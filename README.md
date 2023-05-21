@@ -8,16 +8,17 @@ Some people are looking for an integrated version control system for Scratch, so
 
 ## Configuration
 
-1. Download and install [TurboWarp Desktop](https://desktop.turbowarp.org/). Once finished, you should have access to `$HOME/.config/turbowarp-desktop`
+Download and install [TurboWarp Desktop](https://desktop.turbowarp.org/). Once finished, you should have access to `$HOME/.config/turbowarp-desktop`. 
 
-2. Run `./init.sh`
+Then run the following:
 
-3. Run `./start.sh` to launch a server for the userscript
+```bash
+. functions.sh
+copy-script
+start-server &
+turbowarp Project.sb3
+```
 
-Now when you make some changes to a project in TurboWarp, just click the <kbd>Save to your computer</kbd> button in the corner. Commit names are decided based on the actual changes you made.
+TODO: write usage information
 
-When you're all done, click the <kbd>Push</kbd> button to push all your commits to your repo.
-
-Congrats, you are now a 🦄✨ _1000000x developer_ ✨🦄, no terminal skills required
-
-## Bugs/caveats
+Congrats, you are now a 🦄✨~ _1000x developer_ ~✨🦄, no terminal skills required
