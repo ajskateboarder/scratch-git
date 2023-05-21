@@ -19,6 +19,8 @@ start-server &
 turbowarp Project.sb3
 ```
 
-TODO: write usage information
+## Usage
 
-Congrats, you are now a 🦄✨~ _1000x developer_ ~✨🦄, no terminal skills required
+**TODO:** write the section
+
+Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no terminal skills required
