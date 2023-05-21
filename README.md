@@ -11,6 +11,10 @@ Some people are looking for a version control system for Scratch, so this a firs
 
 2. Run `./init.sh`
 
-3. Run `./start.sh` to launch a server for the userscript to use
+3. Run `./start.sh` to launch a server for the userscript
 
-Now you when you make some changes to a project in TurboWarp, just click the save button in the corner! Commit names are decided based on the actual changes you made.
+Now when you make some changes to a project in TurboWarp, just click the <kbd>Save to your computer</kbd> button in the corner. Commit names are decided based on the actual changes you made.
+
+When you're all done, click the <kbd>Push</kbd> button to push all your commits to your repo.
+
+Congrats, you are now a 🦄✨ _1000000x developer_ ✨🦄
