@@ -1,13 +1,14 @@
 # scratch-git
+
 Git integration for Scratch (TurboWarp)
 
-**⚠️ This is a dumb side project, please don't use this seriously. This is currently for Debian distros only**
+⚠️ **This is a dumb side project, please don't use this seriously. This is currently for Debian distros only**
 
-Some people are looking for a version control system for Scratch, so this a first step toward that.
+Some people are looking for an integrated version control system for Scratch, so this a first step toward that.
 
 ## Configuration
 
-1. Download and install [TurboWarp Desktop](https://desktop.turbowarp.org/). Once finished you should have access to `$HOME/.config/turbowarp-desktop`
+1. Download and install [TurboWarp Desktop](https://desktop.turbowarp.org/). Once finished, you should have access to `$HOME/.config/turbowarp-desktop`
 
 2. Run `./init.sh`
 
@@ -17,4 +18,6 @@ Now when you make some changes to a project in TurboWarp, just click the <kbd>Sa
 
 When you're all done, click the <kbd>Push</kbd> button to push all your commits to your repo.
 
-Congrats, you are now a 🦄✨ _1000000x developer_ ✨🦄
+Congrats, you are now a 🦄✨ _1000000x developer_ ✨🦄, no terminal skills required
+
+## Bugs/caveats
