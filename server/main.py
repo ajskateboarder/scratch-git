@@ -2,6 +2,7 @@ from zipfile import ZipFile
 from pathlib import Path
 import subprocess
 import time
+import json
 
 from flask import Flask, abort
 
@@ -19,7 +20,10 @@ def update():
 
     if (
         subprocess.call(
-            ["git", "commit", "-m", "'random stuff'"], cwd="./scratch-git-test"
+            ["git", "commit", "-m", "'random stuff'"], 
+            cwd="./scratch-git-test",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
         != 0
     ):
@@ -31,19 +35,18 @@ def update():
         check=True,
         cwd="./scratch-git-test",
     )
-    grep_top = subprocess.run(
-        ["grep", "'^ ./'"],
+    grep = subprocess.run(
+        ["grep", "-v", "^ ./"],
         input=git_diff.stdout,
         capture_output=True,
         cwd="./scratch-git-test",
     )
-    grep_git_objs = subprocess.run(
-        ["grep", "-v", "'^ ./.git'"],
-        input=grep_top.stdout,
-        capture_output=True,
-        cwd="./scratch-git-test",
-    )
-    print(grep_git_objs.stdout.decode().strip())
+    print(grep.stdout.decode().strip().split("\n")[:-1])
+
+    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
+        data = json.load(fh)
+        for sprite in data["targets"]:
+            print(f"This guy over here {sprite['name']} has {len(sprite['blocks'].values())} amazing blocks")
 
     return {}
 
