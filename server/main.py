@@ -11,12 +11,28 @@ app = Flask(__name__)
 
 @app.get("/commit")
 def update():
+    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
+        data = json.load(fh)
+        current_changes = {sprite["name"]: len(sprite["blocks"].values()) for sprite in data["targets"]}
+
     time.sleep(1)
+
     with ZipFile("Project.sb3", "r") as fh:
         fh.extractall("scratch-git-test")
 
+    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
+        data = json.load(fh)
+        new_changes = {sprite["name"]: len(sprite["blocks"].values()) for sprite in data["targets"]}
+
     if subprocess.call(["git", "add", "."], cwd="./scratch-git-test") != 0:
         abort(500)
+
+    for old_blocks, new_blocks in zip(current_changes.values(), new_changes.values()):
+        diff = new_blocks - old_blocks
+        if diff != 0:
+            print(diff, "blocks")
+
+    return {}
 
     if (
         subprocess.call(
@@ -42,11 +58,6 @@ def update():
         cwd="./scratch-git-test",
     )
     print(grep.stdout.decode().strip().split("\n")[:-1])
-
-    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
-        data = json.load(fh)
-        for sprite in data["targets"]:
-            print(f"This guy over here {sprite['name']} has {len(sprite['blocks'].values())} amazing blocks")
 
     return {}
 
