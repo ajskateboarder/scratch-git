@@ -14,6 +14,7 @@ def update():
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         data = json.load(fh)
         current_changes = {sprite["name"]: len(sprite["blocks"].values()) for sprite in data["targets"]}
+        current_costume_changes = [costume["md5ext"] for sprite in data["targets"] for costume in sprite["costumes"]]
 
     time.sleep(1)
 
@@ -23,6 +24,7 @@ def update():
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         data = json.load(fh)
         new_changes = {sprite["name"]: len(sprite["blocks"].values()) for sprite in data["targets"]}
+        new_costume_changes = [costume["md5ext"] for sprite in data["targets"] for costume in sprite["costumes"]]
     
     commit = ""
     
@@ -75,7 +77,7 @@ def update():
 
 
 def main():
-    content = [f for f in Path("scratch-git-test").glob("*") if f.is_file()]
+    content = [f for f in Path("scratch-git-test").glob("*") if f.is_file() and not "LICENSE" in f.name]
 
     if not content:
         with ZipFile("Project.sb3", "r") as fh:
