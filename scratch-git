@@ -15,7 +15,7 @@ start-server() {
         . server/env/bin/activate
         pip install -r server/requirements.txt
     fi
-    python3 server/main.py
+    python3 -m server.main
 }
 
 if [ "$0" = "$BASH_SOURCE" ]; then
