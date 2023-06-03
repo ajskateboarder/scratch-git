@@ -25,8 +25,8 @@ def update():
         new_project = Diff(json.load(fh))
 
     print(current_project.block_diff(new_project))
-    print(current_project.costume_diff(new_project))
-    print(new_project.costume_diff(current_project))
+    print(added := current_project.costume_diff(new_project))
+    print(removed := new_project.costume_diff(current_project))
 
     if subprocess.call(["git", "add", "."], cwd="./scratch-git-test") != 0:
         abort(500)

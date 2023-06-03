@@ -8,5 +8,8 @@ with open("scratch-git-test/project.json") as fh:
     project = Diff(json.load(fh))
 
 print(project_w.block_diff(project))
-print(project_w.costume_diff(project))
-print(project.costume_diff(project_w))
+added = project_w.costume_diff(project)
+removed = project.costume_diff(project_w)
+
+print(added)
+print(removed)

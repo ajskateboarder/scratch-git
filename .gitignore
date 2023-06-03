@@ -1,3 +1,4 @@
 **/env
 project
 scratch-git-test
+**/__pycache__

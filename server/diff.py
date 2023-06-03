@@ -1,7 +1,5 @@
 """Helper class to manage asset/code differences"""
 from __future__ import annotations
-from typing import Any
-from pprint import pprint
 
 
 class Diff:
@@ -9,6 +7,11 @@ class Diff:
 
     def __init__(self, data: dict) -> None:
         self.data = data
+
+    @staticmethod
+    def get_costume_path(costume: dict) -> str:
+        """Attempt to return the MD5 extension of a costume"""
+        return costume.get("md5ext") or f"{costume['assetId']}.{costume['dataFormat']}"
 
     def num_blocks(self) -> dict[str, int]:
         """Return the current number of blocks per sprite"""
@@ -21,7 +24,8 @@ class Diff:
         """Return the path to every costume being used"""
         return {
             sprite["name"]: [
-                (costume["md5ext"], costume["name"]) for costume in sprite["costumes"]
+                (self.get_costume_path(costume), costume["name"])
+                for costume in sprite["costumes"]
             ]
             for sprite in self.data["targets"]
         }
@@ -39,7 +43,7 @@ class Diff:
                 commits.append(f"{sprite}: {'+' if diff > 0 else ''}{diff} blocks")
         return commits
 
-    def costume_diff(self, new: Diff) -> Any:
+    def costume_diff(self, new: Diff) -> list[tuple[str, tuple[str, str]]]:
         """Return the costume differences between each sprite in two projects."""
         new_costumes = [
             (sprite, costume)
@@ -52,4 +56,4 @@ class Diff:
             for costume in new_item
         ]
         added = set(new_costumes) - set(old_costumes)
-        return [(item[0], item[1][1]) for item in added]
+        return list(added)
