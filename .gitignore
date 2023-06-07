@@ -3,3 +3,5 @@ project
 scratch-git-test
 scratch-git-test/**
 **/__pycache__
+Project*
+.vscode

@@ -1,5 +1,5 @@
 {
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "none",
   "editor.formatOnSave": true,
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": true,
@@ -10,5 +10,8 @@
     "--show-column-numbers",
     "--disallow-untyped-defs",
     "--disallow-untyped-calls"
-  ]
+  ],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  }
 }
