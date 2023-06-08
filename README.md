@@ -9,7 +9,8 @@ Some people are looking for an integrated version control system for Scratch, so
 ## Usage
 
 Install these things:
-- [TurboWarp Desktop](https://desktop.turbowarp.org/) 
+
+- [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 - [Python](https://python.org/downloads)
 

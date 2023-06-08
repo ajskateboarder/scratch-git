@@ -1,5 +1,9 @@
+from operator import itemgetter
+from itertools import groupby
+
 from zipfile import ZipFile
 from pathlib import Path
+from io import StringIO
 import subprocess
 import time
 import json
@@ -11,8 +15,17 @@ from server.diff import Diff
 app = Flask(__name__)
 
 
+def sort_costumes(items):
+    d = {}
+    for row in items:
+        if row[0] not in d:
+            d[row[0]] = []
+        d[row[0]].append(row[1])
+    return d
+
+
 @app.get("/commit")
-def update():
+def commit():
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         current_project = Diff(json.load(fh))
 
@@ -24,18 +37,44 @@ def update():
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         new_project = Diff(json.load(fh))
 
-    print(current_project.block_diff(new_project))
-    print(added := current_project.costume_diff(new_project))
-    print(removed := new_project.costume_diff(current_project))
+    commit = StringIO()
+
+    costume_additions = current_project.costume_diff(new_project)
+    costume_removals = new_project.costume_diff(current_project)
+
+    commit.write(", ".join(current_project.block_diff(new_project)))
+
+    temp_changes_ = ", ".join(
+        [
+            f"{sprite}: add {', '.join([c[1] for c in costume])}"
+            for sprite, costume in sort_costumes(costume_additions).items()
+        ]
+    )
+    commit.write(
+        (", " if temp_changes_ and commit.getvalue() != "" else "") + temp_changes_
+    )
+    temp_changes_ = ", ".join(
+        [
+            f"{sprite}: remove {', '.join([c[1] for c in costume])}"
+            for sprite, costume in sort_costumes(costume_removals).items()
+        ]
+    )
+    commit.write(
+        (", " if temp_changes_ and commit.getvalue() != "" else "") + temp_changes_
+    )
+
+    commit_message = commit.getvalue()
+    commit.close()
+
+    for _, (path, _) in costume_removals:
+        Path(f"scratch-git-test/{path}").unlink(missing_ok=True)
 
     if subprocess.call(["git", "add", "."], cwd="./scratch-git-test") != 0:
         abort(500)
 
-    return {}
-
     if (
         subprocess.call(
-            ["git", "commit", "-m", "'random stuff'"],
+            ["git", "commit", "-m", commit_message],
             cwd="./scratch-git-test",
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -44,24 +83,18 @@ def update():
     ):
         abort(500)
 
-    git_diff = subprocess.run(
-        ["git", "diff", "--stat", "HEAD^", "HEAD"],
-        capture_output=True,
-        check=True,
-        cwd="./scratch-git-test",
-    )
-    grep = subprocess.run(
-        ["grep", "-v", "^ ./"],
-        input=git_diff.stdout,
-        capture_output=True,
-        cwd="./scratch-git-test",
-    )
-    print(grep.stdout.decode().strip().split("\n")[:-1])
+    return {}
+
+
+@app.get("/push")
+def push():
+    if subprocess.call(["git", "push"], cwd="./scratch-git-test") != 0:
+        abort(500)
 
     return {}
 
 
-def main():
+def main() -> None:
     content = [
         f
         for f in Path("scratch-git-test").glob("*")

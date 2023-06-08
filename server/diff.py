@@ -40,6 +40,8 @@ class Diff:
         ):
             diff = new_blocks - old_blocks
             if diff != 0:
+                if sprite == "Stage":
+                    diff = diff // 2
                 commits.append(f"{sprite}: {'+' if diff > 0 else ''}{diff} blocks")
         return commits
 

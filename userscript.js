@@ -34,7 +34,11 @@ window.onload = () => {
 
   setTimeout(() => {
     document.querySelector("#push-status").onclick = () => {
-      alert("doing the pushing of the changes");
+      (async () => {
+        const res = await fetch("http://localhost:6969/push");
+        console.log(await res.json());
+        alert("I think it pushed now :)");
+      })();
     };
   }, 500);
 };
