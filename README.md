@@ -45,13 +45,11 @@ Commits start with the name of the sprite you are making changes to (e.g. Sprite
 
 Commits then specify the change they are making using one of the following statements:
 
-
 | Statement  | Description |
 | ------------- | ------------- |
 | `add [costumes]`  | The following costumes: `[costumes]` have been added  |
 | `remove [costumes]`  | The following costumes: `[costumes]` have been removed  |
 | `modify [costumes]`  | The following costumes: `[costumes]` have been edited  |
-
 
 | Statement  | Description |
 | ------------- | ------------- |
@@ -59,14 +57,14 @@ Commits then specify the change they are making using one of the following state
 
 Here's a few examples:
 
-```
+```text
 Sprite1: +3 blocks, add costume1, Stage: remove backdrop3
 ```
 
-```
+```text
 Ball: /12 blocks, add red-ball, Stage: add matrix
 ```
 
-```
+```text
 Player: +36 blocks, remove old-player, Cloud: +15 blocks
 ```

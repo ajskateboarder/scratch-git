@@ -60,6 +60,14 @@ def push():  # type: ignore
     return {}
 
 
+@app.get("/project.json")
+def project():  # type: ignore
+    """Retreive the current project.json"""
+
+    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
+        return json.load(fh)["targets"][1]["blocks"]
+
+
 def main() -> None:
     """Entrypoint for web server"""
     content = [

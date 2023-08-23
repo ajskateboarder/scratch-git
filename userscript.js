@@ -1,5 +1,3 @@
-// Don't question this code
-
 // https://stackoverflow.com/a/27870199/16019146
 function pause(ms) {
   var date = Date.now();
@@ -18,6 +16,37 @@ window.onload = () => {
     #push-status:hover {
       cursor: pointer;
     }
+    .content {
+      display: flex;
+    }
+    .sidebar {
+      width: fit-content;
+      background-color: #f0f0f0;
+      position: sticky;
+      top: 0;
+      padding: 10px;
+      height: 100%;
+    }
+    .sidebar ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar li {
+      list-style-type: none;
+    }
+    .blocks {
+      flex: 1;
+      padding: 20px;
+    }
+    .bottom {
+      margin-top: auto;
+    }
+    #commitLog {
+      height: 50%;
+      max-height: 50%;
+      width: 50%;
+    }
   </style>`;
 
   let BUTTON_ROW =
@@ -31,6 +60,21 @@ window.onload = () => {
         </div>
       </div>
     </div>`;
+
+  document.querySelector(BUTTON_ROW).innerHTML += html` <dialog id="commitLog">
+    <div class="content">
+      <div class="sidebar">
+        <ul>
+          <li><a href="#">tab 1</a></li>
+          <li><a href="#">tab 2</a></li>
+        </ul>
+        <button class="bottom">Okay</button>
+      </div>
+      <div class="blocks">
+        <p id="commits">Hello worldus</p>
+      </div>
+    </div>
+  </dialog>`;
 
   setTimeout(() => {
     document.querySelector("#push-status").onclick = () => {
@@ -47,9 +91,37 @@ setInterval(() => {
   try {
     document.querySelector(".save-status_save-now_xBhky").onclick = () => {
       (async () => {
-        const res = await fetch("http://localhost:6969/commit");
+        await fetch("http://localhost:6969/commit");
         pause(1000);
-        console.log(await res.json());
+
+        const project = await (
+          await fetch("http://localhost:6969/project.json")
+        ).json();
+
+        await import(
+          "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
+        );
+        await import(
+          "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
+        );
+
+        const blocks = parseSB3Blocks.toScratchblocks(
+          Object.keys(project).filter(
+            (key) => project[key].opcode === "event_whenflagclicked"
+          )[0],
+          project,
+          "en",
+          {
+            tabs: " ".repeat(4),
+          }
+        );
+        console.log(blocks);
+        document.querySelector("#commits").innerText = blocks;
+        document.querySelector("#commitLog").showModal();
+        scratchblocks.renderMatching("#commits", {
+          style: "scratch3",
+          scale: 0.675,
+        });
       })();
     };
   } catch {}
