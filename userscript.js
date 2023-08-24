@@ -10,6 +10,8 @@ function pause(ms) {
 // Funny editor "hack" so I don't need htm
 const html = (string) => string;
 
+globalThis.diffs = undefined;
+
 window.onload = () => {
   document.head.innerHTML += `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">`;
   document.head.innerHTML += html`<style>
@@ -69,6 +71,37 @@ window.onload = () => {
       padding: 0;
       width: 50%;
     }
+    .bottom-bar {
+      position: sticky;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      background-color: transparent;
+      padding: 10px;
+      bottom: 0;
+    }
+    .bottom-bar select {
+      font-size: 14px;
+      background-color: hsla(0, 100%, 65%, 1);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: bold;
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn i {
+      font-size: 17px;
+      margin-right: 10px;
+    }
+    .scratchblocks {
+      margin-left: 10px;
+    }
   </style>`;
 
   let BUTTON_ROW =
@@ -83,17 +116,35 @@ window.onload = () => {
       </div>
     </div>`;
 
-  document.querySelector(BUTTON_ROW).innerHTML += html`<dialog id="commitLog">
+  document.querySelector(BUTTON_ROW).innerHTML += html`<dialog
+    id="commitLog"
+    style="overflow-x: hidden"
+  >
     <div class="content">
       <div class="sidebar">
         <ul id="scripts"></ul>
         <br />
-        <button onclick="document.querySelector('#commitLog').close()">
-          Okay
-        </button>
       </div>
       <div class="blocks">
         <p id="commits">Hello worldus</p>
+        <div
+          class="bottom-bar"
+          style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
+        >
+          <select onchange="rerender(this.value)" id="styleChoice">
+            <option value="scratch3">Scratch 3.0</option>
+            <option value="scratch2">Scratch 2.0</option>
+            <option value="scratch3-high-contrast">
+              Scratch 3.0 (High Contrast)
+            </option>
+          </select>
+          <button
+            onclick="document.querySelector('#commitLog').close()"
+            class="settings-modal_button_CutmP"
+          >
+            Okay
+          </button>
+        </div>
       </div>
     </div>
   </dialog>`;
@@ -194,6 +245,16 @@ function parseTheBlocks(oldProject, newProject, scriptNumber) {
   };
 }
 
+function rerender(style) {
+  const activeButton = parseInt(
+    document
+      .querySelector("button[class='tab-btn active-tab']")
+      .getAttribute("script-no")
+  );
+  console.log(globalThis.diffs);
+  globalThis.diffs[activeButton].renderBlocks(style);
+}
+
 class ScriptDiff {
   /** @type {string[]} */
   old;
@@ -204,6 +265,8 @@ class ScriptDiff {
   merged;
   /** @type {number} */
   scriptNo;
+  /** @type {("added" | "removed" | "modified")} */
+  status;
 
   /**
    * @constructor
@@ -211,13 +274,17 @@ class ScriptDiff {
    * @param {object} newProject
    * @param {number} scriptNumber
    */
-  constructor(oldProject, newProject, scriptNumber) {
-    const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
-    this.old = parsed.oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
-    this.new = parsed.newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+  constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
+    if (!skipParsing) {
+      const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
+      this.old = parsed.oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
+      this.new = parsed.newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    }
     this.scriptNo = scriptNumber;
-    this.difference = diff(this.old, this.new);
-    this.merged = merge(this.old, this.new);
+    if (!skipParsing) {
+      this.difference = diff(this.old, this.new);
+      this.merged = merge(this.old, this.new);
+    }
   }
 
   /** @returns {boolean} */
@@ -229,16 +296,64 @@ class ScriptDiff {
     );
   }
 
-  renderBlocks() {
-    document.querySelector("#commits").innerText = this.merged
-      .map((item) => item.slice(2))
-      .join("\n");
-    scratchblocks.renderMatching("#commits", {
-      style: "scratch3",
-      scale: 0.675,
+  /** @returns {string[]} */
+  static events(project) {
+    return Object.keys(project).filter((key) =>
+      project[key].opcode.startsWith("event_when")
+    );
+  }
+
+  static availableSprites(oldProject, newProject) {
+    const _scripts = this.events(oldProject);
+    const _newScripts = this.events(newProject);
+
+    const scripts = _scripts.map((e, i) => ({ scriptLoc: e, index: i }));
+    const newScripts = _newScripts.map((e, i) => ({ scriptLoc: e, index: i }));
+
+    const modified = scripts.filter((e) => {
+      try {
+        const oldblocks = parseSB3Blocks.toScratchblocks(
+          _scripts[e.index],
+          oldProject,
+          "en",
+          {
+            tabs: " ".repeat(4),
+          }
+        );
+        const newblocks = parseSB3Blocks.toScratchblocks(
+          _newScripts[e.index],
+          newProject,
+          "en",
+          {
+            tabs: " ".repeat(4),
+          }
+        );
+        return oldblocks !== newblocks;
+      } catch {}
     });
+
+    const removed = scripts.filter((e) => newScripts[e.index] === undefined);
+    const added = newScripts.filter((e) => scripts[e.index] === undefined);
+
+    return {
+      modified,
+      removed,
+      added,
+    };
+  }
+
+  /** @param {("scratch3" | "scratch3-high-contrast" | "scratch2")} style */
+  renderBlocks(style = "scratch3") {
+    const code = this.merged.map((item) => item.slice(2)).join("\n");
+    document.querySelector("#commits").innerText = code;
+
+    scratchblocks.renderMatching("#commits", {
+      style: style,
+      scale: style === "scratch2" ? 1.15 : 0.675,
+    });
+
     const scratch = Array.from(
-      document.querySelectorAll(".scratchblocks-style-scratch3 > g > g > g")
+      document.querySelectorAll(`.scratchblocks-style-${style} > g > g > g`)
     );
     this.merged.forEach((item, i) => {
       if (this.difference.removed.includes(item)) {
@@ -250,10 +365,19 @@ class ScriptDiff {
     });
     this.merged.forEach((item, i) => {
       if (this.difference.added.includes(item)) {
-        const block = scratch[i].querySelector("path").cloneNode(true);
+        let block;
+        try {
+          block = scratch[i].querySelector("path").cloneNode(true);
+        } catch {
+          block = scratch[0].querySelector("path").cloneNode(true);
+        }
         block.style.fill = "green";
         block.style.opacity = "0.5";
-        scratch[i].appendChild(block);
+        try {
+          scratch[i].appendChild(block);
+        } catch {
+          scratch[0].appendChild(block);
+        }
       }
     });
   }
@@ -262,22 +386,62 @@ class ScriptDiff {
 /**
  * @param {object} oldProject
  * @param {object} newProject
- * @returns {ScriptDiff[]}
  */
 function createDiffs(oldProject, newProject) {
-  const range = [
-    ...Array(
-      Object.keys(oldProject).filter((key) =>
-        oldProject[key].opcode.startsWith("event_when")
-      ).length
-    ).keys(),
-  ];
-  const diffs = [];
-  range.forEach((e) => {
-    const script = new ScriptDiff(oldProject, newProject, e);
+  const changes = ScriptDiff.availableSprites(oldProject, newProject);
+  console.log(changes);
+  /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
+  const diffs = {
+    modified: [],
+    removed: [],
+    added: [],
+  };
+  changes.modified.forEach((e) => {
+    const script = new ScriptDiff({
+      oldProject: oldProject,
+      newProject: newProject,
+      scriptNumber: e.index,
+    });
+    script.status = "modified";
     if (script.hasDiffs) {
-      diffs.push(script);
+      diffs.modified.push(script);
     }
+  });
+  changes.removed.forEach((e) => {
+    const oldBlocks = parseSB3Blocks.toScratchblocks(
+      e.scriptLoc,
+      oldProject,
+      "en",
+      {
+        tabs: " ".repeat(4),
+      }
+    );
+    const script = new ScriptDiff({ skipParsing: true });
+    script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    script.new = "".split("\n").map((item, i) => `${i} ${item}`);
+    script.difference = diff(script.old, script.new);
+    script.merged = merge(script.old, script.new);
+    script.scriptNo = e.index;
+    script.status = "removed";
+    diffs.removed.push(script);
+  });
+  changes.added.forEach((e) => {
+    const newBlocks = parseSB3Blocks.toScratchblocks(
+      e.scriptLoc,
+      newProject,
+      "en",
+      {
+        tabs: " ".repeat(4),
+      }
+    );
+    const script = new ScriptDiff({ skipParsing: true });
+    script.old = "".split("\n").map((item, i) => `${i} ${item}`);
+    script.new = newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    script.difference = diff(script.old, script.new);
+    script.merged = merge(script.old, script.new);
+    script.scriptNo = e.index;
+    script.status = "added";
+    diffs.added.push(script);
   });
   return diffs;
 }
@@ -294,32 +458,46 @@ async function showDiffs(oldProject, newProject) {
 
   document.querySelector("#scripts").innerHTML = "";
   document.querySelector("#commits").innerHTML = "";
-  diffs[0].renderBlocks();
 
-  diffs.forEach((diff) => {
-    let newItem = document.createElement("li");
-
-    let link = document.createElement("button");
-    link.classList.add("tab-btn");
-    link.setAttribute("script-no", diff.scriptNo.toString());
-    link.onclick = () => {
-      diff.renderBlocks();
-      document
-        .querySelectorAll(".tab-btn")
-        .forEach((e) => e.classList.remove("active-tab"));
-      link.classList.add("active-tab");
-    };
-    link.appendChild(document.createTextNode(`Script ${diff.scriptNo + 1}`));
-
-    newItem.appendChild(link);
-    document.querySelector("#scripts").appendChild(newItem);
-  });
-
-  document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
     modal.showModal();
   }
+
+  Array.from(Object.values(diffs))
+    .flat(Infinity)
+    .forEach((diff, i) => {
+      let newItem = document.createElement("li");
+
+      let link = document.createElement("button");
+      link.classList.add("tab-btn");
+      link.setAttribute("script-no", i);
+      link.onclick = () => {
+        diff.renderBlocks();
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((e) => e.classList.remove("active-tab"));
+        link.classList.add("active-tab");
+      };
+      switch (diff.status) {
+        case "added":
+          link.innerHTML = `<i class="fa-solid fa-square-plus"></i> Script ${diff.scriptNo}`;
+          break;
+        case "modified":
+          link.innerHTML = `<i class="fa-solid fa-square-minus"></i> Script ${diff.scriptNo}`;
+          break;
+        case "removed":
+          link.innerHTML = `<i class="fa-solid fa-square-xmark"></i> Script ${diff.scriptNo}`;
+          break;
+      }
+      newItem.appendChild(link);
+      document.querySelector("#scripts").appendChild(newItem);
+    });
+
+  document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
+  document.querySelector("#styleChoice").value = "scratch3";
+  Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks();
+  globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
 }
 
 setInterval(() => {
