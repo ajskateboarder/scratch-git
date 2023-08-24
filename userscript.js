@@ -21,13 +21,11 @@ window.onload = () => {
     }
     .sidebar {
       width: fit-content;
-      position: fixed;
-      top: 25%;
-      height: 50%;
-      padding-right: 5px;
-      border-right: 1px solid grey;
-      background-color: #e6f0ff;
-      overflow: auto;
+      background-color: #f0f0f0;
+      position: sticky;
+      top: 0;
+      padding: 10px;
+      height: 100%;
     }
     .sidebar ul {
       list-style-type: none;
@@ -37,28 +35,9 @@ window.onload = () => {
     .sidebar li {
       list-style-type: none;
     }
-    .sidebar li button {
-      padding: 15px 30px;
-      border: 0.5px solid grey;
-      background-color: #d9e3f2;
-      color: hsla(225, 15%, 40%, 0.75);
-      transition: 0.2s background-color ease-in;
-      margin-top: 10px;
-      border-top-right-radius: 10px;
-      border-bottom-right-radius: 10px;
-    }
-    .sidebar li button:hover {
-      background-color: #ccd3dd;
-    }
-    .sidebar li button.active-tab {
-      color: hsla(0, 100%, 65%, 1);
-      background-color: white;
-      outline: none;
-    }
     .blocks {
       flex: 1;
       padding: 20px;
-      margin-left: 12.5%;
     }
     .bottom {
       margin-top: auto;
@@ -66,7 +45,6 @@ window.onload = () => {
     #commitLog {
       height: 50%;
       max-height: 50%;
-      padding: 0;
       width: 50%;
     }
   </style>`;
@@ -88,9 +66,7 @@ window.onload = () => {
       <div class="sidebar">
         <ul id="scripts"></ul>
         <br />
-        <button onclick="document.querySelector('#commitLog').close()">
-          Okay
-        </button>
+        <button class="bottom">Okay</button>
       </div>
       <div class="blocks">
         <p id="commits">Hello worldus</p>
@@ -109,10 +85,11 @@ window.onload = () => {
   }, 500);
 };
 
-function diff(oldArray, newArray) {
+function findArrayChanges(oldArray, newArray) {
   const dp = new Array(oldArray.length + 1)
     .fill(null)
     .map(() => new Array(newArray.length + 1).fill(0));
+
   for (let i = 1; i <= oldArray.length; i++) {
     for (let j = 1; j <= newArray.length; j++) {
       if (oldArray[i - 1] === newArray[j - 1]) {
@@ -122,13 +99,16 @@ function diff(oldArray, newArray) {
       }
     }
   }
+
   const changes = {
     added: [],
     removed: [],
     modified: [],
   };
+
   let i = oldArray.length;
   let j = newArray.length;
+
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0 && oldArray[i - 1] === newArray[j - 1]) {
       i--;
@@ -148,12 +128,14 @@ function diff(oldArray, newArray) {
       j--;
     }
   }
+
   changes.added.reverse();
   changes.removed.reverse();
+
   return changes;
 }
 
-function merge(baseArray, newArray) {
+function mergeArrays(baseArray, newArray) {
   const mergedArray = [...baseArray];
 
   for (const newItem of newArray) {
@@ -165,7 +147,9 @@ function merge(baseArray, newArray) {
   return mergedArray;
 }
 
-async function showDiffs(oldProject, newProject, scriptNumber = 0) {
+const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+
+async function showDiffs(oldProject, newProject) {
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
@@ -176,7 +160,7 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(oldProject).filter((key) =>
       oldProject[key].opcode.startsWith("event_when")
-    )[scriptNumber],
+    )[0],
     oldProject,
     "en",
     {
@@ -187,7 +171,7 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
   const newBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(newProject).filter((key) =>
       newProject[key].opcode.startsWith("event_when")
-    )[scriptNumber],
+    )[0],
     newProject,
     "en",
     {
@@ -202,8 +186,8 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
     (item, i) => `${i} ${item}`
   );
 
-  const difference = diff(oldBlocksSplit, newBlocksSplit);
-  let merged = merge(oldBlocksSplit, newBlocksSplit);
+  const diff = findArrayChanges(oldBlocksSplit, newBlocksSplit);
+  let merged = mergeArrays(oldBlocksSplit, newBlocksSplit);
 
   document.querySelector("#scripts").innerHTML = "";
   Array(
@@ -214,31 +198,14 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
     .fill()
     .forEach((_, i) => {
       let newItem = document.createElement("li");
-
-      let link = document.createElement("button");
-      link.classList.add("tab-btn");
-      link.setAttribute("script-no", i.toString());
-      link.onclick = () => {
-        showDiffs(oldProject, newProject, i);
-      };
-      link.appendChild(document.createTextNode(`Script ${i + 1}`));
-
-      newItem.appendChild(link);
+      newItem.appendChild(document.createTextNode(`Script ${i + 1}`));
       document.querySelector("#scripts").appendChild(newItem);
     });
-  document
-    .querySelectorAll(".tab-btn")
-    [scriptNumber].classList.add("active-tab");
 
   document.querySelector("#commits").innerText = merged
     .map((item) => item.slice(2))
     .join("\n");
-
-  const modal = document.querySelector("#commitLog");
-  if (!modal.open) {
-    modal.showModal();
-  }
-
+  document.querySelector("#commitLog").showModal();
   scratchblocks.renderMatching("#commits", {
     style: "scratch3",
     scale: 0.675,
@@ -249,7 +216,7 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
   );
 
   merged.forEach((item, i) => {
-    if (difference.removed.includes(item)) {
+    if (diff.removed.includes(item)) {
       const block = scratch[i].querySelector("path").cloneNode(true);
       block.style.fill = "red";
       block.style.opacity = "0.5";
@@ -257,7 +224,7 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
     }
   });
   merged.forEach((item, i) => {
-    if (difference.added.includes(item)) {
+    if (diff.added.includes(item)) {
       const block = scratch[i].querySelector("path").cloneNode(true);
       block.style.fill = "green";
       block.style.opacity = "0.5";
