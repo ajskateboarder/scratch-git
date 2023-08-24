@@ -64,10 +64,7 @@ window.onload = () => {
   document.querySelector(BUTTON_ROW).innerHTML += html`<dialog id="commitLog">
     <div class="content">
       <div class="sidebar">
-        <ul>
-          <li><a href="#">script 1</a></li>
-          <li><a href="#">script 2</a></li>
-        </ul>
+        <ul id="scripts"></ul>
         <br />
         <button class="bottom">Okay</button>
       </div>
@@ -152,6 +149,90 @@ function mergeArrays(baseArray, newArray) {
 
 const zip = (a, b) => a.map((k, i) => [k, b[i]]);
 
+async function showDiffs(oldProject, newProject) {
+  await import(
+    "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
+  );
+  await import(
+    "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
+  );
+
+  const oldBlocks = parseSB3Blocks.toScratchblocks(
+    Object.keys(oldProject).filter((key) =>
+      oldProject[key].opcode.startsWith("event_when")
+    )[0],
+    oldProject,
+    "en",
+    {
+      tabs: " ".repeat(4),
+    }
+  );
+
+  const newBlocks = parseSB3Blocks.toScratchblocks(
+    Object.keys(newProject).filter((key) =>
+      newProject[key].opcode.startsWith("event_when")
+    )[0],
+    newProject,
+    "en",
+    {
+      tabs: " ".repeat(4),
+    }
+  );
+
+  const oldBlocksSplit = Array.from(oldBlocks.split("\n")).map(
+    (item, i) => `${i} ${item}`
+  );
+  const newBlocksSplit = Array.from(newBlocks.split("\n")).map(
+    (item, i) => `${i} ${item}`
+  );
+
+  const diff = findArrayChanges(oldBlocksSplit, newBlocksSplit);
+  let merged = mergeArrays(oldBlocksSplit, newBlocksSplit);
+
+  document.querySelector("#scripts").innerHTML = "";
+  Array(
+    Object.keys(newProject).filter((key) =>
+      newProject[key].opcode.startsWith("event_when")
+    ).length
+  )
+    .fill()
+    .forEach((_, i) => {
+      let newItem = document.createElement("li");
+      newItem.appendChild(document.createTextNode(`Script ${i + 1}`));
+      document.querySelector("#scripts").appendChild(newItem);
+    });
+
+  document.querySelector("#commits").innerText = merged
+    .map((item) => item.slice(2))
+    .join("\n");
+  document.querySelector("#commitLog").showModal();
+  scratchblocks.renderMatching("#commits", {
+    style: "scratch3",
+    scale: 0.675,
+  });
+
+  const scratch = Array.from(
+    document.querySelectorAll(".scratchblocks-style-scratch3 > g > g > g")
+  );
+
+  merged.forEach((item, i) => {
+    if (diff.removed.includes(item)) {
+      const block = scratch[i].querySelector("path").cloneNode(true);
+      block.style.fill = "red";
+      block.style.opacity = "0.5";
+      scratch[i].appendChild(block);
+    }
+  });
+  merged.forEach((item, i) => {
+    if (diff.added.includes(item)) {
+      const block = scratch[i].querySelector("path").cloneNode(true);
+      block.style.fill = "green";
+      block.style.opacity = "0.5";
+      scratch[i].appendChild(block);
+    }
+  });
+}
+
 setInterval(() => {
   try {
     document.querySelector(".save-status_save-now_xBhky").onclick = () => {
@@ -167,84 +248,7 @@ setInterval(() => {
           await fetch("http://localhost:6969/project.json")
         ).json();
 
-        await import(
-          "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-        );
-        await import(
-          "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
-        );
-
-        const oldBlocks = parseSB3Blocks.toScratchblocks(
-          Object.keys(oldProject).filter(
-            (key) => oldProject[key].opcode === "event_whenflagclicked"
-          )[0],
-          oldProject,
-          "en",
-          {
-            tabs: " ".repeat(4),
-          }
-        );
-
-        const newBlocks = parseSB3Blocks.toScratchblocks(
-          Object.keys(newProject).filter(
-            (key) => newProject[key].opcode === "event_whenflagclicked"
-          )[0],
-          newProject,
-          "en",
-          {
-            tabs: " ".repeat(4),
-          }
-        );
-
-        const oldBlocksSplit = Array.from(oldBlocks.split("\n")).map(
-          (item, i) => `${i} ${item}`
-        );
-        const newBlocksSplit = Array.from(newBlocks.split("\n")).map(
-          (item, i) => `${i} ${item}`
-        );
-
-        const diff = findArrayChanges(oldBlocksSplit, newBlocksSplit);
-        let merged = mergeArrays(oldBlocksSplit, newBlocksSplit);
-
-        document.querySelector("#commits").innerText = merged
-          .map((item) => item.slice(2))
-          .join("\n");
-        document.querySelector("#commitLog").showModal();
-        scratchblocks.renderMatching("#commits", {
-          style: "scratch3",
-          scale: 0.675,
-        });
-
-        const scratch = Array.from(
-          document.querySelectorAll(".scratchblocks-style-scratch3 > g > g > g")
-        );
-
-        merged.forEach((item, i) => {
-          if (diff.removed.includes(item)) {
-            const block = scratch[i].querySelector("path").cloneNode(true);
-            block.style.fill = "red";
-            block.style.opacity = "0.5";
-            scratch[i].appendChild(block);
-          }
-        });
-        merged.forEach((item, i) => {
-          if (diff.added.includes(item)) {
-            const block = scratch[i].querySelector("path").cloneNode(true);
-            block.style.fill = "green";
-            block.style.opacity = "0.5";
-            scratch[i].appendChild(block);
-          }
-        });
-
-        // Array.from(scratch)
-        //   .slice(1, -1)
-        //   .forEach((element) => {
-        //     const path = element.querySelector("path").cloneNode(true);
-        //     path.style.fill = "red";
-        //     path.style.opacity = "0.5";
-        //     path.style.strokeWidth = "0";
-        //     element.appendChild(path);
-        //   });
+        await showDiffs(oldProject, newProject);
       })();
     };
   } catch {}
