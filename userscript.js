@@ -153,8 +153,8 @@ function diff(oldArray, newArray) {
   return changes;
 }
 
-function merge(baseArray, newArray) {
-  const mergedArray = [...baseArray];
+function merge(oldArray, newArray) {
+  const mergedArray = [...oldArray];
 
   for (const newItem of newArray) {
     if (!mergedArray.includes(newItem)) {
@@ -194,7 +194,95 @@ function parseTheBlocks(oldProject, newProject, scriptNumber) {
   };
 }
 
-async function showDiffs(oldProject, newProject, scriptNumber = 0) {
+class ScriptDiff {
+  /** @type {string[]} */
+  old;
+  /** @type {string[]} */
+  new;
+  difference;
+  /** @type {string[]} */
+  merged;
+  /** @type {number} */
+  scriptNo;
+
+  /**
+   * @constructor
+   * @param {object} oldProject
+   * @param {object} newProject
+   * @param {number} scriptNumber
+   */
+  constructor(oldProject, newProject, scriptNumber) {
+    const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
+    this.old = parsed.oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    this.new = parsed.newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    this.scriptNo = scriptNumber;
+    this.difference = diff(this.old, this.new);
+    this.merged = merge(this.old, this.new);
+  }
+
+  /** @returns {boolean} */
+  get hasDiffs() {
+    return !(
+      this.difference.added.length === 0 &&
+      this.difference.removed.length === 0 &&
+      this.difference.modified.length === 0
+    );
+  }
+
+  renderBlocks() {
+    document.querySelector("#commits").innerText = this.merged
+      .map((item) => item.slice(2))
+      .join("\n");
+    scratchblocks.renderMatching("#commits", {
+      style: "scratch3",
+      scale: 0.675,
+    });
+    const scratch = Array.from(
+      document.querySelectorAll(".scratchblocks-style-scratch3 > g > g > g")
+    );
+    this.merged.forEach((item, i) => {
+      if (this.difference.removed.includes(item)) {
+        const block = scratch[i].querySelector("path").cloneNode(true);
+        block.style.fill = "red";
+        block.style.opacity = "0.5";
+        scratch[i].appendChild(block);
+      }
+    });
+    this.merged.forEach((item, i) => {
+      if (this.difference.added.includes(item)) {
+        const block = scratch[i].querySelector("path").cloneNode(true);
+        block.style.fill = "green";
+        block.style.opacity = "0.5";
+        scratch[i].appendChild(block);
+      }
+    });
+  }
+}
+
+/**
+ * @param {object} oldProject
+ * @param {object} newProject
+ * @returns {ScriptDiff[]}
+ */
+function createDiffs(oldProject, newProject) {
+  const range = [
+    ...Array(
+      Object.keys(oldProject).filter((key) =>
+        oldProject[key].opcode.startsWith("event_when")
+      ).length
+    ).keys(),
+  ];
+  const diffs = [];
+  range.forEach((e) => {
+    const script = new ScriptDiff(oldProject, newProject, e);
+    if (script.hasDiffs) {
+      diffs.push(script);
+    }
+  });
+  return diffs;
+}
+
+async function showDiffs(oldProject, newProject) {
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
@@ -202,86 +290,36 @@ async function showDiffs(oldProject, newProject, scriptNumber = 0) {
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
 
-  const { oldBlocks, newBlocks } = parseTheBlocks(
-    oldProject,
-    newProject,
-    scriptNumber
-  );
-  const oldBlocksSplit = Array.from(oldBlocks.split("\n")).map(
-    (item, i) => `${i} ${item}`
-  );
-  const newBlocksSplit = Array.from(newBlocks.split("\n")).map(
-    (item, i) => `${i} ${item}`
-  );
-
-  const difference = diff(oldBlocksSplit, newBlocksSplit);
-  let merged = merge(oldBlocksSplit, newBlocksSplit);
+  const diffs = createDiffs(oldProject, newProject);
 
   document.querySelector("#scripts").innerHTML = "";
-  Array(
-    Object.keys(newProject).filter((key) =>
-      newProject[key].opcode.startsWith("event_when")
-    ).length
-  )
-    .fill()
-    .forEach((_, i) => {
-      let newItem = document.createElement("li");
+  document.querySelector("#commits").innerHTML = "";
+  diffs[0].renderBlocks();
 
-      let link = document.createElement("button");
-      link.classList.add("tab-btn");
-      link.setAttribute("script-no", i.toString());
-      link.onclick = () => {
-        showDiffs(oldProject, newProject, i);
-      };
-      link.appendChild(document.createTextNode(`Script ${i + 1}`));
+  diffs.forEach((diff) => {
+    let newItem = document.createElement("li");
 
-      newItem.appendChild(link);
-      document.querySelector("#scripts").appendChild(newItem);
-    });
-  try {
-    document
-      .querySelectorAll(".tab-btn")
-      [scriptNumber].classList.add("active-tab");
-  } catch {
-    document
-      .querySelectorAll(".tab-btn")
-      [scriptNumber - 1].classList.add("active-tab");
-  }
+    let link = document.createElement("button");
+    link.classList.add("tab-btn");
+    link.setAttribute("script-no", diff.scriptNo.toString());
+    link.onclick = () => {
+      diff.renderBlocks();
+      document
+        .querySelectorAll(".tab-btn")
+        .forEach((e) => e.classList.remove("active-tab"));
+      link.classList.add("active-tab");
+    };
+    link.appendChild(document.createTextNode(`Script ${diff.scriptNo + 1}`));
 
-  document.querySelector("#commits").innerText = merged
-    .map((item) => item.slice(2))
-    .join("\n");
+    newItem.appendChild(link);
+    document.querySelector("#scripts").appendChild(newItem);
+  });
 
+  document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
     modal.showModal();
   }
-
-  scratchblocks.renderMatching("#commits", {
-    style: "scratch3",
-    scale: 0.675,
-  });
-
-  const scratch = Array.from(
-    document.querySelectorAll(".scratchblocks-style-scratch3 > g > g > g")
-  );
-
-  merged.forEach((item, i) => {
-    if (difference.removed.includes(item)) {
-      const block = scratch[i].querySelector("path").cloneNode(true);
-      block.style.fill = "red";
-      block.style.opacity = "0.5";
-      scratch[i].appendChild(block);
-    }
-  });
-  merged.forEach((item, i) => {
-    if (difference.added.includes(item)) {
-      const block = scratch[i].querySelector("path").cloneNode(true);
-      block.style.fill = "green";
-      block.style.opacity = "0.5";
-      scratch[i].appendChild(block);
-    }
-  });
 }
 
 setInterval(() => {
