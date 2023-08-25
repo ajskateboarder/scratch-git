@@ -473,7 +473,7 @@ async function showDiffs(oldProject, newProject) {
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i);
       link.onclick = () => {
-        diff.renderBlocks();
+        diff.renderBlocks(document.querySelector("#styleChoice").value);
         document
           .querySelectorAll(".tab-btn")
           .forEach((e) => e.classList.remove("active-tab"));
