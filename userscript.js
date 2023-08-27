@@ -231,6 +231,7 @@ function diff(oldArray, newArray) {
       }
     }
   }
+  /** @type {{added: string[]; removed: string[]; modified: string[]}} */
   const changes = {
     added: [],
     removed: [],
@@ -259,6 +260,8 @@ function diff(oldArray, newArray) {
   }
   changes.added.reverse();
   changes.removed.reverse();
+  changes.added = changes.added.filter((e) => !e.endsWith(" end"));
+  changes.removed = changes.removed.filter((e) => !e.endsWith(" end"));
   return changes;
 }
 
@@ -282,7 +285,7 @@ function parseTheBlocks(oldProject, newProject, scriptNumber) {
     oldProject,
     "en",
     {
-      tabs: " ".repeat(4),
+      tabs: "",
     }
   );
 
@@ -293,7 +296,7 @@ function parseTheBlocks(oldProject, newProject, scriptNumber) {
     newProject,
     "en",
     {
-      tabs: " ".repeat(4),
+      tabs: "",
     }
   );
 
@@ -309,10 +312,13 @@ function rerender(style) {
       .querySelector("button[class='tab-btn active-tab']")
       .getAttribute("script-no")
   );
-  console.log(globalThis.diffs);
   globalThis.diffs[activeButton].renderBlocks(style);
 }
-
+const count = (list, item) =>
+  list.reduce(
+    (count, currentValue) => count + (currentValue === item ? 1 : 0),
+    0
+  );
 class ScriptDiff {
   /** @type {string[]} */
   old;
@@ -335,14 +341,38 @@ class ScriptDiff {
   constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
     if (!skipParsing) {
       const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
-      this.old = parsed.oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
-      this.new = parsed.newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+      this.old = parsed.oldBlocks
+        .split("\n")
+        .map((item, i) => `${i} ${item.trim()}`);
+      this.new = parsed.newBlocks
+        .split("\n")
+        .map((item, i) => `${i} ${item.trim()}`);
     }
     this.scriptNo = scriptNumber;
     if (!skipParsing) {
       this.difference = diff(this.old, this.new);
       this.merged = merge(this.old, this.new);
     }
+    this.merged = this.fixCBlocks(this.merged);
+  }
+
+  /** @param {string[]} merged @returns {string[]}*/
+  fixCBlocks(merged) {
+    let mergedNre = merged.map((e) => e.slice(2).trim());
+    let foreverFound = false;
+    [...mergedNre].forEach((block, i) => {
+      if (block === "forever") {
+        foreverFound = true;
+      }
+      if (block === "end" && foreverFound) {
+        mergedNre = mergedNre.filter((e) => e !== mergedNre[i]);
+        foreverFound = false;
+      }
+    });
+    while (count(mergedNre, "forever") !== count(mergedNre, "end")) {
+      mergedNre.push("end");
+    }
+    return mergedNre.map((e, i) => `${i} ${e}`);
   }
 
   /** @returns {boolean} */
@@ -361,6 +391,7 @@ class ScriptDiff {
     );
   }
 
+  /** Finds all scripts which have been modified in some way */
   static availableSprites(oldProject, newProject) {
     const _scripts = this.events(oldProject);
     const _newScripts = this.events(newProject);
@@ -375,7 +406,7 @@ class ScriptDiff {
           oldProject,
           "en",
           {
-            tabs: " ".repeat(4),
+            tabs: "",
           }
         );
         const newblocks = parseSB3Blocks.toScratchblocks(
@@ -383,7 +414,7 @@ class ScriptDiff {
           newProject,
           "en",
           {
-            tabs: " ".repeat(4),
+            tabs: "",
           }
         );
         return oldblocks !== newblocks;
@@ -402,7 +433,9 @@ class ScriptDiff {
 
   /** @param {("scratch3" | "scratch3-high-contrast" | "scratch2")} style */
   renderBlocks(style = "scratch3") {
-    const code = this.merged.map((item) => item.slice(2)).join("\n");
+    const code = this.merged
+      .map((item) => item.substring(item.indexOf(" ") + 1))
+      .join("\n");
     document.querySelector("#commits").innerText = code;
 
     scratchblocks.renderMatching("#commits", {
@@ -410,31 +443,40 @@ class ScriptDiff {
       scale: style === "scratch2" ? 1.15 : 0.675,
     });
 
-    const scratch = Array.from(
-      document.querySelectorAll(`.scratchblocks-style-${style} > g > g > g`)
+    let blocks = Array.from(
+      document.querySelectorAll(`.scratchblocks-style-${style} g > g path`)
     );
+    if (style === "scratch2") {
+      blocks = blocks.filter((e) => !e.classList.contains("sb-input"));
+    }
+
+    console.log(this.difference);
+
     this.merged.forEach((item, i) => {
       if (this.difference.removed.includes(item)) {
-        const block = scratch[i].querySelector("path").cloneNode(true);
+        const block = blocks[i].cloneNode(true);
         block.style.fill = "red";
         block.style.opacity = "0.5";
-        scratch[i].appendChild(block);
+        blocks[i].parentElement.appendChild(block);
       }
     });
     this.merged.forEach((item, i) => {
       if (this.difference.added.includes(item)) {
+        console.log(i, item);
         let block;
         try {
-          block = scratch[i].querySelector("path").cloneNode(true);
-        } catch {
-          block = scratch[0].querySelector("path").cloneNode(true);
+          block = blocks[i].cloneNode(true);
+        } catch (e) {
+          console.warn(e);
+          block = blocks[0].cloneNode(true);
         }
         block.style.fill = "green";
         block.style.opacity = "0.5";
         try {
-          scratch[i].appendChild(block);
-        } catch {
-          scratch[0].appendChild(block);
+          blocks[i].parentElement.appendChild(block);
+        } catch (e) {
+          console.warn(e);
+          blocks[0].parentElement.appendChild(block);
         }
       }
     });
@@ -447,7 +489,6 @@ class ScriptDiff {
  */
 function createDiffs(oldProject, newProject) {
   const changes = ScriptDiff.availableSprites(oldProject, newProject);
-  console.log(changes);
   /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
   const diffs = {
     modified: [],
@@ -460,6 +501,9 @@ function createDiffs(oldProject, newProject) {
       newProject: newProject,
       scriptNumber: e.index,
     });
+    console.log(script.merged.join("\n"));
+    console.log(script.old);
+    console.log(script.new);
     script.status = "modified";
     if (script.hasDiffs) {
       diffs.modified.push(script);
@@ -471,12 +515,12 @@ function createDiffs(oldProject, newProject) {
       oldProject,
       "en",
       {
-        tabs: " ".repeat(4),
+        tabs: "",
       }
     );
     const script = new ScriptDiff({ skipParsing: true });
-    script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item}`);
-    script.new = "".split("\n").map((item, i) => `${i} ${item}`);
+    script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
+    script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = diff(script.old, script.new);
     script.merged = merge(script.old, script.new);
     script.scriptNo = e.index;
@@ -489,12 +533,12 @@ function createDiffs(oldProject, newProject) {
       newProject,
       "en",
       {
-        tabs: " ".repeat(4),
+        tabs: "",
       }
     );
     const script = new ScriptDiff({ skipParsing: true });
-    script.old = "".split("\n").map((item, i) => `${i} ${item}`);
-    script.new = newBlocks.split("\n").map((item, i) => `${i} ${item}`);
+    script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
+    script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = diff(script.old, script.new);
     script.merged = merge(script.old, script.new);
     script.scriptNo = e.index;
@@ -585,9 +629,6 @@ setInterval(() => {
         const newProject = await (
           await fetch("http://localhost:6969/project.json")
         ).json();
-
-        console.log(Object.keys(oldProject).length);
-        console.log(Object.keys(newProject).length);
 
         await showDiffs(oldProject, newProject);
       })();
