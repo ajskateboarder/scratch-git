@@ -1,6 +1,7 @@
 """Web server to manage commits and pushes"""
 from zipfile import ZipFile
 from pathlib import Path
+import shutil
 import subprocess
 import time
 import json
@@ -12,17 +13,25 @@ from server.diff import Diff
 app = Flask(__name__)
 
 
+@app.get("/unzip")
+def unzip():  # type: ignore
+    shutil.copyfile(
+        "scratch-git-test/project.json", "scratch-git-test/project.old.json"
+    )
+
+    time.sleep(1)
+    with ZipFile("Project.sb3", "r") as fh:
+        fh.extractall("scratch-git-test")
+
+    return {}
+
+
 @app.get("/commit")
 def commit():  # type: ignore
     """Commits the state of a Scratch project"""
 
-    with open("scratch-git-test/project.json", encoding="utf-8") as fh:
+    with open("scratch-git-test/project.old.json", encoding="utf-8") as fh:
         current_project = Diff(json.load(fh))
-
-    time.sleep(1)
-
-    with ZipFile("Project.sb3", "r") as fh:
-        fh.extractall("scratch-git-test")
 
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         new_project = Diff(json.load(fh))
@@ -36,18 +45,18 @@ def commit():  # type: ignore
     if subprocess.call(["git", "add", "."], cwd="./scratch-git-test") != 0:
         abort(500)
 
-    if (
-        subprocess.call(
-            ["git", "commit", "-m", commit_message],
-            cwd="./scratch-git-test",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        != 0
-    ):
-        abort(500)
+    with subprocess.Popen(
+        ["git", "commit", "-m", commit_message],
+        cwd="./scratch-git-test",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ) as commit_cmd:
+        if commit_cmd != 0:
+            _, stderr = commit_cmd.communicate()
+            if ".git/hooks/commit-msg" not in stderr.decode("utf-8"):
+                abort(500)
 
-    return {}
+    return commit_message
 
 
 @app.get("/push")
@@ -60,10 +69,16 @@ def push():  # type: ignore
     return {}
 
 
+@app.get("/project.old.json")
+def project_old():  # type: ignore
+    """Retreive the project.old.json"""
+    with open("scratch-git-test/project.old.json", encoding="utf-8") as fh:
+        return json.load(fh)["targets"][1]["blocks"]
+
+
 @app.get("/project.json")
 def project():  # type: ignore
     """Retreive the current project.json"""
-
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         return json.load(fh)["targets"][1]["blocks"]
 

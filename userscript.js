@@ -12,8 +12,53 @@ const html = (string) => string;
 
 globalThis.diffs = undefined;
 
+const _removeAlert = () =>
+  (document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
+    "");
+const Alert = (message) => {
+  document.querySelector(
+    ".alerts_alerts-inner-container_0UOfk"
+  ).innerHTML = html`<div
+    class="alert_alert_K5u0l alert_success_QZsAp box_box_2jjDp"
+    style="justify-content: space-between"
+  >
+    <div class="alert_alert-message_b1o2e"></div>
+    <div class="alert_alert-buttons_qzCdj">
+      <div class="alert_alert-close-button-container_sK95e box_box_2jjDp">
+        <div
+          aria-label="Close"
+          class="close-button_close-button_hsJUK alert_alert-close-button_XMbBP close-button_large_UcF64"
+          role="button"
+          tabindex="0"
+        >
+          <img
+            class="close-button_close-icon_rixGf undefined"
+            src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg=="
+          />
+        </div>
+      </div>
+    </div>
+  </div>`;
+  let text = document.createElement("span");
+  text.appendChild(document.createTextNode(message));
+  document.querySelector(".alert_alert-message_b1o2e").appendChild(text);
+  document.querySelector(".close-button_close-button_hsJUK").onclick =
+    _removeAlert;
+  setTimeout(_removeAlert, 5000);
+};
+
 window.onload = () => {
-  document.head.innerHTML += `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">`;
+  document.head.innerHTML += html`
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+  `;
   document.head.innerHTML += html`<style>
     #push-status:hover {
       cursor: pointer;
@@ -153,6 +198,7 @@ window.onload = () => {
           <button
             onclick="document.querySelector('#commitLog').close()"
             class="settings-modal_button_CutmP"
+            id="commitButton"
           >
             Okay
           </button>
@@ -471,6 +517,12 @@ async function showDiffs(oldProject, newProject) {
   document.querySelector("#scripts").innerHTML = "";
   document.querySelector("#commits").innerHTML = "";
 
+  document.querySelector("#commitButton").onclick = async () => {
+    const message = await (await fetch("http://localhost:6969/commit")).text();
+    document.querySelector("#commitLog").close();
+    Alert(`Commit successful. ${message}`);
+  };
+
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
     modal.showModal();
@@ -522,16 +574,20 @@ setInterval(() => {
   try {
     document.querySelector(".save-status_save-now_xBhky").onclick = () => {
       (async () => {
-        const oldProject = await (
-          await fetch("http://localhost:6969/project.json")
-        ).json();
-
-        await fetch("http://localhost:6969/commit");
         pause(1000);
+        await fetch("http://localhost:6969/unzip");
+        pause(1000);
+
+        const oldProject = await (
+          await fetch("http://localhost:6969/project.old.json")
+        ).json();
 
         const newProject = await (
           await fetch("http://localhost:6969/project.json")
         ).json();
+
+        console.log(Object.keys(oldProject).length);
+        console.log(Object.keys(newProject).length);
 
         await showDiffs(oldProject, newProject);
       })();
