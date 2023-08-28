@@ -102,6 +102,18 @@ window.onload = () => {
     .scratchblocks {
       margin-left: 10px;
     }
+    .dark {
+      background-color: #111;
+      color: #eee;
+    }
+    .dark #scripts li button {
+      background-color: rgb(46, 46, 46);
+      color: #707070;
+    }
+    .dark #scripts li button.active-tab {
+      background-color: rgb(76, 76, 76);
+      color: #eee;
+    }
   </style>`;
 
   let BUTTON_ROW =
@@ -470,6 +482,7 @@ async function showDiffs(oldProject, newProject) {
       let newItem = document.createElement("li");
 
       let link = document.createElement("button");
+      link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i);
       link.onclick = () => {
@@ -498,6 +511,11 @@ async function showDiffs(oldProject, newProject) {
   document.querySelector("#styleChoice").value = "scratch3";
   Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks();
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
+  if (document.querySelector("body").getAttribute("theme") === "dark") {
+    document.querySelector(".sidebar").classList.add("dark");
+  } else {
+    document.querySelector(".sidebar").classList.remove("dark");
+  }
 }
 
 setInterval(() => {
