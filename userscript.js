@@ -216,17 +216,15 @@ window.onload = () => {
   </dialog>`;
 
   setTimeout(() => {
-    document.querySelector("#push-status").onclick = () => {
-      (async () => {
-        document.querySelector("#push-status").style.opacity = "0.5";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Pushing project...";
-        const res = await fetch("http://localhost:6969/push");
-        document.querySelector("#push-status").style.opacity = "1";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Push project";
-        Alert({ message: "Commits pushed successfully", showTime: 5000 });
-      })();
+    document.querySelector("#push-status").onclick = async () => {
+      document.querySelector("#push-status").style.opacity = "0.5";
+      document.querySelector("#push-status").querySelector("span").innerText =
+        "Pushing project...";
+      await fetch("http://localhost:6969/push");
+      document.querySelector("#push-status").style.opacity = "1";
+      document.querySelector("#push-status").querySelector("span").innerText =
+        "Push project";
+      Alert({ message: "Commits pushed successfully", showTime: 5000 });
     };
   }, 500);
 };
@@ -273,8 +271,6 @@ function diff(oldArray, newArray) {
   }
   changes.added.reverse();
   changes.removed.reverse();
-  // changes.added = changes.added.filter((e) => !e.endsWith(" end"));
-  // changes.removed = changes.removed.filter((e) => !e.endsWith(" end"));
   return changes;
 }
 
@@ -458,14 +454,16 @@ class ScriptDiff {
 
     let blocks = Array.from(
       document.querySelectorAll(`.scratchblocks-style-${style} g > g path`)
-    );
+    ).filter((e) => e?.parentElement?.nextElementSibling?.innerHTML !== "then");
     if (style === "scratch2") {
       blocks = blocks.filter((e) => !e.classList.contains("sb-input"));
     }
 
     let addedC = [...this.difference.added];
     let removedC = [...this.difference.removed];
-
+    console.log(code);
+    console.log(this.difference.added);
+    console.log(this.difference.removed);
     // highlight blocks that have been removed in merge
     this.merged.forEach((item, i) => {
       if (removedC.includes(item)) {
@@ -485,18 +483,18 @@ class ScriptDiff {
         try {
           block = blocks[i].cloneNode(true);
         } catch (e) {
-          return console.warn(e);
+          return console.warn(`${e}\n\nFailed to find/parse block ${i}`);
         }
         block.style.fill = "green";
         block.style.opacity = "0.5";
         try {
           blocks[i].parentElement.appendChild(block);
         } catch (e) {
-          console.warn(e);
+          console.warn(`${e}\n\nFailed to find/parse block ${i}`);
         }
       }
     });
-
+    console.log(addedC);
     // TODO: support more C-blocks
     if (addedC[0].endsWith("forever")) {
       let forevers = blocks.filter(
@@ -511,9 +509,9 @@ class ScriptDiff {
           block.parentElement.appendChild(copy);
         });
       } else {
-        let shrek2 = blocks.slice(
-          blocks.indexOf(forevers[parseInt(addedC[0].split(" ")[0]) - 1])
-        );
+        let lineNo = parseInt(addedC[0].split(" ")[0]);
+        let changedForeverBlock = forevers[lineNo - 1] ?? forevers[lineNo - 2];
+        let shrek2 = blocks.slice(blocks.indexOf(changedForeverBlock));
         shrek2.forEach((block) => {
           let copy = block.cloneNode();
           copy.style.fill = "green";
