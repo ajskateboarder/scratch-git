@@ -15,7 +15,9 @@ globalThis.diffs = undefined;
 const _removeAlert = () =>
   (document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
     "");
-const Alert = (message) => {
+
+/** @param {{message: string; showTime: number}} */
+const Alert = ({ message, showTime }) => {
   document.querySelector(
     ".alerts_alerts-inner-container_0UOfk"
   ).innerHTML = html`<div
@@ -33,6 +35,7 @@ const Alert = (message) => {
         >
           <img
             class="close-button_close-icon_rixGf undefined"
+            style="filter: invert(70%)"
             src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg=="
           />
         </div>
@@ -41,10 +44,15 @@ const Alert = (message) => {
   </div>`;
   let text = document.createElement("span");
   text.appendChild(document.createTextNode(message));
+  if (document.querySelector("body").getAttribute("theme") === "dark") {
+    document.querySelector(
+      ".close-button_close-button_hsJUK"
+    ).style.backgroundColor = "rgba(0, 0, 0, 0.255)";
+  }
   document.querySelector(".alert_alert-message_b1o2e").appendChild(text);
   document.querySelector(".close-button_close-button_hsJUK").onclick =
     _removeAlert;
-  setTimeout(_removeAlert, 5000);
+  setTimeout(_removeAlert, showTime);
 };
 
 window.onload = () => {
@@ -260,8 +268,8 @@ function diff(oldArray, newArray) {
   }
   changes.added.reverse();
   changes.removed.reverse();
-  changes.added = changes.added.filter((e) => !e.endsWith(" end"));
-  changes.removed = changes.removed.filter((e) => !e.endsWith(" end"));
+  // changes.added = changes.added.filter((e) => !e.endsWith(" end"));
+  // changes.removed = changes.removed.filter((e) => !e.endsWith(" end"));
   return changes;
 }
 
@@ -450,25 +458,29 @@ class ScriptDiff {
       blocks = blocks.filter((e) => !e.classList.contains("sb-input"));
     }
 
-    console.log(this.difference);
+    let addedC = [...this.difference.added];
+    let removedC = [...this.difference.removed];
 
+    // highlight blocks that have been removed in merge
     this.merged.forEach((item, i) => {
-      if (this.difference.removed.includes(item)) {
+      if (removedC.includes(item)) {
+        removedC = removedC.filter((e) => e !== item);
         const block = blocks[i].cloneNode(true);
         block.style.fill = "red";
         block.style.opacity = "0.5";
         blocks[i].parentElement.appendChild(block);
       }
     });
+
+    // highlight blocks that have been added in merge
     this.merged.forEach((item, i) => {
-      if (this.difference.added.includes(item)) {
-        console.log(i, item);
+      if (addedC.includes(item)) {
+        addedC = addedC.filter((e) => e !== item);
         let block;
         try {
           block = blocks[i].cloneNode(true);
         } catch (e) {
-          console.warn(e);
-          block = blocks[0].cloneNode(true);
+          return console.warn(e);
         }
         block.style.fill = "green";
         block.style.opacity = "0.5";
@@ -476,10 +488,42 @@ class ScriptDiff {
           blocks[i].parentElement.appendChild(block);
         } catch (e) {
           console.warn(e);
-          blocks[0].parentElement.appendChild(block);
         }
       }
     });
+
+    // TODO: support more C-blocks
+    if (addedC[0].endsWith("forever")) {
+      let forevers = blocks.filter(
+        (e) => e.parentElement.querySelector("text").innerHTML === "forever"
+      );
+      if (forevers.length === 1) {
+        let afterForevers = blocks.slice(blocks.indexOf(forevers[0]));
+        afterForevers.forEach((block) => {
+          let copy = block.cloneNode();
+          copy.style.fill = "green";
+          copy.style.opacity = "0.5";
+          block.parentElement.appendChild(copy);
+        });
+      } else {
+        let shrek2 = blocks.slice(
+          blocks.indexOf(forevers[parseInt(addedC[0].split(" ")[0]) - 1])
+        );
+        shrek2.forEach((block) => {
+          let copy = block.cloneNode();
+          copy.style.fill = "green";
+          copy.style.opacity = "0.5";
+          block.parentElement.appendChild(copy);
+        });
+      }
+    }
+
+    // remove duplicate highlights
+    const htmls = Array.from(document.querySelectorAll("path[class^='sb3-'"));
+    const noDupes = [...new Set(htmls.map((e) => e.outerHTML))];
+
+    const dupesOnly = htmls.filter((e) => !noDupes.includes(e.outerHTML));
+    dupesOnly.forEach((element) => element.remove());
   }
 }
 
@@ -501,9 +545,6 @@ function createDiffs(oldProject, newProject) {
       newProject: newProject,
       scriptNumber: e.index,
     });
-    console.log(script.merged.join("\n"));
-    console.log(script.old);
-    console.log(script.new);
     script.status = "modified";
     if (script.hasDiffs) {
       diffs.modified.push(script);
@@ -564,7 +605,7 @@ async function showDiffs(oldProject, newProject) {
   document.querySelector("#commitButton").onclick = async () => {
     const message = await (await fetch("http://localhost:6969/commit")).text();
     document.querySelector("#commitLog").close();
-    Alert(`Commit successful. ${message}`);
+    Alert({ message: `Commit successful. ${message}`, showTime: 5000 });
   };
 
   const modal = document.querySelector("#commitLog");
