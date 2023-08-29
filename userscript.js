@@ -218,9 +218,14 @@ window.onload = () => {
   setTimeout(() => {
     document.querySelector("#push-status").onclick = () => {
       (async () => {
+        document.querySelector("#push-status").style.opacity = "0.5";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Pushing project...";
         const res = await fetch("http://localhost:6969/push");
-        console.log(await res.json());
-        alert("I think it pushed now :)");
+        document.querySelector("#push-status").style.opacity = "1";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Push project";
+        Alert({ message: "Commits pushed successfully", showTime: 5000 });
       })();
     };
   }, 500);
