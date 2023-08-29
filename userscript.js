@@ -202,6 +202,7 @@ window.onload = () => {
             <option value="scratch3-high-contrast">
               Scratch 3.0 (High Contrast)
             </option>
+            <option value="text">Text</option>
           </select>
           <button
             onclick="document.querySelector('#commitLog').close()"
@@ -467,11 +468,15 @@ class ScriptDiff {
     // highlight blocks that have been removed in merge
     this.merged.forEach((item, i) => {
       if (removedC.includes(item)) {
-        removedC = removedC.filter((e) => e !== item);
-        const block = blocks[i].cloneNode(true);
-        block.style.fill = "red";
-        block.style.opacity = "0.5";
-        blocks[i].parentElement.appendChild(block);
+        try {
+          removedC = removedC.filter((e) => e !== item);
+          const block = blocks[i].cloneNode(true);
+          block.style.fill = "red";
+          block.style.opacity = "0.5";
+          blocks[i].parentElement.appendChild(block);
+        } catch (e) {
+          return console.warn(e);
+        }
       }
     });
 
@@ -494,9 +499,11 @@ class ScriptDiff {
         }
       }
     });
+
     console.log(addedC);
+
     // TODO: support more C-blocks
-    if (addedC[0].endsWith("forever")) {
+    if (typeof addedC[0] !== "undefined" && addedC[0].endsWith("forever")) {
       let forevers = blocks.filter(
         (e) => e.parentElement.querySelector("text").innerHTML === "forever"
       );
