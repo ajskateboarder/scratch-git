@@ -579,6 +579,20 @@ class ScriptDiff {
 
     // remove duplicate highlights
     const htmls = Array.from(document.querySelectorAll("path[class^='sb3-'"));
+
+    if (addedC.length !== 0) {
+      htmls
+        .slice(
+          htmls.indexOf(htmls.filter((e) => e.style.fill === "red").pop()) + 1
+        )
+        .forEach((block) => {
+          let copy = block.cloneNode();
+          copy.style.fill = "green";
+          copy.style.opacity = "0.5";
+          block.parentElement.appendChild(copy);
+        });
+    }
+
     const noDupes = [...new Set(htmls.map((e) => e.outerHTML))];
 
     const dupesOnly = htmls.filter((e) => !noDupes.includes(e.outerHTML));
@@ -660,9 +674,6 @@ async function showDiffs({ sprite, script = 0, style }) {
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
 
-  if (style === undefined) {
-    console.warn("NO STYLE");
-  }
   const oldProject = await (
     await fetch(`http://localhost:6969/project.old.json?name=${sprite}`)
   ).json();
@@ -689,7 +700,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   }
 
   document.querySelector(".topbar").innerHTML = "";
-  sprites.forEach((sprite) => {
+  globalThis.sprites.forEach((sprite) => {
     let newItem = document.createElement("a");
     newItem.href = "#whatever";
     newItem.appendChild(document.createTextNode(sprite));
