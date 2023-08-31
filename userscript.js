@@ -11,6 +11,7 @@ function pause(ms) {
 const html = (string) => string;
 
 globalThis.diffs = undefined;
+globalThis.sprites = undefined;
 
 const removeAlert = () =>
   (document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
@@ -58,6 +59,9 @@ const Alert = ({ message, showTime }) => {
 async function theMainFunction() {
   await fetch("http://localhost:6969/unzip");
 
+  const sprites = (await (await fetch("http://localhost:6969/sprites")).json())
+    .sprites;
+
   const oldProject = await (
     await fetch("http://localhost:6969/project.old.json")
   ).json();
@@ -66,7 +70,7 @@ async function theMainFunction() {
     await fetch("http://localhost:6969/project.json")
   ).json();
 
-  await showDiffs(oldProject, newProject);
+  await showDiffs(oldProject, newProject, sprites);
 }
 
 window.onload = () => {
@@ -119,7 +123,8 @@ window.onload = () => {
     .sidebar li button:hover {
       background-color: #ccd3dd;
     }
-    .sidebar li button.active-tab {
+    .sidebar li button.active-tab,
+    .topbar a.active-tab {
       color: hsla(0, 100%, 65%, 1);
       background-color: white;
       outline: none;
@@ -128,6 +133,7 @@ window.onload = () => {
       flex: 1;
       padding: 20px;
       margin-left: 12.5%;
+      margin-top: 30px;
     }
     .bottom {
       margin-top: auto;
@@ -181,6 +187,26 @@ window.onload = () => {
       background-color: rgb(76, 76, 76);
       color: #eee;
     }
+
+    .topbar {
+      background-color: #e6f0ff;
+      overflow: hidden;
+      position: sticky;
+      top: 0;
+      display: flex;
+      position: absolute;
+      margin-left: 135px;
+      padding: 10px;
+      border-bottom: 1px solid grey;
+      width: 100%;
+    }
+
+    .topbar a {
+      display: inline-block;
+      padding: 0 10px;
+      color: hsla(225, 15%, 40%, 0.75);
+      text-decoration: none;
+    }
   </style>`;
 
   let MENU =
@@ -201,6 +227,7 @@ window.onload = () => {
     style="overflow-x: hidden"
   >
     <div class="content">
+      <div class="topbar"></div>
       <div class="sidebar">
         <ul id="scripts"></ul>
         <br />
@@ -375,13 +402,12 @@ class ScriptDiff {
     this.scriptNo = scriptNumber;
     if (!skipParsing) {
       this.difference = diff(this.old, this.new);
-      this.merged = merge(this.old, this.new);
+      this.merged = ScriptDiff.fixCBlocks(merge(this.old, this.new));
     }
-    this.merged = this.fixCBlocks(this.merged);
   }
 
   /** @param {string[]} merged @returns {string[]}*/
-  fixCBlocks(merged) {
+  static fixCBlocks(merged) {
     /** @type {string[]} */
     let mergedNre = merged.map((e) => e.substring(e.indexOf(" ") + 1));
     let cBlockFound = false;
@@ -407,7 +433,8 @@ class ScriptDiff {
       mergedNre.push("end");
       cBlocksOnly.push("end");
     }
-    return mergedNre.map((e, i) => `${i} ${e}`);
+    let returned = mergedNre.map((e, i) => `${i} ${e}`);
+    return returned;
   }
 
   /** @returns {boolean} */
@@ -491,17 +518,20 @@ class ScriptDiff {
     let removedC = [...this.difference.removed];
 
     // highlight blocks that have been removed in merge
-    this.merged.forEach((item, i) => {
-      if (removedC.includes(item)) {
-        try {
-          removedC = removedC.filter((e) => e !== item);
-          const block = blocks[i].cloneNode(true);
-          block.style.fill = "red";
-          block.style.opacity = "0.5";
-          blocks[i].parentElement.appendChild(block);
-        } catch {}
-      }
-    });
+    if (this.status !== "added") {
+      // added scripts don't have any removed blocks lol
+      this.merged.forEach((item, i) => {
+        if (removedC.includes(item)) {
+          try {
+            removedC = removedC.filter((e) => e !== item);
+            const block = blocks[i].cloneNode(true);
+            block.style.fill = "red";
+            block.style.opacity = "0.5";
+            blocks[i].parentElement.appendChild(block);
+          } catch {}
+        }
+      });
+    }
 
     // highlight blocks that have been added in merge
     this.merged.forEach((item, i) => {
@@ -555,6 +585,15 @@ class ScriptDiff {
       }
     }
 
+    if (this.status === "added") {
+      blocks.forEach((block) => {
+        let copy = block.cloneNode();
+        copy.style.fill = "green";
+        copy.style.opacity = "0.5";
+        block.parentElement.appendChild(copy);
+      });
+    }
+
     // remove duplicate highlights
     const htmls = Array.from(document.querySelectorAll("path[class^='sb3-'"));
     const noDupes = [...new Set(htmls.map((e) => e.outerHTML))];
@@ -600,7 +639,7 @@ function createDiffs(oldProject, newProject) {
     script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = diff(script.old, script.new);
-    script.merged = merge(script.old, script.new);
+    script.merged = ScriptDiff.fixCBlocks(merge(script.old, script.new));
     script.scriptNo = e.index;
     script.status = "removed";
     diffs.removed.push(script);
@@ -618,7 +657,7 @@ function createDiffs(oldProject, newProject) {
     script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = diff(script.old, script.new);
-    script.merged = merge(script.old, script.new);
+    script.merged = ScriptDiff.fixCBlocks(merge(script.old, script.new));
     script.scriptNo = e.index;
     script.status = "added";
     diffs.added.push(script);
@@ -626,7 +665,7 @@ function createDiffs(oldProject, newProject) {
   return diffs;
 }
 
-async function showDiffs(oldProject, newProject) {
+async function showDiffs(oldProject, newProject, sprites) {
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
@@ -650,6 +689,20 @@ async function showDiffs(oldProject, newProject) {
   if (!modal.open) {
     modal.showModal();
   }
+
+  document.querySelector(".topbar").innerHTML = "";
+  sprites.forEach((sprite) => {
+    let newItem = document.createElement("a");
+    newItem.href = "#whatever";
+    newItem.appendChild(document.createTextNode(sprite));
+    newItem.onclick = () => {
+      document
+        .querySelectorAll(".topbar a")
+        .forEach((e) => e.classList.remove("active-tab"));
+      newItem.classList.add("active-tab");
+    };
+    document.querySelector(".topbar").appendChild(newItem);
+  });
 
   Array.from(Object.values(diffs))
     .flat(Infinity)
@@ -681,9 +734,11 @@ async function showDiffs(oldProject, newProject) {
     });
 
   document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
+  document.querySelectorAll(".topbar a")[0].classList.add("active-tab");
   document.querySelector("#styleChoice").value = "scratch3";
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
+  globalThis.sprites = sprites;
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(".sidebar").classList.add("dark");
   } else {
