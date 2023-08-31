@@ -12,7 +12,7 @@ const html = (string) => string;
 
 globalThis.diffs = undefined;
 
-const _removeAlert = () =>
+const removeAlert = () =>
   (document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
     "");
 
@@ -51,9 +51,23 @@ const Alert = ({ message, showTime }) => {
   }
   document.querySelector(".alert_alert-message_b1o2e").appendChild(text);
   document.querySelector(".close-button_close-button_hsJUK").onclick =
-    _removeAlert;
-  setTimeout(_removeAlert, showTime);
+    removeAlert;
+  setTimeout(removeAlert, showTime);
 };
+
+async function theMainFunction() {
+  await fetch("http://localhost:6969/unzip");
+
+  const oldProject = await (
+    await fetch("http://localhost:6969/project.old.json")
+  ).json();
+
+  const newProject = await (
+    await fetch("http://localhost:6969/project.json")
+  ).json();
+
+  await showDiffs(oldProject, newProject);
+}
 
 window.onload = () => {
   document.head.innerHTML += html`
@@ -169,10 +183,11 @@ window.onload = () => {
     }
   </style>`;
 
-  let BUTTON_ROW =
-    "#app > div > div.gui_menu-bar-position_RwwFc.menu-bar_menu-bar_48TYq.box_box_-Ky8F > div.menu-bar_main-menu_ZLuRH > div:nth-child(6)";
+  let MENU =
+    "#app > div > div.gui_menu-bar-position_RwwFc.menu-bar_menu-bar_48TYq.box_box_-Ky8F > div.menu-bar_main-menu_ZLuRH";
+  let SAVE_AREA = `${MENU} > div:nth-child(6)`;
 
-  document.querySelector(BUTTON_ROW).innerHTML += html`&nbsp;
+  document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
     <div class="menu-bar_account-info-group_uqH-z">
       <div class="menu-bar_menu-bar-item_hHpQG">
         <div id="push-status">
@@ -181,7 +196,7 @@ window.onload = () => {
       </div>
     </div>`;
 
-  document.querySelector(BUTTON_ROW).innerHTML += html`<dialog
+  document.querySelector(SAVE_AREA).innerHTML += html`<dialog
     id="commitLog"
     style="overflow-x: hidden"
   >
@@ -629,11 +644,7 @@ async function showDiffs(oldProject, newProject) {
     document.querySelector("#commitLog").close();
     Alert({ message: `Commit successful. ${message}`, showTime: 5000 });
   };
-
-  if (
-    Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks() === "No"
-  )
-    return;
+  Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks();
 
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
@@ -680,35 +691,32 @@ async function showDiffs(oldProject, newProject) {
   }
 }
 
-setInterval(() => {
+let addNote = setInterval(async () => {
+  try {
+    let leHTML = document.querySelector(
+      ".save-status_save-now_xBhky"
+    ).innerHTML;
+    if (leHTML.startsWith("<span>")) {
+      let span = document.createElement("span");
+      span.id = "shortcutNote";
+      span.style.opacity = "0.7";
+      span.appendChild(document.createTextNode("(Ctrl+Shift+S for commits)"));
+      document
+        .querySelector(".save-status_save-now_xBhky")
+        .parentNode.after(span);
+      clearInterval(addNote);
+    }
+  } catch {}
+}, 500);
+
+setInterval(async () => {
   try {
     document.querySelector(".save-status_save-now_xBhky").onclick =
-      async () => {
-        await fetch("http://localhost:6969/unzip");
-
-        const oldProject = await (
-          await fetch("http://localhost:6969/project.old.json")
-        ).json();
-
-        const newProject = await (
-          await fetch("http://localhost:6969/project.json")
-        ).json();
-
-        await showDiffs(oldProject, newProject);
-      };
+      theMainFunction;
     document.onkeydown = async (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "S") {
-        await fetch("http://localhost:6969/unzip");
-
-        const oldProject = await (
-          await fetch("http://localhost:6969/project.old.json")
-        ).json();
-
-        const newProject = await (
-          await fetch("http://localhost:6969/project.json")
-        ).json();
-
-        await showDiffs(oldProject, newProject);
+        await theMainFunction();
+        document.querySelector("#shortcutNote").remove();
       }
     };
   } catch {}
