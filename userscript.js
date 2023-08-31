@@ -202,7 +202,6 @@ window.onload = () => {
             <option value="scratch3-high-contrast">
               Scratch 3.0 (High Contrast)
             </option>
-            <option value="text">Text</option>
           </select>
           <button
             onclick="document.querySelector('#commitLog').close()"
@@ -368,19 +367,30 @@ class ScriptDiff {
 
   /** @param {string[]} merged @returns {string[]}*/
   fixCBlocks(merged) {
-    let mergedNre = merged.map((e) => e.slice(2).trim());
-    let foreverFound = false;
+    /** @type {string[]} */
+    let mergedNre = merged.map((e) => e.substring(e.indexOf(" ") + 1));
+    let cBlockFound = false;
     [...mergedNre].forEach((block, i) => {
-      if (block === "forever") {
-        foreverFound = true;
+      if (block === "forever" || block.startsWith("repeat")) {
+        cBlockFound = true;
       }
-      if (block === "end" && foreverFound) {
+      if (block === "end" && cBlockFound) {
         mergedNre = mergedNre.filter((e) => e !== mergedNre[i]);
-        foreverFound = false;
+        cBlockFound = false;
       }
     });
-    while (count(mergedNre, "forever") !== count(mergedNre, "end")) {
+    let cBlocksOnly = mergedNre.map((e) => {
+      if (e.includes("forever") || e.includes("repeat")) {
+        return "cBlock";
+      } else if (e.includes("end")) {
+        return "end";
+      } else {
+        return e;
+      }
+    });
+    while (count(cBlocksOnly, "cBlock") !== count(cBlocksOnly, "end")) {
       mergedNre.push("end");
+      cBlocksOnly.push("end");
     }
     return mergedNre.map((e, i) => `${i} ${e}`);
   }
@@ -428,7 +438,9 @@ class ScriptDiff {
           }
         );
         return oldblocks !== newblocks;
-      } catch {}
+      } catch {
+        console.warn(e);
+      }
     });
 
     const removed = scripts.filter((e) => newScripts[e.index] === undefined);
@@ -462,9 +474,7 @@ class ScriptDiff {
 
     let addedC = [...this.difference.added];
     let removedC = [...this.difference.removed];
-    console.log(code);
-    console.log(this.difference.added);
-    console.log(this.difference.removed);
+
     // highlight blocks that have been removed in merge
     this.merged.forEach((item, i) => {
       if (removedC.includes(item)) {
@@ -474,9 +484,7 @@ class ScriptDiff {
           block.style.fill = "red";
           block.style.opacity = "0.5";
           blocks[i].parentElement.appendChild(block);
-        } catch (e) {
-          return console.warn(e);
-        }
+        } catch {}
       }
     });
 
@@ -502,11 +510,15 @@ class ScriptDiff {
 
     console.log(addedC);
 
-    // TODO: support more C-blocks
-    if (typeof addedC[0] !== "undefined" && addedC[0].endsWith("forever")) {
-      let forevers = blocks.filter(
-        (e) => e.parentElement.querySelector("text").innerHTML === "forever"
-      );
+    // TODO: support more C-blocks (maybe done?)
+    if (
+      typeof addedC[0] !== "undefined" &&
+      (addedC[0].endsWith("forever") || addedC[0].includes("repeat"))
+    ) {
+      let forevers = blocks.filter((e) => {
+        let _text = e.parentElement.querySelector("text").innerHTML;
+        return _text === "forever" || _text === "repeat";
+      });
       if (forevers.length === 1) {
         let afterForevers = blocks.slice(blocks.indexOf(forevers[0]));
         afterForevers.forEach((block) => {
@@ -618,6 +630,11 @@ async function showDiffs(oldProject, newProject) {
     Alert({ message: `Commit successful. ${message}`, showTime: 5000 });
   };
 
+  if (
+    Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks() === "No"
+  )
+    return;
+
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
     modal.showModal();
@@ -627,13 +644,11 @@ async function showDiffs(oldProject, newProject) {
     .flat(Infinity)
     .forEach((diff, i) => {
       let newItem = document.createElement("li");
-
       let link = document.createElement("button");
       link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i);
       link.onclick = () => {
-        diff.renderBlocks(document.querySelector("#styleChoice").value);
         document
           .querySelectorAll(".tab-btn")
           .forEach((e) => e.classList.remove("active-tab"));
@@ -656,7 +671,7 @@ async function showDiffs(oldProject, newProject) {
 
   document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
   document.querySelector("#styleChoice").value = "scratch3";
-  Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks();
+
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(".sidebar").classList.add("dark");
@@ -667,11 +682,9 @@ async function showDiffs(oldProject, newProject) {
 
 setInterval(() => {
   try {
-    document.querySelector(".save-status_save-now_xBhky").onclick = () => {
-      (async () => {
-        pause(1000);
+    document.querySelector(".save-status_save-now_xBhky").onclick =
+      async () => {
         await fetch("http://localhost:6969/unzip");
-        pause(1000);
 
         const oldProject = await (
           await fetch("http://localhost:6969/project.old.json")
@@ -682,7 +695,21 @@ setInterval(() => {
         ).json();
 
         await showDiffs(oldProject, newProject);
-      })();
+      };
+    document.onkeydown = async (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "S") {
+        await fetch("http://localhost:6969/unzip");
+
+        const oldProject = await (
+          await fetch("http://localhost:6969/project.old.json")
+        ).json();
+
+        const newProject = await (
+          await fetch("http://localhost:6969/project.json")
+        ).json();
+
+        await showDiffs(oldProject, newProject);
+      }
     };
   } catch {}
 }, 500);
