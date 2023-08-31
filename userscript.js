@@ -56,23 +56,6 @@ const Alert = ({ message, showTime }) => {
   setTimeout(removeAlert, showTime);
 };
 
-async function theMainFunction() {
-  await fetch("http://localhost:6969/unzip");
-
-  const sprites = (await (await fetch("http://localhost:6969/sprites")).json())
-    .sprites;
-
-  const oldProject = await (
-    await fetch("http://localhost:6969/project.old.json")
-  ).json();
-
-  const newProject = await (
-    await fetch("http://localhost:6969/project.json")
-  ).json();
-
-  await showDiffs(oldProject, newProject, sprites);
-}
-
 window.onload = () => {
   document.head.innerHTML += html`
     <link
@@ -665,13 +648,28 @@ function createDiffs(oldProject, newProject) {
   return diffs;
 }
 
-async function showDiffs(oldProject, newProject, sprites) {
+/**
+ * Render diffs from a script from a sprite
+ * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
+ */
+async function showDiffs({ sprite, script = 0, style }) {
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
   await import(
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
+
+  if (style === undefined) {
+    console.warn("NO STYLE");
+  }
+  const oldProject = await (
+    await fetch(`http://localhost:6969/project.old.json?name=${sprite}`)
+  ).json();
+
+  const newProject = await (
+    await fetch(`http://localhost:6969/project.json?name=${sprite}`)
+  ).json();
 
   const diffs = createDiffs(oldProject, newProject);
 
@@ -683,7 +681,7 @@ async function showDiffs(oldProject, newProject, sprites) {
     document.querySelector("#commitLog").close();
     Alert({ message: `Commit successful. ${message}`, showTime: 5000 });
   };
-  Array.from(Object.values(diffs)).flat(Infinity)[0].renderBlocks();
+  Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
   const modal = document.querySelector("#commitLog");
   if (!modal.open) {
@@ -695,11 +693,15 @@ async function showDiffs(oldProject, newProject, sprites) {
     let newItem = document.createElement("a");
     newItem.href = "#whatever";
     newItem.appendChild(document.createTextNode(sprite));
-    newItem.onclick = () => {
+    newItem.onclick = async () => {
       document
         .querySelectorAll(".topbar a")
         .forEach((e) => e.classList.remove("active-tab"));
       newItem.classList.add("active-tab");
+      await showDiffs({
+        sprite: sprite,
+        style: document.querySelector("#styleChoice").value,
+      });
     };
     document.querySelector(".topbar").appendChild(newItem);
   });
@@ -712,11 +714,17 @@ async function showDiffs(oldProject, newProject, sprites) {
       link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i);
-      link.onclick = () => {
+      link.onclick = async () => {
         document
           .querySelectorAll(".tab-btn")
           .forEach((e) => e.classList.remove("active-tab"));
         link.classList.add("active-tab");
+        console.log(i);
+        await showDiffs({
+          sprite: document.querySelector("a.active-tab").innerText,
+          script: i,
+          style: document.querySelector("#styleChoice").value,
+        });
       };
       switch (diff.status) {
         case "added":
@@ -733,12 +741,12 @@ async function showDiffs(oldProject, newProject, sprites) {
       document.querySelector("#scripts").appendChild(newItem);
     });
 
-  document.querySelectorAll(".tab-btn")[0].classList.add("active-tab");
-  document.querySelectorAll(".topbar a")[0].classList.add("active-tab");
-  document.querySelector("#styleChoice").value = "scratch3";
+  document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
+  document
+    .querySelectorAll(".topbar a")
+    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
-  globalThis.sprites = sprites;
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(".sidebar").classList.add("dark");
   } else {
@@ -776,3 +784,14 @@ setInterval(async () => {
     };
   } catch {}
 }, 500);
+
+async function theMainFunction() {
+  await fetch("http://localhost:6969/unzip");
+
+  globalThis.sprites = (
+    await (await fetch("http://localhost:6969/sprites")).json()
+  ).sprites;
+
+  document.querySelector("#styleChoice").value = "scratch3";
+  await showDiffs({ sprite: globalThis.sprites[0] });
+}

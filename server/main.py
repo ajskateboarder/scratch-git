@@ -6,7 +6,7 @@ import subprocess
 import time
 import json
 
-from flask import Flask, abort
+from flask import Flask, abort, request
 
 from server.diff import Diff
 
@@ -73,25 +73,41 @@ def push():  # type: ignore
 def project_old():  # type: ignore
     """Retreive the project.old.json"""
     with open("scratch-git-test/project.old.json", encoding="utf-8") as fh:
-        return json.load(fh)["targets"][0]["blocks"]
+        project = json.load(fh)
+        return [
+            e["blocks"]
+            for e in project["targets"]
+            if e["name"] == request.args.get("name")
+        ][0]
 
 
 @app.get("/project.json")
 def project():  # type: ignore
     """Retreive the current project.json"""
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
-        return json.load(fh)["targets"][0]["blocks"]
+        project = json.load(fh)
+        return [
+            e["blocks"]
+            for e in project["targets"]
+            if e["name"] == request.args.get("name")
+        ][0]
+
 
 @app.get("/sprites")
-def sprites(): # type: ignore
+def sprites():  # type: ignore
     """Retreive sprites that have been changed since project changes"""
     with open("scratch-git-test/project.old.json", encoding="utf-8") as fh:
         current_project = Diff(json.load(fh))
 
     with open("scratch-git-test/project.json", encoding="utf-8") as fh:
         new_project = Diff(json.load(fh))
-    
-    return {"sprites": [commit.split(":")[0] for commit in current_project.commits(new_project)]}
+
+    return {
+        "sprites": [
+            commit.split(":")[0] for commit in current_project.commits(new_project)
+        ]
+    }
+
 
 def main() -> None:
     """Entrypoint for web server"""
