@@ -1,6 +1,7 @@
 """Web server to manage commits and pushes"""
 from zipfile import ZipFile
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import time
@@ -91,6 +92,29 @@ def project():  # type: ignore
             for e in project["targets"]
             if e["name"] == request.args.get("name")
         ][0]
+
+
+@app.get("/commits")
+def commits():  # type: ignore
+    """Retrieve commits"""
+    offset = request.args.get("offset", 0, type=int)
+    with subprocess.Popen(
+        [
+            "git",
+            "log",
+            "--pretty=format:"
+            + '{%n  "commit": "%H",%n  "subject": "%s",%n  "body": "%b",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%aD"%n  }%n}',
+        ],
+        cwd="./scratch-git-test",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ) as commit_cmd:
+        output, _ = commit_cmd.communicate()
+        output = json.loads(
+            "[" + output.decode().replace("  }\n}", "  }\n},")[:-1] + "]"
+        )[offset : offset + 40]
+
+    return output
 
 
 @app.get("/sprites")

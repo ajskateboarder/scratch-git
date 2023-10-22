@@ -1,3 +1,5 @@
+/** @typedef {{author: {date: string; email: string; name: string}; body: string; commit: string; subject: string}; shortDate: string} Commit */
+
 // https://stackoverflow.com/a/27870199/16019146
 function pause(ms) {
   var date = Date.now();
@@ -7,8 +9,36 @@ function pause(ms) {
   } while (curDate - date < ms);
 }
 
+// https://stackoverflow.com/a/69122877/16019146
+function timeAgo(input) {
+  const date = input instanceof Date ? input : new Date(input);
+  const formatter = new Intl.RelativeTimeFormat("en");
+  const ranges = {
+    years: 3600 * 24 * 365,
+    months: 3600 * 24 * 30,
+    weeks: 3600 * 24 * 7,
+    days: 3600 * 24,
+    hours: 3600,
+    minutes: 60,
+    seconds: 1,
+  };
+  const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+  for (let key in ranges) {
+    if (ranges[key] < Math.abs(secondsElapsed)) {
+      const delta = secondsElapsed / ranges[key];
+      return formatter.format(Math.round(delta), key);
+    }
+  }
+}
+
 // Funny editor "hack" so I don't need htm
-const html = (string) => string;
+const html = (strings, ...values) => {
+  let result = strings[0];
+  values.forEach((e, i) => {
+    result += e + strings[i + 1];
+  });
+  return result;
+};
 
 globalThis.diffs = undefined;
 globalThis.sprites = undefined;
@@ -18,14 +48,14 @@ const removeAlert = () =>
     "");
 
 /** @param {{message: string; showTime: number}} */
-const Alert = ({ message, showTime }) => {
+function Alert({ message, showTime }) {
   document.querySelector(
     ".alerts_alerts-inner-container_0UOfk"
   ).innerHTML = html`<div
     class="alert_alert_K5u0l alert_success_QZsAp box_box_2jjDp"
     style="justify-content: space-between"
   >
-    <div class="alert_alert-message_b1o2e"></div>
+    <div class="alert_alert-message_b1o2e">${message}</div>
     <div class="alert_alert-buttons_qzCdj">
       <div class="alert_alert-close-button-container_sK95e box_box_2jjDp">
         <div
@@ -43,18 +73,15 @@ const Alert = ({ message, showTime }) => {
       </div>
     </div>
   </div>`;
-  let text = document.createElement("span");
-  text.appendChild(document.createTextNode(message));
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(
       ".close-button_close-button_hsJUK"
     ).style.backgroundColor = "rgba(0, 0, 0, 0.255)";
   }
-  document.querySelector(".alert_alert-message_b1o2e").appendChild(text);
   document.querySelector(".close-button_close-button_hsJUK").onclick =
     removeAlert;
   setTimeout(removeAlert, showTime);
-};
+}
 
 window.onload = () => {
   document.head.innerHTML += html`
@@ -70,6 +97,9 @@ window.onload = () => {
   `;
   document.head.innerHTML += html`<style>
     #push-status:hover {
+      cursor: pointer;
+    }
+    #allcommits-log:hover {
       cursor: pointer;
     }
     .content {
@@ -121,7 +151,8 @@ window.onload = () => {
     .bottom {
       margin-top: auto;
     }
-    #commitLog {
+    #commitLog,
+    #allcommitLog {
       height: 50%;
       max-height: 50%;
       padding: 0;
@@ -171,6 +202,25 @@ window.onload = () => {
       color: #eee;
     }
 
+    .commit {
+      border: 1px solid grey;
+      min-width: 100%;
+      padding: 10px 20px;
+    }
+    .commit-group .commit:first-child {
+      border-radius: 5px;
+      border-bottom-left-radius: 0px;
+      border-bottom-right-radius: 0px;
+    }
+    .commit-group .commit:not(:first-child) {
+      border-top: none;
+    }
+    .commit-group .commit:last-child {
+      border-radius: 5px;
+      border-top-left-radius: 0px;
+      border-top-right-radius: 0px;
+    }
+
     .topbar {
       background-color: #e6f0ff;
       overflow: hidden;
@@ -190,6 +240,18 @@ window.onload = () => {
       color: hsla(225, 15%, 40%, 0.75);
       text-decoration: none;
     }
+
+    .dark .topbar {
+      background-color: #111;
+    }
+
+    .dark .topbar a {
+      color: #707070;
+    }
+
+    .dark .topbar a.active-tab {
+      color: #eee;
+    }
   </style>`;
 
   let MENU =
@@ -201,6 +263,14 @@ window.onload = () => {
       <div class="menu-bar_menu-bar-item_hHpQG">
         <div id="push-status">
           <span>Push project</span>
+        </div>
+      </div>
+    </div>`;
+  document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
+    <div class="menu-bar_account-info-group_uqH-z">
+      <div class="menu-bar_menu-bar-item_hHpQG">
+        <div id="allcommits-log">
+          <span>Commits</span>
         </div>
       </div>
     </div>`;
@@ -240,6 +310,36 @@ window.onload = () => {
     </div>
   </dialog>`;
 
+  document.querySelector(SAVE_AREA).innerHTML += html`<dialog
+    id="allcommitLog"
+    style="overflow-x: hidden"
+  >
+    <div
+      style="
+  position: absolute;
+  left: 47%;
+  transform: translateX(-50%);
+  width: 65%;
+  "
+    >
+      <h1>Hello worldus</h1>
+      <div class="commit-group"></div>
+      <div
+        class="bottom-bar"
+        style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
+      >
+        <button
+          onclick="document.querySelector('#allcommitLog').close()"
+          class="settings-modal_button_CutmP"
+          id="commitButton"
+        >
+          Okay
+        </button>
+      </div>
+    </div>
+  </dialog>`;
+  // ${html`<div class="commit">hello world</div>`.repeat(10)}
+
   setTimeout(() => {
     document.querySelector("#push-status").onclick = async () => {
       document.querySelector("#push-status").style.opacity = "0.5";
@@ -250,6 +350,35 @@ window.onload = () => {
       document.querySelector("#push-status").querySelector("span").innerText =
         "Push project";
       Alert({ message: "Commits pushed successfully", showTime: 5000 });
+    };
+    document.querySelector("#allcommits-log").onclick = async () => {
+      /** @type {Commit[]} */
+      let commits = await (await fetch("http://localhost:6969/commits")).json();
+      [...commits].forEach(
+        (commit, i) =>
+          (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+      );
+      console.log(commits);
+
+      document.querySelector(".commit-group").innerHTML = commits
+        .map(
+          (e) =>
+            html`<div class="commit">
+              <span style="font-size: 1rem">${
+                e.subject
+              }<span><br /><span style="font-size: 0.75rem"
+                >${e.author.name} <span style="font-weight: lighter" title="${
+              e.author.date
+            }">commited ${timeAgo(e.author.date)}</span></span
+              >
+            </div>`
+        )
+        .join("");
+
+      const modal = document.querySelector("#allcommitLog");
+      if (!modal.open) {
+        modal.showModal();
+      }
     };
   }, 500);
 };
@@ -760,6 +889,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(".sidebar").classList.add("dark");
+    document.querySelector(".topbar").classList.add("dark");
   } else {
     document.querySelector(".sidebar").classList.remove("dark");
   }
