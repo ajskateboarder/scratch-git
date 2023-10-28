@@ -1,4 +1,4 @@
-/** @typedef {{author: {date: string; email: string; name: string}; body: string; commit: string; subject: string}; shortDate: string} Commit */
+/** @typedef {{author: {date: string; email: string; name: string}; body: string; commit: string; subject: string; shortDate: string} Commit */
 
 // https://stackoverflow.com/a/27870199/16019146
 function pause(ms) {
@@ -252,6 +252,16 @@ window.onload = () => {
     .dark .topbar a.active-tab {
       color: #eee;
     }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+    }
+
+    .disabled-funny {
+      background-color: hsla(0, 60%, 55%, 1);
+      color: rgba(255, 255, 255, 0.4);
+    }
   </style>`;
 
   let MENU =
@@ -322,7 +332,9 @@ window.onload = () => {
   width: 65%;
   "
     >
-      <h1>Hello worldus</h1>
+      <h1>Commits</h1>
+      <div class="pagination"></div>
+      <br />
       <div class="commit-group"></div>
       <div
         class="bottom-bar"
@@ -338,7 +350,22 @@ window.onload = () => {
       </div>
     </div>
   </dialog>`;
-  // ${html`<div class="commit">hello world</div>`.repeat(10)}
+
+  const renderCommits = (commits) =>
+    (document.querySelector(".commit-group").innerHTML = commits
+      .map(
+        (e) =>
+          html`<div class="commit">
+  <span style="font-size: 1rem">${
+    e.subject
+  }<span><br /><span style="font-size: 0.75rem"
+        >${e.author.name} <span style="font-weight: lighter" title="${
+            e.author.date
+          }">commited ${timeAgo(e.author.date)}</span></span
+      >
+    </div>`
+      )
+      .join(""));
 
   setTimeout(() => {
     document.querySelector("#push-status").onclick = async () => {
@@ -352,33 +379,74 @@ window.onload = () => {
       Alert({ message: "Commits pushed successfully", showTime: 5000 });
     };
     document.querySelector("#allcommits-log").onclick = async () => {
+      let offset = 0;
       /** @type {Commit[]} */
-      let commits = await (await fetch("http://localhost:6969/commits")).json();
+      let commits = await (await fetch(`http://localhost:6969/commits`)).json();
       [...commits].forEach(
         (commit, i) =>
           (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
       );
-      console.log(commits);
+      renderCommits(commits.slice(offset, offset + 40));
 
-      document.querySelector(".commit-group").innerHTML = commits
-        .map(
-          (e) =>
-            html`<div class="commit">
-              <span style="font-size: 1rem">${
-                e.subject
-              }<span><br /><span style="font-size: 0.75rem"
-                >${e.author.name} <span style="font-weight: lighter" title="${
-              e.author.date
-            }">commited ${timeAgo(e.author.date)}</span></span
-              >
-            </div>`
-        )
-        .join("");
+      document.querySelector(".pagination").innerHTML = html`<button
+          class="settings-modal_button_CutmP disabled-funny"
+          style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
+          id="newer"
+        >
+          Newer</button
+        ><button
+          class="settings-modal_button_CutmP"
+          style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
+          id="older"
+        >
+          Older
+        </button>`;
+      document.querySelector("#older").onclick = () => {
+        if (
+          document.querySelector("#older").classList.contains("disabled-funny")
+        ) {
+          return;
+        }
+        offset += 40;
+        renderCommits(commits.slice(offset, offset + 40));
+        if (
+          commits
+            .slice(offset, offset + 40)
+            .includes(commits[commits.length - 1])
+        ) {
+          document.querySelector("#older").classList.add("disabled-funny");
+        }
+        if (commits.slice(offset, offset + 40).includes(commits[0])) {
+          document.querySelector("#newer").classList.add("disabled-funny");
+        } else {
+          document.querySelector("#newer").classList.remove("disabled-funny");
+        }
+      };
+      document.querySelector("#newer").onclick = () => {
+        if (
+          document.querySelector("#newer").classList.contains("disabled-funny")
+        ) {
+          return;
+        }
+        offset -= 40;
+        renderCommits(commits.slice(offset, offset + 40));
+        if (
+          !commits
+            .slice(offset, offset + 40)
+            .includes(commits[commits.length - 1])
+        ) {
+          document.querySelector("#older").classList.remove("disabled-funny");
+        }
+        if (commits.slice(offset, offset + 40).includes(commits[0])) {
+          document.querySelector("#newer").classList.add("disabled-funny");
+        }
+      };
 
       const modal = document.querySelector("#allcommitLog");
       if (!modal.open) {
         modal.showModal();
       }
+      document.querySelector("#older").blur();
     };
   }, 500);
 };

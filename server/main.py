@@ -97,7 +97,6 @@ def project():  # type: ignore
 @app.get("/commits")
 def commits():  # type: ignore
     """Retrieve commits"""
-    offset = request.args.get("offset", 0, type=int)
     with subprocess.Popen(
         [
             "git",
@@ -112,7 +111,7 @@ def commits():  # type: ignore
         output, _ = commit_cmd.communicate()
         output = json.loads(
             "[" + output.decode().replace("  }\n}", "  }\n},")[:-1] + "]"
-        )[offset : offset + 40]
+        )
 
     return output
 
