@@ -1,14 +1,5 @@
 /** @typedef {{author: {date: string; email: string; name: string}; body: string; commit: string; subject: string; shortDate: string} Commit */
 
-// https://stackoverflow.com/a/27870199/16019146
-function pause(ms) {
-  var date = Date.now();
-  var curDate;
-  do {
-    curDate = Date.now();
-  } while (curDate - date < ms);
-}
-
 // https://stackoverflow.com/a/69122877/16019146
 function timeAgo(input) {
   const date = input instanceof Date ? input : new Date(input);
@@ -31,6 +22,62 @@ function timeAgo(input) {
   }
 }
 
+class ArrayUtils {
+  /**
+   * @param {any[]} list 
+   * @param {any} item 
+   * @returns {number}
+   */
+  static count = (list, item) =>
+    list.reduce(
+      (count, currentValue) => count + (currentValue === item ? 1 : 0),
+      0
+    );
+
+  /**
+  * @param {any[]} oldArray 
+  * @param {any[]} newArray
+  * @returns {any[]}
+  */
+  static merge(oldArray, newArray) {
+    const mergedArray = [...oldArray];
+
+    for (const newItem of newArray) {
+      if (!mergedArray.includes(newItem)) {
+        mergedArray.push(newItem);
+      }
+    }
+
+    return mergedArray;
+  }
+
+  /**
+  * @param {any[]} oldArray 
+  * @param {any[]} newArray
+  * @returns {any[]}
+  */
+  static diff(oldArray, newArray) {
+    const dp = Array.from({ length: oldArray.length + 1 }, () => Array(newArray.length + 1).fill(0));
+    const changes = { added: [], removed: [], modified: [] };
+    for (let i = 1; i <= oldArray.length; i++)
+      for (let j = 1; j <= newArray.length; j++)
+        (oldArray[i - 1] === newArray[j - 1])
+          ? dp[i][j] = dp[i - 1][j - 1] + 1
+          : dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+    for (let i = oldArray.length, j = newArray.length; i > 0 || j > 0;)
+      (i > 0 && j > 0 && oldArray[--i] === newArray[--j])
+        ? null
+        : (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j]))
+          ? changes.removed.push(oldArray[i])
+          : (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1]))
+            ? changes.added.push(newArray[j])
+            : (changes.modified.push({ from: oldArray[i], to: newArray[j] }), i--, j--);
+    changes.added.reverse();
+    changes.removed.reverse();
+    return changes;
+  }
+}
+
 // Funny editor "hack" so I don't need htm
 const html = (strings, ...values) => {
   let result = strings[0];
@@ -43,44 +90,51 @@ const html = (strings, ...values) => {
 globalThis.diffs = undefined;
 globalThis.sprites = undefined;
 
-const removeAlert = () =>
-  (document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
-    "");
+class Alert {
+  /** @param {{message: string; showTime: number}} */
+  constructor({ message, showTime }) {
+    this.message = message
+    this.showTime = showTime
+  }
 
-/** @param {{message: string; showTime: number}} */
-function Alert({ message, showTime }) {
-  document.querySelector(
-    ".alerts_alerts-inner-container_0UOfk"
-  ).innerHTML = html`<div
-    class="alert_alert_K5u0l alert_success_QZsAp box_box_2jjDp"
-    style="justify-content: space-between"
-  >
-    <div class="alert_alert-message_b1o2e">${message}</div>
-    <div class="alert_alert-buttons_qzCdj">
-      <div class="alert_alert-close-button-container_sK95e box_box_2jjDp">
-        <div
-          aria-label="Close"
-          class="close-button_close-button_hsJUK alert_alert-close-button_XMbBP close-button_large_UcF64"
-          role="button"
-          tabindex="0"
-        >
-          <img
-            class="close-button_close-icon_rixGf undefined"
-            style="filter: invert(70%)"
-            src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg=="
-          />
+  display() {
+    document.querySelector(
+      ".alerts_alerts-inner-container_0UOfk"
+    ).innerHTML = html`<div
+      class="alert_alert_K5u0l alert_success_QZsAp box_box_2jjDp"
+      style="justify-content: space-between"
+    >
+      <div class="alert_alert-message_b1o2e">${message}</div>
+      <div class="alert_alert-buttons_qzCdj">
+        <div class="alert_alert-close-button-container_sK95e box_box_2jjDp">
+          <div
+            aria-label="Close"
+            class="close-button_close-button_hsJUK alert_alert-close-button_XMbBP close-button_large_UcF64"
+            role="button"
+            tabindex="0"
+          >
+            <img
+              class="close-button_close-icon_rixGf undefined"
+              style="filter: invert(70%)"
+              src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg=="
+            />
+          </div>
         </div>
       </div>
-    </div>
-  </div>`;
-  if (document.querySelector("body").getAttribute("theme") === "dark") {
-    document.querySelector(
-      ".close-button_close-button_hsJUK"
-    ).style.backgroundColor = "rgba(0, 0, 0, 0.255)";
+    </div>`;
+    if (document.querySelector("body").getAttribute("theme") === "dark") {
+      document.querySelector(
+        ".close-button_close-button_hsJUK"
+      ).style.backgroundColor = "rgba(0, 0, 0, 0.255)";
+    }
+    document.querySelector(".close-button_close-button_hsJUK").onclick =
+      this.remove;
+    setTimeout(this.remove, showTime);
   }
-  document.querySelector(".close-button_close-button_hsJUK").onclick =
-    removeAlert;
-  setTimeout(removeAlert, showTime);
+
+  remove() {
+    document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML = "";
+  }
 }
 
 window.onload = () => {
@@ -352,20 +406,18 @@ window.onload = () => {
   </dialog>`;
 
   const renderCommits = (commits) =>
-    (document.querySelector(".commit-group").innerHTML = commits
-      .map(
-        (e) =>
-          html`<div class="commit">
-  <span style="font-size: 1rem">${
-    e.subject
-  }<span><br /><span style="font-size: 0.75rem"
-        >${e.author.name} <span style="font-weight: lighter" title="${
-            e.author.date
+  (document.querySelector(".commit-group").innerHTML = commits
+    .map(
+      (e) =>
+        html`<div class="commit">
+  <span style="font-size: 1rem">${e.subject
+          }<span><br /><span style="font-size: 0.75rem"
+        >${e.author.name} <span style="font-weight: lighter" title="${e.author.date
           }">commited ${timeAgo(e.author.date)}</span></span
       >
     </div>`
-      )
-      .join(""));
+    )
+    .join(""));
 
   setTimeout(() => {
     document.querySelector("#push-status").onclick = async () => {
@@ -376,7 +428,7 @@ window.onload = () => {
       document.querySelector("#push-status").style.opacity = "1";
       document.querySelector("#push-status").querySelector("span").innerText =
         "Push project";
-      Alert({ message: "Commits pushed successfully", showTime: 5000 });
+      new Alert({ message: "Commits pushed successfully", showTime: 5000 }).display();
     };
     document.querySelector("#allcommits-log").onclick = async () => {
       let offset = 0;
@@ -451,63 +503,6 @@ window.onload = () => {
   }, 500);
 };
 
-function diff(oldArray, newArray) {
-  const dp = new Array(oldArray.length + 1)
-    .fill(null)
-    .map(() => new Array(newArray.length + 1).fill(0));
-  for (let i = 1; i <= oldArray.length; i++) {
-    for (let j = 1; j <= newArray.length; j++) {
-      if (oldArray[i - 1] === newArray[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-  /** @type {{added: string[]; removed: string[]; modified: string[]}} */
-  const changes = {
-    added: [],
-    removed: [],
-    modified: [],
-  };
-  let i = oldArray.length;
-  let j = newArray.length;
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldArray[i - 1] === newArray[j - 1]) {
-      i--;
-      j--;
-    } else if (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])) {
-      changes.removed.push(oldArray[i - 1]);
-      i--;
-    } else if (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])) {
-      changes.added.push(newArray[j - 1]);
-      j--;
-    } else {
-      changes.modified.push({
-        from: oldArray[i - 1],
-        to: newArray[j - 1],
-      });
-      i--;
-      j--;
-    }
-  }
-  changes.added.reverse();
-  changes.removed.reverse();
-  return changes;
-}
-
-function merge(oldArray, newArray) {
-  const mergedArray = [...oldArray];
-
-  for (const newItem of newArray) {
-    if (!mergedArray.includes(newItem)) {
-      mergedArray.push(newItem);
-    }
-  }
-
-  return mergedArray;
-}
-
 function parseTheBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(oldProject).filter((key) =>
@@ -545,11 +540,7 @@ function rerender(style) {
   );
   globalThis.diffs[activeButton].renderBlocks(style);
 }
-const count = (list, item) =>
-  list.reduce(
-    (count, currentValue) => count + (currentValue === item ? 1 : 0),
-    0
-  );
+
 class ScriptDiff {
   /** @type {string[]} */
   old;
@@ -581,8 +572,8 @@ class ScriptDiff {
     }
     this.scriptNo = scriptNumber;
     if (!skipParsing) {
-      this.difference = diff(this.old, this.new);
-      this.merged = ScriptDiff.fixCBlocks(merge(this.old, this.new));
+      this.difference = ArrayUtils.diff(this.old, this.new);
+      this.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(this.old, this.new));
     }
   }
 
@@ -609,7 +600,7 @@ class ScriptDiff {
         return e;
       }
     });
-    while (count(cBlocksOnly, "cBlock") !== count(cBlocksOnly, "end")) {
+    while (ArrayUtils.count(cBlocksOnly, "cBlock") !== ArrayUtils.count(cBlocksOnly, "end")) {
       mergedNre.push("end");
       cBlocksOnly.push("end");
     }
@@ -708,7 +699,7 @@ class ScriptDiff {
             block.style.fill = "red";
             block.style.opacity = "0.5";
             blocks[i].parentElement.appendChild(block);
-          } catch {}
+          } catch { }
         }
       });
     }
@@ -832,8 +823,8 @@ function createDiffs(oldProject, newProject) {
     const script = new ScriptDiff({ skipParsing: true });
     script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
-    script.difference = diff(script.old, script.new);
-    script.merged = ScriptDiff.fixCBlocks(merge(script.old, script.new));
+    script.difference = ArrayUtils.diff(script.old, script.new);
+    script.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(script.old, script.new));
     script.scriptNo = e.index;
     script.status = "removed";
     diffs.removed.push(script);
@@ -850,8 +841,8 @@ function createDiffs(oldProject, newProject) {
     const script = new ScriptDiff({ skipParsing: true });
     script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
-    script.difference = diff(script.old, script.new);
-    script.merged = ScriptDiff.fixCBlocks(merge(script.old, script.new));
+    script.difference = ArrayUtils.diff(script.old, script.new);
+    script.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(script.old, script.new));
     script.scriptNo = e.index;
     script.status = "added";
     diffs.added.push(script);
@@ -887,7 +878,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   document.querySelector("#commitButton").onclick = async () => {
     const message = await (await fetch("http://localhost:6969/commit")).text();
     document.querySelector("#commitLog").close();
-    Alert({ message: `Commit successful. ${message}`, showTime: 5000 });
+    new Alert({ message: `Commit successful. ${message}`, showTime: 5000 }).display();
   };
   Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
@@ -952,7 +943,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
   document
     .querySelectorAll(".topbar a")
-    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
+  [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
@@ -978,7 +969,7 @@ let addNote = setInterval(async () => {
         .parentNode.after(span);
       clearInterval(addNote);
     }
-  } catch {}
+  } catch { }
 }, 500);
 
 setInterval(async () => {
@@ -991,7 +982,7 @@ setInterval(async () => {
         document.querySelector("#shortcutNote").remove();
       }
     };
-  } catch {}
+  } catch { }
 }, 500);
 
 async function theMainFunction() {
