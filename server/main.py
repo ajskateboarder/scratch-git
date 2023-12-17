@@ -1,7 +1,6 @@
 """Web server to manage commits and pushes"""
 from zipfile import ZipFile
 from pathlib import Path
-import shlex
 import shutil
 import subprocess
 import time
@@ -12,6 +11,14 @@ from flask import Flask, abort, request
 from server.diff import Diff
 
 app = Flask(__name__)
+
+
+# Needed for requests via MS store application
+@app.after_request
+def after_request(response):  # type: ignore
+    header = response.headers
+    header["Access-Control-Allow-Origin"] = "*"
+    return response
 
 
 @app.get("/unzip")

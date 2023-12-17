@@ -1,5 +1,41 @@
 /** @typedef {{author: {date: string; email: string; name: string}; body: string; commit: string; subject: string; shortDate: string} Commit */
 
+/** @type {Array.<string>} */
+const classNames = [
+  ...[...document.styleSheets].map((e) => {
+    try {
+      return e.cssRules;
+    } catch (e) {
+      return;
+    }
+  }),
+]
+  .filter((e) => e !== undefined)
+  .map((e) => Array.from(e))
+  .flatMap((e) => e)
+  .map((e) => e.selectorText)
+  .filter((e) => e !== undefined)
+  .map((e) => e.slice(1));
+
+const select = (className) =>
+  classNames.filter((e) => e.includes(className))[0];
+
+/**
+ * Accessors for parts of the UI
+ */
+const components = {
+  menu: {
+    main: select("menu-bar_main-menu"),
+    bar: select("menu-bar_menu-bar"),
+    position: select("gui_menu-bar-position"),
+    item: select("menu-bar_menu-bar-item"),
+    accountInfoGroup: select("menu-bar_account-info-group"),
+  },
+  settingsButton: select("settings-modal_button"),
+  saveStatus: select("save-status_save-now"),
+};
+window.components = components;
+
 // https://stackoverflow.com/a/69122877/16019146
 function timeAgo(input) {
   const date = input instanceof Date ? input : new Date(input);
@@ -24,8 +60,8 @@ function timeAgo(input) {
 
 class ArrayUtils {
   /**
-   * @param {any[]} list 
-   * @param {any} item 
+   * @param {any[]} list
+   * @param {any} item
    * @returns {number}
    */
   static count = (list, item) =>
@@ -35,10 +71,10 @@ class ArrayUtils {
     );
 
   /**
-  * @param {any[]} oldArray 
-  * @param {any[]} newArray
-  * @returns {any[]}
-  */
+   * @param {any[]} oldArray
+   * @param {any[]} newArray
+   * @returns {any[]}
+   */
   static merge(oldArray, newArray) {
     const mergedArray = [...oldArray];
 
@@ -52,26 +88,30 @@ class ArrayUtils {
   }
 
   /**
-  * @param {any[]} oldArray 
-  * @param {any[]} newArray
-  * @returns {any[]}
-  */
+   * @param {any[]} oldArray
+   * @param {any[]} newArray
+   * @returns {any[]}
+   */
   static diff(oldArray, newArray) {
-    const dp = Array.from({ length: oldArray.length + 1 }, () => Array(newArray.length + 1).fill(0));
+    const dp = Array.from({ length: oldArray.length + 1 }, () =>
+      Array(newArray.length + 1).fill(0)
+    );
     const changes = { added: [], removed: [], modified: [] };
     for (let i = 1; i <= oldArray.length; i++)
       for (let j = 1; j <= newArray.length; j++)
-        (oldArray[i - 1] === newArray[j - 1])
-          ? dp[i][j] = dp[i - 1][j - 1] + 1
-          : dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-    for (let i = oldArray.length, j = newArray.length; i > 0 || j > 0;)
-      (i > 0 && j > 0 && oldArray[--i] === newArray[--j])
+        oldArray[i - 1] === newArray[j - 1]
+          ? (dp[i][j] = dp[i - 1][j - 1] + 1)
+          : (dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]));
+    for (let i = oldArray.length, j = newArray.length; i > 0 || j > 0; )
+      i > 0 && j > 0 && oldArray[--i] === newArray[--j]
         ? null
-        : (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j]))
-          ? changes.removed.push(oldArray[i])
-          : (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1]))
-            ? changes.added.push(newArray[j])
-            : (changes.modified.push({ from: oldArray[i], to: newArray[j] }), i--, j--);
+        : j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])
+        ? changes.removed.push(oldArray[i])
+        : i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])
+        ? changes.added.push(newArray[j])
+        : (changes.modified.push({ from: oldArray[i], to: newArray[j] }),
+          i--,
+          j--);
     changes.added.reverse();
     changes.removed.reverse();
     return changes;
@@ -93,8 +133,8 @@ globalThis.sprites = undefined;
 class Alert {
   /** @param {{message: string; showTime: number}} */
   constructor({ message, showTime }) {
-    this.message = message
-    this.showTime = showTime
+    this.message = message;
+    this.showTime = showTime;
   }
 
   display() {
@@ -133,7 +173,8 @@ class Alert {
   }
 
   remove() {
-    document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML = "";
+    document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
+      "";
   }
 }
 
@@ -315,24 +356,24 @@ window.onload = () => {
     .disabled-funny {
       background-color: hsla(0, 60%, 55%, 1);
       color: rgba(255, 255, 255, 0.4);
+      cursor: default;
     }
   </style>`;
 
-  let MENU =
-    "#app > div > div.gui_menu-bar-position_RwwFc.menu-bar_menu-bar_48TYq.box_box_-Ky8F > div.menu-bar_main-menu_ZLuRH";
+  let MENU = `#app > div > div.${components.menu.position}.${components.menu.bar} > div.${components.menu.main}`;
   let SAVE_AREA = `${MENU} > div:nth-child(6)`;
 
   document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="menu-bar_account-info-group_uqH-z">
-      <div class="menu-bar_menu-bar-item_hHpQG">
+    <div class="${components.menu.accountInfoGroup}">
+      <div class="${components.menu.item}">
         <div id="push-status">
           <span>Push project</span>
         </div>
       </div>
     </div>`;
   document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="menu-bar_account-info-group_uqH-z">
-      <div class="menu-bar_menu-bar-item_hHpQG">
+    <div class="${components.menu.accountInfoGroup}">
+      <div class="${components.menu.item}">
         <div id="allcommits-log">
           <span>Commits</span>
         </div>
@@ -364,7 +405,7 @@ window.onload = () => {
           </select>
           <button
             onclick="document.querySelector('#commitLog').close()"
-            class="settings-modal_button_CutmP"
+            class="${components.settingsButton}"
             id="commitButton"
           >
             Okay
@@ -396,7 +437,7 @@ window.onload = () => {
       >
         <button
           onclick="document.querySelector('#allcommitLog').close()"
-          class="settings-modal_button_CutmP"
+          class="${components.settingsButton}"
           id="commitButton"
         >
           Okay
@@ -406,18 +447,20 @@ window.onload = () => {
   </dialog>`;
 
   const renderCommits = (commits) =>
-  (document.querySelector(".commit-group").innerHTML = commits
-    .map(
-      (e) =>
-        html`<div class="commit">
-  <span style="font-size: 1rem">${e.subject
-          }<span><br /><span style="font-size: 0.75rem"
-        >${e.author.name} <span style="font-weight: lighter" title="${e.author.date
+    (document.querySelector(".commit-group").innerHTML = commits
+      .map(
+        (e) =>
+          html`<div class="commit">
+  <span style="font-size: 1rem">${
+    e.subject
+  }<span><br /><span style="font-size: 0.75rem"
+        >${e.author.name} <span style="font-weight: lighter" title="${
+            e.author.date
           }">commited ${timeAgo(e.author.date)}</span></span
       >
     </div>`
-    )
-    .join(""));
+      )
+      .join(""));
 
   setTimeout(() => {
     document.querySelector("#push-status").onclick = async () => {
@@ -428,7 +471,10 @@ window.onload = () => {
       document.querySelector("#push-status").style.opacity = "1";
       document.querySelector("#push-status").querySelector("span").innerText =
         "Push project";
-      new Alert({ message: "Commits pushed successfully", showTime: 5000 }).display();
+      new Alert({
+        message: "Commits pushed successfully",
+        showTime: 5000,
+      }).display();
     };
     document.querySelector("#allcommits-log").onclick = async () => {
       let offset = 0;
@@ -441,13 +487,13 @@ window.onload = () => {
       renderCommits(commits.slice(offset, offset + 40));
 
       document.querySelector(".pagination").innerHTML = html`<button
-          class="settings-modal_button_CutmP disabled-funny"
+          class="${components.settingsButton} disabled-funny"
           style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
           id="newer"
         >
           Newer</button
         ><button
-          class="settings-modal_button_CutmP"
+          class="${components.settingsButton}"
           style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
           id="older"
         >
@@ -600,7 +646,10 @@ class ScriptDiff {
         return e;
       }
     });
-    while (ArrayUtils.count(cBlocksOnly, "cBlock") !== ArrayUtils.count(cBlocksOnly, "end")) {
+    while (
+      ArrayUtils.count(cBlocksOnly, "cBlock") !==
+      ArrayUtils.count(cBlocksOnly, "end")
+    ) {
       mergedNre.push("end");
       cBlocksOnly.push("end");
     }
@@ -699,7 +748,7 @@ class ScriptDiff {
             block.style.fill = "red";
             block.style.opacity = "0.5";
             blocks[i].parentElement.appendChild(block);
-          } catch { }
+          } catch {}
         }
       });
     }
@@ -824,7 +873,9 @@ function createDiffs(oldProject, newProject) {
     script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = ArrayUtils.diff(script.old, script.new);
-    script.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(script.old, script.new));
+    script.merged = ScriptDiff.fixCBlocks(
+      ArrayUtils.merge(script.old, script.new)
+    );
     script.scriptNo = e.index;
     script.status = "removed";
     diffs.removed.push(script);
@@ -842,7 +893,9 @@ function createDiffs(oldProject, newProject) {
     script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
     script.difference = ArrayUtils.diff(script.old, script.new);
-    script.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(script.old, script.new));
+    script.merged = ScriptDiff.fixCBlocks(
+      ArrayUtils.merge(script.old, script.new)
+    );
     script.scriptNo = e.index;
     script.status = "added";
     diffs.added.push(script);
@@ -878,7 +931,10 @@ async function showDiffs({ sprite, script = 0, style }) {
   document.querySelector("#commitButton").onclick = async () => {
     const message = await (await fetch("http://localhost:6969/commit")).text();
     document.querySelector("#commitLog").close();
-    new Alert({ message: `Commit successful. ${message}`, showTime: 5000 }).display();
+    new Alert({
+      message: `Commit successful. ${message}`,
+      showTime: 5000,
+    }).display();
   };
   Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
@@ -943,7 +999,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
   document
     .querySelectorAll(".topbar a")
-  [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
+    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
@@ -956,9 +1012,7 @@ async function showDiffs({ sprite, script = 0, style }) {
 
 let addNote = setInterval(async () => {
   try {
-    let leHTML = document.querySelector(
-      ".save-status_save-now_xBhky"
-    ).innerHTML;
+    let leHTML = document.querySelector(`.${components.saveStatus}`).innerHTML;
     if (leHTML.startsWith("<span>")) {
       let span = document.createElement("span");
       span.id = "shortcutNote";
@@ -969,12 +1023,12 @@ let addNote = setInterval(async () => {
         .parentNode.after(span);
       clearInterval(addNote);
     }
-  } catch { }
+  } catch {}
 }, 500);
 
 setInterval(async () => {
   try {
-    document.querySelector(".save-status_save-now_xBhky").onclick =
+    document.querySelector(`.${components.saveStatus}`).onclick =
       theMainFunction;
     document.onkeydown = async (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "S") {
@@ -982,7 +1036,7 @@ setInterval(async () => {
         document.querySelector("#shortcutNote").remove();
       }
     };
-  } catch { }
+  } catch {}
 }, 500);
 
 async function theMainFunction() {
