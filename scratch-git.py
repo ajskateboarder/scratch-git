@@ -61,7 +61,7 @@ def main() -> None:
         print(
             "Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations"
         )
-        path = input(": ")
+        path = expandvars(input(": "))
         sys.exit(1)
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
