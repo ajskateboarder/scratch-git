@@ -5,6 +5,7 @@ import sys
 from os.path import expandvars
 import shutil
 from platform import uname
+from threading import Thread
 
 
 def tw_path() -> Path | None:
@@ -64,6 +65,13 @@ def main() -> None:
         sys.exit(1)
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
+
+    import server
+
+    server.extract_project(input("Enter the project path to open: "))
+    Thread(
+        target=lambda: server.app.run(port=6969, debug=True, use_reloader=False)
+    ).start()
 
 
 if __name__ == "__main__":

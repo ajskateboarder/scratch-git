@@ -139,7 +139,7 @@ def sprites():  # type: ignore
     }
 
 
-def main() -> None:
+def extract_project(project_file: str) -> None:
     """Entrypoint for web server"""
     content = [
         f
@@ -148,11 +148,5 @@ def main() -> None:
     ]
 
     if not content:
-        with ZipFile("Project.sb3", "r") as fh:
+        with ZipFile(project_file, "r") as fh:
             fh.extractall("scratch-git-test")
-
-    app.run(port=6969, debug=True)
-
-
-if __name__ == "__main__":
-    main()
