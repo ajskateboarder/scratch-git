@@ -22,19 +22,33 @@ const select = (className) =>
 
 /**
  * Accessors for parts of the UI
+ * @enum {string}
  */
-const components = {
-  menu: {
-    main: select("menu-bar_main-menu"),
-    bar: select("menu-bar_menu-bar"),
-    position: select("gui_menu-bar-position"),
-    item: select("menu-bar_menu-bar-item"),
-    accountInfoGroup: select("menu-bar_account-info-group"),
-  },
-  settingsButton: select("settings-modal_button"),
-  saveStatus: select("save-status_save-now"),
+const C = {
+  // menu
+  MENU_CONTAINER: select("menu-bar_main-menu"),
+  MENU_BAR: select("menu-bar_menu-bar"),
+  MENU_POSITION: select("gui_menu-bar-position"),
+  MENU_ITEM: select("menu-bar_menu-bar-item"),
+  MENU_ACCOUNTINFOGROUP: select("menu-bar_account-info-group"),
+
+  // alerts
+  ALERT_CONTAINER: select("alerts_alerts-inner-container"),
+  ALERT_DIALOG: select("alert_alert"),
+  ALERT_SUCCESS: select("alert_success").split(".")[1],
+  ALERT_MESSAGE: select("alert_alert-message"),
+  ALERT_BUTTONS: select("alert_alert-buttons"),
+  ALERT_CLOSE_CONTAINER: select("alert_alert-close-button-container"),
+  ALERT_CLOSE_BUTTON: select("alert_alert-close-button"),
+
+  // misc
+  SAVE_STATUS: select("save-status_save-now"),
+  BOX: select("box_box"),
+  SETTINGS_BUTTON: select("settings-modal_button"),
+  CLOSE_BUTTON: select("close-button_close-button"),
+  CLOSE_BUTTON_LARGE: select("close-button_large"),
+  CLOSE_ICON: select("close-button_close-icon"),
 };
-window.components = components;
 
 // https://stackoverflow.com/a/69122877/16019146
 function timeAgo(input) {
@@ -93,25 +107,45 @@ class ArrayUtils {
    * @returns {any[]}
    */
   static diff(oldArray, newArray) {
-    const dp = Array.from({ length: oldArray.length + 1 }, () =>
-      Array(newArray.length + 1).fill(0)
-    );
-    const changes = { added: [], removed: [], modified: [] };
-    for (let i = 1; i <= oldArray.length; i++)
-      for (let j = 1; j <= newArray.length; j++)
-        oldArray[i - 1] === newArray[j - 1]
-          ? (dp[i][j] = dp[i - 1][j - 1] + 1)
-          : (dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]));
-    for (let i = oldArray.length, j = newArray.length; i > 0 || j > 0; )
-      i > 0 && j > 0 && oldArray[--i] === newArray[--j]
-        ? null
-        : j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])
-        ? changes.removed.push(oldArray[i])
-        : i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])
-        ? changes.added.push(newArray[j])
-        : (changes.modified.push({ from: oldArray[i], to: newArray[j] }),
-          i--,
-          j--);
+    const dp = new Array(oldArray.length + 1)
+      .fill(null)
+      .map(() => new Array(newArray.length + 1).fill(0));
+    for (let i = 1; i <= oldArray.length; i++) {
+      for (let j = 1; j <= newArray.length; j++) {
+        if (oldArray[i - 1] === newArray[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+    /** @type {{added: string[]; removed: string[]; modified: string[]}} */
+    const changes = {
+      added: [],
+      removed: [],
+      modified: [],
+    };
+    let i = oldArray.length;
+    let j = newArray.length;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldArray[i - 1] === newArray[j - 1]) {
+        i--;
+        j--;
+      } else if (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])) {
+        changes.removed.push(oldArray[i - 1]);
+        i--;
+      } else if (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])) {
+        changes.added.push(newArray[j - 1]);
+        j--;
+      } else {
+        changes.modified.push({
+          from: oldArray[i - 1],
+          to: newArray[j - 1],
+        });
+        i--;
+        j--;
+      }
+    }
     changes.added.reverse();
     changes.removed.reverse();
     return changes;
@@ -131,50 +165,55 @@ globalThis.diffs = undefined;
 globalThis.sprites = undefined;
 
 class Alert {
-  /** @param {{message: string; showTime: number}} */
-  constructor({ message, showTime }) {
+  /** @param {{message: string; duration: number}} */
+  constructor({ message, duration }) {
     this.message = message;
-    this.showTime = showTime;
+    this.duration = duration;
   }
 
   display() {
-    document.querySelector(
-      ".alerts_alerts-inner-container_0UOfk"
-    ).innerHTML = html`<div
-      class="alert_alert_K5u0l alert_success_QZsAp box_box_2jjDp"
+    const CLOSE_BUTTON_SVG =
+      "data:image/svg+xml;base64, \
+      PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d \
+      3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdH \
+      lsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO \
+      3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVm \
+      cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc \
+      0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT \
+      0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
+
+    document.querySelector(`.${C.ALERT_CONTAINER}`).innerHTML = html`<div
+      class="${C.ALERT_DIALOG} ${C.ALERT_SUCCESS} ${C.BOX}"
       style="justify-content: space-between"
     >
-      <div class="alert_alert-message_b1o2e">${message}</div>
-      <div class="alert_alert-buttons_qzCdj">
-        <div class="alert_alert-close-button-container_sK95e box_box_2jjDp">
+      <div class="${C.ALERT_MESSAGE}">${this.message}</div>
+      <div class="${C.ALERT_BUTTONS}">
+        <div class="${C.ALERT_CLOSE_CONTAINER} ${C.BOX}">
           <div
             aria-label="Close"
-            class="close-button_close-button_hsJUK alert_alert-close-button_XMbBP close-button_large_UcF64"
+            class="${C.CLOSE_BUTTON} ${C.ALERT_CLOSE_BUTTON} ${C.CLOSE_BUTTON_LARGE}"
             role="button"
             tabindex="0"
           >
             <img
-              class="close-button_close-icon_rixGf undefined"
+              class="${C.CLOSE_ICON} undefined"
               style="filter: invert(70%)"
-              src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg=="
+              src="${CLOSE_BUTTON_SVG}"
             />
           </div>
         </div>
       </div>
     </div>`;
     if (document.querySelector("body").getAttribute("theme") === "dark") {
-      document.querySelector(
-        ".close-button_close-button_hsJUK"
-      ).style.backgroundColor = "rgba(0, 0, 0, 0.255)";
+      document.querySelector(`.${C.CLOSE_BUTTON}`).style.backgroundColor =
+        "rgba(0, 0, 0, 0.255)";
     }
-    document.querySelector(".close-button_close-button_hsJUK").onclick =
-      this.remove;
-    setTimeout(this.remove, showTime);
+    document.querySelector(`.${C.CLOSE_BUTTON}`).onclick = this.remove;
+    setTimeout(this.remove, this.duration);
   }
 
   remove() {
-    document.querySelector(".alerts_alerts-inner-container_0UOfk").innerHTML =
-      "";
+    document.querySelector(`.${C.ALERT_CONTAINER}`).innerHTML = "";
   }
 }
 
@@ -360,20 +399,20 @@ window.onload = () => {
     }
   </style>`;
 
-  let MENU = `#app > div > div.${components.menu.position}.${components.menu.bar} > div.${components.menu.main}`;
+  let MENU = `#app > div > div.${C.MENU_POSITION}.${C.MENU_BAR} > div.${C.MENU_CONTAINER}`;
   let SAVE_AREA = `${MENU} > div:nth-child(6)`;
 
   document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${components.menu.accountInfoGroup}">
-      <div class="${components.menu.item}">
+    <div class="${C.MENU_ACCOUNTINFOGROUP}">
+      <div class="${C.MENU_ITEM}">
         <div id="push-status">
           <span>Push project</span>
         </div>
       </div>
     </div>`;
   document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${components.menu.accountInfoGroup}">
-      <div class="${components.menu.item}">
+    <div class="${C.MENU_ACCOUNTINFOGROUP}">
+      <div class="${C.MENU_ITEM}">
         <div id="allcommits-log">
           <span>Commits</span>
         </div>
@@ -405,7 +444,7 @@ window.onload = () => {
           </select>
           <button
             onclick="document.querySelector('#commitLog').close()"
-            class="${components.settingsButton}"
+            class="${C.SETTINGS_BUTTON}"
             id="commitButton"
           >
             Okay
@@ -437,7 +476,7 @@ window.onload = () => {
       >
         <button
           onclick="document.querySelector('#allcommitLog').close()"
-          class="${components.settingsButton}"
+          class="${C.SETTINGS_BUTTON}"
           id="commitButton"
         >
           Okay
@@ -473,7 +512,7 @@ window.onload = () => {
         "Push project";
       new Alert({
         message: "Commits pushed successfully",
-        showTime: 5000,
+        duration: 5000,
       }).display();
     };
     document.querySelector("#allcommits-log").onclick = async () => {
@@ -487,13 +526,13 @@ window.onload = () => {
       renderCommits(commits.slice(offset, offset + 40));
 
       document.querySelector(".pagination").innerHTML = html`<button
-          class="${components.settingsButton} disabled-funny"
+          class="${C.SETTINGS_BUTTON} disabled-funny"
           style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
           id="newer"
         >
           Newer</button
         ><button
-          class="${components.settingsButton}"
+          class="${C.SETTINGS_BUTTON}"
           style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
           id="older"
         >
@@ -617,6 +656,7 @@ class ScriptDiff {
         .map((item, i) => `${i} ${item.trim()}`);
     }
     this.scriptNo = scriptNumber;
+
     if (!skipParsing) {
       this.difference = ArrayUtils.diff(this.old, this.new);
       this.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(this.old, this.new));
@@ -773,8 +813,6 @@ class ScriptDiff {
       }
     });
 
-    console.log(addedC);
-
     // TODO: support more C-blocks (maybe done?)
     if (
       typeof addedC[0] !== "undefined" &&
@@ -843,23 +881,27 @@ class ScriptDiff {
  */
 function createDiffs(oldProject, newProject) {
   const changes = ScriptDiff.availableSprites(oldProject, newProject);
+
   /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
   const diffs = {
     modified: [],
     removed: [],
     added: [],
   };
+
   changes.modified.forEach((e) => {
     const script = new ScriptDiff({
       oldProject: oldProject,
       newProject: newProject,
       scriptNumber: e.index,
     });
+
     script.status = "modified";
     if (script.hasDiffs) {
       diffs.modified.push(script);
     }
   });
+
   changes.removed.forEach((e) => {
     const oldBlocks = parseSB3Blocks.toScratchblocks(
       e.scriptLoc,
@@ -880,6 +922,7 @@ function createDiffs(oldProject, newProject) {
     script.status = "removed";
     diffs.removed.push(script);
   });
+
   changes.added.forEach((e) => {
     const newBlocks = parseSB3Blocks.toScratchblocks(
       e.scriptLoc,
@@ -933,9 +976,10 @@ async function showDiffs({ sprite, script = 0, style }) {
     document.querySelector("#commitLog").close();
     new Alert({
       message: `Commit successful. ${message}`,
-      showTime: 5000,
+      duration: 5000,
     }).display();
   };
+
   Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
   const modal = document.querySelector("#commitLog");
@@ -944,6 +988,7 @@ async function showDiffs({ sprite, script = 0, style }) {
   }
 
   document.querySelector(".topbar").innerHTML = "";
+
   globalThis.sprites.forEach((sprite) => {
     let newItem = document.createElement("a");
     newItem.href = "#whatever";
@@ -953,6 +998,7 @@ async function showDiffs({ sprite, script = 0, style }) {
         .querySelectorAll(".topbar a")
         .forEach((e) => e.classList.remove("active-tab"));
       newItem.classList.add("active-tab");
+
       await showDiffs({
         sprite: sprite,
         style: document.querySelector("#styleChoice").value,
@@ -974,7 +1020,7 @@ async function showDiffs({ sprite, script = 0, style }) {
           .querySelectorAll(".tab-btn")
           .forEach((e) => e.classList.remove("active-tab"));
         link.classList.add("active-tab");
-        console.log(i);
+
         await showDiffs({
           sprite: document.querySelector("a.active-tab").innerText,
           script: i,
@@ -1012,7 +1058,7 @@ async function showDiffs({ sprite, script = 0, style }) {
 
 let addNote = setInterval(async () => {
   try {
-    let leHTML = document.querySelector(`.${components.saveStatus}`).innerHTML;
+    let leHTML = document.querySelector(`.${C.SAVE_STATUS}`).innerHTML;
     if (leHTML.startsWith("<span>")) {
       let span = document.createElement("span");
       span.id = "shortcutNote";
@@ -1028,8 +1074,7 @@ let addNote = setInterval(async () => {
 
 setInterval(async () => {
   try {
-    document.querySelector(`.${components.saveStatus}`).onclick =
-      theMainFunction;
+    document.querySelector(`.${C.SAVE_STATUS}`).onclick = theMainFunction;
     document.onkeydown = async (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "S") {
         await theMainFunction();
@@ -1047,5 +1092,8 @@ async function theMainFunction() {
   ).sprites;
 
   document.querySelector("#styleChoice").value = "scratch3";
+
   await showDiffs({ sprite: globalThis.sprites[0] });
 }
+
+window.C = C;

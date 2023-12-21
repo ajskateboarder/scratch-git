@@ -68,7 +68,12 @@ def main() -> None:
 
     import server
 
-    server.extract_project(input("Enter the project path to open: "))
+    if len(sys.argv) == 2:
+        server.extract_project(sys.argv[1])
+    else:
+        server.extract_project(input("Enter path to project file: "))
+
+    server.app.logger.disabled = True
     Thread(
         target=lambda: server.app.run(port=6969, debug=True, use_reloader=False)
     ).start()

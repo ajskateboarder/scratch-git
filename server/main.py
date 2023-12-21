@@ -7,18 +7,12 @@ import time
 import json
 
 from flask import Flask, abort, request
+from flask_cors import CORS
 
 from server.diff import Diff
 
 app = Flask(__name__)
-
-
-# Needed for requests via MS store application
-@app.after_request
-def after_request(response):  # type: ignore
-    header = response.headers
-    header["Access-Control-Allow-Origin"] = "*"
-    return response
+CORS(app)
 
 
 @app.get("/unzip")
@@ -117,7 +111,7 @@ def commits():  # type: ignore
     ) as commit_cmd:
         output, _ = commit_cmd.communicate()
         output = json.loads(
-            "[" + output.decode().replace("  }\n}", "  }\n},")[:-1] + "]"
+            "[" + output.decode().replace("  }\n}", "  }\n},")[:-1] + "]", strict=False
         )
 
     return output
@@ -140,7 +134,6 @@ def sprites():  # type: ignore
 
 
 def extract_project(project_file: str) -> None:
-    """Entrypoint for web server"""
     content = [
         f
         for f in Path("scratch-git-test").glob("*")
@@ -150,3 +143,8 @@ def extract_project(project_file: str) -> None:
     if not content:
         with ZipFile(project_file, "r") as fh:
             fh.extractall("scratch-git-test")
+
+
+if __name__ == "__main__":
+    extract_project("Project.sb3")
+    app.run(port=6969, debug=True, use_reloader=False)
