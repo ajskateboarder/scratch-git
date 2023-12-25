@@ -1,3 +1,5 @@
+import * as ArrayUtils from "../utils";
+
 class ScriptDiff {
   /** @type {string[]} */
   old;
