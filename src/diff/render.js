@@ -1,4 +1,4 @@
-import { createDiffs } from "./scriptdiff";
+import { createDiffs } from "./index";
 
 function parseBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(

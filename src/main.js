@@ -1,4 +1,4 @@
-import { showDiffs } from "./diffrenderer";
+import { showDiffs } from "./diff/render";
 import initialize from "./initialize";
 
 function main() {
