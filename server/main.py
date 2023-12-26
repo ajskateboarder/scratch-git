@@ -15,6 +15,13 @@ app = Flask(__name__)
 CORS(app)
 
 
+@app.get("/create_project")
+def create_project():
+    name = request.args.get("name")
+    if name is None:
+        abort(500)
+    
+
 @app.get("/unzip")
 def unzip():  # type: ignore
     shutil.copyfile(

@@ -86,4 +86,6 @@ class Alert {
   }
 }
 
-export { FileMenu, Alert };
+const fileMenu = new FileMenu();
+
+export { fileMenu, Alert };

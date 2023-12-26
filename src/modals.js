@@ -1,5 +1,11 @@
 import Cmp from "./components";
+import { fileMenu } from "./gui";
 import { html } from "./utils";
+
+window.handleProjectLoad = () => {
+  fileMenu.openProject();
+  document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
+};
 
 export const WELCOME_MODAL = html`<dialog
   id="welcomeLog"
@@ -17,7 +23,7 @@ height: 100%;
   >
     <h1>Welcome!</h1>
     <div style="font-weight: normal">
-      <p>Please configure a project to use with Git</p>
+      <p>Please load a project for Git development</p>
       <input type="checkbox" name="dontshowagain" />
       <label for="dontshowagain"> Don't show again</label>
     </div>
@@ -30,22 +36,39 @@ height: 100%;
         Close
       </button>
       <button
-        onclick="window.fileMenu.openProject(); document.querySelector('#welcomeLog').close()"
+        onclick="handleProjectLoad()"
         style="align-items: right; margin-left: -10px;"
         class="${Cmp.SETTINGS_BUTTON}"
       >
         New Project
       </button>
-      <button
-        onclick="window.fileMenu.openProject(); document.querySelector('#welcomeLog').close()"
-        style="align-items: right; margin-left: -10px;"
-        class="${Cmp.SETTINGS_BUTTON}"
-      >
-        Open project
-      </button>
     </div>
   </div>
 </dialog>`;
+
+const WELCOME_MODAL_STEP_2 = html`
+  <div
+    style="
+position: absolute;
+transform: translateX(-50%);
+width: 100%;
+left: 50%;
+text-align: center;
+height: 100%;
+"
+  >
+    <h1>Welcome again!</h1>
+    <div style="font-weight: normal">
+      <p>
+        Please enter the full path to the project. This is so scratch.git can
+        find your project locally to use with your repository
+      </p>
+    </div>
+    <div class="bottom-bar" style="justify-content: center; gap: 20px">
+      <input style="align-items: right; margin-left: -10px;" type="file" />
+    </div>
+  </div>
+`;
 
 export const DIFF_MODAL = html`<dialog
   id="commitLog"

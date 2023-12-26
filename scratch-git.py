@@ -57,26 +57,20 @@ def tw_path() -> Path | None:
 
 def main() -> None:
     path: Path | str | None = tw_path()
+
     if path is None:
         print(
             "Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations"
         )
         path = expandvars(input(": "))
         sys.exit(1)
+
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
 
     import server
 
-    if len(sys.argv) == 2:
-        server.extract_project(sys.argv[1])
-    else:
-        server.extract_project(input("Enter path to project file: "))
-
-    server.app.logger.disabled = True
-    Thread(
-        target=lambda: server.app.run(port=6969, debug=True, use_reloader=False)
-    ).start()
+    server.app.run(port=6969, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":

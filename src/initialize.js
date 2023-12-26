@@ -1,10 +1,9 @@
-import { FileMenu } from "./gui";
+import { fileMenu } from "./gui";
 import Cmp from "./components";
 import { html } from "./utils";
 import { COMMIT_MODAL, DIFF_MODAL, WELCOME_MODAL } from "./modals";
 
 export default function () {
-  let fileMenu = new FileMenu();
   window.fileMenu = fileMenu;
 
   document.head.innerHTML += html`

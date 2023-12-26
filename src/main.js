@@ -1,5 +1,6 @@
 import { showDiffs } from "./diff/render";
 import initialize from "./initialize";
+import Cmp from "./components";
 
 function main() {
   globalThis.diffs = undefined;
@@ -7,8 +8,8 @@ function main() {
 
   let addNote = setInterval(async () => {
     try {
-      let leHTML = document.querySelector(`.${C.SAVE_STATUS}`).innerHTML;
-      if (leHTML.startsWith("<span>")) {
+      let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
+      if (saveStatus.startsWith("<span>")) {
         let span = document.createElement("span");
         span.id = "shortcutNote";
         span.style.opacity = "0.7";
@@ -35,7 +36,7 @@ function main() {
 
   setInterval(async () => {
     try {
-      document.querySelector(`.${C.SAVE_STATUS}`).onclick = initDiffs;
+      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = initDiffs;
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           await initDiffs();

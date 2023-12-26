@@ -1,6 +1,94 @@
 (function () {
   'use strict';
 
+  // https://stackoverflow.com/a/69122877/16019146
+
+  /**
+   * @param {any[]} list
+   * @param {any} item
+   * @returns {number}
+   */
+  const count = (list, item) =>
+    list.reduce(
+      (count, currentValue) => count + (currentValue === item ? 1 : 0),
+      0
+    );
+
+  /**
+   * @param {any[]} oldArray
+   * @param {any[]} newArray
+   * @returns {any[]}
+   */
+  function merge(oldArray, newArray) {
+    const mergedArray = [...oldArray];
+
+    for (const newItem of newArray) {
+      if (!mergedArray.includes(newItem)) {
+        mergedArray.push(newItem);
+      }
+    }
+
+    return mergedArray;
+  }
+
+  /**
+   * @param {any[]} oldArray
+   * @param {any[]} newArray
+   * @returns {any[]}
+   */
+  function diff(oldArray, newArray) {
+    const dp = new Array(oldArray.length + 1)
+      .fill(null)
+      .map(() => new Array(newArray.length + 1).fill(0));
+    for (let i = 1; i <= oldArray.length; i++) {
+      for (let j = 1; j <= newArray.length; j++) {
+        if (oldArray[i - 1] === newArray[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+    /** @type {{added: string[]; removed: string[]; modified: string[]}} */
+    const changes = {
+      added: [],
+      removed: [],
+      modified: [],
+    };
+    let i = oldArray.length;
+    let j = newArray.length;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldArray[i - 1] === newArray[j - 1]) {
+        i--;
+        j--;
+      } else if (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])) {
+        changes.removed.push(oldArray[i - 1]);
+        i--;
+      } else if (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])) {
+        changes.added.push(newArray[j - 1]);
+        j--;
+      } else {
+        changes.modified.push({
+          from: oldArray[i - 1],
+          to: newArray[j - 1],
+        });
+        i--;
+        j--;
+      }
+    }
+    changes.added.reverse();
+    changes.removed.reverse();
+    return changes;
+  }
+
+  const html = (strings, ...values) => {
+    let result = strings[0];
+    values.forEach((e, i) => {
+      result += e + strings[i + 1];
+    });
+    return result;
+  };
+
   class ScriptDiff {
     /** @type {string[]} */
     old;
@@ -33,8 +121,8 @@
       this.scriptNo = scriptNumber;
 
       if (!skipParsing) {
-        this.difference = ArrayUtils.diff(this.old, this.new);
-        this.merged = ScriptDiff.fixCBlocks(ArrayUtils.merge(this.old, this.new));
+        this.difference = diff(this.old, this.new);
+        this.merged = ScriptDiff.fixCBlocks(merge(this.old, this.new));
       }
     }
 
@@ -62,8 +150,8 @@
         }
       });
       while (
-        ArrayUtils.count(cBlocksOnly, "cBlock") !==
-        ArrayUtils.count(cBlocksOnly, "end")
+        count(cBlocksOnly, "cBlock") !==
+        count(cBlocksOnly, "end")
       ) {
         mergedNre.push("end");
         cBlocksOnly.push("end");
@@ -288,9 +376,9 @@
       const script = new ScriptDiff({ skipParsing: true });
       script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
       script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.difference = ArrayUtils.diff(script.old, script.new);
+      script.difference = diff(script.old, script.new);
       script.merged = ScriptDiff.fixCBlocks(
-        ArrayUtils.merge(script.old, script.new)
+        merge(script.old, script.new)
       );
       script.scriptNo = e.index;
       script.status = "removed";
@@ -309,9 +397,9 @@
       const script = new ScriptDiff({ skipParsing: true });
       script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
       script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.difference = ArrayUtils.diff(script.old, script.new);
+      script.difference = diff(script.old, script.new);
       script.merged = ScriptDiff.fixCBlocks(
-        ArrayUtils.merge(script.old, script.new)
+        merge(script.old, script.new)
       );
       script.scriptNo = e.index;
       script.status = "added";
@@ -430,16 +518,6 @@
     }
   }
 
-  // https://stackoverflow.com/a/69122877/16019146
-
-  const html = (strings, ...values) => {
-    let result = strings[0];
-    values.forEach((e, i) => {
-      result += e + strings[i + 1];
-    });
-    return result;
-  };
-
   /** @type {string[]} */
   const classNames = [
     ...[...document.styleSheets].map((e) => {
@@ -509,6 +587,11 @@
       let loadFromComputer = this.menu.querySelectorAll("li")[2];
       loadFromComputer[this.reactEventHandlers].onClick();
       this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
+      setInterval(() => {
+        console.log(
+          document.querySelector("body").classList.contains("tw-loaded")
+        );
+      }, 50);
     }
 
     isProjectOpen() {
@@ -521,6 +604,13 @@
       return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
     }
   }
+
+  const fileMenu = new FileMenu();
+
+  window.handleProjectLoad = () => {
+    fileMenu.openProject();
+    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
+  };
 
   const WELCOME_MODAL = html`<dialog
   id="welcomeLog"
@@ -538,7 +628,7 @@ height: 100%;
   >
     <h1>Welcome!</h1>
     <div style="font-weight: normal">
-      <p>Please configure a project to use with Git</p>
+      <p>Please load a project for Git development</p>
       <input type="checkbox" name="dontshowagain" />
       <label for="dontshowagain"> Don't show again</label>
     </div>
@@ -551,22 +641,39 @@ height: 100%;
         Close
       </button>
       <button
-        onclick="window.fileMenu.openProject(); document.querySelector('#welcomeLog').close()"
+        onclick="handleProjectLoad()"
         style="align-items: right; margin-left: -10px;"
         class="${Cmp.SETTINGS_BUTTON}"
       >
         New Project
       </button>
-      <button
-        onclick="window.fileMenu.openProject(); document.querySelector('#welcomeLog').close()"
-        style="align-items: right; margin-left: -10px;"
-        class="${Cmp.SETTINGS_BUTTON}"
-      >
-        Open project
-      </button>
     </div>
   </div>
 </dialog>`;
+
+  const WELCOME_MODAL_STEP_2 = html`
+  <div
+    style="
+position: absolute;
+transform: translateX(-50%);
+width: 100%;
+left: 50%;
+text-align: center;
+height: 100%;
+"
+  >
+    <h1>Welcome again!</h1>
+    <div style="font-weight: normal">
+      <p>
+        Please enter the full path to the project. This is so scratch.git can
+        find your project locally to use with your repository
+      </p>
+    </div>
+    <div class="bottom-bar" style="justify-content: center; gap: 20px">
+      <input style="align-items: right; margin-left: -10px;" type="file" />
+    </div>
+  </div>
+`;
 
   const DIFF_MODAL = html`<dialog
   id="commitLog"
@@ -635,7 +742,6 @@ width: 65%;
 </dialog>`;
 
   function initialize () {
-    let fileMenu = new FileMenu();
     window.fileMenu = fileMenu;
 
     document.head.innerHTML += html`
@@ -960,8 +1066,8 @@ width: 65%;
 
     let addNote = setInterval(async () => {
       try {
-        let leHTML = document.querySelector(`.${C.SAVE_STATUS}`).innerHTML;
-        if (leHTML.startsWith("<span>")) {
+        let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
+        if (saveStatus.startsWith("<span>")) {
           let span = document.createElement("span");
           span.id = "shortcutNote";
           span.style.opacity = "0.7";
@@ -988,7 +1094,7 @@ width: 65%;
 
     setInterval(async () => {
       try {
-        document.querySelector(`.${C.SAVE_STATUS}`).onclick = initDiffs;
+        document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = initDiffs;
         document.onkeydown = async (e) => {
           if (e.ctrlKey && e.shiftKey && e.key === "S") {
             await initDiffs();
