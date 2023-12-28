@@ -5,7 +5,7 @@ import sys
 from os.path import expandvars
 import shutil
 from platform import uname
-from threading import Thread
+from subprocess import check_call
 
 
 def tw_path() -> Path | None:
@@ -65,13 +65,26 @@ def main() -> None:
         path = expandvars(input(": "))
         sys.exit(1)
 
+    check_call(
+        [
+            "npx",
+            "rollup",
+            "src/main.js",
+            "--format",
+            "iife",
+            "--name",
+            "bundle",
+            "--file",
+            "userscript.js",
+        ],
+        shell=True,
+    )
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
 
-    if sys.argv[1] != "--no":
-        import server
+    import server
 
-        server.app.run(port=6969, debug=True, use_reloader=False)
+    server.app.run(port=6969, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":

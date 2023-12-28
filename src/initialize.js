@@ -186,6 +186,10 @@ export default function () {
       color: rgba(255, 255, 255, 0.4);
       cursor: default;
     }
+
+    #pathInput::file-selector-button {
+      display: none;
+    }
   </style>`;
 
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;

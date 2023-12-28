@@ -15,6 +15,8 @@ const classNames = [
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 
+window.classNames = classNames;
+
 const select = (className) =>
   classNames.filter((e) => e.includes(className))[0];
 
@@ -46,6 +48,9 @@ const Cmp = {
   CLOSE_BUTTON: select("close-button_close-button"),
   CLOSE_BUTTON_LARGE: select("close-button_large"),
   CLOSE_ICON: select("close-button_close-icon"),
+  DISABLED_BUTTON: select("button_mod-disabled"),
 };
+
+window.Cmp = Cmp;
 
 export default Cmp;

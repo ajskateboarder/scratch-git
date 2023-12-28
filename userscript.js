@@ -535,6 +535,8 @@
     .filter((e) => e !== undefined)
     .map((e) => e.slice(1));
 
+  window.classNames = classNames;
+
   const select = (className) =>
     classNames.filter((e) => e.includes(className))[0];
 
@@ -566,7 +568,10 @@
     CLOSE_BUTTON: select("close-button_close-button"),
     CLOSE_BUTTON_LARGE: select("close-button_large"),
     CLOSE_ICON: select("close-button_close-icon"),
+    DISABLED_BUTTON: select("button_mod-disabled"),
   };
+
+  window.Cmp = Cmp;
 
   class FileMenu {
     /** @type {HTMLElement} */
@@ -602,82 +607,107 @@
 
   const fileMenu = new FileMenu();
 
-  window.handleNextStep = () => {
+  window.goToNextStep = () => {
     document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
   };
+
+  window.goBack = () => {
+    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_1(false);
+  };
+
+  window.openProjectStep = () => {
+    fileMenu.openProject();
+    document.querySelector("#nextButton").classList.remove(Cmp.DISABLED_BUTTON);
+  };
+
+  const DIALOG_CSS = `
+position: absolute;
+transform: translateX(-50%);
+width: 100%;
+left: 50%;
+text-align: center;
+max-height: 100%;
+overflow: hidden;
+word-wrap: break-word;
+white-space: normal;
+padding: 20px;
+box-sizing: border-box;
+`;
+
+  const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
+  <h1>Welcome</h1>
+  <div style="font-weight: normal">
+    <p>Please load a project for Git development<br /><br /></p>
+    <button
+      onclick="openProjectStep()"
+      style="width: 50%"
+      class="${Cmp.SETTINGS_BUTTON}"
+    >
+      Open project</button
+    ><br /><br />
+    <input type="checkbox" name="dontshowagain" />
+    <label for="dontshowagain"> Don't show again</label>
+    <div
+      class="bottom-bar"
+      style="justify-content: center; gap: 20px; width: 97.5%"
+    >
+      <button
+        onclick="document.querySelector('#welcomeLog').close()"
+        style="align-items: right; margin-left: -10px; "
+        class="${Cmp.SETTINGS_BUTTON}"
+      >
+        Close
+      </button>
+      <button
+        onclick="goToNextStep()"
+        style="align-items: right; margin-left: -10px; "
+        class="${Cmp.SETTINGS_BUTTON} ${disabled ? Cmp.DISABLED_BUTTON : ""}"
+        id="nextButton"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>`;
+
+  const WELCOME_MODAL_STEP_2 = html`
+  <div style="${DIALOG_CSS}">
+    <h1>Configure project location</h1>
+    <div style="font-weight: normal">
+      <p>
+        Please enter the full path to the project. This is so scratch.git can
+        find your project locally to use with your repository<br /><br />
+      </p>
+      <input type="file" id="pathInput" class="${Cmp.SETTINGS_BUTTON}" />
+    </div>
+    <div
+      class="bottom-bar"
+      style="justify-content: center; gap: 20px; width: 97.5%"
+    >
+      <button
+        style="align-items: right; margin-left: -10px; "
+        class="${Cmp.SETTINGS_BUTTON}"
+        onclick="goBack()"
+      >
+        Back
+      </button>
+      <button
+        style="align-items: right; margin-left: -10px; "
+        class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
+        id="nextButton"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+`;
 
   const WELCOME_MODAL = html`<dialog
   id="welcomeLog"
   style="overflow-x: hidden"
 >
-  <div
-    style="
-position: absolute;
-transform: translateX(-50%);
-width: 100%;
-left: 50%;
-text-align: center;
-height: 100%;
-"
-  >
-    <h1>Welcome!</h1>
-    <div style="font-weight: normal">
-      <p>Please load a project for Git development</p>
-      <button
-        onclick="fileMenu.openProject()"
-        style="align-items: right; margin-left: -10px;"
-        class="${Cmp.SETTINGS_BUTTON}"
-      >
-        Open project</button
-      ><br /><br />
-      <input type="checkbox" name="dontshowagain" />
-      <label for="dontshowagain"> Don't show again</label>
-      <div
-        class="bottom-bar"
-        style="justify-content: center; gap: 20px; width: 97.5%"
-      >
-        <button
-          onclick="document.querySelector('#welcomeLog').close()"
-          style="align-items: right; margin-left: -10px; "
-          class="${Cmp.SETTINGS_BUTTON}"
-        >
-          Close
-        </button>
-        <button
-          onclick="handleNextStep()"
-          style="align-items: right; margin-left: -10px; "
-          class="${Cmp.SETTINGS_BUTTON}"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  </div>
+  ${WELCOME_MODAL_STEP_1(true)}
 </dialog>`;
-
-  const WELCOME_MODAL_STEP_2 = html`
-  <div
-    style="
-position: absolute;
-transform: translateX(-50%);
-width: 100%;
-left: 50%;
-text-align: center;
-height: 100%;
-"
-  >
-    <h1>Welcome again!</h1>
-    <div style="font-weight: normal">
-      <p>
-        Please enter the full path to the project. This is so scratch.git can
-        find your project locally to use with your repository
-      </p>
-    </div>
-    <div class="bottom-bar" style="justify-content: center; gap: 20px">
-      <input style="align-items: right; margin-left: -10px;" type="file" />
-    </div>
-  </div>
-`;
 
   const DIFF_MODAL = html`<dialog
   id="commitLog"
@@ -927,6 +957,10 @@ width: 65%;
       background-color: hsla(0, 60%, 55%, 1);
       color: rgba(255, 255, 255, 0.4);
       cursor: default;
+    }
+
+    #pathInput::file-selector-button {
+      display: none;
     }
   </style>`;
 

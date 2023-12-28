@@ -190,9 +190,9 @@ def commits(project_name):  # type: ignore
 
 @app.get("/<project_name>/sprites")
 def sprites(project_name):  # type: ignore
+    """Retreive sprites that have been changed since project changes"""
     project_dir = Path(config.map[project_name]["base"])
 
-    """Retreive sprites that have been changed since project changes"""
     with open(project_dir / "project.old.json", encoding="utf-8") as fh:
         current_project = Diff(json.load(fh))
 
