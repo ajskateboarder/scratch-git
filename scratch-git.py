@@ -68,9 +68,10 @@ def main() -> None:
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
 
-    import server
+    if sys.argv[1] != "--no":
+        import server
 
-    server.app.run(port=6969, debug=True, use_reloader=False)
+        server.app.run(port=6969, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":

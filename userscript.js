@@ -587,11 +587,6 @@
       let loadFromComputer = this.menu.querySelectorAll("li")[2];
       loadFromComputer[this.reactEventHandlers].onClick();
       this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
-      setInterval(() => {
-        console.log(
-          document.querySelector("body").classList.contains("tw-loaded")
-        );
-      }, 50);
     }
 
     isProjectOpen() {
@@ -607,8 +602,7 @@
 
   const fileMenu = new FileMenu();
 
-  window.handleProjectLoad = () => {
-    fileMenu.openProject();
+  window.handleNextStep = () => {
     document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
   };
 
@@ -629,24 +623,34 @@ height: 100%;
     <h1>Welcome!</h1>
     <div style="font-weight: normal">
       <p>Please load a project for Git development</p>
-      <input type="checkbox" name="dontshowagain" />
-      <label for="dontshowagain"> Don't show again</label>
-    </div>
-    <div class="bottom-bar" style="justify-content: center; gap: 20px">
       <button
-        onclick="document.querySelector('#welcomeLog').close()"
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON}"
-      >
-        Close
-      </button>
-      <button
-        onclick="handleProjectLoad()"
+        onclick="fileMenu.openProject()"
         style="align-items: right; margin-left: -10px;"
         class="${Cmp.SETTINGS_BUTTON}"
       >
-        New Project
-      </button>
+        Open project</button
+      ><br /><br />
+      <input type="checkbox" name="dontshowagain" />
+      <label for="dontshowagain"> Don't show again</label>
+      <div
+        class="bottom-bar"
+        style="justify-content: center; gap: 20px; width: 97.5%"
+      >
+        <button
+          onclick="document.querySelector('#welcomeLog').close()"
+          style="align-items: right; margin-left: -10px; "
+          class="${Cmp.SETTINGS_BUTTON}"
+        >
+          Close
+        </button>
+        <button
+          onclick="handleNextStep()"
+          style="align-items: right; margin-left: -10px; "
+          class="${Cmp.SETTINGS_BUTTON}"
+        >
+          Next
+        </button>
+      </div>
     </div>
   </div>
 </dialog>`;
