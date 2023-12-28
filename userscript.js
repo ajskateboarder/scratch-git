@@ -607,31 +607,42 @@
 
   const fileMenu = new FileMenu();
 
-  window.goToNextStep = () => {
+  window.goToStep1 = () => {
+    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_1(false);
+  };
+
+  window.goToStep2 = () => {
     document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
   };
 
-  window.goBack = () => {
-    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_1(false);
+  window.goToStep3 = () => {
+    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
+  };
+
+  window.openProjectPathStep = () => {
+    document.querySelector("#nextButton2").classList.remove(Cmp.DISABLED_BUTTON);
   };
 
   window.openProjectStep = () => {
     fileMenu.openProject();
-    document.querySelector("#nextButton").classList.remove(Cmp.DISABLED_BUTTON);
+    /** @type {HTMLButtonElement} */
+    let nextButton = document.querySelector("#nextButton");
+    nextButton.disabled = false;
+    nextButton.classList.remove(Cmp.DISABLED_BUTTON);
   };
 
   const DIALOG_CSS = `
-position: absolute;
-transform: translateX(-50%);
-width: 100%;
-left: 50%;
-text-align: center;
-max-height: 100%;
-overflow: hidden;
-word-wrap: break-word;
-white-space: normal;
-padding: 20px;
-box-sizing: border-box;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 100%;
+  left: 50%;
+  text-align: center;
+  max-height: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  white-space: normal;
+  padding: 20px;
+  box-sizing: border-box;
 `;
 
   const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
@@ -645,6 +656,7 @@ box-sizing: border-box;
     >
       Open project</button
     ><br /><br />
+    <!-- TODO: make functional vv -->
     <input type="checkbox" name="dontshowagain" />
     <label for="dontshowagain"> Don't show again</label>
     <div
@@ -659,9 +671,10 @@ box-sizing: border-box;
         Close
       </button>
       <button
-        onclick="goToNextStep()"
+        onclick="goToStep2()"
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON} ${disabled ? Cmp.DISABLED_BUTTON : ""}"
+        ${disabled ? "disabled" : ""}
         id="nextButton"
       >
         Next
@@ -675,10 +688,16 @@ box-sizing: border-box;
     <h1>Configure project location</h1>
     <div style="font-weight: normal">
       <p>
-        Please enter the full path to the project. This is so scratch.git can
+        Please enter the full path to your project. This is so scratch.git can
         find your project locally to use with your repository<br /><br />
       </p>
-      <input type="file" id="pathInput" class="${Cmp.SETTINGS_BUTTON}" />
+      <input
+        type="file"
+        id="pathInput"
+        class="${Cmp.SETTINGS_BUTTON}"
+        onclick="openProjectPathStep()"
+        accept=".sb,.sb2,.sb3"
+      />
     </div>
     <div
       class="bottom-bar"
@@ -687,16 +706,38 @@ box-sizing: border-box;
       <button
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON}"
-        onclick="goBack()"
+        onclick="goToStep1()"
       >
         Back
       </button>
       <button
+        onclick="goToStep3()"
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
-        id="nextButton"
+        id="nextButton2"
       >
         Next
+      </button>
+    </div>
+  </div>
+`;
+
+  const WELCOME_MODAL_STEP_3 = html`
+  <div style="${DIALOG_CSS}">
+    <h1>Finish</h1>
+    <div style="font-weight: normal">
+      <p>Err IDK<br /><br /></p>
+    </div>
+    <div
+      class="bottom-bar"
+      style="justify-content: center; gap: 20px; width: 97.5%"
+    >
+      <button
+        style="align-items: right; margin-left: -10px; "
+        class="${Cmp.SETTINGS_BUTTON}"
+        onclick="document.querySelector('#welcomeLog').close()"
+      >
+        Close
       </button>
     </div>
   </div>
