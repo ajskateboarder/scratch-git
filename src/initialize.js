@@ -1,5 +1,5 @@
-import { fileMenu } from "./gui";
-import Cmp from "./components";
+import { fileMenu } from "./gui-components";
+import Cmp from "./accessors";
 import { html } from "./utils";
 import { COMMIT_MODAL, DIFF_MODAL, WELCOME_MODAL } from "./modals";
 

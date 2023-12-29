@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable, Any, no_type_check
 
 
-class Diff:
+class DiffGen:
     """Commit generation methods for Scratch project assets and code"""
 
     def __init__(self, data: dict) -> None:
@@ -41,10 +41,10 @@ class Diff:
             for sprite in self.data["targets"]
         }
 
-    def blocks(self, new: Diff) -> list[str]:
+    def blocks(self, new: DiffGen) -> list[str]:
         """Return the block number difference between each sprite in two projects.
 
-        `new` param is the Diff object which contains newer changes"""
+        `new` param is the DiffGen object which contains newer changes"""
         commits = []
         for old_blocks, (sprite, new_blocks) in zip(
             self._blocks().values(), new._blocks().items()
@@ -54,10 +54,10 @@ class Diff:
                 commits.append(f"{sprite}: {'+' if diff > 0 else ''}{diff} blocks")
         return commits
 
-    def costumes(self, new: Diff) -> list[tuple[str, tuple[str, str]]]:
+    def costumes(self, new: DiffGen) -> list[tuple[str, tuple[str, str]]]:
         """Return the costume differences between each sprite in two projects.
 
-        `new` param is the Diff object which contains newer changes"""
+        `new` param is the DiffGen object which contains newer changes"""
         new_costumes = [
             (sprite, costume)
             for sprite, new_item in new._costumes().items()
@@ -73,7 +73,7 @@ class Diff:
         added = set(new_costumes) - set(old_costumes)
         return list(filter(added.__contains__, new_costumes))
 
-    def _merged_costumes(self, new: Diff) -> Any:
+    def _merged_costumes(self, new: DiffGen) -> Any:
         """Return costumes that have changed between projects, but not added or removed"""
 
         # This code is SOOO bad
@@ -125,7 +125,7 @@ class Diff:
         }
         return list(_commits.items())  # type: ignore
 
-    def commits(self, new: Diff) -> list[str]:
+    def commits(self, new: DiffGen) -> list[str]:
         """Create commits for changes from the current project to a newer one"""
         added_, removed_, merged_ = self._merged_costumes(new)
 

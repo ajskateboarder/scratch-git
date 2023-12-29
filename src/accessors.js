@@ -1,3 +1,5 @@
+/** @file A lookup to create elements using scratch-gui classnames */
+
 /** @type {string[]} */
 const classNames = [
   ...[...document.styleSheets].map((e) => {

@@ -10,7 +10,7 @@ import json
 from flask import Flask, abort, request
 from flask_cors import CORS
 
-from server.diff import Diff
+from server.diff import DiffGen
 
 app = Flask(__name__)
 CORS(app)
@@ -96,10 +96,10 @@ def commit(project_name):  # type: ignore
     project_dir = Path(config.map[project_name]["base"])
 
     with open(project_dir / "project.old.json", encoding="utf-8") as fh:
-        current_project = Diff(json.load(fh))
+        current_project = DiffGen(json.load(fh))
 
     with open(project_dir / "project.json", encoding="utf-8") as fh:
-        new_project = Diff(json.load(fh))
+        new_project = DiffGen(json.load(fh))
 
     costume_removals = new_project.costumes(current_project)
     commit_message = ", ".join(current_project.commits(new_project))
@@ -194,10 +194,10 @@ def sprites(project_name):  # type: ignore
     project_dir = Path(config.map[project_name]["base"])
 
     with open(project_dir / "project.old.json", encoding="utf-8") as fh:
-        current_project = Diff(json.load(fh))
+        current_project = DiffGen(json.load(fh))
 
     with open(project_dir / "project.json", encoding="utf-8") as fh:
-        new_project = Diff(json.load(fh))
+        new_project = DiffGen(json.load(fh))
 
     return {
         "sprites": [

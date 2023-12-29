@@ -1,5 +1,5 @@
 import { html } from "./utils";
-import Cmp from "./components";
+import Cmp from "./accessors";
 
 class FileMenu {
   /** @type {HTMLElement} */

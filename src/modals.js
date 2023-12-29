@@ -1,29 +1,27 @@
-import Cmp from "./components";
+import Cmp from "./accessors";
 import { html } from "./utils";
-import { fileMenu } from "./gui";
+import { fileMenu } from "./gui-components";
 
-window.goToStep1 = () => {
-  document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_1(false);
-};
-
-window.goToStep2 = () => {
-  document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2;
-};
-
-window.goToStep3 = () => {
-  document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
-};
-
-window.openProjectPathStep = () => {
-  document.querySelector("#nextButton2").classList.remove(Cmp.DISABLED_BUTTON);
-};
-
-window.openProjectStep = () => {
-  fileMenu.openProject();
-  /** @type {HTMLButtonElement} */
-  let nextButton = document.querySelector("#nextButton");
-  nextButton.disabled = false;
-  nextButton.classList.remove(Cmp.DISABLED_BUTTON);
+window.modalSteps = {
+  goToStep1: () =>
+    (document.querySelector("#welcomeLog").innerHTML =
+      WELCOME_MODAL_STEP_1(false)),
+  goToStep2: () =>
+    (document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2),
+  goToStep3: (path) => {
+    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
+  },
+  openProjectPath: () =>
+    document
+      .querySelector("#nextButton2")
+      .classList.remove(Cmp.DISABLED_BUTTON),
+  openProject: () => {
+    fileMenu.openProject();
+    /** @type {HTMLButtonElement} */
+    let nextButton = document.querySelector("#nextButton");
+    nextButton.disabled = false;
+    nextButton.classList.remove(Cmp.DISABLED_BUTTON);
+  },
 };
 
 const DIALOG_CSS = `
@@ -45,7 +43,7 @@ const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
   <div style="font-weight: normal">
     <p>Please load a project for Git development<br /><br /></p>
     <button
-      onclick="openProjectStep()"
+      onclick="modalSteps.openProject()"
       style="width: 50%"
       class="${Cmp.SETTINGS_BUTTON}"
     >
@@ -66,7 +64,7 @@ const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
         Close
       </button>
       <button
-        onclick="goToStep2()"
+        onclick="modalSteps.goToStep2()"
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON} ${disabled ? Cmp.DISABLED_BUTTON : ""}"
         ${disabled ? "disabled" : ""}
@@ -90,7 +88,7 @@ const WELCOME_MODAL_STEP_2 = html`
         type="file"
         id="pathInput"
         class="${Cmp.SETTINGS_BUTTON}"
-        onclick="openProjectPathStep()"
+        onclick="modalSteps.openProjectPath()"
         accept=".sb,.sb2,.sb3"
       />
     </div>
@@ -101,12 +99,12 @@ const WELCOME_MODAL_STEP_2 = html`
       <button
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON}"
-        onclick="goToStep1()"
+        onclick="modalSteps.goToStep1()"
       >
         Back
       </button>
       <button
-        onclick="goToStep3()"
+        onclick="modalSteps.goToStep3(document.querySelector('#pathInput').files[0].path)"
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
         id="nextButton2"

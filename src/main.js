@@ -1,6 +1,6 @@
 import { showDiffs } from "./diff/render";
 import initialize from "./initialize";
-import Cmp from "./components";
+import Cmp from "./accessors";
 
 function main() {
   globalThis.diffs = undefined;
