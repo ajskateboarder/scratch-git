@@ -58,6 +58,11 @@ def tw_path() -> Path | None:
 def main() -> None:
     path: Path | str | None = tw_path()
 
+    debug = False
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--debug":
+            debug = True
+
     if path is None:
         print(
             "Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations"
@@ -65,26 +70,27 @@ def main() -> None:
         path = expandvars(input(": "))
         sys.exit(1)
 
-    check_call(
-        [
-            "npx",
-            "rollup",
-            "src/main.js",
-            "--format",
-            "iife",
-            "--name",
-            "bundle",
-            "--file",
-            "userscript.js",
-        ],
-        shell=True,
-    )
+    if debug:
+        check_call(
+            [
+                "npx",
+                "rollup",
+                "src/main.js",
+                "--format",
+                "iife",
+                "--name",
+                "bundle",
+                "--file",
+                "userscript.js",
+            ],
+            shell=True,
+        )
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
 
     import server
 
-    server.app.run(port=6969, debug=True, use_reloader=False)
+    server.app.run(port=6969, debug=debug, use_reloader=debug)
 
 
 if __name__ == "__main__":
