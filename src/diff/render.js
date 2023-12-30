@@ -1,4 +1,5 @@
 import { createDiffs } from "./index";
+import API from "../git-api";
 
 function parseBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(

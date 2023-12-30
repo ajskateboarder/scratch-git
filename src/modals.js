@@ -1,6 +1,7 @@
 import Cmp from "./accessors";
 import { html } from "./utils";
 import { fileMenu } from "./gui-components";
+import API from "./git-api";
 
 window.modalSteps = {
   goToStep1: () =>
@@ -9,7 +10,10 @@ window.modalSteps = {
   goToStep2: () =>
     (document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2),
   goToStep3: (path) => {
-    document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
+    (async () => {
+      await API.createProject(path);
+      document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
+    })();
   },
   openProjectPath: () =>
     document

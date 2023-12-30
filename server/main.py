@@ -150,7 +150,7 @@ def old_project(project_name):  # type: ignore
         ][0]
 
 
-@app.get("/<project_name>/project.old.json")
+@app.get("/<project_name>/project.json")
 def current_project(project_name):  # type: ignore
     """Retreive the current project.json"""
     project_dir = Path(config.map[project_name]["base"])

@@ -1,23 +1,19 @@
 import * as ArrayUtils from "../utils";
 
-class ScriptDiff {
-  /** @type {string[]} */
-  old;
-  /** @type {string[]} */
-  new;
-  difference;
-  /** @type {string[]} */
-  merged;
-  /** @type {number} */
-  scriptNo;
+/**
+ * @typedef ScriptDiffOptions
+ * @property {object} oldProject
+ * @property {object} newProject
+ * @property {number} scriptNumber
+ * @property {boolean?} skipParsing
+ */
+
+export class ScriptDiff {
   /** @type {("added" | "removed" | "modified")} */
   status;
 
   /**
-   * @constructor
-   * @param {object} oldProject
-   * @param {object} newProject
-   * @param {number} scriptNumber
+   * @param {ScriptDiffOptions}
    */
   constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
     if (!skipParsing) {
@@ -252,7 +248,7 @@ class ScriptDiff {
  * @param {object} oldProject
  * @param {object} newProject
  */
-function createDiffs(oldProject, newProject) {
+export function createDiffs(oldProject, newProject) {
   const changes = ScriptDiff.availableSprites(oldProject, newProject);
 
   /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
@@ -318,5 +314,3 @@ function createDiffs(oldProject, newProject) {
   });
   return diffs;
 }
-
-export { ScriptDiff, createDiffs };

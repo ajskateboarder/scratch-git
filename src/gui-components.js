@@ -2,12 +2,6 @@ import { html } from "./utils";
 import Cmp from "./accessors";
 
 class FileMenu {
-  /** @type {HTMLElement} */
-  menu;
-  /** @type {string} */
-  reactEventHandlers;
-
-  /** @constructor */
   constructor() {
     this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[2];
     this.reactEventHandlers = Object.keys(this.menu).filter((e) =>
@@ -33,7 +27,7 @@ class FileMenu {
   }
 }
 
-class Alert {
+export class Alert {
   /** @param {{message: string; duration: number}} */
   constructor({ message, duration }) {
     this.message = message;
@@ -86,6 +80,4 @@ class Alert {
   }
 }
 
-const fileMenu = new FileMenu();
-
-export { fileMenu, Alert };
+export const fileMenu = new FileMenu();

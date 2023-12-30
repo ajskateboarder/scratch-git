@@ -1,5 +1,5 @@
 // https://stackoverflow.com/a/69122877/16019146
-function timeAgo(input) {
+export function timeAgo(input) {
   const date = input instanceof Date ? input : new Date(input);
   const formatter = new Intl.RelativeTimeFormat("en");
   const ranges = {
@@ -25,7 +25,7 @@ function timeAgo(input) {
  * @param {any} item
  * @returns {number}
  */
-const count = (list, item) =>
+export const count = (list, item) =>
   list.reduce(
     (count, currentValue) => count + (currentValue === item ? 1 : 0),
     0
@@ -36,7 +36,7 @@ const count = (list, item) =>
  * @param {any[]} newArray
  * @returns {any[]}
  */
-function merge(oldArray, newArray) {
+export function merge(oldArray, newArray) {
   const mergedArray = [...oldArray];
 
   for (const newItem of newArray) {
@@ -53,7 +53,7 @@ function merge(oldArray, newArray) {
  * @param {any[]} newArray
  * @returns {any[]}
  */
-function diff(oldArray, newArray) {
+export function diff(oldArray, newArray) {
   const dp = new Array(oldArray.length + 1)
     .fill(null)
     .map(() => new Array(newArray.length + 1).fill(0));
@@ -98,12 +98,10 @@ function diff(oldArray, newArray) {
   return changes;
 }
 
-const html = (strings, ...values) => {
+export function html(strings, ...values) {
   let result = strings[0];
   values.forEach((e, i) => {
     result += e + strings[i + 1];
   });
   return result;
-};
-
-export { diff, merge, count, timeAgo, html };
+}
