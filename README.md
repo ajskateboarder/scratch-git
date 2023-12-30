@@ -1,12 +1,11 @@
 # scratch-git
 
-Git integration for Scratch (TurboWarp) that just works
+Git version control integration for Scratch (TurboWarp) that just works
 
-https://github.com/lemystic/scratch-git/assets/81255936/1285407f-c9dd-47ca-9a4d-95fd362c5844
+https://github.com/ajskateboarder/scratch-git/assets/81255936/1285407f-c9dd-47ca-9a4d-95fd362c5844
+(out of date as of now)
 
-⚠️ **This is a dumb side project, please don't use this seriously.**
-
-Some people are looking for an integrated version control system for Scratch, so this a first step toward that.
+Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. 
 
 ## Usage
 
@@ -16,24 +15,27 @@ Install these things:
 - [Git](https://git-scm.com) (in case you didn't read the title)
 - [Python](https://python.org/downloads)
 
-After you clone the repo, clone a repo to use for project versioning, rename it to `scratch-git-test`:
+For development, you'll need a [recent version of Node](https://nodejs.org).
+
+After you clone the repo, run the following to copy the userscript and run the server app:
 
 ```bash
-git clone link_to_repo
-mv name_of_repo scratch-git-test
+pip install -r server/requirements.txt
+python scratch-git.py
 ```
 
-Then download a Scratch project locally and rename it to `Project.sb3`. Finally, run this:
+You should now see a new button labeled "Push changes" which runs pushes code from the backend. The save button in the top-right should also be able to make commits based on changes that you make to your project, with a diff-like view for sprite code.
+
+Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no Git skills required!!
+
+## Developing
+
+Run the following for some funny live-reload magic:
 
 ```bash
-./scratch-git
+npm install -g rollup nodemon
+nodemon -x "py scratch-git.py --debug" -w src -w server
 ```
-
-This opens `Project.sb3` in the TurboWarp editor and launches the web server to manage commits/pushes. It also copies the userscript to the config folder for TurboWarp to inject stuff.
-
-You should now see a new button labeled "Push changes" which runs pushes code from the backend. The save button in the top-right should also be able to generate commits based on changes that you make to your project.
-
-Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no terminal skills required.
 
 ## Commit specification
 
@@ -45,17 +47,17 @@ Commits start with the name of the sprite you are making changes to (e.g. Sprite
 
 Commits then specify the change they are making using one of the following statements:
 
-| Statement  | Description |
-| ------------- | ------------- |
-| `add [costumes]`  | The following costumes: `[costumes]` have been added  |
+| Statement            | Description                                             |
+| -------------        | -------------                                           |
+| `add [costumes]`     | The following costumes: `[costumes]` have been added    |
 | `remove [costumes]`  | The following costumes: `[costumes]` have been removed  |
-| `modify [costumes]`  | The following costumes: `[costumes]` have been edited  |
+| `modify [costumes]`  | The following costumes: `[costumes]` have been edited   |
 
-| Statement  | Description |
+| Statement     | Description   |
 | ------------- | ------------- |
-| `{+\|-\|/}{blocks} blocks`  |  `{blocks}` number of blocks have been added (`+`), removed (`-`), or rewritten (`/`)  |
+| `{+\|-\|/}{blocks} blocks`    |  `{blocks}` number of blocks have been added (`+`), removed (`-`), or rewritten (`/`)  |
 
-Here's a few examples:
+### Commit examples
 
 ```text
 Sprite1: +3 blocks, add costume1, Stage: remove backdrop3
