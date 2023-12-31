@@ -1,5 +1,6 @@
 import { createDiffs } from "./index";
 import API from "../api";
+import { scratchAlert } from "../gui-components";
 
 export function parseBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
@@ -44,14 +45,14 @@ export function rerender(style) {
  * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
  */
 export async function showDiffs({ sprite, script = 0, style }) {
-  let project = await API.getCurrentProject();
-
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
   await import(
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
+
+  let project = await API.getCurrentProject();
 
   const oldProject = await project.getPreviousScripts(sprite);
   const newProject = await project.getCurrentScripts(sprite);
@@ -63,10 +64,10 @@ export async function showDiffs({ sprite, script = 0, style }) {
   document.querySelector("#commitButton").onclick = async () => {
     const message = await project.commit();
     document.querySelector("#commitLog").close();
-    new Alert({
+    scratchAlert({
       message: `Commit successful. ${message}`,
       duration: 5000,
-    }).display();
+    });
   };
 
   Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);

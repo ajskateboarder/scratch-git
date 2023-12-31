@@ -1,11 +1,12 @@
 """Web server to manage commits and pushes"""
-from zipfile import ZipFile
-from pathlib import Path
-from os.path import basename
+import json
+import logging
 import shutil
 import subprocess
 import time
-import json
+from os.path import basename
+from pathlib import Path
+from zipfile import ZipFile
 
 from flask import Flask, abort, request
 from flask_cors import CORS
@@ -14,6 +15,9 @@ from server.diff import DiffGen
 
 app = Flask(__name__)
 CORS(app)
+
+log = logging.getLogger("werkzeug")
+log.disabled = True
 
 
 class ProjectConfig:
@@ -30,7 +34,8 @@ class ProjectConfig:
         Path(self.file_name).write_text(json.dumps(self.map), encoding="utf-8")
 
 
-config = ProjectConfig("project_config.json")
+Path("projects").mkdir(exist_ok=True)
+config = ProjectConfig("projects/project_config.json")
 
 
 def extract_project(project_name: str) -> None:
@@ -72,7 +77,7 @@ def create_project():  # type: ignore
     extract_project(basename(project_path))
 
     init_repo = subprocess.check_output(["git", "init"], cwd=project_path).decode()
-    if not "empty Git repository" in init_repo:
+    if not "Git repository" in init_repo:
         abort(500)
     if subprocess.check_call(["git", "add", "."], cwd=project_path) != 0:
         abort(500)
@@ -231,7 +236,3 @@ def sprites(project_name):  # type: ignore
             commit.split(":")[0] for commit in current_project.commits(new_project)
         ]
     }
-
-
-if __name__ == "__main__":
-    app.run(port=6969, debug=True, use_reloader=True)

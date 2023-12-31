@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-from os.path import expandvars
-from os import system
 import shutil
+import sys
+from http.client import HTTPConnection
+from os import system
+from os.path import expandvars
+from pathlib import Path
 from platform import uname
+
+from server.application import app
 
 
 def tw_path() -> Path | None:
@@ -71,14 +74,23 @@ def main() -> None:
         sys.exit(1)
 
     if debug:
-        system("rollup src/main.js --format iife --name bundle --file userscript.js")
+        system(
+            "rollup src/main.js --format iife --name bundle --file userscript.js --silent"
+        )
+        userscript = Path("userscript.js")
+        userscript.write_text(
+            Path("src/reloader.js").read_text("utf-8")
+            + "\n"
+            + userscript.read_text("utf-8"),
+            "utf-8",
+        )
+        HTTPConnection("localhost", 3333).request(
+            "GET", "/update", headers={"Host": "localhost"}
+        )
 
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
-
-    import server
-
-    server.app.run(port=6969, debug=debug, use_reloader=debug)
+    app.run(port=6969)
 
 
 if __name__ == "__main__":

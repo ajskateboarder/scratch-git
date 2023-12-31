@@ -1,6 +1,7 @@
 """Manages asset/code differences"""
 from __future__ import annotations
-from typing import Iterable, Any, no_type_check
+
+from typing import Any, Iterable, no_type_check
 
 
 class DiffGen:

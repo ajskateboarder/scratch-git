@@ -27,7 +27,17 @@ class FileMenu {
   }
 }
 
-export class Alert {
+class Alert {
+  static CLOSE_BUTTON_SVG =
+    "data:image/svg+xml;base64, \
+  PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d \
+  3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdH \
+  lsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO \
+  3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVm \
+  cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc \
+  0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT \
+  0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
+
   /** @param {{message: string; duration: number}} */
   constructor({ message, duration }) {
     this.message = message;
@@ -35,15 +45,10 @@ export class Alert {
   }
 
   display() {
-    const CLOSE_BUTTON_SVG =
-      "data:image/svg+xml;base64, \
-        PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d \
-        3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdH \
-        lsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO \
-        3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVm \
-        cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc \
-        0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT \
-        0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
+    let inverted =
+      document.body.getAttribute("theme") === "dark"
+        ? "filter: invert(70%); "
+        : "";
 
     document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = html`<div
       class="${Cmp.ALERT_DIALOG} ${Cmp.ALERT_SUCCESS} ${Cmp.BOX}"
@@ -60,8 +65,8 @@ export class Alert {
           >
             <img
               class="${Cmp.CLOSE_ICON} undefined"
-              style="filter: invert(70%)"
-              src="${CLOSE_BUTTON_SVG}"
+              style="${inverted}transform: scale(0.6) rotate(45deg)"
+              src="${Alert.CLOSE_BUTTON_SVG}"
             />
           </div>
         </div>
@@ -78,6 +83,11 @@ export class Alert {
   remove() {
     document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = "";
   }
+}
+
+/** @param {{message: string; duration: number}} */
+export function scratchAlert({ message, duration }) {
+  new Alert({ message, duration }).display();
 }
 
 export const fileMenu = new FileMenu();

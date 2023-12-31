@@ -2,7 +2,7 @@ import initialize from "./initialize";
 import Cmp from "./accessors";
 import { initDiffs } from "./diff/render";
 
-function main() {
+(async () => {
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
 
@@ -36,6 +36,4 @@ function main() {
   }, 500);
 
   window.onload = initialize;
-}
-
-main();
+})();
