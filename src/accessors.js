@@ -48,11 +48,9 @@ const Cmp = {
   BOX: select("box_box"),
   SETTINGS_BUTTON: select("settings-modal_button"),
   CLOSE_BUTTON: select("close-button_close-button"),
-  CLOSE_BUTTON_LARGE: select("close-button_large"),
+  CLOSE_BUTTON_LARGE: select("close-button_large").split(".")[1].split(":")[0],
   CLOSE_ICON: select("close-button_close-icon"),
   DISABLED_BUTTON: select("button_mod-disabled"),
 };
-
-window.Cmp = Cmp;
 
 export default Cmp;

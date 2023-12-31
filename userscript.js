@@ -1,4 +1,5 @@
 (() => {
+  console.log("Reloader enabled - waiting for file changes");
   let reloader = new EventSource("http://localhost:3333/listen");
   reloader.onmessage = () => location.reload();
 })();
@@ -7,6 +8,26 @@
   'use strict';
 
   // https://stackoverflow.com/a/69122877/16019146
+  function timeAgo(input) {
+    const date = input instanceof Date ? input : new Date(input);
+    const formatter = new Intl.RelativeTimeFormat("en");
+    const ranges = {
+      years: 3600 * 24 * 365,
+      months: 3600 * 24 * 30,
+      weeks: 3600 * 24 * 7,
+      days: 3600 * 24,
+      hours: 3600,
+      minutes: 60,
+      seconds: 1,
+    };
+    const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+    for (let key in ranges) {
+      if (ranges[key] < Math.abs(secondsElapsed)) {
+        const delta = secondsElapsed / ranges[key];
+        return formatter.format(Math.round(delta), key);
+      }
+    }
+  }
 
   /**
    * @param {any[]} list
@@ -144,12 +165,10 @@
     BOX: select("box_box"),
     SETTINGS_BUTTON: select("settings-modal_button"),
     CLOSE_BUTTON: select("close-button_close-button"),
-    CLOSE_BUTTON_LARGE: select("close-button_large"),
+    CLOSE_BUTTON_LARGE: select("close-button_large").split(".")[1].split(":")[0],
     CLOSE_ICON: select("close-button_close-icon"),
     DISABLED_BUTTON: select("button_mod-disabled"),
   };
-
-  window.Cmp = Cmp;
 
   class FileMenu {
     constructor() {
@@ -177,7 +196,7 @@
     }
   }
 
-  let Alert$1 = class Alert {
+  class Alert {
     static CLOSE_BUTTON_SVG =
       "data:image/svg+xml;base64, \
   PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d \
@@ -195,11 +214,6 @@
     }
 
     display() {
-      let inverted =
-        document.body.getAttribute("theme") === "dark"
-          ? "filter: invert(70%); "
-          : "";
-
       document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = html`<div
       class="${Cmp.ALERT_DIALOG} ${Cmp.ALERT_SUCCESS} ${Cmp.BOX}"
       style="justify-content: space-between"
@@ -209,13 +223,12 @@
         <div class="${Cmp.ALERT_CLOSE_CONTAINER} ${Cmp.BOX}">
           <div
             aria-label="Close"
-            class="${Cmp.CLOSE_BUTTON} ${Cmp.ALERT_CLOSE_BUTTON} ${Cmp.CLOSE_BUTTON_LARGE}"
+            class="${Cmp.CLOSE_BUTTON} ${Cmp.CLOSE_BUTTON_LARGE}"
             role="button"
             tabindex="0"
           >
             <img
               class="${Cmp.CLOSE_ICON} undefined"
-              style="${inverted}transform: scale(0.6) rotate(45deg)"
               src="${Alert.CLOSE_BUTTON_SVG}"
             />
           </div>
@@ -233,11 +246,11 @@
     remove() {
       document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = "";
     }
-  };
+  }
 
   /** @param {{message: string; duration: number}} */
   function scratchAlert({ message, duration }) {
-    new Alert$1({ message, duration }).display();
+    new Alert({ message, duration }).display();
   }
 
   const fileMenu = new FileMenu();
@@ -350,7 +363,7 @@
     }
   }
 
-  var API = new ProjectManager(6969);
+  var api = new ProjectManager(6969);
 
   window.modalSteps = {
     goToStep1: () =>
@@ -360,7 +373,7 @@
       (document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2),
     goToStep3: (path) => {
       (async () => {
-        await API.createProject(path);
+        await api.createProject(path);
         document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_3;
       })();
     },
@@ -562,9 +575,10 @@ width: 65%;
   </div>
 </dialog>`;
 
-  function initialize () {
-    window.fileMenu = fileMenu;
+  /** @file Please someone refactor this nonsense */
 
+
+  function injectStyles() {
     document.head.innerHTML += html`
     <link
       rel="stylesheet"
@@ -576,14 +590,16 @@ width: 65%;
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
   `;
+    // This is kind of cursed.. lol
+    const MENU_ITEM_CSS = `
+div.${Cmp.MENU_ITEM}:has(#push-status):hover {
+  cursor: pointer;
+}
+div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
+  cursor: pointer;
+}`;
     document.head.innerHTML += html`<style>
-    #push-status:hover {
-      cursor: pointer;
-    }
-    #allcommits-log:hover {
-      cursor: pointer;
-    }
-    .content {
+    ${MENU_ITEM_CSS} .content {
       display: flex;
     }
     .sidebar {
@@ -750,27 +766,37 @@ width: 65%;
       display: none;
     }
   </style>`;
+  }
+
+  function initialize () {
+    window.fileMenu = fileMenu;
 
     const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
-    const SAVE_AREA = `${MENU} > div:nth-child(6)`;
+    const SAVE_AREA = `${MENU} > div:nth-child(4)`;
+    let secondCateg = document.querySelector(SAVE_AREA).cloneNode(true);
+    document.querySelector(SAVE_AREA).after(secondCateg);
 
-    document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${Cmp.MENU_ACCOUNTINFOGROUP}">
-      <div class="${Cmp.MENU_ITEM}">
-        <div id="push-status">
-          <span>Push project</span>
-        </div>
-      </div>
-    </div>`;
+    injectStyles();
 
-    document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${Cmp.MENU_ACCOUNTINFOGROUP}">
-      <div class="${Cmp.MENU_ITEM}">
-        <div id="allcommits-log">
-          <span>Commits</span>
-        </div>
+    document.querySelector(SAVE_AREA).innerHTML += html`<div
+    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
+  >
+    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
+      <div id="push-status">
+        <span>Push project</span>
       </div>
-    </div>`;
+    </div>
+  </div>`;
+
+    secondCateg.innerHTML += html`<div
+    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
+  >
+    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
+      <div id="allcommits-log">
+        <span>Commits</span>
+      </div>
+    </div>
+  </div>`;
 
     document.querySelector(SAVE_AREA).innerHTML += DIFF_MODAL;
 
@@ -795,23 +821,25 @@ width: 65%;
         .join(""));
 
     setTimeout(() => {
-      document.querySelector("#push-status").onclick = async () => {
-        document.querySelector("#push-status").style.opacity = "0.5";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Pushing project...";
-        await fetch("http://localhost:6969/push");
-        document.querySelector("#push-status").style.opacity = "1";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Push project";
-        new Alert({
-          message: "Commits pushed successfully",
-          duration: 5000,
-        }).display();
-      };
-      document.querySelector("#allcommits-log").onclick = async () => {
+      document.querySelector("#push-status").parentElement.parentElement.onclick =
+        async () => {
+          document.querySelector("#push-status").style.opacity = "0.5";
+          document.querySelector("#push-status").querySelector("span").innerText =
+            "Pushing project...";
+          await (await api.getCurrentProject()).push();
+          document.querySelector("#push-status").style.opacity = "1";
+          document.querySelector("#push-status").querySelector("span").innerText =
+            "Push project";
+          scratchAlert({
+            message: "Commits pushed successfully",
+            duration: 5000,
+          });
+        };
+      document.querySelector(
+        "#allcommits-log"
+      ).parentElement.parentElement.onclick = async () => {
         let offset = 0;
-        /** @type {Commit[]} */
-        let commits = await (await fetch(`http://localhost:6969/commits`)).json();
+        let commits = await (await api.getCurrentProject()).getCommits();
         [...commits].forEach(
           (commit, i) =>
             (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
@@ -878,8 +906,27 @@ width: 65%;
         }
         document.querySelector("#older").blur();
       };
+      document.querySelectorAll(".git-button").forEach((element) => {
+        element.parentElement.onmouseenter = () => {
+          element.parentElement.style.backgroundColor =
+            "var(--ui-black-transparent, hsla(0, 0%, 0%, 0.15))";
+        };
+        element.parentElement.onmouseleave = () => {
+          element.parentElement.style.backgroundColor =
+            document.body.getAttribute("theme") === "dark"
+              ? "#333"
+              : "hsla(0, 100%, 65%, 1)";
+        };
+      });
     }, 500);
-
+    document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
+      let isDark = document.body.getAttribute("theme") === "dark";
+      document.querySelectorAll(".git-button").forEach((element) => {
+        element.parentElement.style.backgroundColor = isDark
+          ? "#333"
+          : "hsla(0, 100%, 65%, 1)";
+      });
+    };
     if (!fileMenu.isProjectOpen()) {
       document.querySelector("#welcomeLog").showModal();
     }
@@ -1241,7 +1288,7 @@ width: 65%;
       'https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js'
     );
 
-    let project = await API.getCurrentProject();
+    let project = await api.getCurrentProject();
 
     const oldProject = await project.getPreviousScripts(sprite);
     const newProject = await project.getCurrentScripts(sprite);
@@ -1336,7 +1383,7 @@ width: 65%;
   }
 
   async function initDiffs() {
-    let project = await API.getCurrentProject();
+    let project = await api.getCurrentProject();
     await project.unzip();
 
     globalThis.sprites = await project.getSprites();

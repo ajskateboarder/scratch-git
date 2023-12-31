@@ -45,11 +45,6 @@ class Alert {
   }
 
   display() {
-    let inverted =
-      document.body.getAttribute("theme") === "dark"
-        ? "filter: invert(70%); "
-        : "";
-
     document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = html`<div
       class="${Cmp.ALERT_DIALOG} ${Cmp.ALERT_SUCCESS} ${Cmp.BOX}"
       style="justify-content: space-between"
@@ -59,13 +54,12 @@ class Alert {
         <div class="${Cmp.ALERT_CLOSE_CONTAINER} ${Cmp.BOX}">
           <div
             aria-label="Close"
-            class="${Cmp.CLOSE_BUTTON} ${Cmp.ALERT_CLOSE_BUTTON} ${Cmp.CLOSE_BUTTON_LARGE}"
+            class="${Cmp.CLOSE_BUTTON} ${Cmp.CLOSE_BUTTON_LARGE}"
             role="button"
             tabindex="0"
           >
             <img
               class="${Cmp.CLOSE_ICON} undefined"
-              style="${inverted}transform: scale(0.6) rotate(45deg)"
               src="${Alert.CLOSE_BUTTON_SVG}"
             />
           </div>

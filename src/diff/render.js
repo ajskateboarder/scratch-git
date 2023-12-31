@@ -1,5 +1,5 @@
 import { createDiffs } from "./index";
-import API from "../api";
+import api from "../api";
 import { scratchAlert } from "../gui-components";
 
 export function parseBlocks(oldProject, newProject, scriptNumber) {
@@ -52,7 +52,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
 
-  let project = await API.getCurrentProject();
+  let project = await api.getCurrentProject();
 
   const oldProject = await project.getPreviousScripts(sprite);
   const newProject = await project.getCurrentScripts(sprite);
@@ -147,7 +147,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
 }
 
 export async function initDiffs() {
-  let project = await API.getCurrentProject();
+  let project = await api.getCurrentProject();
   await project.unzip();
 
   globalThis.sprites = await project.getSprites();

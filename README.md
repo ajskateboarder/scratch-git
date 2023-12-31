@@ -35,6 +35,7 @@ Run the following for some funny live-reload magic:
 
 ```bash
 npm install -g rollup nodemon
+python3 server/reloader.py &
 nodemon -x "py scratch-git.py --debug" -w src -w server
 ```
 

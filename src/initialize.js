@@ -1,11 +1,12 @@
-import { fileMenu } from "./gui-components";
+/** @file Please someone refactor this nonsense */
+
+import { fileMenu, scratchAlert } from "./gui-components";
 import Cmp from "./accessors";
-import { html } from "./utils";
+import { html, timeAgo } from "./utils";
 import { COMMIT_MODAL, DIFF_MODAL, WELCOME_MODAL } from "./modals";
+import api from "./api";
 
-export default function () {
-  window.fileMenu = fileMenu;
-
+function injectStyles() {
   document.head.innerHTML += html`
     <link
       rel="stylesheet"
@@ -17,14 +18,16 @@ export default function () {
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
   `;
+  // This is kind of cursed.. lol
+  const MENU_ITEM_CSS = `
+div.${Cmp.MENU_ITEM}:has(#push-status):hover {
+  cursor: pointer;
+}
+div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
+  cursor: pointer;
+}`;
   document.head.innerHTML += html`<style>
-    #push-status:hover {
-      cursor: pointer;
-    }
-    #allcommits-log:hover {
-      cursor: pointer;
-    }
-    .content {
+    ${MENU_ITEM_CSS} .content {
       display: flex;
     }
     .sidebar {
@@ -191,27 +194,37 @@ export default function () {
       display: none;
     }
   </style>`;
+}
+
+export default function () {
+  window.fileMenu = fileMenu;
 
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
-  const SAVE_AREA = `${MENU} > div:nth-child(6)`;
+  const SAVE_AREA = `${MENU} > div:nth-child(4)`;
+  let secondCateg = document.querySelector(SAVE_AREA).cloneNode(true);
+  document.querySelector(SAVE_AREA).after(secondCateg);
 
-  document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${Cmp.MENU_ACCOUNTINFOGROUP}">
-      <div class="${Cmp.MENU_ITEM}">
-        <div id="push-status">
-          <span>Push project</span>
-        </div>
-      </div>
-    </div>`;
+  injectStyles();
 
-  document.querySelector(SAVE_AREA).innerHTML += html`&nbsp;
-    <div class="${Cmp.MENU_ACCOUNTINFOGROUP}">
-      <div class="${Cmp.MENU_ITEM}">
-        <div id="allcommits-log">
-          <span>Commits</span>
-        </div>
+  document.querySelector(SAVE_AREA).innerHTML += html`<div
+    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
+  >
+    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
+      <div id="push-status">
+        <span>Push project</span>
       </div>
-    </div>`;
+    </div>
+  </div>`;
+
+  secondCateg.innerHTML += html`<div
+    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
+  >
+    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
+      <div id="allcommits-log">
+        <span>Commits</span>
+      </div>
+    </div>
+  </div>`;
 
   document.querySelector(SAVE_AREA).innerHTML += DIFF_MODAL;
 
@@ -236,23 +249,25 @@ export default function () {
       .join(""));
 
   setTimeout(() => {
-    document.querySelector("#push-status").onclick = async () => {
-      document.querySelector("#push-status").style.opacity = "0.5";
-      document.querySelector("#push-status").querySelector("span").innerText =
-        "Pushing project...";
-      await fetch("http://localhost:6969/push");
-      document.querySelector("#push-status").style.opacity = "1";
-      document.querySelector("#push-status").querySelector("span").innerText =
-        "Push project";
-      new Alert({
-        message: "Commits pushed successfully",
-        duration: 5000,
-      }).display();
-    };
-    document.querySelector("#allcommits-log").onclick = async () => {
+    document.querySelector("#push-status").parentElement.parentElement.onclick =
+      async () => {
+        document.querySelector("#push-status").style.opacity = "0.5";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Pushing project...";
+        await (await api.getCurrentProject()).push();
+        document.querySelector("#push-status").style.opacity = "1";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Push project";
+        scratchAlert({
+          message: "Commits pushed successfully",
+          duration: 5000,
+        });
+      };
+    document.querySelector(
+      "#allcommits-log"
+    ).parentElement.parentElement.onclick = async () => {
       let offset = 0;
-      /** @type {Commit[]} */
-      let commits = await (await fetch(`http://localhost:6969/commits`)).json();
+      let commits = await (await api.getCurrentProject()).getCommits();
       [...commits].forEach(
         (commit, i) =>
           (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
@@ -319,8 +334,27 @@ export default function () {
       }
       document.querySelector("#older").blur();
     };
+    document.querySelectorAll(".git-button").forEach((element) => {
+      element.parentElement.onmouseenter = () => {
+        element.parentElement.style.backgroundColor =
+          "var(--ui-black-transparent, hsla(0, 0%, 0%, 0.15))";
+      };
+      element.parentElement.onmouseleave = () => {
+        element.parentElement.style.backgroundColor =
+          document.body.getAttribute("theme") === "dark"
+            ? "#333"
+            : "hsla(0, 100%, 65%, 1)";
+      };
+    });
   }, 500);
-
+  document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
+    let isDark = document.body.getAttribute("theme") === "dark";
+    document.querySelectorAll(".git-button").forEach((element) => {
+      element.parentElement.style.backgroundColor = isDark
+        ? "#333"
+        : "hsla(0, 100%, 65%, 1)";
+    });
+  };
   if (!fileMenu.isProjectOpen()) {
     document.querySelector("#welcomeLog").showModal();
   }
