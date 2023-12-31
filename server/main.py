@@ -47,7 +47,7 @@ def create_project():  # type: ignore
         abort(500)
     name = basename(Path(file_name)).split(".")[0]
 
-    project_path = Path(name).absolute()
+    project_path = ("projects" / Path(name)).absolute()
     file_path = Path(file_name).absolute()
 
     if not config.map.get(name):
@@ -62,15 +62,29 @@ def create_project():  # type: ignore
                 i += 1
         name = f"{name}~{i}"
         config.map[name] = {
-            "base": str(Path(name).absolute()),
+            "base": str(name.absolute()),
             "project_file": str(file_path),
         }
 
     config.save()
-    Path(name).mkdir()
+    project_path.mkdir(parents=True)
     extract_project(name)
 
     return {"project_name": name}
+
+
+@app.post("/find_project")
+def find_project():  # type: ignore
+    project_json = request.get_json().get("project_json")
+
+    if project_json is None:
+        abort(500)
+
+    for f in Path("projects").glob("**/project.json"):
+        if project_json == f.read_text():
+            return {"project_name": basename(str(f.parent))}
+
+    return {"project_name": None}
 
 
 @app.get("/<project_name>/unzip")

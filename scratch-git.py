@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 from os.path import expandvars
+from os import system
 import shutil
 from platform import uname
-from subprocess import check_call
 
 
 def tw_path() -> Path | None:
@@ -71,20 +71,8 @@ def main() -> None:
         sys.exit(1)
 
     if debug:
-        check_call(
-            [
-                "npx",
-                "rollup",
-                "src/main.js",
-                "--format",
-                "iife",
-                "--name",
-                "bundle",
-                "--file",
-                "userscript.js",
-            ],
-            shell=True,
-        )
+        system("rollup src/main.js --format iife --name bundle --file userscript.js")
+
     shutil.copy2("userscript.js", path)
     print("Script copied to", path)
 

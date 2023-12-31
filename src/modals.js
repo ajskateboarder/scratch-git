@@ -1,7 +1,7 @@
 import Cmp from "./accessors";
 import { html } from "./utils";
 import { fileMenu } from "./gui-components";
-import API from "./git-api";
+import API from "./api";
 
 window.modalSteps = {
   goToStep1: () =>

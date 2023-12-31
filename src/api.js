@@ -10,15 +10,17 @@
  */
 
 class Project {
+  #portNumber;
+
   /** @param {string} project */
   constructor(project, portNumber = 6969) {
     this.project = project;
-    this.portNumber = portNumber;
+    this.#portNumber = portNumber;
   }
 
   async _request(path) {
     return await fetch(
-      `http://localhost:${this.portNumber}/${this.project}${path}`
+      `http://localhost:${this.#portNumber}/${this.project}${path}`
     );
   }
 
@@ -91,6 +93,21 @@ class ProjectManager {
       )
     ).json();
     return new Project(response.project_name, this.#portNumber);
+  }
+
+  /**
+   * @returns {Promise<Project | undefined>}
+   */
+  async getCurrentProject() {
+    let response = await (
+      await fetch(`http://localhost:${this.#portNumber}/find_project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_json: vm.toJSON() }),
+      })
+    ).json();
+    if (response.project_name)
+      return new Project(response.project_name, this.#portNumber);
   }
 }
 
