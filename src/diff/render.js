@@ -1,7 +1,7 @@
 import { createDiffs } from "./index";
 import API from "../api";
 
-function parseBlocks(oldProject, newProject, scriptNumber) {
+export function parseBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(oldProject).filter((key) =>
       oldProject[key].opcode.startsWith("event_when")
@@ -30,7 +30,7 @@ function parseBlocks(oldProject, newProject, scriptNumber) {
   };
 }
 
-function rerender(style) {
+export function rerender(style) {
   const activeButton = parseInt(
     document
       .querySelector("button[class='tab-btn active-tab']")
@@ -43,7 +43,9 @@ function rerender(style) {
  * Render diffs from a script from a sprite
  * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
  */
-async function showDiffs({ sprite, script = 0, style }) {
+export async function showDiffs({ sprite, script = 0, style }) {
+  let project = await API.getCurrentProject();
+
   await import(
     "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
   );
@@ -51,21 +53,15 @@ async function showDiffs({ sprite, script = 0, style }) {
     "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
   );
 
-  const oldProject = await (
-    await fetch(`http://localhost:6969/project.old.json?name=${sprite}`)
-  ).json();
-
-  const newProject = await (
-    await fetch(`http://localhost:6969/project.json?name=${sprite}`)
-  ).json();
-
+  const oldProject = await project.getPreviousScripts(sprite);
+  const newProject = await project.getCurrentScripts(sprite);
   const diffs = createDiffs(oldProject, newProject);
 
   document.querySelector("#scripts").innerHTML = "";
   document.querySelector("#commits").innerHTML = "";
 
   document.querySelector("#commitButton").onclick = async () => {
-    const message = await (await fetch("http://localhost:6969/commit")).text();
+    const message = await project.commit();
     document.querySelector("#commitLog").close();
     new Alert({
       message: `Commit successful. ${message}`,
@@ -149,4 +145,13 @@ async function showDiffs({ sprite, script = 0, style }) {
   }
 }
 
-export { showDiffs, rerender, parseBlocks };
+export async function initDiffs() {
+  let project = await API.getCurrentProject();
+  await project.unzip();
+
+  globalThis.sprites = await project.getSprites();
+
+  document.querySelector("#styleChoice").value = "scratch3";
+
+  await showDiffs({ sprite: globalThis.sprites[0] });
+}

@@ -1,4 +1,5 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
+import Cmp from "./accessors";
 
 /**
  * @typedef Commit
@@ -34,6 +35,7 @@ class Project {
     return commits;
   }
 
+  /** Retreive sprites that have been changed since project changes */
   async getSprites() {
     return (await (await this._request("/sprites")).json()).sprites;
   }
@@ -51,7 +53,7 @@ class Project {
   }
 
   async commit() {
-    await this._request("/commit");
+    return await (await this._request("/commit")).text();
   }
 
   async push() {
@@ -99,15 +101,9 @@ class ProjectManager {
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
-    let response = await (
-      await fetch(`http://localhost:${this.#portNumber}/find_project`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_json: vm.toJSON() }),
-      })
-    ).json();
-    if (response.project_name)
-      return new Project(response.project_name, this.#portNumber);
+    let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
+      .children[0].value;
+    return new Project(projectName, this.#portNumber);
   }
 }
 

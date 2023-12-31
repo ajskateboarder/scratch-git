@@ -1,4 +1,5 @@
 import * as ArrayUtils from "../utils";
+import { parseBlocks } from "./render";
 
 /**
  * @typedef ScriptDiffOptions
@@ -17,7 +18,7 @@ export class ScriptDiff {
    */
   constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
     if (!skipParsing) {
-      const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
+      const parsed = parseBlocks(oldProject, newProject, scriptNumber);
       this.old = parsed.oldBlocks
         .split("\n")
         .map((item, i) => `${i} ${item.trim()}`);

@@ -1,11 +1,12 @@
-import { showDiffs } from "./diff/render";
 import initialize from "./initialize";
 import Cmp from "./accessors";
+import { initDiffs } from "./diff/render";
 
 function main() {
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
 
+  // This doesn't seem to work right now
   let addNote = setInterval(async () => {
     try {
       let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
@@ -21,18 +22,6 @@ function main() {
       }
     } catch {}
   }, 500);
-
-  async function initDiffs() {
-    await fetch("http://localhost:6969/unzip");
-
-    globalThis.sprites = (
-      await (await fetch("http://localhost:6969/sprites")).json()
-    ).sprites;
-
-    document.querySelector("#styleChoice").value = "scratch3";
-
-    await showDiffs({ sprite: globalThis.sprites[0] });
-  }
 
   setInterval(async () => {
     try {

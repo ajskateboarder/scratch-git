@@ -23,11 +23,11 @@ class ProjectConfig:
             with open(Path(file_name), encoding="utf-8") as fh:
                 self.map = json.load(fh)
         else:
-            Path(file_name).write_text("{}")
+            Path(file_name).write_text("{}", encoding="utf-8")
             self.map = {}
 
     def save(self) -> None:
-        Path(self.file_name).write_text(json.dumps(self.map))
+        Path(self.file_name).write_text(json.dumps(self.map), encoding="utf-8")
 
 
 config = ProjectConfig("project_config.json")
@@ -62,13 +62,26 @@ def create_project():  # type: ignore
                 i += 1
         name = f"{name}~{i}"
         config.map[name] = {
-            "base": str(name.absolute()),
+            "base": str(Path(name).absolute()),
             "project_file": str(file_path),
         }
 
     config.save()
-    project_path.mkdir(parents=True)
-    extract_project(name)
+    if not project_path.exists():
+        project_path.mkdir(parents=True)
+    extract_project(basename(project_path))
+
+    init_repo = subprocess.check_output(["git", "init"], cwd=project_path).decode()
+    if not "empty Git repository" in init_repo:
+        abort(500)
+    if subprocess.check_call(["git", "add", "."], cwd=project_path) != 0:
+        abort(500)
+    try:
+        subprocess.check_call(
+            ["git", "commit", "-m", "Initial commit"], cwd=project_path
+        )
+    except subprocess.CalledProcessError:
+        abort(500)
 
     return {"project_name": name}
 
@@ -106,7 +119,7 @@ def unzip(project_name):  # type: ignore
 
 @app.get("/<project_name>/commit")
 def commit(project_name):  # type: ignore
-    """Commits the state of a Scratch project"""
+    """Commits the state of a Scratch project and returns a message"""
     project_dir = Path(config.map[project_name]["base"])
 
     with open(project_dir / "project.old.json", encoding="utf-8") as fh:
@@ -130,7 +143,7 @@ def commit(project_name):  # type: ignore
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     ) as commit_cmd:
-        if commit_cmd != 0:
+        if commit_cmd.returncode != 0:
             _, stderr = commit_cmd.communicate()
             # TODO: modify below code, why do I depend on a commit hook?
             if ".git/hooks/commit-msg" not in stderr.decode("utf-8"):
@@ -165,7 +178,7 @@ def old_project(project_name):  # type: ignore
 
 
 @app.get("/<project_name>/project.json")
-def current_project(project_name):  # type: ignore
+def current_project_(project_name):  # type: ignore
     """Retreive the current project.json"""
     project_dir = Path(config.map[project_name]["base"])
 

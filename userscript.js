@@ -89,546 +89,6 @@
     return result;
   }
 
-  /**
-   * @typedef ScriptDiffOptions
-   * @property {object} oldProject
-   * @property {object} newProject
-   * @property {number} scriptNumber
-   * @property {boolean?} skipParsing
-   */
-
-  class ScriptDiff {
-    /** @type {("added" | "removed" | "modified")} */
-    status;
-
-    /**
-     * @param {ScriptDiffOptions}
-     */
-    constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
-      if (!skipParsing) {
-        const parsed = parseTheBlocks(oldProject, newProject, scriptNumber);
-        this.old = parsed.oldBlocks
-          .split("\n")
-          .map((item, i) => `${i} ${item.trim()}`);
-        this.new = parsed.newBlocks
-          .split("\n")
-          .map((item, i) => `${i} ${item.trim()}`);
-      }
-      this.scriptNo = scriptNumber;
-
-      if (!skipParsing) {
-        this.difference = diff(this.old, this.new);
-        this.merged = ScriptDiff.fixCBlocks(merge(this.old, this.new));
-      }
-    }
-
-    /** @param {string[]} merged @returns {string[]}*/
-    static fixCBlocks(merged) {
-      /** @type {string[]} */
-      let mergedNre = merged.map((e) => e.substring(e.indexOf(" ") + 1));
-      let cBlockFound = false;
-      [...mergedNre].forEach((block, i) => {
-        if (block === "forever" || block.startsWith("repeat")) {
-          cBlockFound = true;
-        }
-        if (block === "end" && cBlockFound) {
-          mergedNre = mergedNre.filter((e) => e !== mergedNre[i]);
-          cBlockFound = false;
-        }
-      });
-      let cBlocksOnly = mergedNre.map((e) => {
-        if (e.includes("forever") || e.includes("repeat")) {
-          return "cBlock";
-        } else if (e.includes("end")) {
-          return "end";
-        } else {
-          return e;
-        }
-      });
-      while (
-        count(cBlocksOnly, "cBlock") !==
-        count(cBlocksOnly, "end")
-      ) {
-        mergedNre.push("end");
-        cBlocksOnly.push("end");
-      }
-      let returned = mergedNre.map((e, i) => `${i} ${e}`);
-      return returned;
-    }
-
-    /** @returns {boolean} */
-    get hasDiffs() {
-      return !(
-        this.difference.added.length === 0 &&
-        this.difference.removed.length === 0 &&
-        this.difference.modified.length === 0
-      );
-    }
-
-    /** @returns {string[]} */
-    static events(project) {
-      return Object.keys(project).filter((key) =>
-        project[key].opcode.startsWith("event_when")
-      );
-    }
-
-    /** Finds all scripts which have been modified in some way */
-    static availableSprites(oldProject, newProject) {
-      const _scripts = this.events(oldProject);
-      const _newScripts = this.events(newProject);
-
-      const scripts = _scripts.map((e, i) => ({ scriptLoc: e, index: i }));
-      const newScripts = _newScripts.map((e, i) => ({ scriptLoc: e, index: i }));
-
-      const modified = scripts.filter((e) => {
-        try {
-          const oldblocks = parseSB3Blocks.toScratchblocks(
-            _scripts[e.index],
-            oldProject,
-            "en",
-            {
-              tabs: "",
-            }
-          );
-          const newblocks = parseSB3Blocks.toScratchblocks(
-            _newScripts[e.index],
-            newProject,
-            "en",
-            {
-              tabs: "",
-            }
-          );
-          return oldblocks !== newblocks;
-        } catch {
-          console.warn(e);
-        }
-      });
-
-      const removed = scripts.filter((e) => newScripts[e.index] === undefined);
-      const added = newScripts.filter((e) => scripts[e.index] === undefined);
-
-      return {
-        modified,
-        removed,
-        added,
-      };
-    }
-
-    /** @param {("scratch3" | "scratch3-high-contrast" | "scratch2")} style */
-    renderBlocks(style = "scratch3") {
-      const code = this.merged
-        .map((item) => item.substring(item.indexOf(" ") + 1))
-        .join("\n");
-      document.querySelector("#commits").innerText = code;
-
-      scratchblocks.renderMatching("#commits", {
-        style: style,
-        scale: style === "scratch2" ? 1.15 : 0.675,
-      });
-
-      let blocks = Array.from(
-        document.querySelectorAll(`.scratchblocks-style-${style} g > g path`)
-      ).filter((e) => e?.parentElement?.nextElementSibling?.innerHTML !== "then");
-      if (style === "scratch2") {
-        blocks = blocks.filter((e) => !e.classList.contains("sb-input"));
-      }
-
-      let addedC = [...this.difference.added];
-      let removedC = [...this.difference.removed];
-
-      // highlight blocks that have been removed in merge
-      if (this.status !== "added") {
-        // added scripts don't have any removed blocks lol
-        this.merged.forEach((item, i) => {
-          if (removedC.includes(item)) {
-            try {
-              removedC = removedC.filter((e) => e !== item);
-              const block = blocks[i].cloneNode(true);
-              block.style.fill = "red";
-              block.style.opacity = "0.5";
-              blocks[i].parentElement.appendChild(block);
-            } catch {}
-          }
-        });
-      }
-
-      // highlight blocks that have been added in merge
-      this.merged.forEach((item, i) => {
-        if (addedC.includes(item)) {
-          addedC = addedC.filter((e) => e !== item);
-          let block;
-          try {
-            block = blocks[i].cloneNode(true);
-          } catch (e) {
-            return console.warn(`${e}\n\nFailed to find/parse block ${i}`);
-          }
-          block.style.fill = "green";
-          block.style.opacity = "0.5";
-          try {
-            blocks[i].parentElement.appendChild(block);
-          } catch (e) {
-            console.warn(`${e}\n\nFailed to find/parse block ${i}`);
-          }
-        }
-      });
-
-      if (
-        typeof addedC[0] !== "undefined" &&
-        (addedC[0].endsWith("forever") || addedC[0].includes("repeat"))
-      ) {
-        let forevers = blocks.filter((e) => {
-          let _text = e.parentElement.querySelector("text").innerHTML;
-          return _text === "forever" || _text === "repeat";
-        });
-        if (forevers.length === 1) {
-          let afterForevers = blocks.slice(blocks.indexOf(forevers[0]));
-          afterForevers.forEach((block) => {
-            let copy = block.cloneNode();
-            copy.style.fill = "green";
-            copy.style.opacity = "0.5";
-            block.parentElement.appendChild(copy);
-          });
-        } else {
-          let lineNo = parseInt(addedC[0].split(" ")[0]);
-          let changedForeverBlock = forevers[lineNo - 1] ?? forevers[lineNo - 2];
-          let shrek2 = blocks.slice(blocks.indexOf(changedForeverBlock));
-          shrek2.forEach((block) => {
-            let copy = block.cloneNode();
-            copy.style.fill = "green";
-            copy.style.opacity = "0.5";
-            block.parentElement.appendChild(copy);
-          });
-        }
-      }
-
-      if (this.status === "added") {
-        blocks.forEach((block) => {
-          let copy = block.cloneNode();
-          copy.style.fill = "green";
-          copy.style.opacity = "0.5";
-          block.parentElement.appendChild(copy);
-        });
-      }
-
-      // remove duplicate highlights
-      const htmls = Array.from(document.querySelectorAll("path[class^='sb3-'"));
-
-      if (addedC.length !== 0) {
-        htmls
-          .slice(
-            htmls.indexOf(htmls.filter((e) => e.style.fill === "red").pop()) + 1
-          )
-          .forEach((block) => {
-            let copy = block.cloneNode();
-            copy.style.fill = "green";
-            copy.style.opacity = "0.5";
-            block.parentElement.appendChild(copy);
-          });
-      }
-
-      const noDupes = [...new Set(htmls.map((e) => e.outerHTML))];
-
-      const dupesOnly = htmls.filter((e) => !noDupes.includes(e.outerHTML));
-      dupesOnly.forEach((element) => element.remove());
-    }
-  }
-
-  /**
-   * @param {object} oldProject
-   * @param {object} newProject
-   */
-  function createDiffs(oldProject, newProject) {
-    const changes = ScriptDiff.availableSprites(oldProject, newProject);
-
-    /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
-    const diffs = {
-      modified: [],
-      removed: [],
-      added: [],
-    };
-
-    changes.modified.forEach((e) => {
-      const script = new ScriptDiff({
-        oldProject: oldProject,
-        newProject: newProject,
-        scriptNumber: e.index,
-      });
-
-      script.status = "modified";
-      if (script.hasDiffs) {
-        diffs.modified.push(script);
-      }
-    });
-
-    changes.removed.forEach((e) => {
-      const oldBlocks = parseSB3Blocks.toScratchblocks(
-        e.scriptLoc,
-        oldProject,
-        "en",
-        {
-          tabs: "",
-        }
-      );
-      const script = new ScriptDiff({ skipParsing: true });
-      script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.difference = diff(script.old, script.new);
-      script.merged = ScriptDiff.fixCBlocks(
-        merge(script.old, script.new)
-      );
-      script.scriptNo = e.index;
-      script.status = "removed";
-      diffs.removed.push(script);
-    });
-
-    changes.added.forEach((e) => {
-      const newBlocks = parseSB3Blocks.toScratchblocks(
-        e.scriptLoc,
-        newProject,
-        "en",
-        {
-          tabs: "",
-        }
-      );
-      const script = new ScriptDiff({ skipParsing: true });
-      script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
-      script.difference = diff(script.old, script.new);
-      script.merged = ScriptDiff.fixCBlocks(
-        merge(script.old, script.new)
-      );
-      script.scriptNo = e.index;
-      script.status = "added";
-      diffs.added.push(script);
-    });
-    return diffs;
-  }
-
-  /** @file A tiny wrapper over the local APIs to work with Git projects */
-
-  /**
-   * @typedef Commit
-   * @property {{date: string; email: string; name: string}} author
-   * @property {string} body
-   * @property {string} commit
-   * @property {string} subject
-   * @property {string} shortDate
-   */
-
-  class Project {
-    #portNumber;
-
-    /** @param {string} project */
-    constructor(project, portNumber = 6969) {
-      this.project = project;
-      this.#portNumber = portNumber;
-    }
-
-    async _request(path) {
-      return await fetch(
-        `http://localhost:${this.#portNumber}/${this.project}${path}`
-      );
-    }
-
-    /** @returns {Promise<Commit[]>} */
-    async getCommits() {
-      let commits = await (await this._request("/commits")).json();
-      [...commits].forEach(
-        (commit, i) =>
-          (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
-      );
-      return commits;
-    }
-
-    async getSprites() {
-      return (await (await this._request("/sprites")).json()).sprites;
-    }
-
-    /** @param {string} sprite */
-    async getCurrentScripts(sprite) {
-      return await (await this._request(`/project.json?name=${sprite}`)).json();
-    }
-
-    /** @param {string} sprite */
-    async getPreviousScripts(sprite) {
-      return await (
-        await this._request(`/project.old.json?name=${sprite}`)
-      ).json();
-    }
-
-    async commit() {
-      await this._request("/commit");
-    }
-
-    async push() {
-      await this._request("/push");
-    }
-
-    async unzip() {
-      await this._request("/unzip");
-    }
-  }
-
-  // class factory jumpscare
-  class ProjectManager {
-    #portNumber;
-
-    /** @param {number} portNumber */
-    constructor(portNumber) {
-      this.#portNumber = portNumber;
-    }
-
-    /**
-     * @param {string} projectName
-     * @returns {Promise<Project>}
-     */
-    async getProject(projectName) {
-      return new Project(projectName, this.#portNumber);
-    }
-
-    /**
-     * @param {string} projectPath
-     * @returns {Promise<Project>}
-     */
-    async createProject(projectPath) {
-      let response = await (
-        await fetch(
-          `http://localhost:${
-          this.#portNumber
-        }/create_project?file_name=${projectPath}`
-        )
-      ).json();
-      return new Project(response.project_name, this.#portNumber);
-    }
-
-    /**
-     * @returns {Promise<Project | undefined>}
-     */
-    async getCurrentProject() {
-      let response = await (
-        await fetch(`http://localhost:${this.#portNumber}/find_project`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ project_json: vm.toJSON() }),
-        })
-      ).json();
-      if (response.project_name)
-        return new Project(response.project_name, this.#portNumber);
-    }
-  }
-
-  var API = new ProjectManager(6969);
-
-  /**
-   * Render diffs from a script from a sprite
-   * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
-   */
-  async function showDiffs({ sprite, script = 0, style }) {
-    await import(
-      'https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js'
-    );
-    await import(
-      'https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js'
-    );
-
-    const oldProject = await (
-      await fetch(`http://localhost:6969/project.old.json?name=${sprite}`)
-    ).json();
-
-    const newProject = await (
-      await fetch(`http://localhost:6969/project.json?name=${sprite}`)
-    ).json();
-
-    const diffs = createDiffs(oldProject, newProject);
-
-    document.querySelector("#scripts").innerHTML = "";
-    document.querySelector("#commits").innerHTML = "";
-
-    document.querySelector("#commitButton").onclick = async () => {
-      const message = await (await fetch("http://localhost:6969/commit")).text();
-      document.querySelector("#commitLog").close();
-      new Alert({
-        message: `Commit successful. ${message}`,
-        duration: 5000,
-      }).display();
-    };
-
-    Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
-
-    const modal = document.querySelector("#commitLog");
-    if (!modal.open) {
-      modal.showModal();
-    }
-
-    document.querySelector(".topbar").innerHTML = "";
-
-    globalThis.sprites.forEach((sprite) => {
-      let newItem = document.createElement("a");
-      newItem.href = "#whatever";
-      newItem.appendChild(document.createTextNode(sprite));
-      newItem.onclick = async () => {
-        document
-          .querySelectorAll(".topbar a")
-          .forEach((e) => e.classList.remove("active-tab"));
-        newItem.classList.add("active-tab");
-
-        await showDiffs({
-          sprite: sprite,
-          style: document.querySelector("#styleChoice").value,
-        });
-      };
-      document.querySelector(".topbar").appendChild(newItem);
-    });
-
-    Array.from(Object.values(diffs))
-      .flat(Infinity)
-      .forEach((diff, i) => {
-        let newItem = document.createElement("li");
-        let link = document.createElement("button");
-        link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
-        link.classList.add("tab-btn");
-        link.setAttribute("script-no", i);
-        link.onclick = async () => {
-          document
-            .querySelectorAll(".tab-btn")
-            .forEach((e) => e.classList.remove("active-tab"));
-          link.classList.add("active-tab");
-
-          await showDiffs({
-            sprite: document.querySelector("a.active-tab").innerText,
-            script: i,
-            style: document.querySelector("#styleChoice").value,
-          });
-        };
-        switch (diff.status) {
-          case "added":
-            link.innerHTML = `<i class="fa-solid fa-square-plus"></i> Script ${diff.scriptNo}`;
-            break;
-          case "modified":
-            link.innerHTML = `<i class="fa-solid fa-square-minus"></i> Script ${diff.scriptNo}`;
-            break;
-          case "removed":
-            link.innerHTML = `<i class="fa-solid fa-square-xmark"></i> Script ${diff.scriptNo}`;
-            break;
-        }
-        newItem.appendChild(link);
-        document.querySelector("#scripts").appendChild(newItem);
-      });
-
-    document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
-    document
-      .querySelectorAll(".topbar a")
-      [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
-
-    globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
-    if (document.querySelector("body").getAttribute("theme") === "dark") {
-      document.querySelector(".sidebar").classList.add("dark");
-      document.querySelector(".topbar").classList.add("dark");
-    } else {
-      document.querySelector(".sidebar").classList.remove("dark");
-    }
-  }
-
   /** @file A lookup to create elements using scratch-gui classnames */
 
   /** @type {string[]} */
@@ -713,6 +173,116 @@
   }
 
   const fileMenu = new FileMenu();
+
+  /** @file A tiny wrapper over the local APIs to work with Git projects */
+
+  /**
+   * @typedef Commit
+   * @property {{date: string; email: string; name: string}} author
+   * @property {string} body
+   * @property {string} commit
+   * @property {string} subject
+   * @property {string} shortDate
+   */
+
+  class Project {
+    #portNumber;
+
+    /** @param {string} project */
+    constructor(project, portNumber = 6969) {
+      this.project = project;
+      this.#portNumber = portNumber;
+    }
+
+    async _request(path) {
+      return await fetch(
+        `http://localhost:${this.#portNumber}/${this.project}${path}`
+      );
+    }
+
+    /** @returns {Promise<Commit[]>} */
+    async getCommits() {
+      let commits = await (await this._request("/commits")).json();
+      [...commits].forEach(
+        (commit, i) =>
+          (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+      );
+      return commits;
+    }
+
+    /** Retreive sprites that have been changed since project changes */
+    async getSprites() {
+      return (await (await this._request("/sprites")).json()).sprites;
+    }
+
+    /** @param {string} sprite */
+    async getCurrentScripts(sprite) {
+      return await (await this._request(`/project.json?name=${sprite}`)).json();
+    }
+
+    /** @param {string} sprite */
+    async getPreviousScripts(sprite) {
+      return await (
+        await this._request(`/project.old.json?name=${sprite}`)
+      ).json();
+    }
+
+    async commit() {
+      return await (await this._request("/commit")).text();
+    }
+
+    async push() {
+      await this._request("/push");
+    }
+
+    async unzip() {
+      await this._request("/unzip");
+    }
+  }
+
+  // class factory jumpscare
+  class ProjectManager {
+    #portNumber;
+
+    /** @param {number} portNumber */
+    constructor(portNumber) {
+      this.#portNumber = portNumber;
+    }
+
+    /**
+     * @param {string} projectName
+     * @returns {Promise<Project>}
+     */
+    async getProject(projectName) {
+      return new Project(projectName, this.#portNumber);
+    }
+
+    /**
+     * @param {string} projectPath
+     * @returns {Promise<Project>}
+     */
+    async createProject(projectPath) {
+      let response = await (
+        await fetch(
+          `http://localhost:${
+          this.#portNumber
+        }/create_project?file_name=${projectPath}`
+        )
+      ).json();
+      return new Project(response.project_name, this.#portNumber);
+    }
+
+    /**
+     * @returns {Promise<Project | undefined>}
+     */
+    async getCurrentProject() {
+      let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
+        .children[0].value;
+      return new Project(projectName, this.#portNumber);
+    }
+  }
+
+  var API = new ProjectManager(6969);
 
   window.modalSteps = {
     goToStep1: () =>
@@ -1247,10 +817,472 @@ width: 65%;
     }
   }
 
+  /**
+   * @typedef ScriptDiffOptions
+   * @property {object} oldProject
+   * @property {object} newProject
+   * @property {number} scriptNumber
+   * @property {boolean?} skipParsing
+   */
+
+  class ScriptDiff {
+    /** @type {("added" | "removed" | "modified")} */
+    status;
+
+    /**
+     * @param {ScriptDiffOptions}
+     */
+    constructor({ oldProject, newProject, scriptNumber, skipParsing = false }) {
+      if (!skipParsing) {
+        const parsed = parseBlocks(oldProject, newProject, scriptNumber);
+        this.old = parsed.oldBlocks
+          .split("\n")
+          .map((item, i) => `${i} ${item.trim()}`);
+        this.new = parsed.newBlocks
+          .split("\n")
+          .map((item, i) => `${i} ${item.trim()}`);
+      }
+      this.scriptNo = scriptNumber;
+
+      if (!skipParsing) {
+        this.difference = diff(this.old, this.new);
+        this.merged = ScriptDiff.fixCBlocks(merge(this.old, this.new));
+      }
+    }
+
+    /** @param {string[]} merged @returns {string[]}*/
+    static fixCBlocks(merged) {
+      /** @type {string[]} */
+      let mergedNre = merged.map((e) => e.substring(e.indexOf(" ") + 1));
+      let cBlockFound = false;
+      [...mergedNre].forEach((block, i) => {
+        if (block === "forever" || block.startsWith("repeat")) {
+          cBlockFound = true;
+        }
+        if (block === "end" && cBlockFound) {
+          mergedNre = mergedNre.filter((e) => e !== mergedNre[i]);
+          cBlockFound = false;
+        }
+      });
+      let cBlocksOnly = mergedNre.map((e) => {
+        if (e.includes("forever") || e.includes("repeat")) {
+          return "cBlock";
+        } else if (e.includes("end")) {
+          return "end";
+        } else {
+          return e;
+        }
+      });
+      while (
+        count(cBlocksOnly, "cBlock") !==
+        count(cBlocksOnly, "end")
+      ) {
+        mergedNre.push("end");
+        cBlocksOnly.push("end");
+      }
+      let returned = mergedNre.map((e, i) => `${i} ${e}`);
+      return returned;
+    }
+
+    /** @returns {boolean} */
+    get hasDiffs() {
+      return !(
+        this.difference.added.length === 0 &&
+        this.difference.removed.length === 0 &&
+        this.difference.modified.length === 0
+      );
+    }
+
+    /** @returns {string[]} */
+    static events(project) {
+      return Object.keys(project).filter((key) =>
+        project[key].opcode.startsWith("event_when")
+      );
+    }
+
+    /** Finds all scripts which have been modified in some way */
+    static availableSprites(oldProject, newProject) {
+      const _scripts = this.events(oldProject);
+      const _newScripts = this.events(newProject);
+
+      const scripts = _scripts.map((e, i) => ({ scriptLoc: e, index: i }));
+      const newScripts = _newScripts.map((e, i) => ({ scriptLoc: e, index: i }));
+
+      const modified = scripts.filter((e) => {
+        try {
+          const oldblocks = parseSB3Blocks.toScratchblocks(
+            _scripts[e.index],
+            oldProject,
+            "en",
+            {
+              tabs: "",
+            }
+          );
+          const newblocks = parseSB3Blocks.toScratchblocks(
+            _newScripts[e.index],
+            newProject,
+            "en",
+            {
+              tabs: "",
+            }
+          );
+          return oldblocks !== newblocks;
+        } catch {
+          console.warn(e);
+        }
+      });
+
+      const removed = scripts.filter((e) => newScripts[e.index] === undefined);
+      const added = newScripts.filter((e) => scripts[e.index] === undefined);
+
+      return {
+        modified,
+        removed,
+        added,
+      };
+    }
+
+    /** @param {("scratch3" | "scratch3-high-contrast" | "scratch2")} style */
+    renderBlocks(style = "scratch3") {
+      const code = this.merged
+        .map((item) => item.substring(item.indexOf(" ") + 1))
+        .join("\n");
+      document.querySelector("#commits").innerText = code;
+
+      scratchblocks.renderMatching("#commits", {
+        style: style,
+        scale: style === "scratch2" ? 1.15 : 0.675,
+      });
+
+      let blocks = Array.from(
+        document.querySelectorAll(`.scratchblocks-style-${style} g > g path`)
+      ).filter((e) => e?.parentElement?.nextElementSibling?.innerHTML !== "then");
+      if (style === "scratch2") {
+        blocks = blocks.filter((e) => !e.classList.contains("sb-input"));
+      }
+
+      let addedC = [...this.difference.added];
+      let removedC = [...this.difference.removed];
+
+      // highlight blocks that have been removed in merge
+      if (this.status !== "added") {
+        // added scripts don't have any removed blocks lol
+        this.merged.forEach((item, i) => {
+          if (removedC.includes(item)) {
+            try {
+              removedC = removedC.filter((e) => e !== item);
+              const block = blocks[i].cloneNode(true);
+              block.style.fill = "red";
+              block.style.opacity = "0.5";
+              blocks[i].parentElement.appendChild(block);
+            } catch {}
+          }
+        });
+      }
+
+      // highlight blocks that have been added in merge
+      this.merged.forEach((item, i) => {
+        if (addedC.includes(item)) {
+          addedC = addedC.filter((e) => e !== item);
+          let block;
+          try {
+            block = blocks[i].cloneNode(true);
+          } catch (e) {
+            return console.warn(`${e}\n\nFailed to find/parse block ${i}`);
+          }
+          block.style.fill = "green";
+          block.style.opacity = "0.5";
+          try {
+            blocks[i].parentElement.appendChild(block);
+          } catch (e) {
+            console.warn(`${e}\n\nFailed to find/parse block ${i}`);
+          }
+        }
+      });
+
+      if (
+        typeof addedC[0] !== "undefined" &&
+        (addedC[0].endsWith("forever") || addedC[0].includes("repeat"))
+      ) {
+        let forevers = blocks.filter((e) => {
+          let _text = e.parentElement.querySelector("text").innerHTML;
+          return _text === "forever" || _text === "repeat";
+        });
+        if (forevers.length === 1) {
+          let afterForevers = blocks.slice(blocks.indexOf(forevers[0]));
+          afterForevers.forEach((block) => {
+            let copy = block.cloneNode();
+            copy.style.fill = "green";
+            copy.style.opacity = "0.5";
+            block.parentElement.appendChild(copy);
+          });
+        } else {
+          let lineNo = parseInt(addedC[0].split(" ")[0]);
+          let changedForeverBlock = forevers[lineNo - 1] ?? forevers[lineNo - 2];
+          let shrek2 = blocks.slice(blocks.indexOf(changedForeverBlock));
+          shrek2.forEach((block) => {
+            let copy = block.cloneNode();
+            copy.style.fill = "green";
+            copy.style.opacity = "0.5";
+            block.parentElement.appendChild(copy);
+          });
+        }
+      }
+
+      if (this.status === "added") {
+        blocks.forEach((block) => {
+          let copy = block.cloneNode();
+          copy.style.fill = "green";
+          copy.style.opacity = "0.5";
+          block.parentElement.appendChild(copy);
+        });
+      }
+
+      // remove duplicate highlights
+      const htmls = Array.from(document.querySelectorAll("path[class^='sb3-'"));
+
+      if (addedC.length !== 0) {
+        htmls
+          .slice(
+            htmls.indexOf(htmls.filter((e) => e.style.fill === "red").pop()) + 1
+          )
+          .forEach((block) => {
+            let copy = block.cloneNode();
+            copy.style.fill = "green";
+            copy.style.opacity = "0.5";
+            block.parentElement.appendChild(copy);
+          });
+      }
+
+      const noDupes = [...new Set(htmls.map((e) => e.outerHTML))];
+
+      const dupesOnly = htmls.filter((e) => !noDupes.includes(e.outerHTML));
+      dupesOnly.forEach((element) => element.remove());
+    }
+  }
+
+  /**
+   * @param {object} oldProject
+   * @param {object} newProject
+   */
+  function createDiffs(oldProject, newProject) {
+    const changes = ScriptDiff.availableSprites(oldProject, newProject);
+
+    /** @type {{modified: ScriptDiff[]; removed: ScriptDiff[]; added: ScriptDiff[]}} */
+    const diffs = {
+      modified: [],
+      removed: [],
+      added: [],
+    };
+
+    changes.modified.forEach((e) => {
+      const script = new ScriptDiff({
+        oldProject: oldProject,
+        newProject: newProject,
+        scriptNumber: e.index,
+      });
+
+      script.status = "modified";
+      if (script.hasDiffs) {
+        diffs.modified.push(script);
+      }
+    });
+
+    changes.removed.forEach((e) => {
+      const oldBlocks = parseSB3Blocks.toScratchblocks(
+        e.scriptLoc,
+        oldProject,
+        "en",
+        {
+          tabs: "",
+        }
+      );
+      const script = new ScriptDiff({ skipParsing: true });
+      script.old = oldBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
+      script.new = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
+      script.difference = diff(script.old, script.new);
+      script.merged = ScriptDiff.fixCBlocks(
+        merge(script.old, script.new)
+      );
+      script.scriptNo = e.index;
+      script.status = "removed";
+      diffs.removed.push(script);
+    });
+
+    changes.added.forEach((e) => {
+      const newBlocks = parseSB3Blocks.toScratchblocks(
+        e.scriptLoc,
+        newProject,
+        "en",
+        {
+          tabs: "",
+        }
+      );
+      const script = new ScriptDiff({ skipParsing: true });
+      script.old = "".split("\n").map((item, i) => `${i} ${item.trim()}`);
+      script.new = newBlocks.split("\n").map((item, i) => `${i} ${item.trim()}`);
+      script.difference = diff(script.old, script.new);
+      script.merged = ScriptDiff.fixCBlocks(
+        merge(script.old, script.new)
+      );
+      script.scriptNo = e.index;
+      script.status = "added";
+      diffs.added.push(script);
+    });
+    return diffs;
+  }
+
+  function parseBlocks(oldProject, newProject, scriptNumber) {
+    const oldBlocks = parseSB3Blocks.toScratchblocks(
+      Object.keys(oldProject).filter((key) =>
+        oldProject[key].opcode.startsWith("event_when")
+      )[scriptNumber],
+      oldProject,
+      "en",
+      {
+        tabs: "",
+      }
+    );
+
+    const newBlocks = parseSB3Blocks.toScratchblocks(
+      Object.keys(newProject).filter((key) =>
+        newProject[key].opcode.startsWith("event_when")
+      )[scriptNumber],
+      newProject,
+      "en",
+      {
+        tabs: "",
+      }
+    );
+
+    return {
+      oldBlocks,
+      newBlocks,
+    };
+  }
+
+  /**
+   * Render diffs from a script from a sprite
+   * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
+   */
+  async function showDiffs({ sprite, script = 0, style }) {
+    let project = await API.getCurrentProject();
+
+    await import(
+      'https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js'
+    );
+    await import(
+      'https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js'
+    );
+
+    const oldProject = await project.getPreviousScripts(sprite);
+    const newProject = await project.getCurrentScripts(sprite);
+    const diffs = createDiffs(oldProject, newProject);
+
+    document.querySelector("#scripts").innerHTML = "";
+    document.querySelector("#commits").innerHTML = "";
+
+    document.querySelector("#commitButton").onclick = async () => {
+      const message = await project.commit();
+      document.querySelector("#commitLog").close();
+      new Alert({
+        message: `Commit successful. ${message}`,
+        duration: 5000,
+      }).display();
+    };
+
+    Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
+
+    const modal = document.querySelector("#commitLog");
+    if (!modal.open) {
+      modal.showModal();
+    }
+
+    document.querySelector(".topbar").innerHTML = "";
+
+    globalThis.sprites.forEach((sprite) => {
+      let newItem = document.createElement("a");
+      newItem.href = "#whatever";
+      newItem.appendChild(document.createTextNode(sprite));
+      newItem.onclick = async () => {
+        document
+          .querySelectorAll(".topbar a")
+          .forEach((e) => e.classList.remove("active-tab"));
+        newItem.classList.add("active-tab");
+
+        await showDiffs({
+          sprite: sprite,
+          style: document.querySelector("#styleChoice").value,
+        });
+      };
+      document.querySelector(".topbar").appendChild(newItem);
+    });
+
+    Array.from(Object.values(diffs))
+      .flat(Infinity)
+      .forEach((diff, i) => {
+        let newItem = document.createElement("li");
+        let link = document.createElement("button");
+        link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
+        link.classList.add("tab-btn");
+        link.setAttribute("script-no", i);
+        link.onclick = async () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((e) => e.classList.remove("active-tab"));
+          link.classList.add("active-tab");
+
+          await showDiffs({
+            sprite: document.querySelector("a.active-tab").innerText,
+            script: i,
+            style: document.querySelector("#styleChoice").value,
+          });
+        };
+        switch (diff.status) {
+          case "added":
+            link.innerHTML = `<i class="fa-solid fa-square-plus"></i> Script ${diff.scriptNo}`;
+            break;
+          case "modified":
+            link.innerHTML = `<i class="fa-solid fa-square-minus"></i> Script ${diff.scriptNo}`;
+            break;
+          case "removed":
+            link.innerHTML = `<i class="fa-solid fa-square-xmark"></i> Script ${diff.scriptNo}`;
+            break;
+        }
+        newItem.appendChild(link);
+        document.querySelector("#scripts").appendChild(newItem);
+      });
+
+    document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
+    document
+      .querySelectorAll(".topbar a")
+      [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
+
+    globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
+    if (document.querySelector("body").getAttribute("theme") === "dark") {
+      document.querySelector(".sidebar").classList.add("dark");
+      document.querySelector(".topbar").classList.add("dark");
+    } else {
+      document.querySelector(".sidebar").classList.remove("dark");
+    }
+  }
+
+  async function initDiffs() {
+    let project = await API.getCurrentProject();
+    await project.unzip();
+
+    globalThis.sprites = await project.getSprites();
+
+    document.querySelector("#styleChoice").value = "scratch3";
+
+    await showDiffs({ sprite: globalThis.sprites[0] });
+  }
+
   function main() {
     globalThis.diffs = undefined;
     globalThis.sprites = undefined;
 
+    // This doesn't seem to work right now
     let addNote = setInterval(async () => {
       try {
         let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
@@ -1266,18 +1298,6 @@ width: 65%;
         }
       } catch {}
     }, 500);
-
-    async function initDiffs() {
-      await fetch("http://localhost:6969/unzip");
-
-      globalThis.sprites = (
-        await (await fetch("http://localhost:6969/sprites")).json()
-      ).sprites;
-
-      document.querySelector("#styleChoice").value = "scratch3";
-
-      await showDiffs({ sprite: globalThis.sprites[0] });
-    }
 
     setInterval(async () => {
       try {
