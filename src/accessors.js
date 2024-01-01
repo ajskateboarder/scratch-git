@@ -54,6 +54,5 @@ const Cmp = {
   CLOSE_ICON: select("close-button_close-icon"),
   DISABLED_BUTTON: select("button_mod-disabled"),
 };
-window.Cmp = Cmp;
-window.Cmp.select = select;
+
 export default Cmp;
