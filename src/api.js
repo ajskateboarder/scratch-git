@@ -101,7 +101,7 @@ class ProjectManager {
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
-    let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
+    let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[7]
       .children[0].value;
     return new Project(projectName, this.#portNumber);
   }

@@ -149,7 +149,9 @@
     MENU_BAR: select("menu-bar_menu-bar"),
     MENU_POSITION: select("gui_menu-bar-position"),
     MENU_ITEM: select("menu-bar_menu-bar-item"),
+    MENU_ITEM_ACTIVE: select("menu-bar_active").split(",")[0].split(".")[1],
     MENU_ACCOUNTINFOGROUP: select("menu-bar_account-info-group"),
+    MENU_SECTION: select("menu_menu-section"),
 
     // alerts
     ALERT_CONTAINER: select("alerts_alerts-inner-container"),
@@ -169,6 +171,16 @@
     CLOSE_ICON: select("close-button_close-icon"),
     DISABLED_BUTTON: select("button_mod-disabled"),
   };
+  window.Cmp = Cmp;
+  window.Cmp.select = select;
+
+  /**
+   * @typedef GitMenuFunctions
+   * @property {() => any} pushHandler
+   * @property {() => any} repoLocationHandler
+   * @property {() => any} ghTokenHandler
+   * @property {() => any} commitViewHandler
+   */
 
   class FileMenu {
     constructor() {
@@ -193,6 +205,108 @@
       );
       this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
       return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
+    }
+  }
+
+  /** Git menu instantiator from Edit menu */
+  class GitMenu {
+    /** @type {HTMLElement} */
+    savedItems;
+
+    constructor() {
+      this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[2];
+      this.reactEventHandlers = Object.keys(this.menu).filter((e) =>
+        e.startsWith("__reactEventHandlers")
+      )[0];
+      this.savedItems = undefined;
+      this.newMenu = undefined;
+      this.open = false;
+    }
+
+    /** @param {number?} index */
+    getListItem(index = 1) {
+      let li = this.savedItems.querySelectorAll("li")[index - 1];
+      return {
+        label: (text) => {
+          try {
+            li.querySelector("span").innerText = text;
+          } catch (e) {
+            li.innerText = text;
+          }
+        },
+        remove: () => li.remove(),
+        onclick: (handler) => {
+          li.onclick = () => {
+            this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+            this.savedItems.style.display = "none";
+            this.open = false;
+            handler();
+          };
+        },
+        elem: li,
+      };
+    }
+
+    /**
+     * @param {GitMenuFunctions}
+     */
+    create({
+      pushHandler,
+      repoLocationHandler,
+      ghTokenHandler,
+      commitViewHandler,
+    }) {
+      this.menu[this.reactEventHandlers].onMouseUp();
+      /** @type {HTMLElement} */
+      this.newMenu = this.menu.cloneNode(true);
+      this.menu.after(this.newMenu);
+      this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+      this.newMenu.querySelector("span").innerText = "Git";
+      this.savedItems = this.newMenu
+        .querySelector("ul")
+        .parentElement.cloneNode(true);
+      this.savedItems.classList.add("git-menu");
+      this.newMenu.querySelector("ul").parentElement.remove();
+      this.savedItems.style.display = "none";
+      this.newMenu.appendChild(this.savedItems);
+
+      this.getListItem(1).label("Push project");
+      this.getListItem(1).onclick(pushHandler);
+      this.getListItem(2).label("Configure repository");
+      this.getListItem(2).onclick(repoLocationHandler);
+      this.getListItem(3).elem.classList.remove(Cmp.MENU_SECTION);
+      this.getListItem(3).label("Configure GitHub token");
+      this.getListItem(3).onclick(ghTokenHandler);
+      this.getListItem(4).remove();
+      this.getListItem(5).remove();
+      this.getListItem(4).remove();
+      this.getListItem(4).label("View commits");
+      this.getListItem(4).onclick(commitViewHandler);
+
+      this.newMenu.onclick = () => {
+        if (this.savedItems.style.display === "none") {
+          this.newMenu.classList.add(Cmp.MENU_ITEM_ACTIVE);
+          this.savedItems.style.display = "block";
+          this.open = true;
+        } else {
+          this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+          this.savedItems.style.display = "none";
+          this.open = false;
+        }
+      };
+      document.querySelector("#app").onmouseup = (e) => {
+        /** @type {Event} */
+        let event = e;
+        if (
+          event.target !== this.newMenu &&
+          event.target.parentNode !== this.newMenu &&
+          this.open
+        ) {
+          this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+          this.savedItems.style.display = "none";
+          this.open = false;
+        }
+      };
     }
   }
 
@@ -254,6 +368,8 @@
   }
 
   const fileMenu = new FileMenu();
+  const gitMenu = new GitMenu();
+  window.gitMenu = gitMenu;
 
   /** @file A tiny wrapper over the local APIs to work with Git projects */
 
@@ -357,7 +473,7 @@
      * @returns {Promise<Project | undefined>}
      */
     async getCurrentProject() {
-      let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
+      let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[7]
         .children[0].value;
       return new Project(projectName, this.#portNumber);
     }
@@ -590,14 +706,14 @@ width: 65%;
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
   `;
-    // This is kind of cursed.. lol
     const MENU_ITEM_CSS = `
-div.${Cmp.MENU_ITEM}:has(#push-status):hover {
-  cursor: pointer;
-}
-div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
-  cursor: pointer;
-}`;
+  div.${Cmp.MENU_ITEM}:has(#push-status):hover {
+    cursor: pointer;
+  }
+  div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
+    cursor: pointer;
+  }`;
+    // This is kind of cursed.. lol
     document.head.innerHTML += html`<style>
     ${MENU_ITEM_CSS} .content {
       display: flex;
@@ -768,8 +884,90 @@ div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
   </style>`;
   }
 
+  async function initCommits() {
+    function renderCommits(commits) {
+      document.querySelector(".commit-group").innerHTML = commits
+        .map(
+          (e) =>
+            html`<div class="commit">
+  <span style="font-size: 1rem">${
+    e.subject
+  }<span><br /><span style="font-size: 0.75rem"
+        >${e.author.name} <span style="font-weight: lighter" title="${
+            e.author.date
+          }">commited ${timeAgo(e.author.date)}</span></span
+      >
+    </div>`
+        )
+        .join("");
+    }
+
+    let offset = 0;
+    let commits = await (await api.getCurrentProject()).getCommits();
+    [...commits].forEach(
+      (commit, i) =>
+        (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+    );
+    renderCommits(commits.slice(offset, offset + 40));
+
+    document.querySelector(".pagination").innerHTML = html`<button
+      class="${Cmp.SETTINGS_BUTTON} disabled-funny"
+      style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
+      id="newer"
+    >
+      Newer</button
+    ><button
+      class="${Cmp.SETTINGS_BUTTON}"
+      style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
+      id="older"
+    >
+      Older
+    </button>`;
+    document.querySelector("#older").onclick = () => {
+      if (document.querySelector("#older").classList.contains("disabled-funny")) {
+        return;
+      }
+      offset += 40;
+      renderCommits(commits.slice(offset, offset + 40));
+      if (
+        commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+      ) {
+        document.querySelector("#older").classList.add("disabled-funny");
+      }
+      if (commits.slice(offset, offset + 40).includes(commits[0])) {
+        document.querySelector("#newer").classList.add("disabled-funny");
+      } else {
+        document.querySelector("#newer").classList.remove("disabled-funny");
+      }
+    };
+    document.querySelector("#newer").onclick = () => {
+      if (document.querySelector("#newer").classList.contains("disabled-funny")) {
+        return;
+      }
+      offset -= 40;
+      renderCommits(commits.slice(offset, offset + 40));
+      if (
+        !commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+      ) {
+        document.querySelector("#older").classList.remove("disabled-funny");
+      }
+      if (commits.slice(offset, offset + 40).includes(commits[0])) {
+        document.querySelector("#newer").classList.add("disabled-funny");
+      }
+    };
+
+    const modal = document.querySelector("#allcommitLog");
+    if (!modal.open) {
+      modal.showModal();
+    }
+    document.querySelector("#older").blur();
+  }
+
   function initialize () {
     window.fileMenu = fileMenu;
+    gitMenu.create({
+      commitViewHandler: initCommits,
+    });
 
     const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
     const SAVE_AREA = `${MENU} > div:nth-child(4)`;
@@ -804,22 +1002,6 @@ div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
 
     document.querySelector(SAVE_AREA).innerHTML += WELCOME_MODAL;
 
-    const renderCommits = (commits) =>
-      (document.querySelector(".commit-group").innerHTML = commits
-        .map(
-          (e) =>
-            html`<div class="commit">
-  <span style="font-size: 1rem">${
-    e.subject
-  }<span><br /><span style="font-size: 0.75rem"
-        >${e.author.name} <span style="font-weight: lighter" title="${
-            e.author.date
-          }">commited ${timeAgo(e.author.date)}</span></span
-      >
-    </div>`
-        )
-        .join(""));
-
     setTimeout(() => {
       document.querySelector("#push-status").parentElement.parentElement.onclick =
         async () => {
@@ -837,75 +1019,7 @@ div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
         };
       document.querySelector(
         "#allcommits-log"
-      ).parentElement.parentElement.onclick = async () => {
-        let offset = 0;
-        let commits = await (await api.getCurrentProject()).getCommits();
-        [...commits].forEach(
-          (commit, i) =>
-            (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
-        );
-        renderCommits(commits.slice(offset, offset + 40));
-
-        document.querySelector(".pagination").innerHTML = html`<button
-          class="${Cmp.SETTINGS_BUTTON} disabled-funny"
-          style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
-          id="newer"
-        >
-          Newer</button
-        ><button
-          class="${Cmp.SETTINGS_BUTTON}"
-          style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-          id="older"
-        >
-          Older
-        </button>`;
-        document.querySelector("#older").onclick = () => {
-          if (
-            document.querySelector("#older").classList.contains("disabled-funny")
-          ) {
-            return;
-          }
-          offset += 40;
-          renderCommits(commits.slice(offset, offset + 40));
-          if (
-            commits
-              .slice(offset, offset + 40)
-              .includes(commits[commits.length - 1])
-          ) {
-            document.querySelector("#older").classList.add("disabled-funny");
-          }
-          if (commits.slice(offset, offset + 40).includes(commits[0])) {
-            document.querySelector("#newer").classList.add("disabled-funny");
-          } else {
-            document.querySelector("#newer").classList.remove("disabled-funny");
-          }
-        };
-        document.querySelector("#newer").onclick = () => {
-          if (
-            document.querySelector("#newer").classList.contains("disabled-funny")
-          ) {
-            return;
-          }
-          offset -= 40;
-          renderCommits(commits.slice(offset, offset + 40));
-          if (
-            !commits
-              .slice(offset, offset + 40)
-              .includes(commits[commits.length - 1])
-          ) {
-            document.querySelector("#older").classList.remove("disabled-funny");
-          }
-          if (commits.slice(offset, offset + 40).includes(commits[0])) {
-            document.querySelector("#newer").classList.add("disabled-funny");
-          }
-        };
-
-        const modal = document.querySelector("#allcommitLog");
-        if (!modal.open) {
-          modal.showModal();
-        }
-        document.querySelector("#older").blur();
-      };
+      ).parentElement.parentElement.onclick = initCommits;
       document.querySelectorAll(".git-button").forEach((element) => {
         element.parentElement.onmouseenter = () => {
           element.parentElement.style.backgroundColor =

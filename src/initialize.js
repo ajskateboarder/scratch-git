@@ -1,6 +1,6 @@
 /** @file Please someone refactor this nonsense */
 
-import { fileMenu, scratchAlert } from "./gui-components";
+import { fileMenu, gitMenu, scratchAlert } from "./gui-components";
 import Cmp from "./accessors";
 import { html, timeAgo } from "./utils";
 import { COMMIT_MODAL, DIFF_MODAL, WELCOME_MODAL } from "./modals";
@@ -18,14 +18,14 @@ function injectStyles() {
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
   `;
-  // This is kind of cursed.. lol
   const MENU_ITEM_CSS = `
-div.${Cmp.MENU_ITEM}:has(#push-status):hover {
-  cursor: pointer;
-}
-div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
-  cursor: pointer;
-}`;
+  div.${Cmp.MENU_ITEM}:has(#push-status):hover {
+    cursor: pointer;
+  }
+  div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
+    cursor: pointer;
+  }`;
+  // This is kind of cursed.. lol
   document.head.innerHTML += html`<style>
     ${MENU_ITEM_CSS} .content {
       display: flex;
@@ -196,8 +196,94 @@ div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
   </style>`;
 }
 
+function initGitMenu() {
+  console.log(document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[3]);
+}
+
+async function initCommits() {
+  function renderCommits(commits) {
+    document.querySelector(".commit-group").innerHTML = commits
+      .map(
+        (e) =>
+          html`<div class="commit">
+  <span style="font-size: 1rem">${
+    e.subject
+  }<span><br /><span style="font-size: 0.75rem"
+        >${e.author.name} <span style="font-weight: lighter" title="${
+            e.author.date
+          }">commited ${timeAgo(e.author.date)}</span></span
+      >
+    </div>`
+      )
+      .join("");
+  }
+
+  let offset = 0;
+  let commits = await (await api.getCurrentProject()).getCommits();
+  [...commits].forEach(
+    (commit, i) =>
+      (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+  );
+  renderCommits(commits.slice(offset, offset + 40));
+
+  document.querySelector(".pagination").innerHTML = html`<button
+      class="${Cmp.SETTINGS_BUTTON} disabled-funny"
+      style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
+      id="newer"
+    >
+      Newer</button
+    ><button
+      class="${Cmp.SETTINGS_BUTTON}"
+      style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
+      id="older"
+    >
+      Older
+    </button>`;
+  document.querySelector("#older").onclick = () => {
+    if (document.querySelector("#older").classList.contains("disabled-funny")) {
+      return;
+    }
+    offset += 40;
+    renderCommits(commits.slice(offset, offset + 40));
+    if (
+      commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+    ) {
+      document.querySelector("#older").classList.add("disabled-funny");
+    }
+    if (commits.slice(offset, offset + 40).includes(commits[0])) {
+      document.querySelector("#newer").classList.add("disabled-funny");
+    } else {
+      document.querySelector("#newer").classList.remove("disabled-funny");
+    }
+  };
+  document.querySelector("#newer").onclick = () => {
+    if (document.querySelector("#newer").classList.contains("disabled-funny")) {
+      return;
+    }
+    offset -= 40;
+    renderCommits(commits.slice(offset, offset + 40));
+    if (
+      !commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+    ) {
+      document.querySelector("#older").classList.remove("disabled-funny");
+    }
+    if (commits.slice(offset, offset + 40).includes(commits[0])) {
+      document.querySelector("#newer").classList.add("disabled-funny");
+    }
+  };
+
+  const modal = document.querySelector("#allcommitLog");
+  if (!modal.open) {
+    modal.showModal();
+  }
+  document.querySelector("#older").blur();
+}
+
 export default function () {
   window.fileMenu = fileMenu;
+  gitMenu.create({
+    commitViewHandler: initCommits,
+  });
 
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
   const SAVE_AREA = `${MENU} > div:nth-child(4)`;
@@ -232,22 +318,6 @@ export default function () {
 
   document.querySelector(SAVE_AREA).innerHTML += WELCOME_MODAL;
 
-  const renderCommits = (commits) =>
-    (document.querySelector(".commit-group").innerHTML = commits
-      .map(
-        (e) =>
-          html`<div class="commit">
-  <span style="font-size: 1rem">${
-    e.subject
-  }<span><br /><span style="font-size: 0.75rem"
-        >${e.author.name} <span style="font-weight: lighter" title="${
-            e.author.date
-          }">commited ${timeAgo(e.author.date)}</span></span
-      >
-    </div>`
-      )
-      .join(""));
-
   setTimeout(() => {
     document.querySelector("#push-status").parentElement.parentElement.onclick =
       async () => {
@@ -265,75 +335,7 @@ export default function () {
       };
     document.querySelector(
       "#allcommits-log"
-    ).parentElement.parentElement.onclick = async () => {
-      let offset = 0;
-      let commits = await (await api.getCurrentProject()).getCommits();
-      [...commits].forEach(
-        (commit, i) =>
-          (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
-      );
-      renderCommits(commits.slice(offset, offset + 40));
-
-      document.querySelector(".pagination").innerHTML = html`<button
-          class="${Cmp.SETTINGS_BUTTON} disabled-funny"
-          style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
-          id="newer"
-        >
-          Newer</button
-        ><button
-          class="${Cmp.SETTINGS_BUTTON}"
-          style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-          id="older"
-        >
-          Older
-        </button>`;
-      document.querySelector("#older").onclick = () => {
-        if (
-          document.querySelector("#older").classList.contains("disabled-funny")
-        ) {
-          return;
-        }
-        offset += 40;
-        renderCommits(commits.slice(offset, offset + 40));
-        if (
-          commits
-            .slice(offset, offset + 40)
-            .includes(commits[commits.length - 1])
-        ) {
-          document.querySelector("#older").classList.add("disabled-funny");
-        }
-        if (commits.slice(offset, offset + 40).includes(commits[0])) {
-          document.querySelector("#newer").classList.add("disabled-funny");
-        } else {
-          document.querySelector("#newer").classList.remove("disabled-funny");
-        }
-      };
-      document.querySelector("#newer").onclick = () => {
-        if (
-          document.querySelector("#newer").classList.contains("disabled-funny")
-        ) {
-          return;
-        }
-        offset -= 40;
-        renderCommits(commits.slice(offset, offset + 40));
-        if (
-          !commits
-            .slice(offset, offset + 40)
-            .includes(commits[commits.length - 1])
-        ) {
-          document.querySelector("#older").classList.remove("disabled-funny");
-        }
-        if (commits.slice(offset, offset + 40).includes(commits[0])) {
-          document.querySelector("#newer").classList.add("disabled-funny");
-        }
-      };
-
-      const modal = document.querySelector("#allcommitLog");
-      if (!modal.open) {
-        modal.showModal();
-      }
-      document.querySelector("#older").blur();
-    };
+    ).parentElement.parentElement.onclick = initCommits;
     document.querySelectorAll(".git-button").forEach((element) => {
       element.parentElement.onmouseenter = () => {
         element.parentElement.style.backgroundColor =

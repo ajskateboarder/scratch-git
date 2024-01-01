@@ -32,7 +32,9 @@ const Cmp = {
   MENU_BAR: select("menu-bar_menu-bar"),
   MENU_POSITION: select("gui_menu-bar-position"),
   MENU_ITEM: select("menu-bar_menu-bar-item"),
+  MENU_ITEM_ACTIVE: select("menu-bar_active").split(",")[0].split(".")[1],
   MENU_ACCOUNTINFOGROUP: select("menu-bar_account-info-group"),
+  MENU_SECTION: select("menu_menu-section"),
 
   // alerts
   ALERT_CONTAINER: select("alerts_alerts-inner-container"),
@@ -52,5 +54,6 @@ const Cmp = {
   CLOSE_ICON: select("close-button_close-icon"),
   DISABLED_BUTTON: select("button_mod-disabled"),
 };
-
+window.Cmp = Cmp;
+window.Cmp.select = select;
 export default Cmp;
