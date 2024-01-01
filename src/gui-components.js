@@ -196,4 +196,3 @@ export function scratchAlert({ message, duration }) {
 
 export const fileMenu = new FileMenu();
 export const gitMenu = new GitMenu();
-window.gitMenu = gitMenu;
