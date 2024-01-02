@@ -2,6 +2,7 @@ import { createDiffs } from "./index";
 import api from "../api";
 import { scratchAlert } from "../gui-components";
 
+
 export function parseBlocks(oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(oldProject).filter((key) =>
@@ -31,6 +32,7 @@ export function parseBlocks(oldProject, newProject, scriptNumber) {
   };
 }
 
+
 export function rerender(style) {
   const activeButton = parseInt(
     document
@@ -39,6 +41,7 @@ export function rerender(style) {
   );
   globalThis.diffs[activeButton].renderBlocks(style);
 }
+
 
 /**
  * Render diffs from a script from a sprite
@@ -135,7 +138,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
   document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
   document
     .querySelectorAll(".topbar a")
-    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
+  [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
@@ -145,6 +148,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
     document.querySelector(".sidebar").classList.remove("dark");
   }
 }
+
 
 export async function initDiffs() {
   let project = await api.getCurrentProject();

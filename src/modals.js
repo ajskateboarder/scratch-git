@@ -3,10 +3,11 @@ import { html } from "./utils";
 import { fileMenu } from "./gui-components";
 import API from "./api";
 
+
 window.modalSteps = {
   goToStep1: () =>
-    (document.querySelector("#welcomeLog").innerHTML =
-      WELCOME_MODAL_STEP_1(false)),
+  (document.querySelector("#welcomeLog").innerHTML =
+    WELCOME_MODAL_STEP_1(false)),
   goToStep2: () =>
     (document.querySelector("#welcomeLog").innerHTML = WELCOME_MODAL_STEP_2),
   goToStep3: (path) => {
@@ -28,6 +29,7 @@ window.modalSteps = {
   },
 };
 
+
 const DIALOG_CSS = `
   position: absolute;
   transform: translateX(-50%);
@@ -41,6 +43,7 @@ const DIALOG_CSS = `
   padding: 20px;
   box-sizing: border-box;
 `;
+
 
 const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
   <h1>Welcome</h1>
@@ -79,6 +82,7 @@ const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
     </div>
   </div>
 </div>`;
+
 
 const WELCOME_MODAL_STEP_2 = html`
   <div style="${DIALOG_CSS}">
@@ -119,6 +123,7 @@ const WELCOME_MODAL_STEP_2 = html`
   </div>
 `;
 
+
 const WELCOME_MODAL_STEP_3 = html`
   <div style="${DIALOG_CSS}">
     <h1>Finish</h1>
@@ -140,12 +145,14 @@ const WELCOME_MODAL_STEP_3 = html`
   </div>
 `;
 
+
 export const WELCOME_MODAL = html`<dialog
   id="welcomeLog"
   style="overflow-x: hidden"
 >
   ${WELCOME_MODAL_STEP_1(true)}
 </dialog>`;
+
 
 export const DIFF_MODAL = html`<dialog
   id="commitLog"
@@ -181,6 +188,7 @@ export const DIFF_MODAL = html`<dialog
     </div>
   </div>
 </dialog>`;
+
 
 export const COMMIT_MODAL = html`<dialog
   id="allcommitLog"

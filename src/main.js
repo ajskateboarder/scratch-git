@@ -2,6 +2,7 @@ import initialize from "./initialize";
 import Cmp from "./accessors";
 import { initDiffs } from "./diff/render";
 
+
 (async () => {
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
@@ -20,7 +21,7 @@ import { initDiffs } from "./diff/render";
           .parentNode.after(span);
         clearInterval(addNote);
       }
-    } catch {}
+    } catch { }
   }, 500);
 
   setInterval(async () => {
@@ -32,7 +33,7 @@ import { initDiffs } from "./diff/render";
           document.querySelector("#shortcutNote").remove();
         }
       };
-    } catch {}
+    } catch { }
   }, 500);
 
   window.onload = initialize;

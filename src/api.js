@@ -1,6 +1,7 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
 import Cmp from "./accessors";
 
+
 /**
  * @typedef Commit
  * @property {{date: string; email: string; name: string}} author
@@ -9,6 +10,7 @@ import Cmp from "./accessors";
  * @property {string} subject
  * @property {string} shortDate
  */
+
 
 class Project {
   #portNumber;
@@ -65,6 +67,7 @@ class Project {
   }
 }
 
+
 // class factory jumpscare
 class ProjectManager {
   #portNumber;
@@ -83,14 +86,14 @@ class ProjectManager {
   }
 
   /**
+   * Create and git-init a new project
    * @param {string} projectPath
    * @returns {Promise<Project>}
    */
   async createProject(projectPath) {
     let response = await (
       await fetch(
-        `http://localhost:${
-          this.#portNumber
+        `http://localhost:${this.#portNumber
         }/create_project?file_name=${projectPath}`
       )
     ).json();
@@ -98,6 +101,7 @@ class ProjectManager {
   }
 
   /**
+   * Get the current project based on the project name
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
@@ -106,5 +110,6 @@ class ProjectManager {
     return new Project(projectName, this.#portNumber);
   }
 }
+
 
 export default new ProjectManager(6969);

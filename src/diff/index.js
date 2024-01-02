@@ -1,6 +1,7 @@
 import * as ArrayUtils from "../utils";
 import { parseBlocks } from "./render";
 
+
 /**
  * @typedef ScriptDiffOptions
  * @property {object} oldProject
@@ -8,6 +9,7 @@ import { parseBlocks } from "./render";
  * @property {number} scriptNumber
  * @property {boolean?} skipParsing
  */
+
 
 export class ScriptDiff {
   /** @type {("added" | "removed" | "modified")} */
@@ -159,7 +161,7 @@ export class ScriptDiff {
             block.style.fill = "red";
             block.style.opacity = "0.5";
             blocks[i].parentElement.appendChild(block);
-          } catch {}
+          } catch { }
         }
       });
     }
@@ -188,10 +190,9 @@ export class ScriptDiff {
       typeof addedC[0] !== "undefined" &&
       (addedC[0].endsWith("forever") || addedC[0].includes("repeat"))
     ) {
-      let forevers = blocks.filter((e) => {
-        let _text = e.parentElement.querySelector("text").innerHTML;
-        return _text === "forever" || _text === "repeat";
-      });
+      let forevers = blocks.filter((e) =>
+        ["forever", "repeat"].includes(e.parentElement.querySelector("text").innerHTML)
+      );
       if (forevers.length === 1) {
         let afterForevers = blocks.slice(blocks.indexOf(forevers[0]));
         afterForevers.forEach((block) => {
@@ -244,6 +245,7 @@ export class ScriptDiff {
     dupesOnly.forEach((element) => element.remove());
   }
 }
+
 
 /**
  * @param {object} oldProject
