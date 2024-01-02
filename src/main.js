@@ -14,7 +14,6 @@ import { diff } from "./modals/index";
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
 
-  // This doesn't seem to work right now
   let addNote = setInterval(async () => {
     try {
       let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
@@ -22,9 +21,9 @@ import { diff } from "./modals/index";
         let span = document.createElement("span");
         span.id = "shortcutNote";
         span.style.opacity = "0.7";
-        span.appendChild(document.createTextNode("(Ctrl+Shift+S for commits)"));
+        span.innerText = "(Ctrl+Shift+S for commits)";
         document
-          .querySelector(".save-status_save-now_xBhky")
+          .querySelector(`.${Cmp.SAVE_STATUS}`)
           .parentNode.after(span);
         clearInterval(addNote);
       }

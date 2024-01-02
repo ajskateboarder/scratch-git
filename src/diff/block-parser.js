@@ -1,8 +1,4 @@
 export default async function (oldProject, newProject, scriptNumber) {
-    await import(
-        "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-    );
-
     const oldBlocks = parseSB3Blocks.toScratchblocks(
         Object.keys(oldProject).filter((key) =>
             oldProject[key].opcode.startsWith("event_when")
