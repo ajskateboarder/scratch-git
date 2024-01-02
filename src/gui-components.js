@@ -35,6 +35,7 @@ class FileMenu {
   }
 }
 
+
 /** Git menu instantiator from Edit menu */
 class GitMenu {
   constructor() {
@@ -71,6 +72,7 @@ class GitMenu {
   }
 
   /**
+   * Copy the File nav menu and edit it to become a Git one
    * @param {GitMenuFunctions}
    */
   create({
@@ -79,6 +81,7 @@ class GitMenu {
     ghTokenHandler,
     commitViewHandler,
   }) {
+    // open, copy, and edit the file menu
     this.menu[this.reactEventHandlers].onMouseUp();
     this.newMenu = this.menu.cloneNode(true);
     this.menu.after(this.newMenu);
@@ -105,6 +108,7 @@ class GitMenu {
     this.item(4).label('View commits');
     this.item(4).onclick(commitViewHandler);
 
+    // make new menu toggle-able
     this.newMenu.onclick = () => {
       if (this.savedItems.style.display === 'none') {
         this.newMenu.classList.add(Cmp.MENU_ITEM_ACTIVE);
@@ -117,6 +121,7 @@ class GitMenu {
       }
     };
 
+    // close new menu upon clicking anywhere outside of the menu
     document.querySelector('#app').onmouseup = (e) => {
       /** @type {Event} */
       const event = e;

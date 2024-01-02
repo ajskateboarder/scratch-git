@@ -1,5 +1,5 @@
 import * as ArrayUtils from "../utils";
-import { parseBlocks } from "./render";
+import parseBlocks from "./block-parser";
 
 
 /**
@@ -129,7 +129,7 @@ export class ScriptDiff {
   }
 
   /** @param {("scratch3" | "scratch3-high-contrast" | "scratch2")} style */
-  renderBlocks(style = "scratch3") {
+  async renderBlocks(style = "scratch3") {
     const code = this.merged
       .map((item) => item.substring(item.indexOf(" ") + 1))
       .join("\n");
