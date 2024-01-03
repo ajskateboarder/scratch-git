@@ -4,11 +4,7 @@ import Cmp from "../accessors";
 import api from "../api";
 import { html, timeAgo } from "../utils";
 
-
-const COMMIT_MODAL = html`<dialog
-  id="commitModal"
-  style="overflow-x: hidden"
->
+const COMMIT_MODAL = html`<dialog id="commitModal" style="overflow-x: hidden">
   <div
     style="
 position: absolute;
@@ -36,26 +32,42 @@ width: 65%;
   </div>
 </dialog>`;
 
-
 /** Appends a commit modal to the DOM and becomes display-able */
-class CommitModal {
-  #modal
+export class CommitModal {
+  constructor(root) {
+    root.innerHTML += COMMIT_MODAL;
+    /** @type {HTMLDialogElement} */
+    this.modal = document.querySelector("#commitModal");
 
-  constructor() {
-    document.body.innerHTML += COMMIT_MODAL
-    this.#modal = document.querySelector("#commitModal")
+    document.querySelector(".pagination").innerHTML = html`<button
+        class="${Cmp.SETTINGS_BUTTON} disabled-funny"
+        style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
+        id="newer"
+      >
+        Newer</button
+      ><button
+        class="${Cmp.SETTINGS_BUTTON}"
+        style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
+        id="older"
+      >
+        Older
+      </button>`;
   }
 
   async display() {
-    const older = document.querySelector("#older");
-    const newer = document.querySelector("#newer");
+    const older = this.modal.querySelector("#older");
+    const newer = this.modal.querySelector("#newer");
 
     function renderCommits(commits) {
       document.querySelector(".commit-group").innerHTML = commits
         .map(
           (e) => html`<div class="commit">
-      <span style="font-size: 1rem">${e.subject}<span><br /><span style="font-size: 0.75rem"
-            >${e.author.name} <span style="font-weight: lighter" title="${e.author.date}">commited ${timeAgo(e.author.date)}</span></span
+      <span style="font-size: 1rem">${
+        e.subject
+      }<span><br /><span style="font-size: 0.75rem"
+            >${e.author.name} <span style="font-weight: lighter" title="${
+            e.author.date
+          }">commited ${timeAgo(e.author.date)}</span></span
           >
         </div>`
         )
@@ -65,30 +77,19 @@ class CommitModal {
     let offset = 0;
     const commits = await (await api.getCurrentProject()).getCommits();
     [...commits].forEach(
-      (commit, i) => (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+      (commit, i) =>
+        (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
     );
     renderCommits(commits.slice(offset, offset + 40));
-
-    document.querySelector(".pagination").innerHTML = html`<button
-          class="${Cmp.SETTINGS_BUTTON} disabled-funny"
-          style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
-          id="newer"
-        >
-          Newer</button
-        ><button
-          class="${Cmp.SETTINGS_BUTTON}"
-          style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-          id="older"
-        >
-          Older
-        </button>`;
 
     older.onclick = () => {
       if (older.classList.contains("disabled-funny")) return;
 
       offset += 40;
       renderCommits(commits.slice(offset, offset + 40));
-      if (commits.slice(offset, offset + 40).includes(commits[commits.length - 1])) {
+      if (
+        commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+      ) {
         older.classList.add("disabled-funny");
       }
       if (commits.slice(offset, offset + 40).includes(commits[0])) {
@@ -103,7 +104,11 @@ class CommitModal {
 
       offset -= 40;
       renderCommits(commits.slice(offset, offset + 40));
-      if (!commits.slice(offset, offset + 40).includes(commits[commits.length - 1])) {
+      if (
+        !commits
+          .slice(offset, offset + 40)
+          .includes(commits[commits.length - 1])
+      ) {
         older.classList.remove("disabled-funny");
       }
       if (commits.slice(offset, offset + 40).includes(commits[0])) {
@@ -111,12 +116,8 @@ class CommitModal {
       }
     };
 
-    if (!this.#modal.open) {
-      this.#modal.showModal();
-    }
+    // "The element is not in a document" my ass
+    document.querySelector("#commitModal").showModal();
     document.querySelector("#older").blur();
   }
 }
-
-
-export default new CommitModal()

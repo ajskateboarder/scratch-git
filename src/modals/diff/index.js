@@ -1,12 +1,8 @@
 import Cmp from "../../accessors";
 import { html } from "../../utils";
-import showDiffs from "./render"
+import showDiffs from "./render";
 
-
-const DIFF_MODAL = html`<dialog
-  id="diffModal"
-  style="overflow-x: hidden"
->
+const DIFF_MODAL = html`<dialog id="diffModal" style="overflow-x: hidden">
   <div class="content">
     <div class="topbar"></div>
     <div class="sidebar">
@@ -38,21 +34,22 @@ const DIFF_MODAL = html`<dialog
   </div>
 </dialog>`;
 
-
-class DiffModal {
+export class DiffModal {
   /** @type {HTMLDialogElement} */
-  #modal
+  #modal;
   /** @type {HTMLSelectElement} */
-  #style
+  #style;
 
   constructor() {
-    document.body.innerHTML += DIFF_MODAL
-    this.#modal = document.querySelector("#diffModal")
+    document.body.innerHTML += DIFF_MODAL;
+    this.#modal = document.querySelector("#diffModal");
 
-    this.#style = document.querySelector("#styleChoice")
+    this.#style = document.querySelector("#styleChoice");
     this.#style.onchange = () => {
-      (async () => { await this._rerender(this.#style.value) })()
-    }
+      (async () => {
+        await this._rerender(this.#style.value);
+      })();
+    };
   }
 
   async display() {
@@ -63,11 +60,11 @@ class DiffModal {
 
     this.#style.value = "scratch3";
 
-    await showDiffs({
+    showDiffs({
       modalElement: this.#modal,
       styleElement: this.#style,
       sprite: globalThis.sprites[0],
-      style
+      style,
     });
   }
 
@@ -80,6 +77,3 @@ class DiffModal {
     await globalThis.diffs[activeButton].renderBlocks(style);
   }
 }
-
-
-export default new DiffModal()

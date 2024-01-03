@@ -63,6 +63,15 @@
   max-height: 50%;
   padding: 0;
   width: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  left: 50%;
+  max-height: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  white-space: normal;
+  padding: 20px;
+  box-sizing: border-box
 }
 
 .bottom-bar {
@@ -105,10 +114,12 @@
   background-color: #111;
   color: #eee;
 }
+
 .dark #scripts li button {
   background-color: rgb(46, 46, 46);
   color: #707070;
 }
+
 .dark #scripts li button.active-tab {
   background-color: rgb(76, 76, 76);
   color: #eee;

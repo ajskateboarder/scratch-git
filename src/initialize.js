@@ -5,9 +5,8 @@ import Cmp from "./accessors";
 import { html } from "./utils";
 import api from "./api";
 
-import { welcome, commit } from "./modals/index";
-import styles from "./styles.css"
-
+import { WelcomeModal, CommitModal } from "./modals/index";
+import styles from "./styles.css";
 
 function injectStyles() {
   document.head.innerHTML += html`
@@ -32,12 +31,11 @@ function injectStyles() {
   document.head.innerHTML += "<style>" + MENU_ITEM_CSS + styles + "</style>";
 }
 
-
 /** TODO: deprecate in favor of dedicated menu */
-function addGitMenuButtons(saveArea) {
-
+function addGitMenuButtons(saveArea, commitArea, commit) {
+  console.log(commitArea);
   // add buttons
-  document.querySelector(saveArea).innerHTML += html`<div
+  saveArea.innerHTML += html`<div
     class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
   >
     <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
@@ -47,7 +45,7 @@ function addGitMenuButtons(saveArea) {
     </div>
   </div>`;
 
-  secondCateg.innerHTML += html`<div
+  commitArea.innerHTML += html`<div
     class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
   >
     <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
@@ -59,58 +57,62 @@ function addGitMenuButtons(saveArea) {
 
   // add button reactivity
   setTimeout(() => {
-    document.querySelector("#push-status").parentElement.parentElement.onclick = async () => {
-      document.querySelector("#push-status").style.opacity = "0.5";
-      document.querySelector("#push-status").querySelector("span").innerText = "Pushing project...";
-      await (await api.getCurrentProject()).push();
-      document.querySelector("#push-status").style.opacity = "1";
-      document.querySelector("#push-status").querySelector("span").innerText = "Push project";
-      scratchAlert({
-        message: "Commits pushed successfully",
-        duration: 5000,
-      });
-    };
+    document.querySelector("#push-status").parentElement.parentElement.onclick =
+      async () => {
+        document.querySelector("#push-status").style.opacity = "0.5";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Pushing project...";
+        await (await api.getCurrentProject()).push();
+        document.querySelector("#push-status").style.opacity = "1";
+        document.querySelector("#push-status").querySelector("span").innerText =
+          "Push project";
+        scratchAlert({
+          message: "Commits pushed successfully",
+          duration: 5000,
+        });
+      };
     document.querySelector(
-      "#allcommits-log",
-    ).parentElement.parentElement.onclick = displayCommitsMenu;
+      "#allcommits-log"
+    ).parentElement.parentElement.onclick = commit.display;
     document.querySelectorAll(".git-button").forEach((element) => {
       element.parentElement.onmouseenter = () => {
-        element.parentElement.style.backgroundColor = "var(--ui-black-transparent, hsla(0, 0%, 0%, 0.15))";
+        element.parentElement.style.backgroundColor =
+          "var(--ui-black-transparent, hsla(0, 0%, 0%, 0.15))";
       };
       element.parentElement.onmouseleave = () => {
-        element.parentElement.style.backgroundColor = document.body.getAttribute("theme") === "dark"
-          ? "#333"
-          : "hsla(0, 100%, 65%, 1)";
+        element.parentElement.style.backgroundColor =
+          document.body.getAttribute("theme") === "dark"
+            ? "#333"
+            : "hsla(0, 100%, 65%, 1)";
       };
     });
   }, 500);
 }
 
-
 export default function () {
-  gitMenu.create({
-    commitViewHandler: (async () => await commit.display()),
-  });
-
-  injectStyles();
-
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
   let saveArea = `${MENU} > div:nth-child(4)`;
-  const secondCateg = document.querySelector(saveArea).cloneNode(true);
-  document.querySelector(saveArea).after(secondCateg);
 
-  addGitMenuButtons(saveArea);
+  let commit = new CommitModal(document.querySelector(saveArea));
+  let welcome = new WelcomeModal(document.querySelector(saveArea));
 
-  document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
-    const isDark = document.body.getAttribute("theme") === "dark";
-    document.querySelectorAll(".git-button").forEach((element) => {
-      element.parentElement.style.backgroundColor = isDark
-        ? "#333"
-        : "hsla(0, 100%, 65%, 1)";
-    });
-  };
+  gitMenu.create({
+    commitViewHandler: async () => await commit.display(),
+  });
+  injectStyles();
 
+  // const secondCateg = document.querySelector(saveArea).cloneNode(true);
+  // document.querySelector(saveArea).after(secondCateg);
+  // addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
+  // document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
+  //   const isDark = document.body.getAttribute("theme") === "dark";
+  //   document.querySelectorAll(".git-button").forEach((element) => {
+  //     element.parentElement.style.backgroundColor = isDark
+  //       ? "#333"
+  //       : "hsla(0, 100%, 65%, 1)";
+  //   });
+  // };
   if (!fileMenu.isProjectOpen()) {
-    welcome.display()
+    welcome.display();
   }
 }

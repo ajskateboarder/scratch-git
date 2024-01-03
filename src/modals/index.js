@@ -1,5 +1,5 @@
-import diff from "./diff/index"
-import commit from "./commit"
-import welcome from "./welcome"
+import { DiffModal } from "./diff/index";
+import { CommitModal } from "./commit";
+import { WelcomeModal } from "./welcome";
 
-export { diff, commit, welcome }
+export { DiffModal, CommitModal, WelcomeModal };

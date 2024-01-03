@@ -1,31 +1,16 @@
 /** @file Template and logic for the project initialization modal */
 import { fileMenu } from "../gui-components";
+import { html } from "../utils";
+import Cmp from "../accessors";
+import api from "../api";
 
+const DIALOG_CSS = `text-align: center; display: none`;
 
-const DIALOG_CSS = `
-  position: absolute;
-  transform: translateX(-50%);
-  width: 100%;
-  left: 50%;
-  text-align: center;
-  max-height: 100%;
-  overflow: hidden;
-  word-wrap: break-word;
-  white-space: normal;
-  padding: 20px;
-  box-sizing: border-box;
-`;
-
-
-const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
+const WELCOME_MODAL_STEP_1 = html`<div style="${DIALOG_CSS}" id="welcomeStep1">
   <h1>Welcome</h1>
   <div style="font-weight: normal">
     <p>Please load a project for Git development<br /><br /></p>
-    <button
-      id="openProject"
-      style="width: 50%"
-      class="${Cmp.SETTINGS_BUTTON}"
-    >
+    <button id="openProject" style="width: 50%" class="${Cmp.SETTINGS_BUTTON}">
       Open project</button
     ><br /><br />
     <!-- TODO: make functional vv -->
@@ -44,8 +29,8 @@ const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
       </button>
       <button
         style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON} ${disabled ? Cmp.DISABLED_BUTTON : ""}"
-        ${disabled ? "disabled" : ""}
+        class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
+        disabled
         id="goToStep2"
       >
         Next
@@ -54,9 +39,8 @@ const WELCOME_MODAL_STEP_1 = (disabled) => html`<div style="${DIALOG_CSS}">
   </div>
 </div>`;
 
-
 const WELCOME_MODAL_STEP_2 = html`
-  <div style="${DIALOG_CSS}">
+  <div style="${DIALOG_CSS}" id="welcomeStep2">
     <h1>Configure project location</h1>
     <div style="font-weight: normal">
       <p>
@@ -77,7 +61,7 @@ const WELCOME_MODAL_STEP_2 = html`
       <button
         style="align-items: right; margin-left: -10px; "
         class="${Cmp.SETTINGS_BUTTON}"
-        id="gotoStep1"
+        id="goToStep1"
       >
         Back
       </button>
@@ -93,9 +77,8 @@ const WELCOME_MODAL_STEP_2 = html`
   </div>
 `;
 
-
 const WELCOME_MODAL_STEP_3 = html`
-  <div style="${DIALOG_CSS}">
+  <div style="${DIALOG_CSS}" id="welcomeStep3">
     <h1>Finish</h1>
     <div style="font-weight: normal">
       <p>Err IDK<br /><br /></p>
@@ -115,62 +98,63 @@ const WELCOME_MODAL_STEP_3 = html`
   </div>
 `;
 
-
-const WELCOME_MODAL = html`<dialog
-  id="welcomeModal"
-  style="overflow-x: hidden"
->
-  ${WELCOME_MODAL_STEP_1(true)}
+const WELCOME_MODAL = html`<dialog id="welcomeModal" style="overflow-x: hidden">
+  ${WELCOME_MODAL_STEP_1} ${WELCOME_MODAL_STEP_2} ${WELCOME_MODAL_STEP_3}
 </dialog>`;
 
-class WelcomeModal {
-  #modal
+export class WelcomeModal {
+  modal;
 
-  constructor() {
-    document.body.innerHTML += WELCOME_MODAL
-    this.#modal = document.querySelector("#welcomeModal")
-    document.querySelector("#openProject").onclick = this.openProject
-    document.querySelector("#openProjectPath").onclick = this.openProjectPath
-    document.querySelector("#goToStep1").onclick = this.goToStep1
-    document.querySelector("#goToStep2").onclick = this.goToStep2
-    document.querySelector("#goToStep3").onclick = () => this.goToStep3(document.querySelector('#pathInput').files[0].path)
+  constructor(root) {
+    root.innerHTML += WELCOME_MODAL;
+    this.modal = document.querySelector("#welcomeModal");
+    document.querySelector("#openProject").onclick = () => this.openProject();
+    document.querySelector("#openProjectPath").onclick = () =>
+      this.openProjectPath();
+    document.querySelector("#goToStep1").onclick = () => this.goToStep1();
+    document.querySelector("#goToStep2").onclick = () => this.goToStep2();
+    document.querySelector("#goToStep3").onclick = () =>
+      this.goToStep3(document.querySelector("#openProjectPath").files[0].path);
+    document.querySelector("#goToStep1").style.display = "block";
   }
 
   display() {
-    if (!this.#modal.open) {
-      this.#modal.showModal();
+    if (!this.modal.open) {
+      this.modal.showModal();
     }
   }
 
+  // Can't say this is less verbose than simply swapping HTML
+  // but hey, at least I control state better, or something
+
   goToStep1() {
-    this.#modal.innerHTML = WELCOME_MODAL_STEP_1(false)
+    this.modal.querySelector("#welcomeStep2").style.display = "none";
+    this.modal.querySelector("#welcomeStep1").style.display = "block";
   }
 
   goToStep2() {
-    this.#modal.innerHTML = WELCOME_MODAL_STEP_2
+    this.modal.querySelector("#welcomeStep3").style.display = "none";
+    this.modal.querySelector("#welcomeStep1").style.display = "none";
+    this.modal.querySelector("#welcomeStep2").style.display = "block";
   }
 
   goToStep3(path) {
     (async () => {
-      await API.createProject(path);
-      this.#modal.innerHTML = WELCOME_MODAL_STEP_3;
+      await api.createProject(path);
+      this.modal.querySelector("#welcomeStep2").style.display = "none";
+      this.modal.querySelector("#welcomeStep3").style.display = "block";
     })();
   }
 
   openProjectPath() {
-    document
-      .querySelector("#nextButton2")
-      .classList.remove(Cmp.DISABLED_BUTTON)
+    document.querySelector("#goToStep3").classList.remove(Cmp.DISABLED_BUTTON);
   }
 
   openProject() {
     fileMenu.openProject();
     /** @type {HTMLButtonElement} */
-    let nextButton = document.querySelector("#nextButton");
+    let nextButton = document.querySelector("#goToStep2");
     nextButton.disabled = false;
     nextButton.classList.remove(Cmp.DISABLED_BUTTON);
   }
 }
-
-
-export default new WelcomeModal()
