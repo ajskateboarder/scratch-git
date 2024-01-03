@@ -4,7 +4,7 @@ import { html } from "../utils";
 import Cmp from "../accessors";
 import api from "../api";
 
-const DIALOG_CSS = `text-align: center; display: none`;
+const DIALOG_CSS = `text-align: center;`;
 
 const WELCOME_MODAL_STEP_1 = html`<div style="${DIALOG_CSS}" id="welcomeStep1">
   <h1>Welcome</h1>
@@ -40,7 +40,7 @@ const WELCOME_MODAL_STEP_1 = html`<div style="${DIALOG_CSS}" id="welcomeStep1">
 </div>`;
 
 const WELCOME_MODAL_STEP_2 = html`
-  <div style="${DIALOG_CSS}" id="welcomeStep2">
+  <div style="${DIALOG_CSS}display: none" id="welcomeStep2">
     <h1>Configure project location</h1>
     <div style="font-weight: normal">
       <p>
@@ -78,7 +78,7 @@ const WELCOME_MODAL_STEP_2 = html`
 `;
 
 const WELCOME_MODAL_STEP_3 = html`
-  <div style="${DIALOG_CSS}" id="welcomeStep3">
+  <div style="${DIALOG_CSS}display: none" id="welcomeStep3">
     <h1>Finish</h1>
     <div style="font-weight: normal">
       <p>Err IDK<br /><br /></p>
@@ -103,11 +103,16 @@ const WELCOME_MODAL = html`<dialog id="welcomeModal" style="overflow-x: hidden">
 </dialog>`;
 
 export class WelcomeModal {
-  modal;
-
   constructor(root) {
     root.innerHTML += WELCOME_MODAL;
-    this.modal = document.querySelector("#welcomeModal");
+  }
+
+  /** @returns {HTMLDialogElement} */
+  get modal() {
+    return document.querySelector("#welcomeModal");
+  }
+
+  display() {
     document.querySelector("#openProject").onclick = () => this.openProject();
     document.querySelector("#openProjectPath").onclick = () =>
       this.openProjectPath();
@@ -115,10 +120,6 @@ export class WelcomeModal {
     document.querySelector("#goToStep2").onclick = () => this.goToStep2();
     document.querySelector("#goToStep3").onclick = () =>
       this.goToStep3(document.querySelector("#openProjectPath").files[0].path);
-    document.querySelector("#goToStep1").style.display = "block";
-  }
-
-  display() {
     if (!this.modal.open) {
       this.modal.showModal();
     }

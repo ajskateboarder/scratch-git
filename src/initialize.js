@@ -96,23 +96,24 @@ export default function () {
   let commit = new CommitModal(document.querySelector(saveArea));
   let welcome = new WelcomeModal(document.querySelector(saveArea));
 
-  gitMenu.create({
-    commitViewHandler: async () => await commit.display(),
-  });
   injectStyles();
 
-  // const secondCateg = document.querySelector(saveArea).cloneNode(true);
-  // document.querySelector(saveArea).after(secondCateg);
-  // addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
-  // document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
-  //   const isDark = document.body.getAttribute("theme") === "dark";
-  //   document.querySelectorAll(".git-button").forEach((element) => {
-  //     element.parentElement.style.backgroundColor = isDark
-  //       ? "#333"
-  //       : "hsla(0, 100%, 65%, 1)";
-  //   });
-  // };
+  const secondCateg = document.querySelector(saveArea).cloneNode(true);
+  document.querySelector(saveArea).after(secondCateg);
+  addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
+  document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
+    const isDark = document.body.getAttribute("theme") === "dark";
+    document.querySelectorAll(".git-button").forEach((element) => {
+      element.parentElement.style.backgroundColor = isDark
+        ? "#333"
+        : "hsla(0, 100%, 65%, 1)";
+    });
+  };
   if (!fileMenu.isProjectOpen()) {
     welcome.display();
+  } else {
+    gitMenu.create({
+      commitViewHandler: async () => await commit.display(),
+    });
   }
 }

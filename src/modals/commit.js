@@ -4,7 +4,10 @@ import Cmp from "../accessors";
 import api from "../api";
 import { html, timeAgo } from "../utils";
 
-const COMMIT_MODAL = html`<dialog id="commitModal" style="overflow-x: hidden">
+const COMMIT_MODAL = html`<dialog
+  id="commitModal"
+  style="overflow-x: hidden; overflow-y: auto"
+>
   <div
     style="
 position: absolute;
@@ -36,8 +39,6 @@ width: 65%;
 export class CommitModal {
   constructor(root) {
     root.innerHTML += COMMIT_MODAL;
-    /** @type {HTMLDialogElement} */
-    this.modal = document.querySelector("#commitModal");
 
     document.querySelector(".pagination").innerHTML = html`<button
         class="${Cmp.SETTINGS_BUTTON} disabled-funny"
@@ -54,8 +55,15 @@ export class CommitModal {
       </button>`;
   }
 
+  /** @returns {HTMLDialogElement} */
+  get modal() {
+    return document.querySelector("#commitModal");
+  }
+
   async display() {
+    /** @type {HTMLButtonElement} */
     const older = this.modal.querySelector("#older");
+    /** @type {HTMLButtonElement} */
     const newer = this.modal.querySelector("#newer");
 
     function renderCommits(commits) {
@@ -75,28 +83,45 @@ export class CommitModal {
     }
 
     let offset = 0;
-    const commits = await (await api.getCurrentProject()).getCommits();
+    let commit = await (await api.getCurrentProject()).getCommits();
+    const commits = Array(150).fill(commit[0]);
+
     [...commits].forEach(
       (commit, i) =>
         (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
     );
     renderCommits(commits.slice(offset, offset + 40));
 
+    /** @param {HTMLButtonElement} button */
+    const enable = (button) => {
+      button.classList.remove("disabled-funny");
+      button.disabled = false;
+    };
+
+    /** @param {HTMLButtonElement} button */
+    const disable = (button) => {
+      button.classList.add("disabled-funny");
+      button.disabled = true;
+    };
+
+    const toggle = (button, condition) => {
+      condition ? enable(button) : disable(button);
+    };
+
     older.onclick = () => {
       if (older.classList.contains("disabled-funny")) return;
 
       offset += 40;
       renderCommits(commits.slice(offset, offset + 40));
+
       if (
-        commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
-      ) {
-        older.classList.add("disabled-funny");
-      }
-      if (commits.slice(offset, offset + 40).includes(commits[0])) {
-        newer.classList.add("disabled-funny");
-      } else {
-        newer.classList.remove("disabled-funny");
-      }
+        !commits
+          .slice(offset, offset + 40)
+          .includes(commits[commits.length - 1])
+      )
+        disable(older);
+
+      toggle(newer, commits.slice(offset, offset + 40).includes(commits[0]));
     };
 
     newer.onclick = () => {
@@ -104,20 +129,22 @@ export class CommitModal {
 
       offset -= 40;
       renderCommits(commits.slice(offset, offset + 40));
+      // toggle(
+      //   older,
+      //   commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
+      // );
+      // toggle(newer, !commits.slice(offset, offset + 40).includes(commits[0]));
       if (
         !commits
           .slice(offset, offset + 40)
           .includes(commits[commits.length - 1])
-      ) {
-        older.classList.remove("disabled-funny");
-      }
-      if (commits.slice(offset, offset + 40).includes(commits[0])) {
-        newer.classList.add("disabled-funny");
-      }
+      )
+        enable(older);
+      if (commits.slice(offset, offset + 40).includes(commits[0]))
+        disable(newer);
     };
 
-    // "The element is not in a document" my ass
-    document.querySelector("#commitModal").showModal();
+    this.modal.showModal();
     document.querySelector("#older").blur();
   }
 }

@@ -99,7 +99,7 @@ class GitMenu {
 
     this.item(1).label("Push project");
     this.item(1).onclick(pushHandler);
-    this.item(2).label("Configure user/repository");
+    this.item(2).label("Configure repository");
     this.item(2).onclick(repoLocationHandler);
     this.item(3).elem.classList.remove(Cmp.MENU_SECTION);
     this.item(3).label("Configure GitHub token");
