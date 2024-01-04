@@ -20,7 +20,6 @@ export function timeAgo(input) {
   }
 }
 
-
 /**
  * @param {any[]} list
  * @param {any} item
@@ -48,7 +47,6 @@ export function merge(oldArray, newArray) {
 
   return mergedArray;
 }
-
 
 /**
  * @param {any[]} oldArray
@@ -99,7 +97,6 @@ export function diff(oldArray, newArray) {
   changes.removed.reverse();
   return changes;
 }
-
 
 export function html(strings, ...values) {
   let result = strings[0];

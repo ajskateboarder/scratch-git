@@ -1,9 +1,9 @@
-import { createDiffs } from "./index";
-import api from "../api";
-import { scratchAlert } from "../gui-components";
+import { createDiffs } from "../../diff/diff";
+import api from "../../api";
+import { scratchAlert } from "../../gui-components";
 
 
-export function parseBlocks(oldProject, newProject, scriptNumber) {
+export default function (oldProject, newProject, scriptNumber) {
   const oldBlocks = parseSB3Blocks.toScratchblocks(
     Object.keys(oldProject).filter((key) =>
       oldProject[key].opcode.startsWith("event_when")
@@ -33,28 +33,11 @@ export function parseBlocks(oldProject, newProject, scriptNumber) {
 }
 
 
-export function rerender(style) {
-  const activeButton = parseInt(
-    document
-      .querySelector("button[class='tab-btn active-tab']")
-      .getAttribute("script-no")
-  );
-  globalThis.diffs[activeButton].renderBlocks(style);
-}
-
-
 /**
  * Render diffs from a script from a sprite
- * @param {{sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
+ * @param {{modalElement: HTMLDialogElement; styleElement: HTMLSelectElement; sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
  */
-export async function showDiffs({ sprite, script = 0, style }) {
-  await import(
-    "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-  );
-  await import(
-    "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
-  );
-
+export async function showDiffs({ modalElement, styleElement, sprite, script = 0, style }) {
   let project = await api.getCurrentProject();
 
   const oldProject = await project.getPreviousScripts(sprite);
@@ -66,18 +49,17 @@ export async function showDiffs({ sprite, script = 0, style }) {
 
   document.querySelector("#commitButton").onclick = async () => {
     const message = await project.commit();
-    document.querySelector("#commitLog").close();
+    modalElement.close();
     scratchAlert({
       message: `Commit successful. ${message}`,
       duration: 5000,
     });
   };
 
-  Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
+  await Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
-  const modal = document.querySelector("#commitLog");
-  if (!modal.open) {
-    modal.showModal();
+  if (!modalElement.open) {
+    modalElement.showModal();
   }
 
   document.querySelector(".topbar").innerHTML = "";
@@ -94,7 +76,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
 
       await showDiffs({
         sprite: sprite,
-        style: document.querySelector("#styleChoice").value,
+        style: styleElement.value,
       });
     };
     document.querySelector(".topbar").appendChild(newItem);
@@ -117,7 +99,7 @@ export async function showDiffs({ sprite, script = 0, style }) {
         await showDiffs({
           sprite: document.querySelector("a.active-tab").innerText,
           script: i,
-          style: document.querySelector("#styleChoice").value,
+          style: styleElement.value,
         });
       };
       switch (diff.status) {
@@ -147,16 +129,4 @@ export async function showDiffs({ sprite, script = 0, style }) {
   } else {
     document.querySelector(".sidebar").classList.remove("dark");
   }
-}
-
-
-export async function initDiffs() {
-  let project = await api.getCurrentProject();
-  await project.unzip();
-
-  globalThis.sprites = await project.getSprites();
-
-  document.querySelector("#styleChoice").value = "scratch3";
-
-  await showDiffs({ sprite: globalThis.sprites[0] });
 }

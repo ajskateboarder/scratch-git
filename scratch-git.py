@@ -74,9 +74,7 @@ def main() -> None:
         sys.exit(1)
 
     if debug:
-        system(
-            "rollup src/main.js --format iife --name bundle --file userscript.js --silent"
-        )
+        system("rollup -c")
         userscript = Path("userscript.js")
         userscript.write_text(
             Path("src/reloader.js").read_text("utf-8")

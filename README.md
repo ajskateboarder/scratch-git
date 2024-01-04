@@ -6,7 +6,7 @@ https://github.com/ajskateboarder/scratch-git/assets/81255936/1285407f-c9dd-47ca
 
 (out of date as of now)
 
-Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. 
+Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that.
 
 ## Usage
 
@@ -31,12 +31,18 @@ Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no Git skills r
 
 ## Developing
 
-Run the following for some funny live-reload magic:
+Install the build dependencies:
 
 ```bash
 npm install -g rollup nodemon
-python3 server/reloader.py &
-nodemon -x "py scratch-git.py --debug" -w src -w server
+npm install -D rollup rollup-plugin-string
+```
+
+And run the following for some funny live-reload magic:
+
+```bash
+python server/reloader.py &
+nodemon -x "python scratch-git.py --debug" -w src -w server
 ```
 
 ## Commit specification
@@ -49,15 +55,12 @@ Commits start with the name of the sprite you are making changes to (e.g. Sprite
 
 Commits then specify the change they are making using one of the following statements:
 
-| Statement            | Description                                             |
-| -------------        | -------------                                           |
-| `add [costumes]`     | The following costumes: `[costumes]` have been added    |
-| `remove [costumes]`  | The following costumes: `[costumes]` have been removed  |
-| `modify [costumes]`  | The following costumes: `[costumes]` have been edited   |
-
-| Statement     | Description   |
-| ------------- | ------------- |
-| `{+\|-\|/}{blocks} blocks`    |  `{blocks}` number of blocks have been added (`+`), removed (`-`), or rewritten (`/`)  |
+| Statement                  | Description                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| `add [costumes]`           | The following costumes: `[costumes]` have been added                                 |
+| `remove [costumes]`        | The following costumes: `[costumes]` have been removed                               |
+| `modify [costumes]`        | The following costumes: `[costumes]` have been edited                                |
+| `{+\|-\|/}{blocks} blocks` | `{blocks}` number of blocks have been added (`+`), removed (`-`), or rewritten (`/`) |
 
 ### Commit examples
 

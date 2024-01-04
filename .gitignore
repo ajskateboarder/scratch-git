@@ -6,3 +6,5 @@ scratch-git-test/**
 Project*.sb3
 Project.sb3
 .vscode
+node_modules
+package*.json

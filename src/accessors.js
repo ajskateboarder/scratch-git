@@ -1,26 +1,15 @@
 /** @file A lookup to create elements using scratch-gui classnames */
 
-
-const defined = (e) => e !== undefined
-
-
 /** @type {string[]} */
-const classNames = [
-  ...[...document.styleSheets].map((e) => {
-    return Object.hasOwn(e, "cssRules") ? e.cssRules : undefined;
-  }),
-]
-  .filter(defined)
+const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
   .map((e) => Array.from(e))
   .flatMap((e) => e)
   .map((e) => e.selectorText)
-  .filter(defined)
+  .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
-
 
 const select = (className) =>
   classNames.filter((e) => e.includes(className))[0];
-
 
 /**
  * Accessors for parts of the UI
@@ -54,6 +43,5 @@ const Cmp = {
   CLOSE_ICON: select("close-button_close-icon"),
   DISABLED_BUTTON: select("button_mod-disabled"),
 };
-
-
+window.Cmp = Cmp;
 export default Cmp;
