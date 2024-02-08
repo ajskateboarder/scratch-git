@@ -55,6 +55,28 @@ def tw_path() -> Path | None:
         )
         if list(pth.glob("*")):
             return pth
+    if platform == "Darwin":
+        HOME = expandvars("$HOME")
+        pth = (
+            Path(HOME)
+            / "Library"
+            / "Application Support"
+            / "turbowarp-desktop"
+        )
+        if list(pth.glob("*")):
+            return pth
+        pth = (
+            Path(HOME)
+            / "Library"
+            / "Containers"
+            / "org.turbowarp.desktop"
+            / "Data"
+            / "Library"
+            / "Application Support"
+            / "turbowarp-desktop"
+        )
+        if list(pth.glob("*")):
+            return pth
     return None
 
 
