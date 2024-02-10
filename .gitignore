@@ -8,3 +8,7 @@ Project.sb3
 .vscode
 node_modules
 package*.json
+
+# Added by cargo
+
+/target
