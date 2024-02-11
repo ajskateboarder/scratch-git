@@ -2,7 +2,8 @@
 scratch-git-test
 scratch-git-test/**
 **/__pycache__
-Project*.sb3
+*.sb3
+projects
 Project.sb3
 .vscode
 node_modules

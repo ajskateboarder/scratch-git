@@ -26,7 +26,7 @@ fn project_config() -> &'static Mutex<ProjectConfig> {
     ARRAY.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json".to_string())))
 }
 
-#[post("/create-project?<file_name>")]
+#[get("/create-project?<file_name>")]
 fn create_project(file_name: &str) -> Response {
     let mut name = Path::new(file_name).file_name().unwrap().to_os_string();
     let mut config = project_config().lock().unwrap();
