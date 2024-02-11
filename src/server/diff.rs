@@ -85,6 +85,8 @@ pub struct CostumeChange {
 impl Diff {
     /// Commit generation methods for Scratch project assets and code
     pub fn new(data: Value) -> Self {
+        data.get("targets")
+            .expect("Provided json should have targets key");
         Self { data }
     }
 
