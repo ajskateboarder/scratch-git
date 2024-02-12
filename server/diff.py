@@ -119,11 +119,13 @@ class DiffGen:
     def format_costume_changes(self, changes: tuple, action: str) -> list[str]:
         """Group and format a set of costume changes into proper commits"""
         changes_ = [(m[0], f"{action} {m[1][1]}") for m in changes]
+        print(changes_)
         _commits = {
-            sprite: f"{act[0][0]} {', '.join(act[0][1])}"
+            sprite: f"{act[0][0]} {', '.join(act[0][1])} {act[0]}"
             for sprite, actions in self.group_items(changes_).items()
             if (act := list(self.group_items([a.split(" ") for a in actions]).items()))
         }
+        print(_commits)
         return list(_commits.items())  # type: ignore
 
     def commits(self, new: DiffGen) -> list[str]:
@@ -136,6 +138,8 @@ class DiffGen:
         removed = self.format_costume_changes(removed_, "remove")
 
         commits_ = [*blocks, *added, *merged, *removed]
+        print("141: ", commits_)
+
         return [
             f"{sprite}: {', '.join(changes)}"
             for sprite, changes in self.group_items(commits_).items()

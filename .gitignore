@@ -1,10 +1,13 @@
 **/env
-project*
 scratch-git-test
 scratch-git-test/**
 **/__pycache__
-Project*.sb3
+*.sb3
+lol2.sb3
+projects
 Project.sb3
 .vscode
 node_modules
-package*.json
+*.json
+/target
+/*.sb3
