@@ -6,7 +6,7 @@ module.exports = {
     logLevel: "silent",
     plugins: [
         string({
-            include: "src/styles.css",
+            include: "src/frontend/styles.css",
         })
     ]
 }
