@@ -14,9 +14,9 @@ Install these things:
 
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
-- [Python](https://python.org/downloads)
 
-For development, you'll need a [recent version of Node](https://nodejs.org).
+For development, you'll need a recent version of [Node.js](https://nodejs.org) and [Rust](https://rustup.rs/).
+
 
 After you clone the repo, run the following to copy the userscript and run the server app:
 
