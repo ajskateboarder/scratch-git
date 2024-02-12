@@ -898,7 +898,6 @@ dependencies = [
  "rocket_codegen",
  "rocket_http",
  "serde",
- "serde_json",
  "state",
  "tempfile",
  "time",
@@ -1001,7 +1000,6 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 name = "scratch-git"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "rocket",
  "serde_json",
  "zip-extract",

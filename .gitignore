@@ -3,12 +3,11 @@ scratch-git-test
 scratch-git-test/**
 **/__pycache__
 *.sb3
+lol2.sb3
 projects
 Project.sb3
 .vscode
 node_modules
-package*.json
-
-# Added by cargo
-
+*.json
 /target
+/*.sb3

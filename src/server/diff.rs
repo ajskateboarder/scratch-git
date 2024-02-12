@@ -271,7 +271,7 @@ impl Diff {
     }
 
     /// Create commits for changes from the current project to a newer one
-    pub fn commits(&self, new: Diff) -> Vec<String> {
+    pub fn commits(&self, new: &Diff) -> Vec<String> {
         let costume_changes = self._merged_costumes(&new);
         let blocks: Vec<_> = self
             .blocks(&new)
