@@ -45,7 +45,7 @@ jobs:
           npm i -g rollup rollup-plugin-string
           rollup -c
           cargo build --release
-          Compress-Archive -Path target/debug/scratch-git,userscript.js -Destination scratch-git.zip
+          Compress-Archive -Path target/release/scratch-git,userscript.js -Destination scratch-git.zip
       - name: Save Windows build
         uses: actions/upload-artifact@v3
         with:
