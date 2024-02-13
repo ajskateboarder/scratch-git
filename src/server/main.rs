@@ -18,31 +18,35 @@ fn turbowarp_path() -> Option<PathBuf> {
     if cfg!(windows) {
         dbg!(env::var("APPDATA").unwrap().to_string());
         let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
-        match pth.read_dir() {
-            Ok(mut dir) => {
-                if !dir.next().is_none() {
-                    return Some(pth);
-                }
+        if let Ok(mut dir) = pth.read_dir() {
+            if !dir.next().is_none() {
+                return Some(pth);
             }
-            Err(_) => {}
         };
         let file_name =
             |f: Result<DirEntry>| f.unwrap().file_name().to_os_string().into_string().unwrap();
         let pth = Path::new(&env::var("LOCALAPPDATA").unwrap().to_string()).join("Packages");
+        dbg!(&pth);
         if let Ok(__store_folder) = pth.read_dir() {
+            dbg!(&__store_folder);
             let _store_folder = __store_folder
                 .into_iter()
                 .map(|f| file_name(f))
                 .filter(|f| f.contains("TurboWarpDesktop"))
                 .next();
+            dbg!(&_store_folder);
             if let Some(store_folder) = _store_folder {
+                dbg!(&store_folder);
                 if let Ok(mut store_folder_exists) = pth.join(&store_folder).read_dir() {
+                    dbg!(&store_folder_exists);
                     if let Some(local_cache) = store_folder_exists.next() {
+                        dbg!(&local_cache);
                         if local_cache
                             .into_iter()
                             .map(|f| file_name(Ok(f)))
                             .any(|f| f.contains("LocalCache"))
                         {
+                            dbg!("i am here");
                             return Some(
                                 pth.join(store_folder)
                                     .join("LocalCache")
