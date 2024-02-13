@@ -37,23 +37,20 @@ fn turbowarp_path() -> Option<PathBuf> {
             dbg!(&_store_folder);
             if let Some(store_folder) = _store_folder {
                 dbg!(&store_folder);
-                if let Ok(mut store_folder_exists) = pth.join(&store_folder).read_dir() {
-                    dbg!(&store_folder_exists);
-                    if let Some(local_cache) = store_folder_exists.next() {
-                        dbg!(&local_cache);
-                        if local_cache
-                            .into_iter()
-                            .map(|f| file_name(Ok(f)))
-                            .any(|f| f.contains("LocalCache"))
-                        {
-                            dbg!("i am here");
-                            return Some(
-                                pth.join(store_folder)
-                                    .join("LocalCache")
-                                    .join("Roaming")
-                                    .join("turbowarp-desktop"),
-                            );
-                        }
+                if let Ok(local_cache) = pth.join(&store_folder).read_dir() {
+                    dbg!(&local_cache);
+                    if local_cache
+                        .into_iter()
+                        .map(|f| file_name(f))
+                        .any(|f| f.contains("LocalCache"))
+                    {
+                        dbg!("i am here");
+                        return Some(
+                            pth.join(store_folder)
+                                .join("LocalCache")
+                                .join("Roaming")
+                                .join("turbowarp-desktop"),
+                        );
                     }
                 }
             }
