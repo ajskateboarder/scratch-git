@@ -42,6 +42,7 @@ jobs:
           node-version: 20
       - name: Build
         run: |
+          ls
           npm i -g rollup rollup-plugin-string
           rollup -c
           cargo build --release
