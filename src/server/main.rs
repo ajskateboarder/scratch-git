@@ -32,7 +32,6 @@ fn turbowarp_path() -> Option<PathBuf> {
                 .filter(|f| f.contains("TurboWarpDesktop"))
                 .next();
             if let Some(store_folder) = _store_folder {
-                dbg!(&store_folder);
                 if let Ok(local_cache) = pth.join(&store_folder).read_dir() {
                     if local_cache
                         .into_iter()
