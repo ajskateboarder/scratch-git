@@ -16,6 +16,7 @@ use std::{
 
 fn turbowarp_path() -> Option<PathBuf> {
     if cfg!(windows) {
+        dbg!(env::var("APPDATA").unwrap().to_string());
         let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
         match pth.read_dir() {
             Ok(mut dir) => {
