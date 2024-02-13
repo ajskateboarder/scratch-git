@@ -10,6 +10,23 @@ on:
       - '.github/workflows/release.yml'
 
 jobs:
+  build-userscript:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install npm deps and build script
+        run: |
+          npm install -g rollup
+          npm install rollup-plugin-string
+          rollup -c
+      - name: Archive userscript
+        uses: actions/upload-artifact@v4
+        with:
+          name: userscript
+          path: |
+            ./userscript.js
+
   build:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux2014_x86_64
@@ -25,16 +42,20 @@ jobs:
           default: true
           override: true
 
+      - name: Get userscript
+      - uses: actions/download-artifact@v4
+        with:
+          name: userscript
+          path: |
+            ./userscript.js
+
       - name: Build
         run: |
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
           cargo build --all --release
           strip target/release/scratch-git
-          mv target/release/scratch-git target/release/scratch-git_amd64
-          zip scratch-git_linux_amd64.zip target/release/scratch-git_amd64 userscript.js
-          tar -zcvf scratch-git_linux_amd64.tar.gz target/release/scratch-git_amd64 userscript.js
+          mv target/release/scratch-git scratch-git_amd64
+          zip scratch-git_linux_amd64.zip scratch-git_amd64 userscript.js
+          tar -zcvf scratch-git_linux_amd64.tar.gz scratch-git_amd64 userscript.js
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -60,11 +81,15 @@ jobs:
           default: true
           override: true
 
+      - name: Get userscript
+      - uses: actions/download-artifact@v4
+        with:
+          name: userscript
+          path: |
+            ./userscript.js
+
       - name: Build
         run: |
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
           cargo build --all --release
           mv target/release/scratch-git.exe scratch-git_amd64.exe
           Compress-Archive -Path scratch-git_amd64.exe,userscript.js -Destination scratch-git_win.zip
@@ -92,16 +117,20 @@ jobs:
           default: true
           override: true
 
+      - name: Get userscript
+      - uses: actions/download-artifact@v4
+        with:
+          name: userscript
+          path: |
+            ./userscript.js
+
       - name: Build
         run: |
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
           cargo build --all --release
           strip target/release/scratch-git
-          mv target/release/scratch-git target/release/scratch-git_amd64
-          zip scratch-git_darwin_amd64.zip target/release/scratch-git_amd64 userscript.js
-          tar -zcvf scratch-git_darwin_amd64.tar.gz target/release/scratch-git_amd64 userscript.js
+          mv target/release/scratch-git scratch-git_amd64
+          zip scratch-git_darwin_amd64.zip scratch-git_amd64 userscript.js
+          tar -zcvf scratch-git_darwin_amd64.tar.gz scratch-git_amd64 userscript.js
 
       - name: Release
         uses: softprops/action-gh-release@v1
