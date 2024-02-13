@@ -124,7 +124,6 @@ jobs:
           path: |
             ./userscript.js
 
-
       - name: Build
         run: |
           cargo build --all --release
