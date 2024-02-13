@@ -28,8 +28,7 @@ jobs:
             ./userscript.js
 
   build:
-    runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
