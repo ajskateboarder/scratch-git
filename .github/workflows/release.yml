@@ -1,5 +1,6 @@
+# adapted from https://alican.codes/rust-github-actions
+# and https://github.com/It4innovations/hyperqueue/blob/498a162e9f17506bfe4a274f7afe2773bb25c0ee/.github/workflows/release.yml
 name: Build server app
-# adapted from https://alican.codes/rust-github-actions (thanks)
 
 on:
   push:
@@ -10,7 +11,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux2014_x86_64
 
     steps:
       - name: Checkout
