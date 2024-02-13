@@ -14,9 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: cargo build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build
         run: |
+          sudo apt-get install zip
+          npm i -g rollup rollup-plugin-string
+          rollup -c
           cargo build --release
+          zip scratch-git.zip -d ./target/release/scratch-git userscript.js
       - name: Save Linux build
         uses: actions/upload-artifact@v3
         with:
@@ -29,9 +36,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: cargo build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build
         run: |
+          npm i -g rollup rollup-plugin-string
+          rollup -c
           cargo build --release
+          Compress-Archive -Path .\target\debug\scratch-git,userscript.js -DestinationPath scratch-git.zip
       - name: Save Windows build
         uses: actions/upload-artifact@v3
         with:
@@ -44,9 +57,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: cargo build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build
         run: |
+          npm i -g rollup rollup-plugin-string
+          rollup -c
           cargo build --release
+          zip scratch-git.zip -d ./target/release/scratch-git userscript.js
       - name: Save MacOS build
         uses: actions/upload-artifact@v3
         with:
