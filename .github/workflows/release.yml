@@ -99,7 +99,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git-windows-x64.exe'
+        asset_path: './target/release/scratch-git'
         asset_name: "scratch-git-windows-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
@@ -110,7 +110,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git-macos-x64.exe'
+        asset_path: './target/release/scratch-git'
         asset_name: "scratch-git-macos-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
@@ -121,7 +121,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git-linux-x64.exe'
+        asset_path: './target/release/scratch-git'
         asset_name: "scratch-git-linux-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
