@@ -1,5 +1,6 @@
 name: Build server app
 # adapted from https://alican.codes/rust-github-actions (thanks)
+permissions: read-all
 
 on:
   push:
