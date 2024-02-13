@@ -1,6 +1,6 @@
 # adapted from https://alican.codes/rust-github-actions
 # and https://github.com/It4innovations/hyperqueue/blob/498a162e9f17506bfe4a274f7afe2773bb25c0ee/.github/workflows/release.yml
-name: Build server app
+name: Build
 
 on:
   push:
@@ -24,11 +24,6 @@ jobs:
           toolchain: stable
           default: true
           override: true
-      
-      - name: Install node 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
 
       - name: Build
         run: |
@@ -65,19 +60,14 @@ jobs:
           default: true
           override: true
 
-      - name: Install node 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
       - name: Build
         run: |
           npm i -g rollup
           npm i rollup-plugin-string
           rollup -c
           cargo build --all --release
-          mv target/release/scratch-git.exe target/release/scratch-git_amd64.exe
-          Compress-Archive -Path target/release/scratch-git.exe,userscript.js -Destination scratch-git_win.zip
+          mv target/release/scratch-git.exe scratch-git_amd64.exe
+          Compress-Archive -Path scratch-git_amd64.exe,userscript.js -Destination scratch-git_win.zip
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -101,11 +91,6 @@ jobs:
           target: x86_64-apple-darwin
           default: true
           override: true
-
-      - name: Install node 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
 
       - name: Build
         run: |
