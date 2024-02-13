@@ -20,7 +20,8 @@ jobs:
       - name: Build
         run: |
           sudo apt-get install zip
-          npm i -g rollup rollup-plugin-string
+          npm i -g rollup
+          npm i rollup-plugin-string
           rollup -c
           cargo build --release
           zip scratch-git.zip -d ./target/release/scratch-git userscript.js
@@ -28,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: scratch-git-linux-x64
-          path: ./target/release/scratch-git
+          path: ./scratch-git.zip
 
   build-windows-x64:
     runs-on: windows-latest
@@ -49,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: scratch-git-windows-x64
-          path: ./target/release/scratch-git.exe
+          path: ./scratch-git.zip
 
   build-macos-x64:
     runs-on: macos-latest
@@ -62,7 +63,8 @@ jobs:
           node-version: 20
       - name: Build
         run: |
-          npm i -g rollup rollup-plugin-string
+          npm i -g rollup
+          npm i rollup-plugin-string
           rollup -c
           cargo build --release
           zip scratch-git.zip -d ./target/release/scratch-git userscript.js
@@ -70,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: scratch-git-macos-x64
-          path: ./target/release/scratch-git
+          path: ./scratch-git.zip
 
   release:
     runs-on: ubuntu-latest
@@ -83,17 +85,17 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: scratch-git-windows-x64
-        path: ./target/release
+        path: ./
 
     - uses: actions/download-artifact@v3
       with:
         name: scratch-git-linux-x64
-        path: ./target/release
+        path: ./
 
     - uses: actions/download-artifact@v3
       with:
         name: scratch-git-macos-x64
-        path: ./target/release
+        path: ./
 
     - uses: reecetech/version-increment@2023.4.1
       id: version
@@ -118,7 +120,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git'
+        asset_path: './scratch-git.zip'
         asset_name: "scratch-git-windows-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
@@ -129,7 +131,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git'
+        asset_path: './scratch-git.zip'
         asset_name: "scratch-git-macos-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
@@ -140,7 +142,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        asset_path: './target/release/scratch-git'
+        asset_path: './scratch-git.zip'
         asset_name: "scratch-git-linux-x64.exe"
         asset_content_type: application/zip
         upload_url: ${{ steps.release.outputs.upload_url }}
