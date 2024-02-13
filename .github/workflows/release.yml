@@ -1,4 +1,5 @@
-name: Build
+name: Build server app
+# adapted from https://alican.codes/rust-github-actions (thanks)
 
 on:
   push:
@@ -8,142 +9,80 @@ on:
       - '.github/workflows/release.yml'
 
 jobs:
-  build-linux-x64:
-    runs-on: ubuntu-20.04
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Build
-        run: |
-          sudo apt-get install zip
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
-          cargo build --release
-          zip scratch-git.zip ./target/release/scratch-git userscript.js
-      - name: Save Linux build
-        uses: actions/upload-artifact@v3
-        with:
-          name: scratch-git-linux-x64
-          path: ./scratch-git.zip
+      - name: Checkout
+        uses: actions/checkout@v1
 
-  build-windows-x64:
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          override: true
+
+      - name: Build
+        run: cargo build --all --release && strip target/release/scratch-git && mv target/release/scratch-git target/release/scratch-git_amd64
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            target/release/scratch-git_amd64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-win:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Build
-        run: |
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
-          cargo build --release
-          Compress-Archive -Path target/release/scratch-git.exe,userscript.js -Destination scratch-git.zip
-      - name: Save Windows build
-        uses: actions/upload-artifact@v3
-        with:
-          name: scratch-git-windows-x64
-          path: ./scratch-git.zip
+      - name: Checkout
+        uses: actions/checkout@v1
 
-  build-macos-x64:
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          override: true
+
+      - name: Build
+        run: cargo build --all --release
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: target/release/scratch-git.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mac:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          node-version: 20
-      - name: Build
-        run: |
-          npm i -g rollup
-          npm i rollup-plugin-string
-          rollup -c
-          cargo build --release
-          zip scratch-git.zip ./target/release/scratch-git userscript.js
-      - name: Save MacOS build
-        uses: actions/upload-artifact@v3
+          toolchain: stable
+          target: x86_64-apple-darwin
+          default: true
+          override: true
+
+      - name: Build for mac
+        run: cargo build --all --release && strip target/release/scratch-git && mv target/release/scratch-git target/release/scratch-git_darwin
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: scratch-git-macos-x64
-          path: ./scratch-git.zip
-
-  release:
-    runs-on: ubuntu-latest
-    needs: [build-windows-x64, build-linux-x64, build-macos-x64]
-    permissions: write-all
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - uses: actions/download-artifact@v3
-      with:
-        name: scratch-git-windows-x64
-        path: ./
-
-    - uses: actions/download-artifact@v3
-      with:
-        name: scratch-git-linux-x64
-        path: ./
-
-    - uses: actions/download-artifact@v3
-      with:
-        name: scratch-git-macos-x64
-        path: ./
-
-    - uses: reecetech/version-increment@2023.4.1
-      id: version
-      with:
-        scheme: semver
-        increment: patch
-  
-    - name: Create release
-      id: release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.version.outputs.version }}
-        release_name: Release ${{ steps.version.outputs.version }}
-        draft: false
-        prerelease: false
-
-    - name: Upload Windows Build
-      id: upload-win-asset
-      uses: sekwah41/upload-release-assets@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        asset_path: './scratch-git.zip'
-        asset_name: "scratch-git-windows-x64.exe"
-        asset_content_type: application/zip
-        upload_url: ${{ steps.release.outputs.upload_url }}
-
-    - name: Upload MacOS Build
-      id: upload-mac-asset
-      uses: sekwah41/upload-release-assets@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        asset_path: './scratch-git.zip'
-        asset_name: "scratch-git-macos-x64.exe"
-        asset_content_type: application/zip
-        upload_url: ${{ steps.release.outputs.upload_url }}
-
-    - name: Upload Linux Build
-      id: upload-lin-asset
-      uses: sekwah41/upload-release-assets@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        asset_path: './scratch-git.zip'
-        asset_name: "scratch-git-linux-x64.exe"
-        asset_content_type: application/zip
-        upload_url: ${{ steps.release.outputs.upload_url }}
+          files: |
+            target/release/scratch-git_darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
