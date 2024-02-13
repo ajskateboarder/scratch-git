@@ -24,7 +24,7 @@ jobs:
           npm i rollup-plugin-string
           rollup -c
           cargo build --release
-          zip scratch-git.zip -d ./target/release/scratch-git userscript.js
+          zip scratch-git.zip ./target/release/scratch-git userscript.js
       - name: Save Linux build
         uses: actions/upload-artifact@v3
         with:
@@ -67,7 +67,7 @@ jobs:
           npm i rollup-plugin-string
           rollup -c
           cargo build --release
-          zip scratch-git.zip -d ./target/release/scratch-git userscript.js
+          zip scratch-git.zip ./target/release/scratch-git userscript.js
       - name: Save MacOS build
         uses: actions/upload-artifact@v3
         with:
