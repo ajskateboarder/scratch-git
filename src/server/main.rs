@@ -16,7 +16,6 @@ use std::{
 
 fn turbowarp_path() -> Option<PathBuf> {
     if cfg!(windows) {
-        dbg!(env::var("APPDATA").unwrap().to_string());
         let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
         if let Ok(mut dir) = pth.read_dir() {
             if !dir.next().is_none() {
@@ -26,25 +25,20 @@ fn turbowarp_path() -> Option<PathBuf> {
         let file_name =
             |f: Result<DirEntry>| f.unwrap().file_name().to_os_string().into_string().unwrap();
         let pth = Path::new(&env::var("LOCALAPPDATA").unwrap().to_string()).join("Packages");
-        dbg!(&pth);
         if let Ok(__store_folder) = pth.read_dir() {
-            dbg!(&__store_folder);
             let _store_folder = __store_folder
                 .into_iter()
                 .map(|f| file_name(f))
                 .filter(|f| f.contains("TurboWarpDesktop"))
                 .next();
-            dbg!(&_store_folder);
             if let Some(store_folder) = _store_folder {
                 dbg!(&store_folder);
                 if let Ok(local_cache) = pth.join(&store_folder).read_dir() {
-                    dbg!(&local_cache);
                     if local_cache
                         .into_iter()
                         .map(|f| file_name(f))
                         .any(|f| f.contains("LocalCache"))
                     {
-                        dbg!("i am here");
                         return Some(
                             pth.join(store_folder)
                                 .join("LocalCache")
@@ -123,7 +117,7 @@ fn app() -> Rocket<Build> {
         }
     };
     println!("Script copied to {}", path.to_str().unwrap());
-    let _ = fs::copy("userscript.js", path.join("userscript.js"));
+    fs::copy("userscript.js", path.join("userscript.js")).expect("failed to copy userscript");
     let _ = fs::create_dir("projects");
     create_app()
 }
