@@ -13,9 +13,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
-      - run: |
+        name: cargo build
+        run: |
           cargo build --release
       - name: Save Linux build
         uses: actions/upload-artifact@v3
@@ -28,9 +28,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
-      - run: |
+        name: cargo build
+        run: |
           cargo build --release
       - name: Save Windows build
         uses: actions/upload-artifact@v3
@@ -43,9 +43,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
-      - run: |
+        name: cargo build
+        run: |
           cargo build --release
       - name: Save MacOS build
         uses: actions/upload-artifact@v3
