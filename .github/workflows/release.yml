@@ -46,8 +46,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: userscript
-          path: |
-            ./userscript.js
 
       - name: Build
         run: |
@@ -86,8 +84,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: userscript
-          path: |
-            ./userscript.js
 
       - name: Build
         run: |
@@ -123,8 +119,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: userscript
-          path: |
-            ./userscript.js
 
       - name: Build
         run: |
