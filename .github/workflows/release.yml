@@ -25,10 +25,10 @@ jobs:
           default: true
           override: true
       
-      - name: Install node 20
+      - name: Install node 18
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Build
         run: |
@@ -65,10 +65,10 @@ jobs:
           default: true
           override: true
 
-      - name: Install node 20
+      - name: Install node 18
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Build
         run: |
@@ -101,6 +101,11 @@ jobs:
           target: x86_64-apple-darwin
           default: true
           override: true
+
+      - name: Install node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
       - name: Build
         run: |
