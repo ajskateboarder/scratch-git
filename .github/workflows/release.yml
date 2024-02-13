@@ -11,50 +11,47 @@ jobs:
   build-linux-x64:
     runs-on: ubuntu-20.04
 
-    name: cargo build
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           cargo build --release
-    - name: Save Linux build
-      uses: actions/upload-artifact@v3
-      with:
-        name: scratch-git-linux-x64
-        path: ./target/release/scratch-git
+      - name: Save Linux build
+        uses: actions/upload-artifact@v3
+        with:
+          name: scratch-git-linux-x64
+          path: ./target/release/scratch-git
 
   build-windows-x64:
     runs-on: windows-latest
 
-    name: cargo build
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           cargo build --release
-    - name: Save Windows build
-      uses: actions/upload-artifact@v3
-      with:
-        name: scratch-git-windows-x64
-        path: ./target/release/scratch-git.exe
+      - name: Save Windows build
+        uses: actions/upload-artifact@v3
+        with:
+          name: scratch-git-windows-x64
+          path: ./target/release/scratch-git.exe
 
   build-macos-x64:
     runs-on: macos-latest
 
-    name: cargo build
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: cargo build
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           cargo build --release
-    - name: Save MacOS build
-      uses: actions/upload-artifact@v3
-      with:
-        name: scratch-git-macos-x64
-        path: ./target/release/scratch-git.exe
+      - name: Save MacOS build
+        uses: actions/upload-artifact@v3
+        with:
+          name: scratch-git-macos-x64
+          path: ./target/release/scratch-git
 
   release:
     runs-on: ubuntu-latest
