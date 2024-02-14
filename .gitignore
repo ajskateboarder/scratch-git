@@ -3,7 +3,6 @@ scratch-git-test
 scratch-git-test/**
 **/__pycache__
 *.sb3
-lol2.sb3
 projects
 Project.sb3
 .vscode
