@@ -10,20 +10,16 @@ Some people are looking for better collaboration - not needing to form remix cha
 
 ## Usage
 
-Install these things:
+1) Install these things:
 
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 
-For development, you'll need a recent version of [Node.js](https://nodejs.org) and [Rust](https://rustup.rs/).
+(For development, you'll need a recent version of [Node.js](https://nodejs.org) and [Rust](https://rustup.rs/))
 
+2) Download the scratch-git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
-After you clone the repo, run the following to copy the userscript and run the server app:
-
-```bash
-pip install -r server/requirements.txt
-python scratch-git.py
-```
+3) Unpack the zip or tar.gz and run the scratch-git executable - it'll run continuously until you close out the terminal or do Ctrl+C
 
 You should now see a new button labeled "Push changes" which runs pushes code from the backend. The save button in the top-right should also be able to make commits based on changes that you make to your project, with a diff-like view for sprite code.
 
@@ -35,14 +31,13 @@ Install the build dependencies:
 
 ```bash
 npm install -g rollup nodemon
-npm install -D rollup rollup-plugin-string
+npm install rollup-plugin-string
 ```
 
 And run the following for some funny live-reload magic:
 
 ```bash
-python server/reloader.py &
-nodemon -x "python scratch-git.py --debug" -w src -w server
+nodemon -x "python3 debug.py" -w src -w server
 ```
 
 ## Commit specification
