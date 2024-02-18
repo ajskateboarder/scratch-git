@@ -2,9 +2,7 @@
 
 import queue
 
-from http.client import HTTPConnection
 from pathlib import Path
-from threading import Thread
 from platform import uname
 import shutil
 import os
@@ -42,7 +40,7 @@ def cors(response):
     return response
 
 
-def tw_path() -> Path | None:
+def tw_path() -> Path:
     platform = uname().system
     if platform == "Windows":
         pth = Path(expandvars("%APPDATA%")) / "turbowarp-desktop"
@@ -118,7 +116,9 @@ announcer = MessageAnnouncer()
 def ping():
     if request.method == "OPTIONS":
         return cors_preflight()
-
+    os.system("rollup -c")
+    shutil.copy2("userscript.js", tw_path())
+    print("Copying to", tw_path())
     announcer.announce(msg="data: update\n\n")
     return {}
 
@@ -134,13 +134,11 @@ def listen():
             msg = messages.get()
             yield msg
 
-    return Response(stream(), mimetype="text/event-stream")
+    return cors(Response(stream(), mimetype="text/event-stream"))
 
 
 if __name__ == "__main__":
     os.system("rollup -c")
     shutil.copy2("userscript.js", tw_path())
-    Thread(target=lambda: app.run(port=3333)).start()
-    HTTPConnection("localhost", 3333).request(
-        "GET", "/update", headers={"Host": "localhost"}
-    )
+    print("Copying to", tw_path())
+    app.run(port=3333)

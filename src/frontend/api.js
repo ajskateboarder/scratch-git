@@ -92,7 +92,7 @@ class ProjectManager {
       await fetch(
         `http://localhost:${
           this.#portNumber
-        }/create_project?file_name=${projectPath}`
+        }/create-project?file_name=${projectPath}`
       )
     ).json();
     return new Project(response.project_name, this.#portNumber);
@@ -109,4 +109,4 @@ class ProjectManager {
   }
 }
 
-export default new ProjectManager(6969);
+export default new ProjectManager(8000);

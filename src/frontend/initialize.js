@@ -5,7 +5,7 @@ import Cmp from "./accessors";
 import { html } from "./utils";
 import api from "./api";
 
-import { WelcomeModal, CommitModal } from "./modals/index";
+import { WelcomeModal, CommitModal, DiffModal } from "./modals/index";
 import styles from "./styles.css";
 
 function injectStyles() {
@@ -95,6 +95,20 @@ export default function () {
 
   let commit = new CommitModal(document.querySelector(saveArea));
   let welcome = new WelcomeModal(document.querySelector(saveArea));
+  let diff = new DiffModal(document.querySelector(saveArea));
+
+  setInterval(async () => {
+    try {
+      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = () =>
+        diff.display();
+      document.onkeydown = async (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === "S") {
+          await diff.display();
+          document.querySelector("#shortcutNote").remove();
+        }
+      };
+    } catch {}
+  }, 500);
 
   injectStyles();
 

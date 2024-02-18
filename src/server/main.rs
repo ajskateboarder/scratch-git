@@ -4,6 +4,7 @@ extern crate rocket;
 pub mod application;
 pub mod diff;
 pub mod projects;
+pub mod git_piping;
 
 use application::create_app;
 use rocket::{Build, Rocket};
@@ -11,7 +12,7 @@ use std::{
     env,
     fs::{self, DirEntry},
     io::{stdin, BufRead, Result},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, process::Command,
 };
 
 fn turbowarp_path() -> Option<PathBuf> {
@@ -117,6 +118,17 @@ fn app() -> Rocket<Build> {
     };
     println!("Script copied to {}", path.to_str().unwrap());
     fs::copy("userscript.js", path.join("userscript.js")).expect("failed to copy userscript");
+    if let Some(arg) = env::args().nth(1) {
+        if arg == "--debug" {
+            if !Command::new("curl")
+                .args(["-X", "GET", "http://localhost:3333/update"])
+                .status()
+                .unwrap()
+                .success() {
+                    panic!("Failed to post to http://localhost:3333/update. Do you have the debug server running?")
+                }
+        }
+    }
     let _ = fs::create_dir("projects");
     create_app()
 }

@@ -1,6 +1,10 @@
 use crate::diff::Diff;
+use crate::git_piping::git_diff;
 use crate::projects::ProjectConfig;
+
 use rocket::http::{ContentType, Status};
+use rocket::serde::json::Json;
+use rocket::serde::Deserialize;
 use rocket::{Build, Rocket};
 
 use serde_json::{json, to_string, Value};
@@ -16,9 +20,15 @@ use std::{
     time::Duration,
 };
 
-type Response = (Status, (ContentType, String));
+#[derive(Deserialize)]
+struct DiffParams {
+    old_content: String,
+    new_content: String,
+}
 
-fn response(status: Status, content: Value) -> Response {
+type AppResponse = (Status, (ContentType, String));
+
+fn response(status: Status, content: Value) -> AppResponse {
     (status, (ContentType::JSON, to_string(&content).unwrap()))
 }
 
@@ -32,9 +42,27 @@ fn project_config() -> &'static Mutex<ProjectConfig> {
     CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json".to_string())))
 }
 
+#[post("/diff", format = "json", data = "<diff_params>")]
+fn diff(diff_params: Json<DiffParams>) -> AppResponse {
+    response(
+        Status::Ok,
+        json!(git_diff(
+            diff_params.old_content.clone(),
+            diff_params.new_content.clone()
+        )),
+    )
+}
+
 #[get("/create-project?<file_name>")]
-fn create_project(file_name: &str) -> Response {
-    let mut name = Path::new(file_name).file_name().unwrap().to_os_string();
+fn create_project(file_name: &str) -> AppResponse {
+    let binding = Path::new(file_name)
+        .file_name()
+        .unwrap()
+        .to_os_string()
+        .to_str()
+        .unwrap()
+        .to_string();
+    let mut name = binding.split(".").collect::<Vec<_>>()[0].to_string();
     let mut config = project_config().lock().unwrap();
 
     let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
@@ -46,33 +74,30 @@ fn create_project(file_name: &str) -> Response {
         }
     };
 
-    let Ok(file_path) = fs::canonicalize(&name) else {
+    let Ok(file_path) = fs::canonicalize(&file_name) else {
         return response(
             Status::InternalServerError,
             json!({ "project_name": "fail" }),
         );
     };
 
-    let binding = name.clone().into_string().unwrap();
-
-    match config.projects[&binding] {
+    match config.projects[&name] {
         Value::Null => {
-            config.projects[binding] = json!({
+            config.projects[name.clone()] = json!({
                 "base": project_path.to_str().unwrap().to_string(),
                 "project_file": file_path.to_str().unwrap().to_string()
             });
         }
         Value::Object(_) => {
             let mut _i = 0;
-            let _name = name.clone().into_string().unwrap();
-            if Path::new(&format!("projects/{}~0", _name)).exists() {
-                while Path::new(&format!("projects/{}~{}", _name, _i)).exists() {
+            if Path::new(&format!("projects/{}~0", name)).exists() {
+                while Path::new(&format!("projects/{}~{}", name, _i)).exists() {
                     _i += 1;
                 }
             }
-            name = format!("projects/{}~{}", _name, _i).into();
-            config.projects[format!("{}~{}", _name, _i)] = json!({
-                "base": name.clone().into_string().unwrap(),
+            name = format!("projects/{}~{}", name, _i).to_string();
+            config.projects[format!("{}~{}", name, _i)] = json!({
+                "base": name,
                 "project_file": file_path.to_str().unwrap().to_string()
             });
             let _project_path = Path::new(&name);
@@ -158,12 +183,12 @@ fn create_project(file_name: &str) -> Response {
 
     response(
         Status::Ok,
-        json!({ "project_name": name.to_str().unwrap().to_string().replace("projects/", "") }),
+        json!({ "project_name": name.replace("projects/", "") }),
     )
 }
 
 #[get("/<project_name>/unzip")]
-fn unzip(project_name: String) -> Response {
+fn unzip(project_name: String) -> AppResponse {
     let projects = &project_config().lock().unwrap().projects;
     let pth = get_project_path(projects, &project_name);
 
@@ -186,7 +211,7 @@ fn unzip(project_name: String) -> Response {
 }
 
 #[get("/<project_name>/project.old.json?<name>")]
-fn old_project(project_name: String, name: String) -> Response {
+fn old_project(project_name: String, name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let old_project = serde_json::from_str::<serde_json::Value>(
@@ -210,7 +235,7 @@ fn old_project(project_name: String, name: String) -> Response {
 }
 
 #[get("/<project_name>/project.json?<name>")]
-fn current_project(project_name: String, name: String) -> Response {
+fn current_project(project_name: String, name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let old_project = serde_json::from_str::<serde_json::Value>(
@@ -234,7 +259,7 @@ fn current_project(project_name: String, name: String) -> Response {
 }
 
 #[get("/<project_name>/sprites")]
-fn sprites(project_name: String) -> Response {
+fn sprites(project_name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let _current_project = serde_json::from_str::<serde_json::Value>(
@@ -265,7 +290,7 @@ fn sprites(project_name: String) -> Response {
 }
 
 #[get("/<project_name>/push")]
-fn push(project_name: String) -> Response {
+fn push(project_name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     if !Command::new("git")
@@ -284,7 +309,7 @@ fn push(project_name: String) -> Response {
 }
 
 #[get("/<project_name>/commit")]
-fn commit(project_name: String) -> Response {
+fn commit(project_name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let _current_project = serde_json::from_str::<serde_json::Value>(
@@ -342,7 +367,7 @@ fn commit(project_name: String) -> Response {
 }
 
 #[get("/<project_name>/commits")]
-fn commits(project_name: String) -> Response {
+fn commits(project_name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let git_log = Command::new("git")
@@ -359,7 +384,7 @@ fn commits(project_name: String) -> Response {
                 + &"}".to_string()
         )
     } else {
-        format!("[{}]", binding)
+        format!("[{binding}]")
     };
     let log_output = binding.as_str();
 
@@ -371,17 +396,22 @@ fn commits(project_name: String) -> Response {
 }
 
 pub fn create_app() -> Rocket<Build> {
-    rocket::build().mount(
-        "/",
-        routes![
-            create_project,
-            unzip,
-            commit,
-            push,
-            old_project,
-            current_project,
-            sprites,
-            commits
-        ],
-    )
+    let cors = rocket_cors::CorsOptions::default().to_cors();
+
+    rocket::build()
+        .mount(
+            "/",
+            routes![
+                diff,
+                create_project,
+                unzip,
+                commit,
+                push,
+                old_project,
+                current_project,
+                sprites,
+                commits
+            ],
+        )
+        .attach(cors.unwrap())
 }

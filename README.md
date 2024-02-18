@@ -34,10 +34,11 @@ npm install -g rollup nodemon
 npm install rollup-plugin-string
 ```
 
-And run the following for some funny live-reload magic:
+And run the following to reload the frontend and backend whenever changes are saved:
 
 ```bash
-nodemon -x "python3 debug.py" -w src -w server
+python3 debug.py &
+nodemon -x "cargo run -- --debug" -w src
 ```
 
 ## Commit specification

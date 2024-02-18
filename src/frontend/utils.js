@@ -21,81 +21,23 @@ export function timeAgo(input) {
 }
 
 /**
- * @param {any[]} list
- * @param {any} item
- * @returns {number}
+ * @param {string} oldContent
+ * @param {string} newContent
+ * @returns {Promise<{added: number; removed: number; diffed: string}>}
  */
-export const count = (list, item) =>
-  list.reduce(
-    (count, currentValue) => count + (currentValue === item ? 1 : 0),
-    0
-  );
-
-/**
- * @param {any[]} oldArray
- * @param {any[]} newArray
- * @returns {any[]}
- */
-export function merge(oldArray, newArray) {
-  const mergedArray = [...oldArray];
-
-  for (const newItem of newArray) {
-    if (!mergedArray.includes(newItem)) {
-      mergedArray.push(newItem);
-    }
-  }
-
-  return mergedArray;
-}
-
-/**
- * @param {any[]} oldArray
- * @param {any[]} newArray
- * @returns {any[]}
- */
-export function diff(oldArray, newArray) {
-  const dp = new Array(oldArray.length + 1)
-    .fill(null)
-    .map(() => new Array(newArray.length + 1).fill(0));
-  for (let i = 1; i <= oldArray.length; i++) {
-    for (let j = 1; j <= newArray.length; j++) {
-      if (oldArray[i - 1] === newArray[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-  /** @type {{added: string[]; removed: string[]; modified: string[]}} */
-  const changes = {
-    added: [],
-    removed: [],
-    modified: [],
-  };
-  let i = oldArray.length;
-  let j = newArray.length;
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldArray[i - 1] === newArray[j - 1]) {
-      i--;
-      j--;
-    } else if (j === 0 || (i > 0 && dp[i][j] === dp[i - 1][j])) {
-      changes.removed.push(oldArray[i - 1]);
-      i--;
-    } else if (i === 0 || (j > 0 && dp[i][j] === dp[i][j - 1])) {
-      changes.added.push(newArray[j - 1]);
-      j--;
-    } else {
-      changes.modified.push({
-        from: oldArray[i - 1],
-        to: newArray[j - 1],
-      });
-      i--;
-      j--;
-    }
-  }
-  changes.added.reverse();
-  changes.removed.reverse();
-  return changes;
+export async function diff(oldContent, newContent) {
+  return await (
+    await fetch("http://localhost:8000/diff", {
+      method: "POST",
+      body: JSON.stringify({
+        old_content: oldContent,
+        new_content: newContent,
+      }),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+  ).json();
 }
 
 export function html(strings, ...values) {

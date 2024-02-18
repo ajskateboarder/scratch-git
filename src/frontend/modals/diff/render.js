@@ -1,48 +1,28 @@
-import { createDiffs } from "../../diff/diff";
+import parseBlocks from "./block-parser";
 import api from "../../api";
 import { scratchAlert } from "../../gui-components";
-
-
-export default function (oldProject, newProject, scriptNumber) {
-  const oldBlocks = parseSB3Blocks.toScratchblocks(
-    Object.keys(oldProject).filter((key) =>
-      oldProject[key].opcode.startsWith("event_when")
-    )[scriptNumber],
-    oldProject,
-    "en",
-    {
-      tabs: "",
-    }
-  );
-
-  const newBlocks = parseSB3Blocks.toScratchblocks(
-    Object.keys(newProject).filter((key) =>
-      newProject[key].opcode.startsWith("event_when")
-    )[scriptNumber],
-    newProject,
-    "en",
-    {
-      tabs: "",
-    }
-  );
-
-  return {
-    oldBlocks,
-    newBlocks,
-  };
-}
-
+import { diff } from "../../utils";
 
 /**
  * Render diffs from a script from a sprite
  * @param {{modalElement: HTMLDialogElement; styleElement: HTMLSelectElement; sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
  */
-export async function showDiffs({ modalElement, styleElement, sprite, script = 0, style }) {
+export async function showDiffs({
+  modalElement,
+  styleElement,
+  sprite,
+  script = 0,
+  style,
+}) {
+  console.log(modalElement, styleElement);
   let project = await api.getCurrentProject();
 
   const oldProject = await project.getPreviousScripts(sprite);
   const newProject = await project.getCurrentScripts(sprite);
-  const diffs = createDiffs(oldProject, newProject);
+  console.log(oldProject, newProject);
+  let blocks = parseBlocks(oldProject, newProject);
+  console.log(blocks);
+  console.log(await diff(blocks.oldBlocks, blocks.newBlocks));
 
   document.querySelector("#scripts").innerHTML = "";
   document.querySelector("#commits").innerHTML = "";
@@ -55,8 +35,6 @@ export async function showDiffs({ modalElement, styleElement, sprite, script = 0
       duration: 5000,
     });
   };
-
-  await Array.from(Object.values(diffs)).flat(Infinity)[script].renderBlocks(style);
 
   if (!modalElement.open) {
     modalElement.showModal();
@@ -120,7 +98,7 @@ export async function showDiffs({ modalElement, styleElement, sprite, script = 0
   document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
   document
     .querySelectorAll(".topbar a")
-  [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
+    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
 
   globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {

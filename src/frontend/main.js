@@ -1,19 +1,20 @@
 import initialize from "./initialize";
 import Cmp from "./accessors";
-
+import "./reloader";
+// import { diff } from "./utils";
 import { DiffModal } from "./modals/index";
 
 (async () => {
-  // await import(
-  //   "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-  // );
-  // await import(
-  //   "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
-  // );
+  await import(
+    "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
+  );
+  await import(
+    "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
+  );
 
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
-
+  // window.diff = diff;
   // let addNote = setInterval(async () => {
   //   try {
   //     let saveStatus = document.querySelector(`.${Cmp.SAVE_STATUS}`).innerHTML;
@@ -25,18 +26,6 @@ import { DiffModal } from "./modals/index";
   //       document.querySelector(`.${Cmp.SAVE_STATUS}`).parentNode.after(span);
   //       clearInterval(addNote);
   //     }
-  //   } catch {}
-  // }, 500);
-
-  // setInterval(async () => {
-  //   try {
-  //     document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = diff.display;
-  //     document.onkeydown = async (e) => {
-  //       if (e.ctrlKey && e.shiftKey && e.key === "S") {
-  //         await diff.display();
-  //         document.querySelector("#shortcutNote").remove();
-  //       }
-  //     };
   //   } catch {}
   // }, 500);
 

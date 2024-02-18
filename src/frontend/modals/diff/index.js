@@ -1,6 +1,7 @@
 import Cmp from "../../accessors";
+import api from "../../api";
 import { html } from "../../utils";
-import showDiffs from "./render";
+import { showDiffs } from "./render";
 
 const DIFF_MODAL = html`<dialog id="diffModal" style="overflow-x: hidden">
   <div class="content">
@@ -35,36 +36,39 @@ const DIFF_MODAL = html`<dialog id="diffModal" style="overflow-x: hidden">
 </dialog>`;
 
 export class DiffModal {
-  /** @type {HTMLDialogElement} */
-  #modal;
-  /** @type {HTMLSelectElement} */
-  #style;
-
-  constructor() {
-    document.body.innerHTML += DIFF_MODAL;
-    this.#modal = document.querySelector("#diffModal");
-
-    this.#style = document.querySelector("#styleChoice");
-    this.#style.onchange = () => {
-      (async () => {
-        await this._rerender(this.#style.value);
-      })();
-    };
+  constructor(root) {
+    root.innerHTML += DIFF_MODAL;
   }
 
+  /** @returns {HTMLDialogElement} */
+  get modal() {
+    return document.querySelector("#diffModal");
+  }
+
+  /** @returns {HTMLDialogElement} */
+  get style() {
+    let style = document.querySelector("#styleChoice");
+    style.onchange = () => {
+      (async () => {
+        await this._rerender(style.value);
+      })();
+    };
+    return style;
+  }
+
+  /** @returns {HTMLDialogElement} */
   async display() {
     let project = await api.getCurrentProject();
     await project.unzip();
 
     globalThis.sprites = await project.getSprites();
-
-    this.#style.value = "scratch3";
+    console.log(await api.getCurrentProject(), await project.getSprites());
+    this.style.value = "scratch3";
 
     showDiffs({
-      modalElement: this.#modal,
-      styleElement: this.#style,
+      modalElement: this.modal,
+      styleElement: this.style,
       sprite: globalThis.sprites[0],
-      style,
     });
   }
 
