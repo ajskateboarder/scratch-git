@@ -83,8 +83,7 @@ export class CommitModal {
     }
 
     let offset = 0;
-    let commit = await (await api.getCurrentProject()).getCommits();
-    const commits = Array(150).fill(commit[0]);
+    let commits = await (await api.getCurrentProject()).getCommits();
 
     [...commits].forEach(
       (commit, i) =>

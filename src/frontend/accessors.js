@@ -42,6 +42,7 @@ const Cmp = {
   CLOSE_BUTTON_LARGE: select("close-button_large").split(".")[1].split(":")[0],
   CLOSE_ICON: select("close-button_close-icon"),
   DISABLED_BUTTON: select("button_mod-disabled"),
+  GUI_PAGE_WRAPPER: select("gui_page-wrapper"),
 };
-window.Cmp = Cmp;
+
 export default Cmp;

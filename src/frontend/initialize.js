@@ -33,7 +33,6 @@ function injectStyles() {
 
 /** TODO: deprecate in favor of dedicated menu */
 function addGitMenuButtons(saveArea, commitArea, commit) {
-  console.log(commitArea);
   // add buttons
   saveArea.innerHTML += html`<div
     class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
@@ -92,19 +91,25 @@ function addGitMenuButtons(saveArea, commitArea, commit) {
 export default function () {
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
   let saveArea = `${MENU} > div:nth-child(4)`;
+  let modalArea = document.querySelector("#gitModals");
 
   let commit = new CommitModal(document.querySelector(saveArea));
   let welcome = new WelcomeModal(document.querySelector(saveArea));
-  let diff = new DiffModal(document.querySelector(saveArea));
+  // let diff = new DiffModal(document.querySelector(saveArea));
+
+  document.querySelector("body > div[style='display: none;']").innerHTML +=
+    "<dialog is='diff-modal' id='diffModal' style='overflow-x: hidden'></dialog>";
 
   setInterval(async () => {
     try {
       document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = () =>
-        diff.display();
+        document.querySelector("#diffModal").diff("Sprite1");
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
-          await diff.display();
-          document.querySelector("#shortcutNote").remove();
+          document.querySelector("#diffModal").diff("Sprite1");
+
+          // await diff.display();
+          // document.querySelector("#shortcutNote").remove();
         }
       };
     } catch {}

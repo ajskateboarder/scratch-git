@@ -1,83 +1,87 @@
+import { html, diff } from "../../utils";
 import Cmp from "../../accessors";
 import api from "../../api";
-import { html } from "../../utils";
-import { showDiffs } from "./render";
 
-const DIFF_MODAL = html`<dialog id="diffModal" style="overflow-x: hidden">
-  <div class="content">
-    <div class="topbar"></div>
-    <div class="sidebar">
-      <ul id="scripts"></ul>
-      <br />
-    </div>
-    <div class="blocks">
-      <p id="commits"></p>
-      <div
-        class="bottom-bar"
-        style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
-      >
-        <select id="styleChoice">
-          <option value="scratch3">Scratch 3.0</option>
-          <option value="scratch2">Scratch 2.0</option>
-          <option value="scratch3-high-contrast">
-            Scratch 3.0 (High Contrast)
-          </option>
-        </select>
-        <button
-          onclick="document.querySelector('#diffModal').close()"
-          class="${Cmp.SETTINGS_BUTTON}"
-          id="commitButton"
-        >
-          Okay
-        </button>
-      </div>
-    </div>
-  </div>
-</dialog>`;
+import { parseScripts } from "./block-parser";
 
-export class DiffModal {
-  constructor(root) {
-    root.innerHTML += DIFF_MODAL;
+class DiffModal extends HTMLDialogElement {
+  constructor() {
+    super();
   }
 
-  /** @returns {HTMLDialogElement} */
-  get modal() {
-    return document.querySelector("#diffModal");
+  connectedCallback() {
+    if (!this.querySelector(".content")) {
+      this.innerHTML += html`<div class="content">
+        <div class="topbar"></div>
+        <div class="sidebar">
+          <br />
+        </div>
+        <div class="blocks">
+          <div
+            class="bottom-bar"
+            style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
+          >
+            <button
+              onclick="document.querySelector('#diffModal').close()"
+              class="${Cmp.SETTINGS_BUTTON}"
+              id="commitButton"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      </div>`;
+      this.scripts = document.createElement("ul", { id: "scripts" });
+      this.querySelector(".sidebar").prepend(this.scripts);
+      this.commits = document.createElement("p", { id: "commits" });
+      this.querySelector(".blocks").prepend(this.commits);
+    }
   }
 
-  /** @returns {HTMLDialogElement} */
-  get style() {
-    let style = document.querySelector("#styleChoice");
-    style.onchange = () => {
-      (async () => {
-        await this._rerender(style.value);
-      })();
-    };
-    return style;
+  _showMe() {
+    // directly attaching this modal to anything in #app will hide the project player
+    // so apparantly moving it elsewhere fixes it :/
+    let fragment = document.createDocumentFragment();
+    fragment.appendChild(this);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document.querySelector("#diffModal").showModal();
   }
 
-  /** @returns {HTMLDialogElement} */
-  async display() {
+  /**
+   * @param {string} sprite
+   * @param {number} script - 0 by default
+   */
+  async diff(sprite, script = 0) {
     let project = await api.getCurrentProject();
-    await project.unzip();
+    let sprites = await project.getSprites();
+    project.unzip();
+    const oldProject = await project.getPreviousScripts(sprite);
+    const newProject = await project.getCurrentScripts(sprite);
 
-    globalThis.sprites = await project.getSprites();
-    console.log(await api.getCurrentProject(), await project.getSprites());
-    this.style.value = "scratch3";
+    let scripts = parseScripts(oldProject, newProject);
+    let diffs = (
+      await Promise.all(
+        scripts.map((script) => diff(script.oldContent, script.newContent))
+      )
+    )
+      .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
+      .filter((result) => result.diffed !== "")
+      .map((result) => {
+        if (!result.diffed.trimStart().startsWith("when @greenFlag clicked")) {
+          return {
+            ...result,
+            diffed: " when @greenFlag clicked\n" + result.diffed.trimStart(),
+          };
+        }
+        return result;
+      });
 
-    showDiffs({
-      modalElement: this.modal,
-      styleElement: this.style,
-      sprite: globalThis.sprites[0],
-    });
-  }
+    console.log(diffs);
+    this.scripts.innerHTML = "";
+    this.commits.innerText = diffs[script].diffed;
 
-  async _rerender(style) {
-    const activeButton = parseInt(
-      document
-        .querySelector("button.tab-btn.active-tab")
-        .getAttribute("script-no")
-    );
-    await globalThis.diffs[activeButton].renderBlocks(style);
+    this._showMe();
   }
 }
+
+customElements.define("diff-modal", DiffModal, { extends: "dialog" });

@@ -1,11 +1,11 @@
-import parseBlocks from "./block-parser";
+import { parseScripts } from "./block-parser";
 import api from "../../api";
 import { scratchAlert } from "../../gui-components";
 import { diff } from "../../utils";
 
 /**
  * Render diffs from a script from a sprite
- * @param {{modalElement: HTMLDialogElement; styleElement: HTMLSelectElement; sprite: string; script: number?; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
+ * @param {{modalElement: HTMLDialogElement; styleElement: HTMLSelectElement; sprite: string; script: number; style: "scratch3" | "scratch3-high-contrast" | "scratch2")}}
  */
 export async function showDiffs({
   modalElement,
@@ -14,18 +14,42 @@ export async function showDiffs({
   script = 0,
   style,
 }) {
-  console.log(modalElement, styleElement);
   let project = await api.getCurrentProject();
+  // try again in case of undefined
+  if (!project) {
+    project = await api.getCurrentProject();
+  }
+  let sprites = await project.getSprites();
 
   const oldProject = await project.getPreviousScripts(sprite);
   const newProject = await project.getCurrentScripts(sprite);
-  console.log(oldProject, newProject);
-  let blocks = parseBlocks(oldProject, newProject);
-  console.log(blocks);
-  console.log(await diff(blocks.oldBlocks, blocks.newBlocks));
+
+  let scripts = parseScripts(oldProject, newProject);
+  let diffs = (
+    await Promise.all(
+      scripts.map((script) => diff(script.oldContent, script.newContent))
+    )
+  )
+    .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
+    .filter((result) => result.diffed !== "")
+    .map((result) => {
+      if (!result.diffed.trimStart().startsWith("when @greenFlag clicked")) {
+        return {
+          ...result,
+          diffed: " when @greenFlag clicked\n" + result.diffed.trimStart(),
+        };
+      }
+      return result;
+    });
 
   document.querySelector("#scripts").innerHTML = "";
-  document.querySelector("#commits").innerHTML = "";
+  document.querySelector("#commits").innerText = diffs[script].diffed;
+
+  scratchblocks.appendStyles();
+  scratchblocks.renderMatching("#commits", {
+    style: "scratch3",
+    scale: 0.675,
+  });
 
   document.querySelector("#commitButton").onclick = async () => {
     const message = await project.commit();
@@ -42,7 +66,7 @@ export async function showDiffs({
 
   document.querySelector(".topbar").innerHTML = "";
 
-  globalThis.sprites.forEach((sprite) => {
+  sprites.forEach((sprite) => {
     let newItem = document.createElement("a");
     newItem.href = "#whatever";
     newItem.appendChild(document.createTextNode(sprite));
@@ -53,6 +77,8 @@ export async function showDiffs({
       newItem.classList.add("active-tab");
 
       await showDiffs({
+        modalElement,
+        styleElement,
         sprite: sprite,
         style: styleElement.value,
       });
@@ -60,47 +86,37 @@ export async function showDiffs({
     document.querySelector(".topbar").appendChild(newItem);
   });
 
-  Array.from(Object.values(diffs))
-    .flat(Infinity)
-    .forEach((diff, i) => {
-      let newItem = document.createElement("li");
-      let link = document.createElement("button");
-      link.title = diff.status.charAt(0).toUpperCase() + diff.status.slice(1);
-      link.classList.add("tab-btn");
-      link.setAttribute("script-no", i);
-      link.onclick = async () => {
-        document
-          .querySelectorAll(".tab-btn")
-          .forEach((e) => e.classList.remove("active-tab"));
-        link.classList.add("active-tab");
+  diffs.forEach(async (diff, i) => {
+    let newItem = document.createElement("li");
+    let link = document.createElement("button");
+    link.classList.add("tab-btn");
+    link.setAttribute("script-no", i);
+    link.onclick = async () => {
+      document
+        .querySelectorAll(".tab-btn")
+        .forEach((e) => e.classList.remove("active-tab"));
+      link.classList.add("active-tab");
+      await showDiffs({
+        modalElement,
+        styleElement,
+        sprite: sprite,
+        script: document
+          .querySelector("button.active-tab")
+          .getAttribute("script-no"),
+        style: styleElement.value,
+      });
+    };
+    link.innerHTML = `<i class="fa-solid fa-square-${
+      diff.status === "added"
+        ? "plus"
+        : diff.status === "removed"
+        ? "xmark"
+        : "minus"
+    }"></i> Script ${diff.scriptNo}`;
+    newItem.appendChild(link);
+    document.querySelector("#scripts").appendChild(newItem);
+  });
 
-        await showDiffs({
-          sprite: document.querySelector("a.active-tab").innerText,
-          script: i,
-          style: styleElement.value,
-        });
-      };
-      switch (diff.status) {
-        case "added":
-          link.innerHTML = `<i class="fa-solid fa-square-plus"></i> Script ${diff.scriptNo}`;
-          break;
-        case "modified":
-          link.innerHTML = `<i class="fa-solid fa-square-minus"></i> Script ${diff.scriptNo}`;
-          break;
-        case "removed":
-          link.innerHTML = `<i class="fa-solid fa-square-xmark"></i> Script ${diff.scriptNo}`;
-          break;
-      }
-      newItem.appendChild(link);
-      document.querySelector("#scripts").appendChild(newItem);
-    });
-
-  document.querySelectorAll(".tab-btn")[script].classList.add("active-tab");
-  document
-    .querySelectorAll(".topbar a")
-    [globalThis.sprites.indexOf(sprite)].classList.add("active-tab");
-
-  globalThis.diffs = Array.from(Object.values(diffs)).flat(Infinity);
   if (document.querySelector("body").getAttribute("theme") === "dark") {
     document.querySelector(".sidebar").classList.add("dark");
     document.querySelector(".topbar").classList.add("dark");

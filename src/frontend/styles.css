@@ -5,8 +5,7 @@
 .sidebar {
   width: fit-content;
   position: fixed;
-  top: 25%;
-  height: 50%;
+  height: 100%;
   padding-right: 5px;
   border-right: 1px solid grey;
   background-color: #e6f0ff;
@@ -61,7 +60,6 @@
 #welcomeModal {
   height: 50%;
   max-height: 50%;
-  padding: 0;
   width: 50%;
   position: absolute;
   transform: translateX(-50%);
@@ -72,6 +70,10 @@
   white-space: normal;
   padding: 20px;
   box-sizing: border-box
+}
+
+#diffModal {
+  padding: 0;
 }
 
 .bottom-bar {
@@ -123,6 +125,10 @@
 .dark #scripts li button.active-tab {
   background-color: rgb(76, 76, 76);
   color: #eee;
+}
+
+#commits {
+  margin-left: 20px;
 }
 
 .commit {

@@ -29,7 +29,9 @@ pub struct GitDiff {
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
 pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
+    dbg!(&old_content, &new_content);
     if old_content == new_content {
+        dbg!("their different");
         return GitDiff {
             removed: 0,
             added: 0,
@@ -58,7 +60,6 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
     let binding = &String::from_utf8_lossy(&output.stdout).trim().to_owned();
     let result = &binding.split("@@").into_iter().collect::<Vec<_>>()[1..3];
     let binding = result[0].to_string();
-    dbg!(&binding);
     let add_rms = binding
         .trim()
         .split(" ")
@@ -68,6 +69,6 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
     GitDiff {
         removed: add_rms[0].parse::<i32>().unwrap(),
         added: add_rms[1].parse::<i32>().unwrap(),
-        diffed: result[1].replacen("\n", "", 1),
+        diffed: result[1].to_string(),
     }
 }

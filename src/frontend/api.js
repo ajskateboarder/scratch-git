@@ -27,17 +27,28 @@ class Project {
 
   /** @returns {Promise<Commit[]>} */
   async getCommits() {
-    let commits = await (await this._request("/commits")).json();
-    [...commits].forEach(
-      (commit, i) =>
-        (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
+    let commits = [...(await (await this._request("/commits")).json())][0].map(
+      (commit) => {
+        return {
+          ...commit,
+          shortDate: commit.author.date.split(" ").slice(0, 4),
+        };
+      }
     );
+
     return commits;
   }
 
-  /** Retreive sprites that have been changed since project changes */
+  /** Retreive sprites that have been changed since project changes
+   * Sorted alphabetically
+   *
+   * @returns {Promise<string[]>}
+   */
   async getSprites() {
-    return (await (await this._request("/sprites")).json()).sprites;
+    /** @type {string[]} */
+    let sprites = (await (await this._request("/sprites")).json()).sprites;
+    sprites.sort((a, b) => a.localeCompare(b));
+    return sprites;
   }
 
   /** @param {string} sprite */
