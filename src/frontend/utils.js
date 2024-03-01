@@ -20,26 +20,6 @@ export function timeAgo(input) {
   }
 }
 
-/**
- * @param {string} oldContent
- * @param {string} newContent
- * @returns {Promise<{added: number; removed: number; diffed: string}>}
- */
-export async function diff(oldContent, newContent) {
-  return await (
-    await fetch("http://localhost:8000/diff", {
-      method: "POST",
-      body: JSON.stringify({
-        old_content: oldContent,
-        new_content: newContent,
-      }),
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    })
-  ).json();
-}
-
 export function html(strings, ...values) {
   let result = strings[0];
   values.forEach((e, i) => {

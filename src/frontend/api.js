@@ -19,7 +19,7 @@ class Project {
     this.#portNumber = portNumber;
   }
 
-  async _request(path) {
+  async #request(path) {
     return await fetch(
       `http://localhost:${this.#portNumber}/${this.project}${path}`
     );
@@ -27,7 +27,7 @@ class Project {
 
   /** @returns {Promise<Commit[]>} */
   async getCommits() {
-    let commits = [...(await (await this._request("/commits")).json())][0].map(
+    return [...(await (await this.#request("/commits")).json())][0].map(
       (commit) => {
         return {
           ...commit,
@@ -35,8 +35,6 @@ class Project {
         };
       }
     );
-
-    return commits;
   }
 
   /** Retreive sprites that have been changed since project changes
@@ -46,33 +44,33 @@ class Project {
    */
   async getSprites() {
     /** @type {string[]} */
-    let sprites = (await (await this._request("/sprites")).json()).sprites;
+    let sprites = (await (await this.#request("/sprites")).json()).sprites;
     sprites.sort((a, b) => a.localeCompare(b));
     return sprites;
   }
 
   /** @param {string} sprite */
   async getCurrentScripts(sprite) {
-    return await (await this._request(`/project.json?name=${sprite}`)).json();
+    return await (await this.#request(`/project.json?name=${sprite}`)).json();
   }
 
   /** @param {string} sprite */
   async getPreviousScripts(sprite) {
     return await (
-      await this._request(`/project.old.json?name=${sprite}`)
+      await this.#request(`/project.old.json?name=${sprite}`)
     ).json();
   }
 
   async commit() {
-    return await (await this._request("/commit")).text();
+    return await (await this.#request("/commit")).text();
   }
 
   async push() {
-    await this._request("/push");
+    await this.#request("/push");
   }
 
   async unzip() {
-    await this._request("/unzip");
+    await this.#request("/unzip");
   }
 }
 
@@ -90,6 +88,7 @@ class ProjectManager {
    * @returns {Promise<Project>}
    */
   async getProject(projectName) {
+    
     return new Project(projectName, this.#portNumber);
   }
 
@@ -99,7 +98,7 @@ class ProjectManager {
    * @returns {Promise<Project>}
    */
   async createProject(projectPath) {
-    let response = await (
+    const response = await (
       await fetch(
         `http://localhost:${
           this.#portNumber
@@ -114,7 +113,7 @@ class ProjectManager {
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
-    let projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[7]
+    const projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[7]
       .children[0].value;
     return new Project(projectName, this.#portNumber);
   }

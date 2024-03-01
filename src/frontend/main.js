@@ -5,12 +5,7 @@ import "./reloader";
 import { DiffModal } from "./modals/index";
 
 (async () => {
-  await import(
-    "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-  );
-  await import(
-    "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
-  );
+
 
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;

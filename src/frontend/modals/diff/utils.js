@@ -1,3 +1,5 @@
+import { ParseSB3Blocks } from "../../lib";
+
 const zip = (a, b) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
     a[i] ?? "",
@@ -13,7 +15,7 @@ export function parseScripts(oldProject, newProject) {
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].opcode.startsWith("event_when"))
     .map((script) =>
-      parseSB3Blocks.toScratchblocks(script, oldProject, "en", {
+      ParseSB3Blocks.toScratchblocks(script, oldProject, "en", {
         tabs: "",
       })
     );
@@ -21,7 +23,7 @@ export function parseScripts(oldProject, newProject) {
   const newBlocks = Object.keys(newProject)
     .filter((key) => newProject[key].opcode.startsWith("event_when"))
     .map((script) =>
-      parseSB3Blocks.toScratchblocks(script, newProject, "en", {
+      ParseSB3Blocks.toScratchblocks(script, newProject, "en", {
         tabs: "",
       })
     );
@@ -40,4 +42,24 @@ export function parseScripts(oldProject, newProject) {
     });
 
   return changed;
+}
+
+/**
+ * @param {string} oldContent
+ * @param {string} newContent
+ * @returns {Promise<{added: number; removed: number; diffed: string}>}
+ */
+export async function diff(oldContent, newContent) {
+  return await (
+    await fetch("http://localhost:8000/diff", {
+      method: "POST",
+      body: JSON.stringify({
+        old_content: oldContent,
+        new_content: newContent,
+      }),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+  ).json();
 }
