@@ -137,6 +137,8 @@ class GitMenu {
         this.open = false;
       }
     };
+
+    this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
   }
 }
 

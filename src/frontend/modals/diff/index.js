@@ -54,7 +54,7 @@ export class DiffModal extends HTMLDialogElement {
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
     document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)?.appendChild(fragment);
-    document.querySelector(this.id)?.showModal();
+    document.querySelector(`#${this.id}`).showModal();
   }
 
   /**
@@ -65,12 +65,13 @@ export class DiffModal extends HTMLDialogElement {
     let project = await api.getCurrentProject();
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
-    const sprites = await project?.getSprites();
+    const sprites = await project.getSprites();
 
-    const oldProject = await project?.getPreviousScripts(sprite);
-    const newProject = await project?.getCurrentScripts(sprite);
+    const oldProject = await project.getPreviousScripts(sprite);
+    const newProject = await project.getCurrentScripts(sprite);
 
     const scripts = parseScripts(oldProject, newProject);
+    console.log(scripts);
 
     // not sure why all this isn't just done by diff()
     const diffs = (

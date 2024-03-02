@@ -119,10 +119,12 @@ export default function () {
   setInterval(async () => {
     try {
       document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
+        (await api.getCurrentProject()).unzip();
         document.querySelector("#diffModal").diff("Sprite1");
       };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
+          (await api.getCurrentProject()).unzip();
           document.querySelector("#diffModal").diff("Sprite1");
 
           // await diff.display();
