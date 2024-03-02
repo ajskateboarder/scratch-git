@@ -1,6 +1,10 @@
-import { DiffModal } from "./diff/index_old";
-import { CommitModal } from "./commit";
+// import { CommitModal } from "./commit_old";
 import { WelcomeModal } from "./welcome";
-import "./diff/index";
+import { DiffModal } from "./diff/index";
+import { CommitModal } from "./commit";
 
-export { DiffModal, CommitModal, WelcomeModal };
+customElements.define("commit-modal", CommitModal, { extends: "dialog" });
+customElements.define("diff-modal", DiffModal, { extends: "dialog" });
+
+// this is the imposter modal that isn't a wc yet >:\
+export { WelcomeModal };

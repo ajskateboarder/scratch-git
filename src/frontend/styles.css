@@ -69,7 +69,7 @@
   word-wrap: break-word;
   white-space: normal;
   padding: 20px;
-  box-sizing: border-box
+  box-sizing: border-box;
 }
 
 #diffModal {
@@ -188,12 +188,6 @@
 .pagination {
   display: flex;
   justify-content: center;
-}
-
-.disabled-funny {
-  background-color: hsla(0, 60%, 55%, 1);
-  color: rgba(255, 255, 255, 0.4);
-  cursor: default;
 }
 
 #pathInput::file-selector-button {

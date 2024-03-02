@@ -262,12 +262,18 @@ fn current_project(project_name: String, name: String) -> AppResponse {
 fn sprites(project_name: String) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
-    let _current_project = serde_json::from_str::<serde_json::Value>(
-        &fs::read_to_string(pth.join("project.old.json"))
-            .unwrap()
-            .as_str(),
-    )
-    .unwrap();
+    let binding = &fs::read_to_string(pth.join("project.old.json"));
+    let project_old_json = match binding {
+        Ok(fh) => fh.as_str(),
+        Err(_) => {
+            return response(
+                Status::InternalServerError,
+                json!({ "status": "you forgot to unzip the project dingus" }),
+            )
+        }
+    };
+    let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();
+
     let current_diff = Diff::new(_current_project);
     let _new_project = serde_json::from_str::<serde_json::Value>(
         &fs::read_to_string(pth.join("project.json"))
@@ -374,14 +380,13 @@ fn commits(project_name: String) -> AppResponse {
         .args([
             "log",
             &("--pretty=format:".to_owned()+
-            "{%n \"commit\": \"%H\",%n \"subject\": \"%s\",%n \"body\": \"%b\",%n \"author\": {%n \"name\": \"%aN\",%n \"email\": \"%aE\",%n \"date\": \"%aD\"%n }%n}")
+            "{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},")
         ]).current_dir(pth).output().unwrap().stdout;
     let binding = String::from_utf8(git_log).unwrap();
     let binding = if binding.as_str().matches("\"commit\"").count() > 1 {
         format!(
             "[{}]",
             binding.replace(" }\n}", " }\n},").as_str()[..binding.len() - 1].to_string()
-                + &"}".to_string()
         )
     } else {
         format!("[{binding}]")

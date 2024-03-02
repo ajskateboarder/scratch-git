@@ -1,73 +1,73 @@
-/** @file Template and logic for the commit modal */
-
 import Cmp from "../accessors";
 import api from "../api";
 import { html, timeAgo } from "../utils";
 
-const COMMIT_MODAL = html`<dialog
-  id="commitModal"
-  style="overflow-x: hidden; overflow-y: auto"
->
-  <div
-    style="
+export class CommitModal extends HTMLDialogElement {
+  /** @type {HTMLButtonElement} */
+  closeButton;
+  /** @type {HTMLButtonElement} */
+  older;
+  /** @type {HTMLButtonElement} */
+  newer;
+
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    if (this.querySelector("#comits")) return;
+    this.innerHTML += html`<div
+      style="
 position: absolute;
 left: 47%;
 transform: translateX(-50%);
 width: 65%;
 "
-  >
-    <h1>Commits</h1>
-    <div class="pagination"></div>
-    <br />
-    <div class="commit-group"></div>
-    <div
-      class="bottom-bar"
-      style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
+      id="comits"
     >
-      <button
-        onclick="document.querySelector('#commitModal').close()"
-        class="${Cmp.SETTINGS_BUTTON}"
-        id="commitButton"
-      >
-        Okay
-      </button>
-    </div>
-  </div>
-</dialog>`;
-
-/** Appends a commit modal to the DOM and becomes display-able */
-export class CommitModal {
-  constructor(root) {
-    root.innerHTML += COMMIT_MODAL;
-
-    document.querySelector(".pagination").innerHTML = html`<button
-        class="${Cmp.SETTINGS_BUTTON} disabled-funny"
-        style="border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
-        id="newer"
-      >
-        Newer</button
-      ><button
-        class="${Cmp.SETTINGS_BUTTON}"
-        style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-        id="older"
-      >
-        Older
-      </button>`;
+      <h1>Commits</h1>
+      <div class="pagination"></div>
+      <br />
+      <div class="commit-group"></div>
+      <div
+        class="bottom-bar"
+        style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px;"
+      ></div>
+    </div>`;
+    this.closeButton = Object.assign(document.createElement("button"), {
+      id: "commitButton",
+      innerText: "Close",
+      className: Cmp.SETTINGS_BUTTON,
+    });
+    this.querySelector(".bottom-bar")?.appendChild(this.closeButton);
+    this.newer = Object.assign(document.createElement("button"), {
+      className: `${Cmp.SETTINGS_BUTTON}`,
+      style:
+        "border-top-right-radius: 0px; border-bottom-right-radius: 0px; user-select: none",
+      innerText: "Newer",
+    });
+    this.querySelector(".pagination").appendChild(this.newer);
+    this.older = Object.assign(document.createElement("button"), {
+      className: `${Cmp.SETTINGS_BUTTON}`,
+      style:
+        "border-top-left-radius: 0px; border-bottom-left-radius: 0px; user-select: none",
+      innerText: "Older",
+    });
+    this.querySelector(".pagination").appendChild(this.older);
   }
 
-  /** @returns {HTMLDialogElement} */
-  get modal() {
-    return document.querySelector("#commitModal");
+  _showMe() {
+    // directly attaching this modal to anything in #app will hide the project player
+    // so apparantly moving it elsewhere fixes it :/
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(this);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document.querySelector(`#${this.id}`).showModal();
   }
 
   async display() {
-    /** @type {HTMLButtonElement} */
-    const older = this.modal.querySelector("#older");
-    /** @type {HTMLButtonElement} */
-    const newer = this.modal.querySelector("#newer");
-
-    function renderCommits(commits) {
-      document.querySelector(".commit-group").innerHTML = commits
+    const renderCommits = (commits) => {
+      this.querySelector(".commit-group").innerHTML = commits
         .map(
           (e) => html`<div class="commit">
       <span style="font-size: 1rem">${
@@ -80,70 +80,49 @@ export class CommitModal {
         </div>`
         )
         .join("");
+    };
+
+    let page = 0;
+    let commits = await (await api.getCurrentProject()).getCommits();
+    commits = [...Array(Math.ceil(commits.length / 40))].map((_) =>
+      commits.splice(0, 40)
+    );
+
+    renderCommits(commits[page]);
+
+    if (commits.length === 1) {
+      this.newer.disabled = true;
+      this.older.disabled = true;
     }
 
-    let offset = 0;
-    let commits = await (await api.getCurrentProject()).getCommits();
-
-    [...commits].forEach(
-      (commit, i) =>
-        (commits[i].shortDate = commit.author.date.split(" ").slice(0, 4))
-    );
-    renderCommits(commits.slice(offset, offset + 40));
-
-    /** @param {HTMLButtonElement} button */
-    const enable = (button) => {
-      button.classList.remove("disabled-funny");
-      button.disabled = false;
+    this.older.onclick = () => {
+      page += 1;
+      renderCommits(commits[page]);
+      this.older.disabled = page === commits.length - 1;
+      this.newer.disabled = page !== commits.length - 1;
+      if (page !== 0 && page !== commits.length - 1) {
+        this.older.disabled = false;
+        this.newer.disabled = false;
+      }
     };
 
-    /** @param {HTMLButtonElement} button */
-    const disable = (button) => {
-      button.classList.add("disabled-funny");
-      button.disabled = true;
+    this.newer.onclick = () => {
+      page -= 1;
+      console.log("page", page);
+      renderCommits(commits[page]);
+      this.newer.disabled = page === 0;
+      this.older.disabled = page !== 0;
+      if (page !== 0 && page !== commits.length - 1) {
+        this.older.disabled = false;
+        this.newer.disabled = false;
+      }
     };
 
-    const toggle = (button, condition) => {
-      condition ? enable(button) : disable(button);
+    this.closeButton.onclick = () => {
+      this.close();
     };
 
-    older.onclick = () => {
-      if (older.classList.contains("disabled-funny")) return;
-
-      offset += 40;
-      renderCommits(commits.slice(offset, offset + 40));
-
-      if (
-        !commits
-          .slice(offset, offset + 40)
-          .includes(commits[commits.length - 1])
-      )
-        disable(older);
-
-      toggle(newer, commits.slice(offset, offset + 40).includes(commits[0]));
-    };
-
-    newer.onclick = () => {
-      if (newer.classList.contains("disabled-funny")) return;
-
-      offset -= 40;
-      renderCommits(commits.slice(offset, offset + 40));
-      // toggle(
-      //   older,
-      //   commits.slice(offset, offset + 40).includes(commits[commits.length - 1])
-      // );
-      // toggle(newer, !commits.slice(offset, offset + 40).includes(commits[0]));
-      if (
-        !commits
-          .slice(offset, offset + 40)
-          .includes(commits[commits.length - 1])
-      )
-        enable(older);
-      if (commits.slice(offset, offset + 40).includes(commits[0]))
-        disable(newer);
-    };
-
-    this.modal.showModal();
-    document.querySelector("#older").blur();
+    this._showMe();
+    this.older.blur();
   }
 }

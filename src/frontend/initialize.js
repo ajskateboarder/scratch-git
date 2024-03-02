@@ -5,7 +5,7 @@ import Cmp from "./accessors";
 import { html } from "./utils";
 import api from "./api";
 
-import { WelcomeModal, CommitModal, DiffModal } from "./modals/index";
+import { WelcomeModal, CommitModal } from "./modals/index";
 import styles from "./styles.css";
 
 function injectStyles() {
@@ -26,6 +26,12 @@ function injectStyles() {
     }
     div.${Cmp.MENU_ITEM}:has(#allcommits-log):hover {
       cursor: pointer;
+    }
+    
+    .${Cmp.SETTINGS_BUTTON}[disabled] {
+      background-color: hsla(0, 60%, 55%, 1);
+      color: rgba(255, 255, 255, 0.4);
+      cursor: default;
     }`;
 
   document.head.innerHTML += "<style>" + MENU_ITEM_CSS + styles + "</style>";
@@ -70,9 +76,9 @@ function addGitMenuButtons(saveArea, commitArea, commit) {
           duration: 5000,
         });
       };
-    document.querySelector(
-      "#allcommits-log"
-    ).parentElement.parentElement.onclick = commit.display;
+    // document.querySelector(
+    //   "#allcommits-log"
+    // ).parentElement.parentElement.onclick = commit.display;
     document.querySelectorAll(".git-button").forEach((element) => {
       element.parentElement.onmouseenter = () => {
         element.parentElement.style.backgroundColor =
@@ -93,17 +99,28 @@ export default function () {
   let saveArea = `${MENU} > div:nth-child(4)`;
   let modalArea = document.querySelector("#gitModals");
 
-  let commit = new CommitModal(document.querySelector(saveArea));
+  // let commit = new CommitModal(document.querySelector(saveArea));
   let welcome = new WelcomeModal(document.querySelector(saveArea));
   // let diff = new DiffModal(document.querySelector(saveArea));
 
-  document.querySelector("body > div[style='display: none;']").innerHTML +=
-    "<dialog is='diff-modal' id='diffModal' style='overflow-x: hidden'></dialog>";
+  document.querySelector(
+    "body > div[style='display: none;']"
+  ).innerHTML += html`<dialog
+      is="diff-modal"
+      id="diffModal"
+      style="overflow-x: hidden"
+    ></dialog>
+    <dialog
+      is="commit-modal"
+      id="commitModal"
+      style="overflow-x: hidden; overflow-y: auto"
+    ></dialog>`;
 
   setInterval(async () => {
     try {
-      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = () =>
+      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
         document.querySelector("#diffModal").diff("Sprite1");
+      };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           document.querySelector("#diffModal").diff("Sprite1");
@@ -119,7 +136,7 @@ export default function () {
 
   const secondCateg = document.querySelector(saveArea).cloneNode(true);
   document.querySelector(saveArea).after(secondCateg);
-  addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
+  // addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
   document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
     const isDark = document.body.getAttribute("theme") === "dark";
     document.querySelectorAll(".git-button").forEach((element) => {
@@ -132,7 +149,8 @@ export default function () {
     welcome.display();
   } else {
     gitMenu.create({
-      commitViewHandler: async () => await commit.display(),
+      commitViewHandler: async () =>
+        document.querySelector("#commitModal").display("Sprite1"),
     });
   }
 }

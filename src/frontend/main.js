@@ -1,12 +1,7 @@
 import initialize from "./initialize";
-import Cmp from "./accessors";
 import "./reloader";
-// import { diff } from "./utils";
-import { DiffModal } from "./modals/index";
 
 (async () => {
-
-
   globalThis.diffs = undefined;
   globalThis.sprites = undefined;
   // window.diff = diff;

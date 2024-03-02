@@ -29,9 +29,7 @@ pub struct GitDiff {
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
 pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
-    dbg!(&old_content, &new_content);
     if old_content == new_content {
-        dbg!("their different");
         return GitDiff {
             removed: 0,
             added: 0,
