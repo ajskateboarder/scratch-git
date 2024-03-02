@@ -6,7 +6,7 @@ https://github.com/ajskateboarder/scratch-git/assets/81255936/1285407f-c9dd-47ca
 
 (out of date as of now)
 
-Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that.
+Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes.
 
 ## Usage
 
