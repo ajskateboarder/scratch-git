@@ -5,19 +5,15 @@ import Cmp from "./accessors";
 import { html } from "./utils";
 import api from "./api";
 
-import { WelcomeModal, CommitModal } from "./modals/index";
-import styles from "./styles.css";
+import { WelcomeModal } from "./modals/index";
+import styles from "./media/styles.css";
 
 function injectStyles() {
   document.head.innerHTML += html`
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+      defer
     />
   `;
   const MENU_ITEM_CSS = `

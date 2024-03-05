@@ -62,7 +62,7 @@ fn create_project(file_name: &str) -> AppResponse {
         .to_str()
         .unwrap()
         .to_string();
-    let mut name = binding.split(".").collect::<Vec<_>>()[0].to_string();
+    let name = binding.split(".").collect::<Vec<_>>()[0].to_string();
     let mut config = project_config().lock().unwrap();
 
     let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
@@ -95,12 +95,12 @@ fn create_project(file_name: &str) -> AppResponse {
                     _i += 1;
                 }
             }
-            name = format!("projects/{}~{}", name, _i).to_string();
+            let fixed_name = format!("projects/{}~{}", name, _i).to_string();
             config.projects[format!("{}~{}", name, _i)] = json!({
-                "base": name,
+                "base": fixed_name,
                 "project_file": file_path.to_str().unwrap().to_string()
             });
-            let _project_path = Path::new(&name);
+            let _project_path = Path::new(&fixed_name);
             let _ = fs::create_dir(&_project_path);
             project_path = fs::canonicalize(_project_path).unwrap();
         }

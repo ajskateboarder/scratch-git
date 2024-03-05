@@ -4,22 +4,22 @@ import { html } from "../utils";
 import Cmp from "../accessors";
 import api from "../api";
 
+import thumbnail from "../media/thumb.svg";
+
 const DIALOG_CSS = `text-align: center;`;
 
-const WELCOME_MODAL_STEP_1 = html`<div style="${DIALOG_CSS}" id="welcomeStep1">
-  <h1>Welcome</h1>
-  <div style="font-weight: normal">
-    <p>Please load a project for Git development<br /><br /></p>
+const WELCOME_MODAL_STEP_1 = html`<div id="welcomeStep1">
+  <div class="finishContent">
+    <h1>Welcome to scratch.git!</h1>
+    <p>Please load a project for Git development to get started.<br /><br /></p>
     <button id="openProject" style="width: 50%" class="${Cmp.SETTINGS_BUTTON}">
-      Open project</button
-    ><br /><br />
-    <!-- TODO: make functional vv -->
+      Open project
+    </button>
+    <!-- TODO: make functional vv -->&nbsp;
     <input type="checkbox" name="dontshowagain" />
     <label for="dontshowagain"> Don't show again</label>
-    <div
-      class="bottom-bar"
-      style="justify-content: center; gap: 20px; width: 97.5%"
-    >
+    <br /><br />
+    <div class="bottom-bar">
       <button
         onclick="document.querySelector('#welcomeModal').close()"
         style="align-items: right; margin-left: -10px; "
@@ -37,6 +37,7 @@ const WELCOME_MODAL_STEP_1 = html`<div style="${DIALOG_CSS}" id="welcomeStep1">
       </button>
     </div>
   </div>
+  <span class="thumbnail">${thumbnail}</span>
 </div>`;
 
 const WELCOME_MODAL_STEP_2 = html`
@@ -78,23 +79,23 @@ const WELCOME_MODAL_STEP_2 = html`
 `;
 
 const WELCOME_MODAL_STEP_3 = html`
-  <div style="${DIALOG_CSS}display: none" id="welcomeStep3">
-    <h1>Finish</h1>
-    <div style="font-weight: normal">
-      <p>Err IDK<br /><br /></p>
+  <div style="display: none" id="welcomeStep3">
+    <div class="finishContent">
+      <h1>Welcome to scratch.git!</h1>
+      <div style="font-weight: normal">
+        <p>Err IDK<br /><br /></p>
+      </div>
+      <div class="bottom-bar">
+        <button
+          style="align-items: right; margin-left: -10px; "
+          class="${Cmp.SETTINGS_BUTTON}"
+          onclick="document.querySelector('#welcomeModal').close()"
+        >
+          Close
+        </button>
+      </div>
     </div>
-    <div
-      class="bottom-bar"
-      style="justify-content: center; gap: 20px; width: 97.5%"
-    >
-      <button
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON}"
-        onclick="document.querySelector('#welcomeModal').close()"
-      >
-        Close
-      </button>
-    </div>
+    <span class="thumbnail">${thumbnail}</span>
   </div>
 `;
 
@@ -122,7 +123,27 @@ export class WelcomeModal {
       this.goToStep3(document.querySelector("#openProjectPath").files[0].path);
     if (!this.modal.open) {
       this.modal.showModal();
+      this.updateResponsiveness();
+      window.addEventListener("resize", () => this.updateResponsiveness());
     }
+  }
+
+  updateResponsiveness() {
+    [...this.modal.querySelectorAll(".thumbnail")].map(
+      (e) =>
+        (e.style.transform = `scaleY(${Math.max(
+          1,
+          this.modal.offsetHeight / 215
+        )}) scaleX(${Math.min(this.modal.offsetHeight / 215, 3)})`)
+    );
+    [...this.modal.querySelectorAll(".finishContent")].map(
+      (e) =>
+        (e.style.width =
+          (this.modal.clientWidth + this.modal.clientHeight) / 2 -
+          this.modal.querySelector(".thumbnail").clientWidth -
+          40 +
+          "px")
+    );
   }
 
   // Can't say this is less verbose than simply swapping HTML
@@ -131,6 +152,8 @@ export class WelcomeModal {
   goToStep1() {
     this.modal.querySelector("#welcomeStep2").style.display = "none";
     this.modal.querySelector("#welcomeStep1").style.display = "block";
+    this.updateResponsiveness();
+    window.addEventListener("resize", () => this.updateResponsiveness());
   }
 
   goToStep2() {
@@ -145,6 +168,8 @@ export class WelcomeModal {
       this.modal.querySelector("#welcomeStep2").style.display = "none";
       this.modal.querySelector("#welcomeStep3").style.display = "block";
     })();
+    this.updateResponsiveness();
+    window.addEventListener("resize", () => this.updateResponsiveness());
   }
 
   openProjectPath() {
@@ -152,10 +177,37 @@ export class WelcomeModal {
   }
 
   openProject() {
+    function waitForElm(selector) {
+      return new Promise((resolve) => {
+        if (document.querySelector(selector)) {
+          return resolve(document.querySelector(selector));
+        }
+        const observer = new MutationObserver((_) => {
+          if (document.querySelector(selector)) {
+            observer.disconnect();
+            resolve(document.querySelector(selector));
+          }
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      });
+    }
+
     fileMenu.openProject();
     /** @type {HTMLButtonElement} */
     let nextButton = document.querySelector("#goToStep2");
     nextButton.disabled = false;
     nextButton.classList.remove(Cmp.DISABLED_BUTTON);
+
+    window.vm.runtime.on("PROJECT_LOADED", () => {
+      document.querySelector(
+        "#openProject"
+      ).innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
+      setTimeout(() => {
+        document.querySelector("#openProject").innerHTML = `Open project`;
+      }, 2000);
+    });
   }
 }

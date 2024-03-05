@@ -5,9 +5,8 @@ scratch-git-test/**
 *.sb3
 projects
 Project.sb3
-.vscode
 node_modules
-*.json
+/*.json
 /target
 /*.sb3
 userscript.js

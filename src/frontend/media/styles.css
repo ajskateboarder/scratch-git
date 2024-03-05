@@ -76,6 +76,14 @@
   padding: 0;
 }
 
+.thumbnail {
+  position: absolute;
+  top: 0;
+  right: -10px;
+  bottom: 0;
+  filter: hue-rotate(90deg) saturate(1.3);
+}
+
 .bottom-bar {
   position: sticky;
   width: 100%;
@@ -192,4 +200,8 @@
 
 #pathInput::file-selector-button {
   display: none;
+}
+
+#finishContent {
+  text-align: left;
 }

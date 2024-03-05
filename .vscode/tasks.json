@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Debug scratch-git",
+      "type": "shell",
+      "command": "nodemon -x 'python3 debug.py' -w src &; sleep 1; cargo run -- --debug &; /opt/TurboWarp/turbowarp-desktop >/dev/null",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
