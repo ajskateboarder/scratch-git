@@ -1,5 +1,5 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
-import Cmp from "./accessors";
+import Cmp from "./dom/index";
 
 /**
  * @typedef Commit
@@ -88,7 +88,6 @@ class ProjectManager {
    * @returns {Promise<Project>}
    */
   async getProject(projectName) {
-    
     return new Project(projectName, this.#portNumber);
   }
 

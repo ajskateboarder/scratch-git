@@ -1,4 +1,4 @@
-import Cmp from "../accessors";
+import Cmp from "../dom/index";
 import api from "../api";
 import { html, timeAgo } from "../utils";
 

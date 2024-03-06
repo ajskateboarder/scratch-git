@@ -45,4 +45,4 @@ const Cmp = {
   GUI_PAGE_WRAPPER: select("gui_page-wrapper"),
 };
 
-export default Cmp;
+export const Cmp;

@@ -1,8 +1,7 @@
 import { html } from "../../utils";
-import Cmp from "../../accessors";
 import api from "../../api";
 import { Scratchblocks } from "../../lib";
-import { scratchAlert } from "../../gui-components";
+import { Cmp, scratchAlert } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
 

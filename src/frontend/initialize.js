@@ -1,7 +1,6 @@
 /** @file Please someone refactor this nonsense */
 
-import { fileMenu, gitMenu, scratchAlert } from "./gui-components";
-import Cmp from "./accessors";
+import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index";
 import { html } from "./utils";
 import api from "./api";
 

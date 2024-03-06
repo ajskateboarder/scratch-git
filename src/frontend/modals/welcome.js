@@ -1,7 +1,6 @@
 /** @file Template and logic for the project initialization modal */
-import { fileMenu } from "../gui-components";
 import { html } from "../utils";
-import Cmp from "../accessors";
+import { Cmp, fileMenu } from "../dom/index";
 import api from "../api";
 
 import thumbnail from "../media/thumb.svg";
