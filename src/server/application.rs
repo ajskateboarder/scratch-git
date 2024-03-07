@@ -66,7 +66,7 @@ fn create_project(file_name: &str) -> AppResponse {
     let mut config = project_config().lock().unwrap();
 
     let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
-    let mut project_path = match project_path_result {
+    let project_path = match project_path_result {
         Ok(file) => file,
         Err(_) => {
             let _ = fs::create_dir(Path::new("projects").join(&name));
@@ -89,20 +89,10 @@ fn create_project(file_name: &str) -> AppResponse {
             });
         }
         Value::Object(_) => {
-            let mut _i = 0;
-            if Path::new(&format!("projects/{}~0", name)).exists() {
-                while Path::new(&format!("projects/{}~{}", name, _i)).exists() {
-                    _i += 1;
-                }
-            }
-            let fixed_name = format!("projects/{}~{}", name, _i).to_string();
-            config.projects[format!("{}~{}", name, _i)] = json!({
-                "base": fixed_name,
-                "project_file": file_path.to_str().unwrap().to_string()
-            });
-            let _project_path = Path::new(&fixed_name);
-            let _ = fs::create_dir(&_project_path);
-            project_path = fs::canonicalize(_project_path).unwrap();
+            return response(
+                Status::InternalServerError,
+                json!({ "project_name": "exists" }),
+            );
         }
         _ => todo!("idk"),
     };

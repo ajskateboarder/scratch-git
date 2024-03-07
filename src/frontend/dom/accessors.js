@@ -15,7 +15,7 @@ const select = (className) =>
  * Accessors for parts of the UI
  * @enum
  */
-const Cmp = {
+export const Cmp = {
   // menu
   MENU_CONTAINER: select("menu-bar_main-menu"),
   MENU_BAR: select("menu-bar_menu-bar"),
@@ -44,5 +44,3 @@ const Cmp = {
   DISABLED_BUTTON: select("button_mod-disabled"),
   GUI_PAGE_WRAPPER: select("gui_page-wrapper"),
 };
-
-export const Cmp;

@@ -1,7 +1,8 @@
-import Cmp from "../dom/index";
+import { Cmp } from "../dom/index";
 import api from "../api";
 import { html, timeAgo } from "../utils";
 
+/** Displays a log of all commits to a Git project */
 export class CommitModal extends HTMLDialogElement {
   /** @type {HTMLButtonElement} */
   closeButton;
@@ -62,7 +63,9 @@ width: 65%;
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
     document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
-    document.querySelector(`#${this.id}`).showModal();
+    document
+      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .showModal();
   }
 
   async display() {

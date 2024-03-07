@@ -17,6 +17,7 @@ class FileMenu {
     )[0];
   }
 
+  /** Opens a file picker dialog to load projects into TurboWarp */
   openProject() {
     this.menu[this.reactEventHandlers].onMouseUp();
     const loadFromComputer = this.menu.querySelectorAll("li")[2];
@@ -24,6 +25,7 @@ class FileMenu {
     this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
   }
 
+  /** Returns if a project is currently open */
   isProjectOpen() {
     this.menu[this.reactEventHandlers].onMouseUp();
     const savedMenu = new DOMParser().parseFromString(

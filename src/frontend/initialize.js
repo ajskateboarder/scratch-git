@@ -3,9 +3,10 @@
 import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index";
 import { html } from "./utils";
 import api from "./api";
+import "./modals/index";
 
-import { WelcomeModal } from "./modals/index";
-import styles from "./media/styles.css";
+import barCSS from "./media/bars.css";
+import miscCSS from "./media/misc.css";
 
 function injectStyles() {
   document.head.innerHTML += html`
@@ -29,101 +30,38 @@ function injectStyles() {
       cursor: default;
     }`;
 
-  document.head.innerHTML += "<style>" + MENU_ITEM_CSS + styles + "</style>";
-}
-
-/** TODO: deprecate in favor of dedicated menu */
-function addGitMenuButtons(saveArea, commitArea, commit) {
-  // add buttons
-  saveArea.innerHTML += html`<div
-    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
-  >
-    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
-      <div id="push-status">
-        <span>Push project</span>
-      </div>
-    </div>
-  </div>`;
-
-  commitArea.innerHTML += html`<div
-    class="${Cmp.MENU_ACCOUNTINFOGROUP} git-button"
-  >
-    <div class="${Cmp.MENU_ITEM}" style="padding: 0 0.375rem 0 0.375rem">
-      <div id="allcommits-log">
-        <span>Commits</span>
-      </div>
-    </div>
-  </div>`;
-
-  // add button reactivity
-  setTimeout(() => {
-    document.querySelector("#push-status").parentElement.parentElement.onclick =
-      async () => {
-        document.querySelector("#push-status").style.opacity = "0.5";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Pushing project...";
-        await (await api.getCurrentProject()).push();
-        document.querySelector("#push-status").style.opacity = "1";
-        document.querySelector("#push-status").querySelector("span").innerText =
-          "Push project";
-        scratchAlert({
-          message: "Commits pushed successfully",
-          duration: 5000,
-        });
-      };
-    // document.querySelector(
-    //   "#allcommits-log"
-    // ).parentElement.parentElement.onclick = commit.display;
-    document.querySelectorAll(".git-button").forEach((element) => {
-      element.parentElement.onmouseenter = () => {
-        element.parentElement.style.backgroundColor =
-          "var(--ui-black-transparent, hsla(0, 0%, 0%, 0.15))";
-      };
-      element.parentElement.onmouseleave = () => {
-        element.parentElement.style.backgroundColor =
-          document.body.getAttribute("theme") === "dark"
-            ? "#333"
-            : "hsla(0, 100%, 65%, 1)";
-      };
-    });
-  }, 500);
+  document.head.innerHTML += `<style>${MENU_ITEM_CSS}\n${barCSS}\n${miscCSS}</style>`;
 }
 
 export default function () {
   const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
   let saveArea = `${MENU} > div:nth-child(4)`;
-  let modalArea = document.querySelector("#gitModals");
-
-  // let commit = new CommitModal(document.querySelector(saveArea));
-  let welcome = new WelcomeModal(document.querySelector(saveArea));
-  // let diff = new DiffModal(document.querySelector(saveArea));
 
   document.querySelector(
     "body > div[style='display: none;']"
   ).innerHTML += html`<dialog
       is="diff-modal"
-      id="diffModal"
       style="overflow-x: hidden"
     ></dialog>
     <dialog
       is="commit-modal"
-      id="commitModal"
       style="overflow-x: hidden; overflow-y: auto"
+    ></dialog>
+    <dialog
+      is="welcome-modal"
+      style="overflow-x: hidden; overflow-y: hidden"
     ></dialog>`;
 
   setInterval(async () => {
     try {
       document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
         (await api.getCurrentProject()).unzip();
-        document.querySelector("#diffModal").diff("Sprite1");
+        document.querySelector("dialog[is='diff-modal']").diff("Sprite1");
       };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           (await api.getCurrentProject()).unzip();
-          document.querySelector("#diffModal").diff("Sprite1");
-
-          // await diff.display();
-          // document.querySelector("#shortcutNote").remove();
+          document.querySelector("dialog[is='diff-modal']").diff("Sprite1");
         }
       };
     } catch {}
@@ -143,11 +81,12 @@ export default function () {
     });
   };
   if (!fileMenu.isProjectOpen()) {
-    welcome.display();
+    document.querySelector("dialog[is='welcome-modal']").display();
+    // welcome.display();
   } else {
     gitMenu.create({
       commitViewHandler: async () =>
-        document.querySelector("#commitModal").display("Sprite1"),
+        document.querySelector("dialog[is='commit-modal]'").display(),
     });
   }
 }

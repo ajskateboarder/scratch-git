@@ -1,5 +1,5 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
-import Cmp from "./dom/index";
+import { Cmp } from "./dom/index";
 
 /**
  * @typedef Commit
@@ -74,6 +74,13 @@ class Project {
   }
 }
 
+export class ProjectExistsException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
 // class factory jumpscare
 class ProjectManager {
   #portNumber;
@@ -95,15 +102,26 @@ class ProjectManager {
    * Create and git-init a new project
    * @param {string} projectPath
    * @returns {Promise<Project>}
+   * @throws {e}
    */
   async createProject(projectPath) {
-    const response = await (
-      await fetch(
-        `http://localhost:${
-          this.#portNumber
-        }/create-project?file_name=${projectPath}`
-      )
-    ).json();
+    const response = await fetch(
+      `http://localhost:${
+        this.#portNumber
+      }/create-project?file_name=${projectPath}`
+    ).then((res) => res.json());
+    if (response.project_name === "exists") {
+      throw new ProjectExistsException(
+        `${projectPath
+          .split("/")
+          .pop()} is already a project.<wbr /> Either load the existing<wbr /> project or make a copy of<wbr /> the project file.`
+      );
+    } else if (response.project_name === "fail") {
+      throw new Error(
+        `An uncaught error has occured.<wbr />
+        Please check the server logs and<wbr /> <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
+      );
+    }
     return new Project(response.project_name, this.#portNumber);
   }
 

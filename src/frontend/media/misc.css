@@ -1,0 +1,105 @@
+.content {
+  display: flex;
+}
+
+.blocks {
+  flex: 1;
+  padding: 20px;
+  margin-left: 12.5%;
+  margin-top: 30px;
+}
+
+dialog[is="diff-modal"],
+dialog[is="commit-modal"],
+dialog[is="welcome-modal"] {
+  height: 50%;
+  max-height: 50%;
+  width: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  left: 50%;
+  max-height: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  white-space: normal;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+dialog[is="diff-modal"] {
+  padding: 0;
+}
+
+dialog[is="welcome-modal"] {
+  display: flex;
+  gap: 15px;
+  padding: 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+}
+
+.tab-btn i {
+  font-size: 17px;
+  margin-right: 10px;
+}
+
+.scratchblocks {
+  margin-left: 10px;
+}
+
+.dark {
+  background-color: #111;
+  color: #eee;
+}
+
+.dark #scripts li button {
+  background-color: rgb(46, 46, 46);
+  color: #707070;
+}
+
+.dark #scripts li button.active-tab {
+  background-color: rgb(76, 76, 76);
+  color: #eee;
+}
+
+#commits {
+  margin-left: 20px;
+}
+
+.commit {
+  border: 1px solid grey;
+  min-width: 100%;
+  padding: 10px 20px;
+}
+
+.commit-group .commit:first-child {
+  border-radius: 5px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+.commit-group .commit:not(:first-child) {
+  border-top: none;
+}
+
+.commit-group .commit:last-child {
+  border-radius: 5px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+}
+
+#pathInput::file-selector-button {
+  display: none;
+}
+
+#finishContent {
+  text-align: left;
+}

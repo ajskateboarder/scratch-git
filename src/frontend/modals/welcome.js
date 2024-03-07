@@ -5,190 +5,200 @@ import api from "../api";
 
 import thumbnail from "../media/thumb.svg";
 
-const DIALOG_CSS = `text-align: center;`;
+/** Handles project initialization */
+export class WelcomeModal extends HTMLDialogElement {
+  /** @type {HTMLDivElement} */
+  step1;
+  /** @type {HTMLDivElement} */
+  step2;
+  /** @type {HTMLDivElement} */
+  step3;
 
-const WELCOME_MODAL_STEP_1 = html`<div id="welcomeStep1">
-  <div class="finishContent">
-    <h1>Welcome to scratch.git!</h1>
-    <p>Please load a project for Git development to get started.<br /><br /></p>
-    <button id="openProject" style="width: 50%" class="${Cmp.SETTINGS_BUTTON}">
-      Open project
-    </button>
-    <!-- TODO: make functional vv -->&nbsp;
-    <input type="checkbox" name="dontshowagain" />
-    <label for="dontshowagain"> Don't show again</label>
-    <br /><br />
-    <div class="bottom-bar">
-      <button
-        onclick="document.querySelector('#welcomeModal').close()"
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON}"
-      >
-        Close
-      </button>
-      <button
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
-        disabled
-        id="goToStep2"
-      >
-        Next
-      </button>
-    </div>
-  </div>
-  <span class="thumbnail">${thumbnail}</span>
-</div>`;
+  constructor() {
+    super();
+  }
 
-const WELCOME_MODAL_STEP_2 = html`
-  <div style="${DIALOG_CSS}display: none" id="welcomeStep2">
-    <h1>Configure project location</h1>
-    <div style="font-weight: normal">
-      <p>
-        Please enter the full path to your project. This is so scratch.git can
-        find your project locally to use with your repository<br /><br />
-      </p>
-      <input
-        id="openProjectPath"
-        type="file"
-        class="${Cmp.SETTINGS_BUTTON}"
-        accept=".sb,.sb2,.sb3"
-      />
-    </div>
-    <div
-      class="bottom-bar"
-      style="justify-content: center; gap: 20px; width: 97.5%"
-    >
-      <button
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON}"
-        id="goToStep1"
-      >
-        Back
-      </button>
-      <button
-        id="goToStep3"
-        onclick="modalSteps.goToStep3()"
-        style="align-items: right; margin-left: -10px; "
-        class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
-      >
-        Next
-      </button>
-    </div>
-  </div>
-`;
+  connectedCallback() {
+    if (this.querySelector("div") || this.querySelector("style")) return;
+    this.innerHTML += html`<style>
+      .thumbnail {
+        filter: hue-rotate(90deg) saturate(1.3);
+        display: flex;
+        flex-grow: 1;
+        justify-content: right;
+        align-items: center;
+      }
+    </style>`;
 
-const WELCOME_MODAL_STEP_3 = html`
-  <div style="display: none" id="welcomeStep3">
-    <div class="finishContent">
-      <h1>Welcome to scratch.git!</h1>
-      <div style="font-weight: normal">
-        <p>Err IDK<br /><br /></p>
-      </div>
-      <div class="bottom-bar">
+    this.step1 = Object.assign(document.createElement("div"), {
+      id: "welcomeStep1",
+      style:
+        "display: flex; flex-direction: column; padding: 20px; width: 100%",
+      innerHTML: html`<div class="finishContent">
+        <h1>Welcome to scratch.git!</h1>
+        <p>
+          Please load a project for Git development to get started.<br /><br />
+        </p>
         <button
-          style="align-items: right; margin-left: -10px; "
+          id="openProject"
+          style="width: 50%"
           class="${Cmp.SETTINGS_BUTTON}"
-          onclick="document.querySelector('#welcomeModal').close()"
         >
-          Close
+          Open project
         </button>
-      </div>
-    </div>
-    <span class="thumbnail">${thumbnail}</span>
-  </div>
-`;
+        <!-- TODO: make functional vv -->&nbsp;
+        <input type="checkbox" name="dontshowagain" />
+        <label for="dontshowagain"> Don't show again</label>
+        <br /><br />
+        <div class="bottom-bar">
+          <button
+            style="align-items: right; margin-left: -10px; "
+            class="${Cmp.SETTINGS_BUTTON}"
+            id="exitWelcome"
+          >
+            Close
+          </button>
+          <button
+            style="align-items: right; margin-left: -10px; "
+            class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
+            disabled
+            id="goToStep2"
+          >
+            Next
+          </button>
+        </div>
+      </div>`,
+    });
 
-const WELCOME_MODAL = html`<dialog id="welcomeModal" style="overflow-x: hidden">
-  ${WELCOME_MODAL_STEP_1} ${WELCOME_MODAL_STEP_2} ${WELCOME_MODAL_STEP_3}
-</dialog>`;
+    this.step2 = Object.assign(document.createElement("div"), {
+      id: "welcomeStep2",
+      style: "display: none; flex-direction: column; padding: 20px",
+      innerHTML: html`<div class="finishContent">
+        <h1>Configure project location</h1>
+        <div style="font-weight: normal">
+          <p>
+            Please select the location of your project file. This is so
+            scratch.git can find your project locally to use with your
+            repository.<br /><br />
+          </p>
+          <input
+            id="openProjectPath"
+            type="file"
+            class="${Cmp.SETTINGS_BUTTON}"
+            accept=".sb,.sb2,.sb3"
+          />
+          <pre id="creationError" style="color: red; font-size: 14px"></pre>
+        </div>
+        <div class="bottom-bar">
+          <button
+            style="align-items: right; margin-left: -10px; "
+            class="${Cmp.SETTINGS_BUTTON}"
+            id="goToStep1"
+          >
+            Back
+          </button>
+          <button
+            id="goToStep3"
+            style="align-items: right; margin-left: -10px; "
+            class="${Cmp.SETTINGS_BUTTON} ${Cmp.DISABLED_BUTTON}"
+            disabled
+          >
+            Next
+          </button>
+        </div>
+      </div>`,
+    });
 
-export class WelcomeModal {
-  constructor(root) {
-    root.innerHTML += WELCOME_MODAL;
+    this.step3 = Object.assign(document.createElement("div"), {
+      id: "welcomeStep3",
+      style:
+        "display: none; flex-direction: column; padding: 20px; width: 100%",
+      innerHTML: html`<div class="finishContent">
+        <h1>Welcome to scratch.git!</h1>
+        <div style="font-weight: normal">
+          <p>Err IDK<br /><br /></p>
+        </div>
+        <div class="bottom-bar">
+          <button
+            style="align-items: right; margin-left: -10px; "
+            class="${Cmp.SETTINGS_BUTTON}"
+            id="exitWelcome2"
+          >
+            Close
+          </button>
+        </div>
+      </div>`,
+    });
+
+    this.append(this.step1);
+    this.append(this.step2);
+    this.append(this.step3);
+    this.innerHTML += html`<span class="thumbnail">${thumbnail}</span>`;
   }
 
-  /** @returns {HTMLDialogElement} */
-  get modal() {
-    return document.querySelector("#welcomeModal");
-  }
-
-  display() {
-    document.querySelector("#openProject").onclick = () => this.openProject();
-    document.querySelector("#openProjectPath").onclick = () =>
-      this.openProjectPath();
-    document.querySelector("#goToStep1").onclick = () => this.goToStep1();
-    document.querySelector("#goToStep2").onclick = () => this.goToStep2();
-    document.querySelector("#goToStep3").onclick = () =>
-      this.goToStep3(document.querySelector("#openProjectPath").files[0].path);
-    if (!this.modal.open) {
-      this.modal.showModal();
-      this.updateResponsiveness();
-      window.addEventListener("resize", () => this.updateResponsiveness());
-    }
-  }
-
-  updateResponsiveness() {
-    [...this.modal.querySelectorAll(".thumbnail")].map(
-      (e) =>
-        (e.style.transform = `scaleY(${Math.max(
-          1,
-          this.modal.offsetHeight / 215
-        )}) scaleX(${Math.min(this.modal.offsetHeight / 215, 3)})`)
-    );
-    [...this.modal.querySelectorAll(".finishContent")].map(
-      (e) =>
-        (e.style.width =
-          (this.modal.clientWidth + this.modal.clientHeight) / 2 -
-          this.modal.querySelector(".thumbnail").clientWidth -
-          40 +
-          "px")
-    );
-  }
-
-  // Can't say this is less verbose than simply swapping HTML
-  // but hey, at least I control state better, or something
-
-  goToStep1() {
-    this.modal.querySelector("#welcomeStep2").style.display = "none";
-    this.modal.querySelector("#welcomeStep1").style.display = "block";
-    this.updateResponsiveness();
-    window.addEventListener("resize", () => this.updateResponsiveness());
-  }
-
-  goToStep2() {
-    this.modal.querySelector("#welcomeStep3").style.display = "none";
-    this.modal.querySelector("#welcomeStep1").style.display = "none";
-    this.modal.querySelector("#welcomeStep2").style.display = "block";
-  }
-
-  goToStep3(path) {
-    (async () => {
-      await api.createProject(path);
-      this.modal.querySelector("#welcomeStep2").style.display = "none";
-      this.modal.querySelector("#welcomeStep3").style.display = "block";
-    })();
-    this.updateResponsiveness();
-    window.addEventListener("resize", () => this.updateResponsiveness());
-  }
-
-  openProjectPath() {
-    document.querySelector("#goToStep3").classList.remove(Cmp.DISABLED_BUTTON);
+  _showMe() {
+    // directly attaching this modal to anything in #app will hide the project player
+    // so apparantly moving it elsewhere fixes it :/
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(this);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document
+      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .showModal();
   }
 
   openProject() {
     fileMenu.openProject();
-    /** @type {HTMLButtonElement} */
-    let nextButton = document.querySelector("#goToStep2");
-    nextButton.disabled = false;
-    nextButton.classList.remove(Cmp.DISABLED_BUTTON);
-
     window.vm.runtime.on("PROJECT_LOADED", () => {
-      document.querySelector(
+      /** @type {HTMLButtonElement} */
+      let nextButton = this.querySelector("#goToStep2");
+      nextButton.disabled = false;
+      nextButton.classList.remove(Cmp.DISABLED_BUTTON);
+      this.querySelector(
         "#openProject"
       ).innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
       setTimeout(() => {
-        document.querySelector("#openProject").innerHTML = `Open project`;
+        this.querySelector("#openProject").innerHTML = "Open project";
       }, 2000);
     });
+  }
+
+  async display() {
+    let path;
+    this.querySelector("#exitWelcome").onclick = () => this.close();
+    this.querySelector("#exitWelcome2").onclick = () => this.close();
+    this.querySelector("#goToStep1").onclick = () => {
+      this.querySelector("#welcomeStep2").style.display = "none";
+      this.querySelector("#welcomeStep1").style.display = "flex";
+    };
+    this.querySelector("#goToStep2").onclick = () => {
+      this.querySelector("#welcomeStep1").style.display = "none";
+      this.querySelector("#welcomeStep2").style.display = "flex";
+    };
+    this.querySelector("#goToStep3").onclick = async () => {
+      this.querySelector("#creationError").innerHTML = "";
+      try {
+        await api.createProject(path);
+      } catch (e) {
+        /** @type {import("../api").ProjectExistsException} */
+        let err = e;
+        if (err.name === "ProjectExistsException") {
+          this.querySelector("#creationError").innerHTML = err.message;
+          return;
+        } else if (err.name === "Error") {
+          this.querySelector("#creationError").innerHTML = err.message;
+          throw err;
+        }
+      }
+      this.querySelector("#welcomeStep2").style.display = "none";
+      this.querySelector("#welcomeStep3").style.display = "flex";
+    };
+    this.querySelector("#openProject").onclick = () => this.openProject();
+    this.querySelector("#openProjectPath").onchange = () => {
+      this.querySelector("#goToStep3").disabled = false;
+      this.querySelector("#goToStep3").classList.remove(Cmp.DISABLED_BUTTON);
+      path = this.querySelector("#openProjectPath").files[0].path;
+    };
+    this._showMe();
   }
 }

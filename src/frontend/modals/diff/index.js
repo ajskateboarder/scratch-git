@@ -5,6 +5,7 @@ import { Cmp, scratchAlert } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
 
+/** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends HTMLDialogElement {
   /** @type {HTMLUListElement} */
   scripts;
@@ -53,7 +54,9 @@ export class DiffModal extends HTMLDialogElement {
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
     document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)?.appendChild(fragment);
-    document.querySelector(`#${this.id}`).showModal();
+    document
+      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .showModal();
   }
 
   /**
@@ -89,7 +92,6 @@ export class DiffModal extends HTMLDialogElement {
         }
         return result;
       });
-    console.log(diffs);
 
     this.scripts.innerHTML = "";
     this.querySelector(".topbar").innerHTML = "";
