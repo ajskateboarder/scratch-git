@@ -11,38 +11,48 @@ import { Cmp } from "./accessors";
 
 class FileMenu {
   constructor() {
-    this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[2];
-    this.reactEventHandlers = Object.keys(this.menu).filter((e) =>
+    this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[1];
+    this.eventHandlers = Object.keys(this.menu).filter((e) =>
       e.startsWith("__reactEventHandlers")
     )[0];
+
+    /** @type {(open: boolean) => void} */
+    this.clickMenu = (open) => {
+      // we pass a fake event object to control whether to open or close the file menu
+      // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
+      this.menu[this.eventHandlers].onClick({
+        target: {
+          closest: () => (open ? this.menu : document.body),
+        },
+      });
+    };
   }
 
   /** Opens a file picker dialog to load projects into TurboWarp */
   openProject() {
-    this.menu[this.reactEventHandlers].onMouseUp();
+    this.clickMenu(true);
     const loadFromComputer = this.menu.querySelectorAll("li")[2];
-    loadFromComputer[this.reactEventHandlers].onClick();
-    this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
+    loadFromComputer[this.eventHandlers].onClick();
+    this.clickMenu(false);
   }
 
   /** Returns if a project is currently open */
   isProjectOpen() {
-    this.menu[this.reactEventHandlers].onMouseUp();
+    this.clickMenu(true);
     const savedMenu = new DOMParser().parseFromString(
       this.menu.innerHTML,
       "text/html"
     );
-    this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
+    this.clickMenu(false);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
 }
 
+/** Manages functions with the file menu */
+export const fileMenu = new FileMenu();
+
 class GitMenu {
   constructor() {
-    this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[2];
-    this.reactEventHandlers = Object.keys(this.menu).filter((e) =>
-      e.startsWith("__reactEventHandlers")
-    )[0];
     /** @type {HTMLElement} */
     this.savedItems = undefined;
     /** @type {HTMLElement} */
@@ -85,14 +95,19 @@ class GitMenu {
     commitViewHandler,
   }) {
     // open, copy, and edit the file menu
-    this.menu[this.reactEventHandlers].onMouseUp();
-    this.newMenu = this.menu.cloneNode(true);
-    this.menu.after(this.newMenu);
+    fileMenu.clickMenu(false);
+    this.newMenu = fileMenu.menu.cloneNode(true);
+    fileMenu.menu.after(this.newMenu);
     this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
     this.newMenu.querySelector("span").innerText = "Git";
     this.savedItems = this.newMenu
       .querySelector("ul")
       .parentElement.cloneNode(true);
+    this.newMenu.querySelector("img").replaceWith(
+      Object.assign(document.createElement("i"), {
+        className: "fa fa-code-fork fa-lg",
+      })
+    );
     this.savedItems.classList.add("git-menu");
     this.newMenu.querySelector("ul").parentElement.remove();
     this.savedItems.style.display = "none";
@@ -139,7 +154,7 @@ class GitMenu {
       }
     };
 
-    this.menu[this.reactEventHandlers].children[1].props.onRequestClose();
+    fileMenu.clickMenu(true);
   }
 }
 
@@ -171,7 +186,7 @@ export function scratchAlert({ message, duration }) {
         >
           <img
           <!-- todo: why does this have an undefined class -->
-          class="${Cmp.CLOSE_ICON} undefined" src="${Alert.CLOSE_BUTTON_SVG}" />
+          class="${Cmp.CLOSE_ICON} undefined" src="${CLOSE_BUTTON_SVG}" />
         </div>
       </div>
     </div>
@@ -181,15 +196,11 @@ export function scratchAlert({ message, duration }) {
     document.querySelector(`.${Cmp.CLOSE_BUTTON}`).style.backgroundColor =
       "rgba(0, 0, 0, 0.255)";
   }
-  document.querySelector(`.${Cmp.CLOSE_BUTTON}`).onclick = this.remove;
-  setTimeout(
-    () => (document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = ""),
-    this.duration
-  );
+  const remove = () =>
+    (document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = "");
+  document.querySelector(`.${Cmp.CLOSE_BUTTON}`).onclick = remove;
+  setTimeout(remove, duration);
 }
-
-/** Manages functions with the file menu */
-export const fileMenu = new FileMenu();
 
 /** Manages the intialization of the Git menu */
 export const gitMenu = new GitMenu();
