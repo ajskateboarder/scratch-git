@@ -2,7 +2,7 @@
 
 Git version control integration for Scratch (TurboWarp) that just works
 
-Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that.
+Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes.
 
 ## Usage
 
