@@ -3,13 +3,13 @@ extern crate rocket;
 
 pub mod application;
 pub mod diff;
-pub mod projects;
-pub mod git_piping;
+pub mod utils;
 
 use application::create_app;
 use rocket::{Build, Rocket};
 use std::{
     env,
+    process::exit,
     fs::{self, DirEntry},
     io::{stdin, BufRead, Result},
     path::{Path, PathBuf}, process::Command,
@@ -116,8 +116,11 @@ fn app() -> Rocket<Build> {
             PathBuf::from(stdin().lock().lines().next().unwrap().unwrap())
         }
     };
+    if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
+        println!("Error: {}", e);
+        exit(1);
+    }
     println!("Script copied to {}", path.to_str().unwrap());
-    fs::copy("userscript.js", path.join("userscript.js")).expect("failed to copy userscript");
     if let Some(arg) = env::args().nth(1) {
         if arg == "--debug" {
             if !Command::new("curl")
@@ -125,7 +128,8 @@ fn app() -> Rocket<Build> {
                 .status()
                 .unwrap()
                 .success() {
-                    panic!("Failed to post to http://localhost:3333/update. Do you have the debug server running?")
+                    println!("Error: failed to post to http://localhost:3333/update. Do you have the debug server running?");
+                    exit(1);
                 }
         }
     }

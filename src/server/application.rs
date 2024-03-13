@@ -1,6 +1,6 @@
 use crate::diff::Diff;
-use crate::git_piping::git_diff;
-use crate::projects::ProjectConfig;
+use crate::utils::projects::ProjectConfig;
+use crate::utils::extract::extract;
 
 use rocket::http::{ContentType, Status};
 use rocket::serde::json::Json;
@@ -11,9 +11,7 @@ use serde_json::{json, to_string, Value};
 
 use std::fs;
 use std::{
-    io::Cursor,
-    path::Path,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{Mutex, OnceLock},
     thread::sleep,
@@ -46,7 +44,7 @@ fn project_config() -> &'static Mutex<ProjectConfig> {
 fn diff(diff_params: Json<DiffParams>) -> AppResponse {
     response(
         Status::Ok,
-        json!(git_diff(
+        json!(crate::utils::git_piping::git_diff(
             diff_params.old_content.clone(),
             diff_params.new_content.clone()
         )),
@@ -112,15 +110,14 @@ fn create_project(file_name: &str) -> AppResponse {
     let target_dir = PathBuf::from(Path::new(
         &project_to_extract["base"].as_str().unwrap().to_string(),
     ));
-    let archive = fs::read(Path::new(
+    // let archive = fs::read()
+    // .unwrap();
+    extract(fs::File::open(Path::new(
         &project_to_extract["project_file"]
             .as_str()
             .unwrap()
             .to_string(),
-    ))
-    .unwrap();
-    zip_extract::extract(Cursor::new(archive), &target_dir, true)
-        .expect("failed to extract archive");
+    )).expect("failed to open file"), target_dir).unwrap();
 
     let init_repo = Command::new("git")
         .args(["init"])
@@ -187,15 +184,12 @@ fn unzip(project_name: String) -> AppResponse {
 
     sleep(Duration::from_millis(1000));
     let target_dir = PathBuf::from(Path::new(&pth));
-    let archive: Vec<u8> = fs::read(Path::new(
+    extract(fs::File::open(Path::new(
         &projects[project_name]["project_file"]
             .as_str()
             .unwrap()
             .to_string(),
-    ))
-    .unwrap();
-    zip_extract::extract(Cursor::new(archive), &target_dir, true)
-        .expect("failed to extract archive");
+    )).expect("failed to open file"), target_dir).unwrap();
 
     response(Status::Ok, json!({ "status": "success" }))
 }
