@@ -1,12 +1,12 @@
 /** @file Please someone refactor this nonsense */
 
-import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index";
+import { Cmp, fileMenu, gitMenu } from "./dom/index";
 import { html } from "./utils";
 import api from "./api";
 import "./modals/index";
 
-import barCSS from "./media/bars.css";
-import miscCSS from "./media/misc.css";
+import barStyles from "./media/bars.css";
+import miscStyles from "./media/misc.css";
 
 function injectStyles() {
   document.head.innerHTML += html`
@@ -30,13 +30,10 @@ function injectStyles() {
       cursor: default;
     }`;
 
-  document.head.innerHTML += `<style>${MENU_ITEM_CSS}\n${barCSS}\n${miscCSS}</style>`;
+  document.head.innerHTML += `<style>${MENU_ITEM_CSS}\n${barStyles}\n${miscStyles}</style>`;
 }
 
 export default function () {
-  const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
-  let saveArea = `${MENU} > div:nth-child(4)`;
-
   document.querySelector(
     "body > div[style='display: none;']"
   ).innerHTML += html`<dialog
@@ -52,16 +49,21 @@ export default function () {
       style="overflow-x: hidden; overflow-y: hidden"
     ></dialog>`;
 
-  setInterval(async () => {
+  // setting an interval ensures the listeners always exist
+  setInterval(() => {
     try {
       document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
-        (await api.getCurrentProject()).unzip();
-        document.querySelector("dialog[is='diff-modal']").diff("Sprite1");
+        let project = await api.getCurrentProject();
+        await project.unzip();
+        let sprites = await project.getSprites();
+        document.querySelector("dialog[is='diff-modal']").diff(sprites[0]);
       };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
-          (await api.getCurrentProject()).unzip();
-          document.querySelector("dialog[is='diff-modal']").diff("Sprite1");
+          let project = await api.getCurrentProject();
+          await project.unzip();
+          let sprites = await project.getSprites();
+          document.querySelector("dialog[is='diff-modal']").diff(sprites[0]);
         }
       };
     } catch {}
@@ -69,9 +71,6 @@ export default function () {
 
   injectStyles();
 
-  const secondCateg = document.querySelector(saveArea).cloneNode(true);
-  document.querySelector(saveArea).after(secondCateg);
-  // addGitMenuButtons(document.querySelector(saveArea), secondCateg, commit);
   document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
     const isDark = document.body.getAttribute("theme") === "dark";
     document.querySelectorAll(".git-button").forEach((element) => {
@@ -82,11 +81,10 @@ export default function () {
   };
   if (!fileMenu.isProjectOpen()) {
     document.querySelector("dialog[is='welcome-modal']").display();
-    // welcome.display();
   } else {
     gitMenu.create({
       commitViewHandler: async () =>
-        document.querySelector("dialog[is='commit-modal]'").display(),
+        document.querySelector("dialog[is='commit-modal']").display(),
     });
   }
 }

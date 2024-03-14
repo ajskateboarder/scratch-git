@@ -61,8 +61,12 @@ class Project {
     ).json();
   }
 
+  /** Commit the current project to Git
+   *
+   * @returns {string}
+   */
   async commit() {
-    return await (await this.#request("/commit")).text();
+    return await (await this.#request("/commit")).json().message;
   }
 
   async push() {
@@ -130,7 +134,7 @@ class ProjectManager {
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
-    const projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[7]
+    const projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
       .children[0].value;
     return new Project(projectName, this.#portNumber);
   }
