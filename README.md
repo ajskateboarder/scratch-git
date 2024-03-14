@@ -69,3 +69,15 @@ Ball: /12 blocks, add red-ball, Stage: add matrix
 ```text
 Player: +36 blocks, remove old-player, Cloud: +15 blocks
 ```
+
+## Credits
+
+Thanks to:
+
+- @apple502j for the [parse-sb3-blocks](https://github.com/apple502j/parse-sb3-blocks) library
+
+- @tjvr for the [scratchblocks](https://github.com/scratchblocks/scratchblocks) library
+
+- @rokcoder-scratch for the inspiration, [sb3-commit](https://github.com/rokcoder-scratch/sb3-commit)
+
+- @GarboMuffin for making TurboWarp easily extensible

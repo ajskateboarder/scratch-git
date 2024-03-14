@@ -33,7 +33,7 @@ function injectStyles() {
   document.head.innerHTML += `<style>${MENU_ITEM_CSS}\n${barStyles}\n${miscStyles}</style>`;
 }
 
-export default function () {
+export default async function () {
   document.querySelector(
     "body > div[style='display: none;']"
   ).innerHTML += html`<dialog
@@ -82,9 +82,12 @@ export default function () {
   if (!fileMenu.isProjectOpen()) {
     document.querySelector("dialog[is='welcome-modal']").display();
   } else {
-    gitMenu.create({
-      commitViewHandler: async () =>
-        document.querySelector("dialog[is='commit-modal']").display(),
-    });
+    let project = await api.getCurrentProject();
+    if (await project.exists()) {
+      gitMenu.create({
+        commitViewHandler: async () =>
+          document.querySelector("dialog[is='commit-modal']").display(),
+      });
+    }
   }
 }

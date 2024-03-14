@@ -1,6 +1,6 @@
 use crate::diff::Diff;
-use crate::utils::projects::ProjectConfig;
 use crate::utils::extract::extract;
+use crate::utils::projects::ProjectConfig;
 
 use rocket::http::{ContentType, Status};
 use rocket::serde::json::Json;
@@ -112,12 +112,17 @@ fn create_project(file_name: &str) -> AppResponse {
     ));
     // let archive = fs::read()
     // .unwrap();
-    extract(fs::File::open(Path::new(
-        &project_to_extract["project_file"]
-            .as_str()
-            .unwrap()
-            .to_string(),
-    )).expect("failed to open file"), target_dir).unwrap();
+    extract(
+        fs::File::open(Path::new(
+            &project_to_extract["project_file"]
+                .as_str()
+                .unwrap()
+                .to_string(),
+        ))
+        .expect("failed to open file"),
+        target_dir,
+    )
+    .unwrap();
 
     let init_repo = Command::new("git")
         .args(["init"])
@@ -174,6 +179,15 @@ fn create_project(file_name: &str) -> AppResponse {
     )
 }
 
+#[get("/<project_name>/exists")]
+fn exists(project_name: String) -> AppResponse {
+    let projects = &project_config().lock().unwrap().projects;
+    response(
+        Status::Ok,
+        json!({ "exists": projects[project_name] != Value::Null }),
+    )
+}
+
 #[get("/<project_name>/unzip")]
 fn unzip(project_name: String) -> AppResponse {
     let projects = &project_config().lock().unwrap().projects;
@@ -184,12 +198,17 @@ fn unzip(project_name: String) -> AppResponse {
 
     sleep(Duration::from_millis(1000));
     let target_dir = PathBuf::from(Path::new(&pth));
-    extract(fs::File::open(Path::new(
-        &projects[project_name]["project_file"]
-            .as_str()
-            .unwrap()
-            .to_string(),
-    )).expect("failed to open file"), target_dir).unwrap();
+    extract(
+        fs::File::open(Path::new(
+            &projects[project_name]["project_file"]
+                .as_str()
+                .unwrap()
+                .to_string(),
+        ))
+        .expect("failed to open file"),
+        target_dir,
+    )
+    .unwrap();
 
     response(Status::Ok, json!({ "status": "success" }))
 }
@@ -391,9 +410,10 @@ pub fn create_app() -> Rocket<Build> {
         .mount(
             "/",
             routes![
+                unzip,
+                exists,
                 diff,
                 create_project,
-                unzip,
                 commit,
                 push,
                 old_project,

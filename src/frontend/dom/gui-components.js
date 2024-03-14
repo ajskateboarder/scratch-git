@@ -34,6 +34,7 @@ class FileMenu {
     const loadFromComputer = this.menu.querySelectorAll("li")[2];
     loadFromComputer[this.eventHandlers].onClick();
     this.clickMenu(false);
+    this.clickMenu(true);
   }
 
   /** Returns if a project is currently open */
@@ -44,6 +45,7 @@ class FileMenu {
       "text/html"
     );
     this.clickMenu(false);
+    this.clickMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
 }
@@ -96,6 +98,7 @@ class GitMenu {
   }) {
     // open, copy, and edit the file menu
     fileMenu.clickMenu(false);
+    fileMenu.clickMenu(true);
     this.newMenu = fileMenu.menu.cloneNode(true);
     fileMenu.menu.after(this.newMenu);
     this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
@@ -158,6 +161,7 @@ class GitMenu {
   }
 }
 
+// taken directly from Scratch
 const CLOSE_BUTTON_SVG =
   "data:image/svg+xml;base64,\
 PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d\

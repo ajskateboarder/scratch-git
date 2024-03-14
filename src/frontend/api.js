@@ -25,6 +25,13 @@ class Project {
     );
   }
 
+  /** Returns if the project has been linked to scratch.git
+   *
+   * @returns {Promise<boolean>} */
+  async exists() {
+    return (await (await this.#request("/exists")).json()).exists;
+  }
+
   /** @returns {Promise<Commit[]>} */
   async getCommits() {
     return [...(await (await this.#request("/commits")).json())][0].map(
@@ -106,7 +113,7 @@ class ProjectManager {
    * Create and git-init a new project
    * @param {string} projectPath
    * @returns {Promise<Project>}
-   * @throws {e}
+   * @throws {ProjectExistsException}
    */
   async createProject(projectPath) {
     const response = await fetch(
@@ -134,10 +141,28 @@ class ProjectManager {
    * @returns {Promise<Project | undefined>}
    */
   async getCurrentProject() {
-    const projectName = document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[6]
-      .children[0].value;
+    /** @type {HTMLDivElement} */
+    const projectNameElement = await new Promise((resolve) => {
+      const observer = new MutationObserver(() => {
+        if (
+          document.querySelector(".menu-bar_menu-bar-item_Fh07T:nth-child(5)")
+        ) {
+          observer.disconnect();
+          resolve(
+            document.querySelector(".menu-bar_menu-bar-item_Fh07T:nth-child(5)")
+          );
+        }
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    });
+    const projectName =
+      projectNameElement.parentElement.nextElementSibling.nextElementSibling
+        .children[0].value;
     return new Project(projectName, this.#portNumber);
   }
 }
-
+window.api = new ProjectManager(8000);
 export default new ProjectManager(8000);
