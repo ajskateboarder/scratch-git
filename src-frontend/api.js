@@ -164,5 +164,5 @@ class ProjectManager {
     return new Project(projectName, this.#portNumber);
   }
 }
-window.api = new ProjectManager(8000);
+
 export default new ProjectManager(8000);
