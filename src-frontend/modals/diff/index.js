@@ -35,17 +35,17 @@ export class DiffModal extends HTMLDialogElement {
     this.scripts = Object.assign(document.createElement("ul"), {
       id: "scripts",
     });
-    this.querySelector(".sidebar")?.prepend(this.scripts);
+    this.querySelector(".sidebar").prepend(this.scripts);
     this.commits = Object.assign(document.createElement("p"), {
       id: "commits",
     });
-    this.querySelector(".blocks")?.prepend(this.commits);
+    this.querySelector(".blocks").prepend(this.commits);
     this.commitButton = Object.assign(document.createElement("button"), {
       id: "commitButton",
       innerText: "Okay",
       className: Cmp.SETTINGS_BUTTON,
     });
-    this.querySelector(".bottom-bar")?.appendChild(this.commitButton);
+    this.querySelector(".bottom-bar").appendChild(this.commitButton);
   }
 
   _showMe() {
@@ -53,28 +53,25 @@ export class DiffModal extends HTMLDialogElement {
     // so apparantly moving it elsewhere fixes it :/
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)?.appendChild(fragment);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
     document
       .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
       .showModal();
   }
 
   /**
+   * @param {import("../../api").Project} project
    * @param {string} sprite
    * @param {number} script - 0 by default
    */
-  async diff(sprite, script = 0) {
-    let project = await api.getCurrentProject();
+  async diff(project, sprite, script = 0) {
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
     const sprites = await project.getSprites();
-
     const oldProject = await project.getPreviousScripts(sprite);
     const newProject = await project.getCurrentScripts(sprite);
 
     const scripts = parseScripts(oldProject, newProject);
-    console.log(scripts);
-
     // not sure why all this isn't just done by diff()
     const diffs = (
       await Promise.all(
@@ -95,6 +92,7 @@ export class DiffModal extends HTMLDialogElement {
 
     this.scripts.innerHTML = "";
     this.querySelector(".topbar").innerHTML = "";
+
     this.commits.innerText = diffs[script].diffed;
 
     Scratchblocks.appendStyles();
@@ -104,8 +102,9 @@ export class DiffModal extends HTMLDialogElement {
     });
 
     this.commitButton.onclick = async () => {
-      const message = await project?.commit();
+      const message = await project.commit();
       this.close();
+      console.log(message);
       scratchAlert({
         message: `Commit successful. ${message}`,
         duration: 5000,
@@ -113,7 +112,7 @@ export class DiffModal extends HTMLDialogElement {
     };
 
     // append sprites
-    sprites?.forEach((sprite) => {
+    sprites.forEach((sprite) => {
       let newItem = Object.assign(document.createElement("a"), {
         href: "#whatever",
         innerText: sprite,
@@ -123,10 +122,10 @@ export class DiffModal extends HTMLDialogElement {
             .forEach((e) => e.classList.remove("active-tab"));
           newItem.classList.add("active-tab");
 
-          await this.diff(sprite);
+          await this.diff(project, sprite);
         },
       });
-      this.querySelector(".topbar")?.appendChild(newItem);
+      this.querySelector(".topbar").appendChild(newItem);
     });
 
     // assign diff displaying to diffs
@@ -140,10 +139,11 @@ export class DiffModal extends HTMLDialogElement {
           .querySelectorAll(".tab-btn")
           .forEach((e) => e.classList.remove("active-tab"));
         link.classList.add("active-tab");
-        this.diff(
+        await this.diff(
+          project,
           sprite,
           parseInt(
-            this.querySelector("button.active-tab")?.getAttribute("script-no")
+            this.querySelector("button.active-tab").getAttribute("script-no")
           )
         );
       };
@@ -159,13 +159,12 @@ export class DiffModal extends HTMLDialogElement {
     });
 
     // dark mode
-    if (document.querySelector("body")?.getAttribute("theme") === "dark") {
-      document.querySelector(".sidebar")?.classList.add("dark");
-      document.querySelector(".topbar")?.classList.add("dark");
+    if (document.querySelector("body").getAttribute("theme") === "dark") {
+      document.querySelector(".sidebar").classList.add("dark");
+      document.querySelector(".topbar").classList.add("dark");
     } else {
-      document.querySelector(".sidebar")?.classList.remove("dark");
+      document.querySelector(".sidebar").classList.remove("dark");
     }
-
     if (!this.open) this._showMe();
   }
 }

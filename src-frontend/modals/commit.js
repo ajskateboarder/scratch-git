@@ -111,7 +111,6 @@ width: 65%;
 
     this.newer.onclick = () => {
       page -= 1;
-      console.log("page", page);
       renderCommits(commits[page]);
       this.newer.disabled = page === 0;
       this.older.disabled = page !== 0;

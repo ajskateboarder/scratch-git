@@ -10,7 +10,7 @@ import { Cmp } from "./dom/index";
  * @property {string} shortDate
  */
 
-class Project {
+export class Project {
   #portNumber;
 
   /** @param {string} project */
@@ -70,10 +70,11 @@ class Project {
 
   /** Commit the current project to Git
    *
-   * @returns {string}
+   * @returns {Promise<string>}
    */
   async commit() {
-    return await (await this.#request("/commit")).json().message;
+    const res = await (await this.#request("/commit")).json();
+    return res.message;
   }
 
   async push() {
@@ -144,13 +145,9 @@ class ProjectManager {
     /** @type {HTMLDivElement} */
     const projectNameElement = await new Promise((resolve) => {
       const observer = new MutationObserver(() => {
-        if (
-          document.querySelector(".menu-bar_menu-bar-item_Fh07T:nth-child(5)")
-        ) {
+        if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
           observer.disconnect();
-          resolve(
-            document.querySelector(".menu-bar_menu-bar-item_Fh07T:nth-child(5)")
-          );
+          resolve(document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`));
         }
       });
       observer.observe(document.body, {

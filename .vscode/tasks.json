@@ -4,7 +4,7 @@
     {
       "label": "Debug scratch-git",
       "type": "shell",
-      "command": "nodemon -x 'python3 debug.py' -w src &; sleep 1; cargo run -- --debug &; /opt/TurboWarp/turbowarp-desktop >/dev/null",
+      "command": "nodemon -x 'pkill python3; python3 debug.py' -w src-server -w src-frontend &; sleep 1; cargo run -- --debug &; /opt/TurboWarp/turbowarp-desktop >/dev/null",
       "group": {
         "kind": "build",
         "isDefault": true

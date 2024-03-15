@@ -199,6 +199,8 @@ export class WelcomeModal extends HTMLDialogElement {
       this.querySelector("#goToStep3").classList.remove(Cmp.DISABLED_BUTTON);
       path = this.querySelector("#openProjectPath").files[0].path;
     };
-    this._showMe();
+    if (!this.open) {
+      this._showMe();
+    }
   }
 }

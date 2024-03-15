@@ -56,14 +56,18 @@ export default async function () {
         let project = await api.getCurrentProject();
         await project.unzip();
         let sprites = await project.getSprites();
-        document.querySelector("dialog[is='diff-modal']").diff(sprites[0]);
+        await document
+          .querySelector("dialog[is='diff-modal']")
+          .diff(project, sprites[0]);
       };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           let project = await api.getCurrentProject();
           await project.unzip();
           let sprites = await project.getSprites();
-          document.querySelector("dialog[is='diff-modal']").diff(sprites[0]);
+          await document
+            .querySelector("dialog[is='diff-modal']")
+            .diff(project, sprites[0]);
         }
       };
     } catch {}
