@@ -1,4 +1,4 @@
-import { ParseSB3Blocks } from "../../lib";
+import { ParseSB3Blocks } from "../../lib/index";
 
 const zip = (a, b) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [

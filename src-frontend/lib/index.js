@@ -1,16 +1,5 @@
-(async function () {
-  try {
-    scratchblocks;
-    parseSB3Blocks;
-  } catch {
-    await import(
-      "https://cdn.jsdelivr.net/npm/parse-sb3-blocks@0.5.0/dist/parse-sb3-blocks.browser.js"
-    );
-    await import(
-      "https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"
-    );
-  }
-})();
+import parseSB3Blocks from "./parse-sb3-blocks";
+import "./scratchblocks";
 
 export const Scratchblocks = {
   /** @returns {void} */

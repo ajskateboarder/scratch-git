@@ -1,6 +1,6 @@
 import { html } from "../../utils";
 import api from "../../api";
-import { Scratchblocks } from "../../lib";
+import { Scratchblocks } from "../../lib/index";
 import { Cmp, scratchAlert } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
