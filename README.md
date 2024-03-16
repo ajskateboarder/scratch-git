@@ -2,6 +2,8 @@
 
 Git version control integration for Scratch (TurboWarp) that just works
 
+https://github.com/ajskateboarder/scratch-git/assets/81255936/4374d0a8-1d89-4aad-a968-5919a63b6b27
+
 Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes. Building this will likely not work as-is.
 
 ## Usage
