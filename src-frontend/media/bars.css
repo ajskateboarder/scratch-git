@@ -37,7 +37,7 @@
 
 .sidebar li button.active-tab,
 .topbar a.active-tab {
-    color: hsla(0, 100%, 65%, 1);
+    color: var(--menu-bar-background-default);
     background-color: white;
     outline: none;
 }
@@ -60,7 +60,7 @@
 
 .bottom-bar select {
     font-size: 14px;
-    background-color: hsla(0, 100%, 65%, 1);
+    background-color: var(--menu-bar-background-default);
     color: white;
     border: none;
     padding: 0.5rem 1rem;

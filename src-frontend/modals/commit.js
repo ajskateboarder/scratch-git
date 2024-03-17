@@ -69,6 +69,7 @@ width: 65%;
   }
 
   async display() {
+    console.log("hi");
     const renderCommits = (commits) => {
       this.querySelector(".commit-group").innerHTML = commits
         .map(
@@ -84,9 +85,9 @@ width: 65%;
         )
         .join("");
     };
-
     let page = 0;
     let commits = await (await api.getCurrentProject()).getCommits();
+    console.log(commits);
     commits = [...Array(Math.ceil(commits.length / 40))].map((_) =>
       commits.splice(0, 40)
     );
@@ -124,7 +125,9 @@ width: 65%;
       this.close();
     };
 
-    this._showMe();
-    this.older.blur();
+    if (!this.open) {
+      this._showMe();
+      this.older.blur();
+    }
   }
 }

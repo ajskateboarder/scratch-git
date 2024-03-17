@@ -1,4 +1,5 @@
 /** @file A lookup to create elements using scratch-gui classnames */
+// this could've used css selectors but ig i'm too lazy to move now
 
 /** @type {string[]} */
 const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
@@ -33,6 +34,16 @@ export const Cmp = {
   ALERT_BUTTONS: select("alert_alert-buttons"),
   ALERT_CLOSE_CONTAINER: select("alert_alert-close-button-container"),
   ALERT_CLOSE_BUTTON: select("alert_alert-close-button"),
+
+  // sprites/stage
+  DELETE_BUTTON: select("delete-button_delete-button"),
+  DELETE_BUTTON_VISIBLE: select("delete-button_delete-button-visible"),
+  DELETE_BUTTON_ICON: select("delete-button_delete-icon"),
+  SELECTOR_ITEM_DELETE_BUTTON: select("sprite-selector-item_delete-button"),
+  SPRITES: select("sprite-selector_items-wrapper"),
+  SPRITE_NAME: select("sprite-selector-item_sprite-name").split(",")[0],
+  SELECTED_SPRITE: select("sprite-selector-item_is-selected").split(".")[1],
+  STAGE_WRAPPER: select("target-pane_stage-selector-wrapper"),
 
   // misc
   SAVE_STATUS: select("save-status_save-now"),

@@ -12,7 +12,7 @@ export class DiffModal extends HTMLDialogElement {
   /** @type {HTMLParagraphElement} */
   commits;
   /** @type {HTMLButtonElement} */
-  commitButton;
+  closeButton;
 
   constructor() {
     super();
@@ -21,10 +21,7 @@ export class DiffModal extends HTMLDialogElement {
   connectedCallback() {
     if (this.querySelector(".content")) return;
     this.innerHTML += html`<div class="content">
-      <div class="topbar"></div>
-      <div class="sidebar">
-        <br />
-      </div>
+      <div class="sidebar"></div>
       <div class="blocks">
         <div
           class="bottom-bar"
@@ -40,12 +37,13 @@ export class DiffModal extends HTMLDialogElement {
       id: "commits",
     });
     this.querySelector(".blocks").prepend(this.commits);
-    this.commitButton = Object.assign(document.createElement("button"), {
-      id: "commitButton",
+    this.closeButton = Object.assign(document.createElement("button"), {
+      id: "closeButton",
       innerText: "Okay",
       className: Cmp.SETTINGS_BUTTON,
+      style: "margin-left: 10px",
     });
-    this.querySelector(".bottom-bar").appendChild(this.commitButton);
+    this.querySelector(".bottom-bar").append(this.closeButton);
   }
 
   _showMe() {
@@ -67,7 +65,6 @@ export class DiffModal extends HTMLDialogElement {
   async diff(project, sprite, script = 0) {
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
-    const sprites = await project.getSprites();
     const oldProject = await project.getPreviousScripts(sprite);
     const newProject = await project.getCurrentScripts(sprite);
 
@@ -91,7 +88,6 @@ export class DiffModal extends HTMLDialogElement {
       });
 
     this.scripts.innerHTML = "";
-    this.querySelector(".topbar").innerHTML = "";
 
     this.commits.innerText = diffs[script].diffed;
 
@@ -101,32 +97,9 @@ export class DiffModal extends HTMLDialogElement {
       scale: 0.675,
     });
 
-    this.commitButton.onclick = async () => {
-      const message = await project.commit();
+    this.closeButton.onclick = () => {
       this.close();
-      console.log(message);
-      scratchAlert({
-        message: `Commit successful. ${message}`,
-        duration: 5000,
-      });
     };
-
-    // append sprites
-    sprites.forEach((sprite) => {
-      let newItem = Object.assign(document.createElement("a"), {
-        href: "#whatever",
-        innerText: sprite,
-        onclick: async () => {
-          document
-            .querySelectorAll(".topbar a")
-            .forEach((e) => e.classList.remove("active-tab"));
-          newItem.classList.add("active-tab");
-
-          await this.diff(project, sprite);
-        },
-      });
-      this.querySelector(".topbar").appendChild(newItem);
-    });
 
     // assign diff displaying to diffs
     diffs.forEach(async (diff, i) => {

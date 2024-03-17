@@ -6,7 +6,26 @@
   flex: 1;
   padding: 20px;
   margin-left: 12.5%;
-  margin-top: 30px;
+}
+
+.indicator-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 1.75rem;
+  height: 1.75rem;
+  box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+  background-color: var(--looks-secondary);
+  color: var(--ui-white);
+  border-radius: 50%;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
 }
 
 dialog[is="diff-modal"],

@@ -60,6 +60,7 @@ class GitMenu {
     /** @type {HTMLElement} */
     this.newMenu = undefined;
     this.open = false;
+    this.initialized = false;
   }
 
   /** @param {number?} index */
@@ -76,6 +77,7 @@ class GitMenu {
       remove: () => li.remove(),
       onclick: (handler) => {
         li.onclick = () => {
+          handler();
           this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
           this.savedItems.style.display = "none";
           this.open = false;
@@ -96,6 +98,8 @@ class GitMenu {
     ghTokenHandler,
     commitViewHandler,
   }) {
+    if (this.initialized) return;
+
     // open, copy, and edit the file menu
     fileMenu.clickMenu(false);
     fileMenu.clickMenu(true);
@@ -158,6 +162,7 @@ class GitMenu {
     };
 
     fileMenu.clickMenu(true);
+    this.initialized = true;
   }
 }
 

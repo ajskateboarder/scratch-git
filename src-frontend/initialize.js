@@ -7,6 +7,7 @@ import "./modals/index";
 
 import barStyles from "./media/bars.css";
 import miscStyles from "./media/misc.css";
+import { showIndicators } from "./diff-indicators";
 
 function injectStyles() {
   document.head.innerHTML += html`
@@ -25,7 +26,7 @@ function injectStyles() {
     }
     
     .${Cmp.SETTINGS_BUTTON}[disabled] {
-      background-color: hsla(0, 60%, 55%, 1);
+      background-color: var(--menu-bar-background-default);
       color: rgba(255, 255, 255, 0.4);
       cursor: default;
     }`;
@@ -55,19 +56,21 @@ export default async function () {
       document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
         let project = await api.getCurrentProject();
         await project.unzip();
-        let sprites = await project.getSprites();
-        await document
-          .querySelector("dialog[is='diff-modal']")
-          .diff(project, sprites[0]);
+        showIndicators(project);
+        // let sprites = await project.getSprites();
+        // await document
+        //   .querySelector("dialog[is='diff-modal']")
+        //   .diff(project, sprites[0]);
       };
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           let project = await api.getCurrentProject();
           await project.unzip();
-          let sprites = await project.getSprites();
-          await document
-            .querySelector("dialog[is='diff-modal']")
-            .diff(project, sprites[0]);
+          await showIndicators(project);
+          // let sprites = await project.getSprites();
+          // await document
+          //   .querySelector("dialog[is='diff-modal']")
+          //   .diff(project, sprites[0]);
         }
       };
     } catch {}

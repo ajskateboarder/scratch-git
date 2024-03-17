@@ -165,8 +165,14 @@ export class WelcomeModal extends HTMLDialogElement {
 
   async display() {
     let path;
-    this.querySelector("#exitWelcome").onclick = () => this.close();
-    this.querySelector("#exitWelcome2").onclick = () => this.close();
+    this.querySelector("#exitWelcome").onclick = () => {
+      this.close();
+      window.location.reload();
+    };
+    this.querySelector("#exitWelcome2").onclick = () => {
+      this.close();
+      window.location.reload();
+    };
     this.querySelector("#goToStep1").onclick = () => {
       this.querySelector("#welcomeStep2").style.display = "none";
       this.querySelector("#welcomeStep1").style.display = "flex";
