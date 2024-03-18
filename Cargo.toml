@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-path = "src-ws-server/main.rs"
+path = "src-server/main.rs"
 name = "scratch-git"
 
 [dependencies]
