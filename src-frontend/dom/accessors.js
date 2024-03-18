@@ -55,3 +55,4 @@ export const Cmp = {
   DISABLED_BUTTON: select("button_mod-disabled"),
   GUI_PAGE_WRAPPER: select("gui_page-wrapper"),
 };
+window.Cmp = Cmp;

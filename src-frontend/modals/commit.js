@@ -58,6 +58,8 @@ width: 65%;
   }
 
   _showMe() {
+    if (document.querySelector(`dialog[is="${this.getAttribute("is")}"]`).open)
+      return;
     // directly attaching this modal to anything in #app will hide the project player
     // so apparantly moving it elsewhere fixes it :/
     const fragment = document.createDocumentFragment();
@@ -69,7 +71,6 @@ width: 65%;
   }
 
   async display() {
-    console.log("hi");
     const renderCommits = (commits) => {
       this.querySelector(".commit-group").innerHTML = commits
         .map(
@@ -87,7 +88,7 @@ width: 65%;
     };
     let page = 0;
     let commits = await (await api.getCurrentProject()).getCommits();
-    console.log(commits);
+
     commits = [...Array(Math.ceil(commits.length / 40))].map((_) =>
       commits.splice(0, 40)
     );
@@ -125,9 +126,6 @@ width: 65%;
       this.close();
     };
 
-    if (!this.open) {
-      this._showMe();
-      this.older.blur();
-    }
+    if (!this.open) this._showMe();
   }
 }

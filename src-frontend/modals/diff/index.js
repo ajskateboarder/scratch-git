@@ -131,6 +131,10 @@ export class DiffModal extends HTMLDialogElement {
       this.scripts.appendChild(newItem);
     });
 
+    document
+      .querySelector(`button[script-no="${script}"]`)
+      .classList.add("active-tab");
+
     // dark mode
     if (document.querySelector("body").getAttribute("theme") === "dark") {
       document.querySelector(".sidebar").classList.add("dark");

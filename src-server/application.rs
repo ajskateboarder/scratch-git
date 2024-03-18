@@ -30,14 +30,14 @@ fn response(status: Status, content: Value) -> AppResponse {
     (status, (ContentType::JSON, to_string(&content).unwrap()))
 }
 
-fn get_project_path(projects: &Value, project_name: &String) -> PathBuf {
+fn get_project_path(projects: &Value, project_name: &str) -> PathBuf {
     let base_loc = &projects[project_name]["base"].as_str().unwrap().to_string();
     Path::new(&base_loc).to_path_buf()
 }
 
 fn project_config() -> &'static Mutex<ProjectConfig> {
     static CONFIG: OnceLock<Mutex<ProjectConfig>> = OnceLock::new();
-    CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json".to_string())))
+    CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json")))
 }
 
 #[post("/diff", format = "json", data = "<diff_params>")]
@@ -60,7 +60,7 @@ fn create_project(file_name: &str) -> AppResponse {
         .to_str()
         .unwrap()
         .to_string();
-    let name = binding.split(".").collect::<Vec<_>>()[0].to_string();
+    let name = binding.split(".").collect::<Vec<_>>()[0];
     let mut config = project_config().lock().unwrap();
 
     let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
@@ -81,7 +81,7 @@ fn create_project(file_name: &str) -> AppResponse {
 
     match config.projects[&name] {
         Value::Null => {
-            config.projects[name.clone()] = json!({
+            config.projects[name] = json!({
                 "base": project_path.to_str().unwrap().to_string(),
                 "project_file": file_path.to_str().unwrap().to_string()
             });
@@ -110,8 +110,7 @@ fn create_project(file_name: &str) -> AppResponse {
     let target_dir = PathBuf::from(Path::new(
         &project_to_extract["base"].as_str().unwrap().to_string(),
     ));
-    // let archive = fs::read()
-    // .unwrap();
+
     extract(
         fs::File::open(Path::new(
             &project_to_extract["project_file"]
@@ -180,7 +179,7 @@ fn create_project(file_name: &str) -> AppResponse {
 }
 
 #[get("/<project_name>/exists")]
-fn exists(project_name: String) -> AppResponse {
+fn exists(project_name: &str) -> AppResponse {
     let projects = &project_config().lock().unwrap().projects;
     response(
         Status::Ok,
@@ -189,9 +188,9 @@ fn exists(project_name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/unzip")]
-fn unzip(project_name: String) -> AppResponse {
+fn unzip(project_name: &str) -> AppResponse {
     let projects = &project_config().lock().unwrap().projects;
-    let pth = get_project_path(projects, &project_name);
+    let pth = get_project_path(projects, project_name);
 
     fs::copy(pth.join("project.json"), pth.join("project.old.json"))
         .expect("failed to move project.json");
@@ -214,7 +213,7 @@ fn unzip(project_name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/project.old.json?<name>")]
-fn old_project(project_name: String, name: String) -> AppResponse {
+fn old_project(project_name: &str, name: &str) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let old_project = serde_json::from_str::<serde_json::Value>(
@@ -238,7 +237,7 @@ fn old_project(project_name: String, name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/project.json?<name>")]
-fn current_project(project_name: String, name: String) -> AppResponse {
+fn current_project(project_name: &str, name: &str) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let old_project = serde_json::from_str::<serde_json::Value>(
@@ -299,7 +298,7 @@ fn sprites(project_name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/push")]
-fn push(project_name: String) -> AppResponse {
+fn push(project_name: &str) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     if !Command::new("git")
@@ -318,7 +317,7 @@ fn push(project_name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/commit")]
-fn commit(project_name: String) -> AppResponse {
+fn commit(project_name: &str) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let _current_project = serde_json::from_str::<serde_json::Value>(
@@ -376,7 +375,7 @@ fn commit(project_name: String) -> AppResponse {
 }
 
 #[get("/<project_name>/commits")]
-fn commits(project_name: String) -> AppResponse {
+fn commits(project_name: &str) -> AppResponse {
     let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
 
     let git_log = Command::new("git")
@@ -398,8 +397,7 @@ fn commits(project_name: String) -> AppResponse {
 
     response(
         Status::Ok,
-        serde_json::from_str(("[".to_owned() + &log_output + "]").as_str())
-            .expect("failed to parse log output"),
+        serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output"),
     )
 }
 

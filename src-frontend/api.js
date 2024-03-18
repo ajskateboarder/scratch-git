@@ -96,10 +96,12 @@ export class ProjectExistsException extends Error {
 // class factory jumpscare
 class ProjectManager {
   #portNumber;
+  #observedName;
 
   /** @param {number} portNumber */
   constructor(portNumber) {
     this.#portNumber = portNumber;
+    this.#observedName = undefined;
   }
 
   /**
@@ -143,21 +145,29 @@ class ProjectManager {
    */
   async getCurrentProject() {
     /** @type {HTMLDivElement} */
-    const projectNameElement = await new Promise((resolve) => {
-      const observer = new MutationObserver(() => {
-        if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
-          observer.disconnect();
-          resolve(document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`));
-        }
+    let projectName;
+
+    if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
+      projectName = document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)
+        .parentElement.nextElementSibling.nextElementSibling.children[0].value;
+    } else {
+      const projectNameElement = await new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+          if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
+            observer.disconnect();
+            resolve(document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`));
+          }
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
       });
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    });
-    const projectName =
-      projectNameElement.parentElement.nextElementSibling.nextElementSibling
-        .children[0].value;
+      projectName =
+        projectNameElement.parentElement.nextElementSibling.nextElementSibling
+          .children[0].value;
+    }
+
     return new Project(projectName, this.#portNumber);
   }
 }

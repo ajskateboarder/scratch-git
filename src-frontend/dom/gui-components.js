@@ -76,13 +76,13 @@ class GitMenu {
       },
       remove: () => li.remove(),
       onclick: (handler) => {
-        li.onclick = () => {
-          handler();
+        li.addEventListener("click", async (e) => {
+          e.stopPropagation();
           this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
           this.savedItems.style.display = "none";
           this.open = false;
-          handler();
-        };
+          await handler();
+        });
       },
       elem: li,
     };

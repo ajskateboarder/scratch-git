@@ -2,12 +2,12 @@ use serde_json;
 use std::{fs, path::Path};
 
 pub struct ProjectConfig {
-    file_path: String,
+    file_path: &'static str,
     pub projects: serde_json::Value,
 }
 
 impl ProjectConfig {
-    pub fn new(file_path: String) -> Self {
+    pub fn new(file_path: &'static str) -> Self {
         if !Path::new(&file_path).exists() {
             fs::write(&file_path, "{}").expect("Unable to create new file");
         }

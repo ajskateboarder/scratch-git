@@ -16,6 +16,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
   constructor() {
     super();
+    this.loadedProject = false;
   }
 
   connectedCallback() {
@@ -150,6 +151,7 @@ export class WelcomeModal extends HTMLDialogElement {
   openProject() {
     fileMenu.openProject();
     window.vm.runtime.on("PROJECT_LOADED", () => {
+      this.loadedProject = true;
       /** @type {HTMLButtonElement} */
       let nextButton = this.querySelector("#goToStep2");
       nextButton.disabled = false;
@@ -167,11 +169,11 @@ export class WelcomeModal extends HTMLDialogElement {
     let path;
     this.querySelector("#exitWelcome").onclick = () => {
       this.close();
-      window.location.reload();
+      if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#exitWelcome2").onclick = () => {
       this.close();
-      window.location.reload();
+      if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#goToStep1").onclick = () => {
       this.querySelector("#welcomeStep2").style.display = "none";
