@@ -10,38 +10,55 @@ import { Cmp } from "./dom/index";
  * @property {string} shortDate
  */
 
-export class Project {
-  #portNumber;
+/**
+ * @typedef Command
+ * @property {"diff" | "create-project" | "exists" | "unzip" | "commit" | "push" | "current-project" | "previous-project" | "get-commits" | "get-changed-sprites"} command
+ * @property {Object} data
+ * @property {{project_name: string; sprite_name?: string}} data.Project
+ * @property {{old_content: string; new_content: string}} data.GitDiff
+ * @property {{file_name: string}} data.FilePath
+ */
 
-  /** @param {string} project */
-  constructor(project, portNumber = 6969) {
+export class Project {
+  #ws;
+
+  /** Constructs a project
+   * @param {string} project
+   * @param {ProjectManager} ws
+   */
+  constructor(project, ws) {
     this.project = project;
-    this.#portNumber = portNumber;
+    this.#ws = ws;
   }
 
-  async #request(path) {
-    return await fetch(
-      `http://localhost:${this.#portNumber}/${this.project}${path}`
-    );
+  /** @param {Command} */
+  async #request({ command, data }) {
+    this.#ws.send(JSON.stringify({ command, data }));
+    return JSON.parse(await this.#ws.receive());
   }
 
   /** Returns if the project has been linked to scratch.git
    *
    * @returns {Promise<boolean>} */
   async exists() {
-    return (await (await this.#request("/exists")).json()).exists;
+    return await this.#request({
+      command: "exists",
+      data: { Project: { project_name: this.project } },
+    });
   }
 
   /** @returns {Promise<Commit[]>} */
   async getCommits() {
-    return [...(await (await this.#request("/commits")).json())][0].map(
-      (commit) => {
-        return {
-          ...commit,
-          shortDate: commit.author.date.split(" ").slice(0, 4),
-        };
-      }
-    );
+    let commits = await this.#request({
+      command: "get-commits",
+      data: { Project: { project_name: this.project } },
+    });
+    return [...commits][0].map((commit) => {
+      return {
+        ...commit,
+        shortDate: commit.author.date.split(" ").slice(0, 4),
+      };
+    });
   }
 
   /** Retreive sprites that have been changed since project changes
@@ -51,21 +68,30 @@ export class Project {
    */
   async getSprites() {
     /** @type {string[]} */
-    let sprites = (await (await this.#request("/sprites")).json()).sprites;
+    let sprites = (
+      await this.#request({
+        command: "get-changed-sprites",
+        data: { Project: { project_name: this.project } },
+      })
+    ).sprites;
     sprites.sort((a, b) => a.localeCompare(b));
     return sprites;
   }
 
   /** @param {string} sprite */
   async getCurrentScripts(sprite) {
-    return await (await this.#request(`/project.json?name=${sprite}`)).json();
+    return await this.#request({
+      command: "current-project",
+      data: { Project: { project_name: this.project, sprite_name: sprite } },
+    });
   }
 
   /** @param {string} sprite */
   async getPreviousScripts(sprite) {
-    return await (
-      await this.#request(`/project.old.json?name=${sprite}`)
-    ).json();
+    return await this.#request({
+      command: "previous-project",
+      data: { Project: { project_name: this.project, sprite_name: sprite } },
+    });
   }
 
   /** Commit the current project to Git
@@ -73,16 +99,24 @@ export class Project {
    * @returns {Promise<string>}
    */
   async commit() {
-    const res = await (await this.#request("/commit")).json();
-    return res.message;
+    return await this.#request({
+      command: "commit",
+      data: { Project: { project_name: this.project } },
+    });
   }
 
   async push() {
-    await this.#request("/push");
+    await this.#request({
+      command: "push",
+      data: { Project: { project_name: this.project } },
+    });
   }
 
   async unzip() {
-    await this.#request("/unzip");
+    await this.#request({
+      command: "unzip",
+      data: { Project: { project_name: this.project } },
+    });
   }
 }
 
@@ -94,14 +128,22 @@ export class ProjectExistsException extends Error {
 }
 
 // class factory jumpscare
-class ProjectManager {
-  #portNumber;
-  #observedName;
+class ProjectManager extends WebSocket {
+  /** @param {string} url */
+  constructor(url) {
+    super(url);
+  }
 
-  /** @param {number} portNumber */
-  constructor(portNumber) {
-    this.#portNumber = portNumber;
-    this.#observedName = undefined;
+  receive() {
+    return new Promise((resolve, reject) => {
+      this.onmessage = (message) => {
+        return resolve(message.data);
+      };
+
+      this.onerror = (error) => {
+        return reject(error);
+      };
+    });
   }
 
   /**
@@ -109,7 +151,7 @@ class ProjectManager {
    * @returns {Promise<Project>}
    */
   async getProject(projectName) {
-    return new Project(projectName, this.#portNumber);
+    return new Project(projectName, this);
   }
 
   /**
@@ -119,11 +161,14 @@ class ProjectManager {
    * @throws {ProjectExistsException}
    */
   async createProject(projectPath) {
-    const response = await fetch(
-      `http://localhost:${
-        this.#portNumber
-      }/create-project?file_name=${projectPath}`
-    ).then((res) => res.json());
+    this.send(
+      JSON.stringify({
+        command: "create-project",
+        data: { FilePath: projectPath },
+      })
+    );
+
+    let response = await this.receive();
     if (response.project_name === "exists") {
       throw new ProjectExistsException(
         `${projectPath
@@ -136,7 +181,8 @@ class ProjectManager {
         Please check the server logs and<wbr /> <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
       );
     }
-    return new Project(response.project_name, this.#portNumber);
+
+    return new Project(response.project_name, this);
   }
 
   /**
@@ -168,8 +214,8 @@ class ProjectManager {
           .children[0].value;
     }
 
-    return new Project(projectName, this.#portNumber);
+    return new Project(projectName, this);
   }
 }
 
-export default new ProjectManager(8000);
+export default new ProjectManager("ws://localhost:8000");

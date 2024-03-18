@@ -1,6 +1,6 @@
-use std::fs::{File, self};
-use std::path::PathBuf;
+use std::fs::{self, File};
 use std::io;
+use std::path::PathBuf;
 
 use zip::result::ZipError;
 
@@ -22,7 +22,7 @@ pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-    
+
             if let Some(mode) = file.unix_mode() {
                 fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
             }

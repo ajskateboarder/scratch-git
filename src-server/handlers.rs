@@ -27,17 +27,17 @@ fn project_config() -> &'static Mutex<ProjectConfig> {
 
 #[derive(Serialize, Deserialize, PartialEq)]
 enum CommandData<'a> {
-    GitDiff {
-        old_content: &'a str,
-        new_content: &'a str,
-    },
-    FilePath {
-        file_name: &'a str,
-    },
     Project {
         project_name: &'a str,
         sprite_name: Option<&'a str>,
     },
+    // owned strings are needed to account for newlines
+    // or maybe i'm doing something wrong
+    GitDiff {
+        old_content: String,
+        new_content: String,
+    },
+    FilePath(&'a str),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -62,7 +62,7 @@ impl Cmd<'_> {
     }
 
     fn create_project(data: CommandData) -> Value {
-        let CommandData::FilePath { file_name } = data else {
+        let CommandData::FilePath(file_name) = data else {
             return json!({});
         };
         let binding = Path::new(file_name)
@@ -265,7 +265,7 @@ impl Cmd<'_> {
         )
         .unwrap();
         let current_diff = Diff::new(_current_project);
-    
+
         let _new_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.json"))
                 .unwrap()
@@ -273,14 +273,14 @@ impl Cmd<'_> {
         )
         .unwrap();
         let new_diff = Diff::new(_new_project);
-    
+
         let costume_removals = new_diff.costumes(&current_diff);
         let commit_message = current_diff.commits(&new_diff).join(", ");
-    
+
         for change in costume_removals {
             fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
         }
-    
+
         if !Command::new("git")
             .args(["add", "."])
             .stdout(Stdio::piped())
@@ -292,7 +292,7 @@ impl Cmd<'_> {
         {
             return json!({ "project_name": "fail" });
         }
-    
+
         let mut binding = Command::new("git");
         let git_commit = binding
             .args(["commit", "-m", commit_message.as_str()])
@@ -302,7 +302,7 @@ impl Cmd<'_> {
         if !git_commit.status().unwrap().success() {
             return json!({ "project_name": "Nothing to add" });
         }
-    
+
         json!({ "message": commit_message })
     }
 
@@ -327,9 +327,47 @@ impl Cmd<'_> {
         } else {
             format!("[{binding}]")
         };
-        let log_output = binding.as_str();
-    
+        let log_output = if binding.ends_with(",]") {
+            binding[..binding.len() - 2].to_owned() + "]"
+        } else {
+            binding
+        };
+
         serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output")
+    }
+
+    fn get_changed_sprites(data: CommandData) -> Value {
+        let CommandData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+
+        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+
+        let binding = &fs::read_to_string(pth.join("project.old.json"));
+        let project_old_json = match binding {
+            Ok(fh) => fh.as_str(),
+            Err(_) => {
+                return json!({ "status": "you forgot to unzip the project dingus" });
+            }
+        };
+        let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();
+
+        let current_diff = Diff::new(_current_project);
+        let _new_project = serde_json::from_str::<serde_json::Value>(
+            &fs::read_to_string(pth.join("project.json"))
+                .unwrap()
+                .as_str(),
+        )
+        .unwrap();
+
+        let new_diff = Diff::new(_new_project);
+
+        json!({
+            "sprites": current_diff.commits(&new_diff)
+                .iter()
+                .map(|commit| commit.split(":").collect::<Vec<_>>()[0])
+                .collect::<Vec<_>>()
+        })
     }
 
     pub fn handle(msg: String) -> Result<Message, Error> {
@@ -337,7 +375,7 @@ impl Cmd<'_> {
             Ok(j) => j,
             Err(e) => return Err(e),
         };
-        
+
         Ok(Message::Text(
             match json.command {
                 "diff" => Cmd::diff(json.data),
@@ -349,6 +387,7 @@ impl Cmd<'_> {
                 "current-project" => Cmd::get_project(json.data, false),
                 "previous-project" => Cmd::get_project(json.data, true),
                 "get-commits" => Cmd::get_commits(json.data),
+                "get-changed-sprites" => Cmd::get_changed_sprites(json.data),
                 _ => unreachable!(),
             }
             .to_string(),
