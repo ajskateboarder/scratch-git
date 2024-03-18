@@ -1,114 +1,50 @@
-#[macro_use]
-extern crate rocket;
-
-pub mod application;
 pub mod diff;
+pub mod handlers;
 pub mod utils;
 
-use application::create_app;
-use rocket::{Build, Rocket};
 use std::{
-    env,
-    process::exit,
-    fs::{self, DirEntry},
-    io::{stdin, BufRead, Result},
-    path::{Path, PathBuf}, process::Command,
+    env, fs,
+    io::{stdin, BufRead},
+    net::{TcpListener, TcpStream},
+    path::PathBuf,
+    process::{exit, Command},
+    thread::spawn,
 };
+use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
-fn turbowarp_path() -> Option<PathBuf> {
-    if cfg!(windows) {
-        let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
-        let file_name =
-            |f: Result<DirEntry>| f.unwrap().file_name().to_os_string().into_string().unwrap();
-        let pth = Path::new(&env::var("LOCALAPPDATA").unwrap().to_string()).join("Packages");
-        if let Ok(__store_folder) = pth.read_dir() {
-            let _store_folder = __store_folder
-                .into_iter()
-                .map(|f| file_name(f))
-                .filter(|f| f.contains("TurboWarpDesktop"))
-                .next();
-            if let Some(store_folder) = _store_folder {
-                if let Ok(local_cache) = pth.join(&store_folder).read_dir() {
-                    if local_cache
-                        .into_iter()
-                        .map(|f| file_name(f))
-                        .any(|f| f.contains("LocalCache"))
-                    {
-                        return Some(
-                            pth.join(store_folder)
-                                .join("LocalCache")
-                                .join("Roaming")
-                                .join("turbowarp-desktop"),
-                        );
-                    }
-                }
-            }
-        };
-    } else if cfg!(target_os = "macos") {
-        let home = env::var("HOME").unwrap();
-        let pth = Path::new(&home)
-            .join("Library")
-            .join("Application Support")
-            .join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
-        let pth = Path::new(&home)
-            .join("Library")
-            .join("Containers")
-            .join("org.turbowarp.desktop")
-            .join("Data")
-            .join("Library")
-            .join("Application Support")
-            .join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
-    } else if cfg!(unix) {
-        let home = env::var("HOME").unwrap();
-        let pth = Path::new(&home).join(".config").join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
-        let pth = Path::new(&home)
-            .join(".var")
-            .join("app")
-            .join("org.turbowarp.TurboWarp")
-            .join("config")
-            .join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
-        let pth = Path::new(&home)
-            .join("snap")
-            .join("turbowarp-desktop")
-            .join("current")
-            .join(".config")
-            .join("turbowarp-desktop");
-        if let Ok(mut dir) = pth.read_dir() {
-            if !dir.next().is_none() {
-                return Some(pth);
-            }
-        };
+use crate::handlers::Cmd;
+use crate::utils::tw_path::turbowarp_path;
+
+fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
+    match err {
+        HandshakeError::Interrupted(_) => panic!("Bug: blocking socket would block"),
+        HandshakeError::Failure(f) => f,
     }
-    None
 }
 
-#[launch]
-fn app() -> Rocket<Build> {
+fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
+    let mut socket = accept(stream).map_err(must_not_block)?;
+    loop {
+        match socket.read()? {
+            msg @ Message::Text(_) | msg @ Message::Binary(_) => {
+                if debug {
+                    println!("<- Received message: {}", msg.to_string());
+                }
+                let response = match Cmd::handle(msg.to_string()) {
+                    Ok(res) => res,
+                    Err(e) => Message::Text(e.to_string()),
+                };
+                if debug {
+                    println!("-> Sending response: {}", response.to_string());
+                }
+                socket.send(response)?;
+            }
+            Message::Ping(_) | Message::Pong(_) | Message::Close(_) | Message::Frame(_) => {}
+        }
+    }
+}
+
+fn main() {
     let path = match turbowarp_path() {
         Some(path) => path,
         None => {
@@ -116,23 +52,46 @@ fn app() -> Rocket<Build> {
             PathBuf::from(stdin().lock().lines().next().unwrap().unwrap())
         }
     };
+    let mut debug = false;
+
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
         exit(1);
     }
     println!("Script copied to {}", path.to_str().unwrap());
+
     if let Some(arg) = env::args().nth(1) {
         if arg == "--debug" {
             if !Command::new("curl")
                 .args(["-X", "GET", "http://localhost:3333/update"])
                 .status()
                 .unwrap()
-                .success() {
-                    println!("Error: failed to post to http://localhost:3333/update. Do you have the debug server running?");
-                    exit(1);
-                }
+                .success()
+            {
+                println!("Error: failed to post to http://localhost:3333/update. Do you have the debug server running?");
+                exit(1);
+            }
+            debug = true;
         }
     }
+
     let _ = fs::create_dir("projects");
-    create_app()
+    println!(
+        "Open TurboWarp Desktop to begin using scratch.git, and make sure to keep this running!"
+    );
+
+    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
+    for stream in server.incoming() {
+        spawn(move || match stream {
+            Ok(stream) => {
+                if let Err(err) = handle_client(stream, debug) {
+                    match err {
+                        Error::ConnectionClosed | Error::Protocol(_) | Error::Utf8 => (),
+                        e => panic!("{e}"),
+                    }
+                }
+            }
+            Err(_) => (),
+        });
+    }
 }

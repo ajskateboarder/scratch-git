@@ -4,7 +4,6 @@ import { html } from "./utils";
 
 /** @param {import("./api").Project} project  */
 export async function showIndicators(project) {
-  if (!project.exists()) return;
   let changedSprites = await project.getSprites();
   document.querySelectorAll(".diffButton").forEach((button) => button.remove());
   [...document.querySelector(`.${Cmp.SPRITES}`).children].forEach((sprite) => {

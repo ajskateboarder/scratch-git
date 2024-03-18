@@ -46,8 +46,8 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
         .args([
             "diff",
             "--no-color",
-            &git_object_id(old_content),
-            &git_object_id(new_content),
+            &git_object_id(old_content.into()),
+            &git_object_id(new_content.into()),
         ])
         .stdout(Stdio::piped())
         .spawn()

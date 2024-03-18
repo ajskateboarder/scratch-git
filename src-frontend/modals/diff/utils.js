@@ -49,17 +49,24 @@ export function parseScripts(oldProject, newProject) {
  * @param {string} newContent
  * @returns {Promise<{added: number; removed: number; diffed: string}>}
  */
-export async function diff(oldContent, newContent) {
-  return await (
-    await fetch("http://localhost:8000/diff", {
-      method: "POST",
-      body: JSON.stringify({
-        old_content: oldContent,
-        new_content: newContent,
-      }),
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    })
-  ).json();
+export function diff(oldContent, newContent) {
+  return new Promise((resolve, reject) => {
+    let ws = new WebSocket("ws://localhost:8000");
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          command: "diff",
+          data: {
+            GitDiff: { old_content: oldContent, new_content: newContent },
+          },
+        })
+      );
+    };
+    ws.onmessage = (message) => {
+      return resolve(JSON.parse(message.data));
+    };
+    ws.onerror = (error) => {
+      return reject(error);
+    };
+  });
 }
