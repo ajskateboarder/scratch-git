@@ -2,11 +2,9 @@
 
 Git version control integration for Scratch (TurboWarp) that just works
 
-https://github.com/ajskateboarder/scratch-git/assets/81255936/1285407f-c9dd-47ca-9a4d-95fd362c5844
+https://github.com/ajskateboarder/scratch-git/assets/81255936/4374d0a8-1d89-4aad-a968-5919a63b6b27
 
-(out of date as of now)
-
-Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes.
+Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes. Building this will likely not work as-is.
 
 ## Usage
 
@@ -15,7 +13,7 @@ Some people are looking for better collaboration - not needing to form remix cha
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 
-(For development, you'll need a recent version of [Node.js](https://nodejs.org) and [Rust](https://rustup.rs/))
+(For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript, [Rust](https://rustup.rs/) to compile the server, and [Python](https://python.org) to setup live debugging)
 
 2) Download the scratch-git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
@@ -34,11 +32,14 @@ npm install -g rollup nodemon
 npm install rollup-plugin-string
 ```
 
-And run the following for some funny live-reload magic:
+And run the following to reload the frontend and backend whenever changes are saved:
 
 ```bash
-nodemon -x "python3 debug.py" -w src -w server
+python3 debug.py &
+nodemon -x "cargo run -- --debug" -w src
 ```
+
+Alternatively, if you are using VSCode, there is a build task you can configure to run with <kbd>Ctrl+Shift+B</kbd>.
 
 ## Commit specification
 
@@ -70,3 +71,15 @@ Ball: /12 blocks, add red-ball, Stage: add matrix
 ```text
 Player: +36 blocks, remove old-player, Cloud: +15 blocks
 ```
+
+## Credits
+
+Thanks to:
+
+- @apple502j for the [parse-sb3-blocks](https://github.com/apple502j/parse-sb3-blocks) library
+
+- @tjvr for the [scratchblocks](https://github.com/scratchblocks/scratchblocks) library
+
+- @rokcoder-scratch for the inspiration, [sb3-commit](https://github.com/rokcoder-scratch/sb3-commit)
+
+- @GarboMuffin for making TurboWarp easily extensible
