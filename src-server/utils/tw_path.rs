@@ -3,15 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[cfg(windows)]
-use fs::DirEntry;
-#[cfg(windows)]
-use io::Result;
-
 /// Find the first available TurboWarp Desktop config directory
 pub fn turbowarp_path() -> Option<PathBuf> {
     #[cfg(windows)]
     {
+        use std::{fs::DirEntry, io::Result};
+
         let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
         if let Ok(mut dir) = pth.read_dir() {
             if !dir.next().is_none() {
