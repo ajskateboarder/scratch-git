@@ -8,8 +8,6 @@ on:
       - "src/**/*.js"
       - "src/**/*.rs"
       - ".github/workflows/release.yml"
-    branches:
-      - "main"
 
 jobs:
   build-userscript:
