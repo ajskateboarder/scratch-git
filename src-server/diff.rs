@@ -75,6 +75,7 @@ pub struct CostumeChange {
     pub sprite: String,
     pub costume_name: String,
     pub costume_path: String,
+    pub on_stage: bool,
 }
 
 impl Diff {
@@ -127,6 +128,7 @@ impl Diff {
                 removed.remove(pos);
             }
         }
+
         Changes {
             added,
             removed,
@@ -143,6 +145,7 @@ impl Diff {
                     sprite: sprite.clone(),
                     costume_name: costume.0,
                     costume_path: costume.1,
+                    on_stage: costume.2,
                 })
             }
         }
@@ -153,6 +156,7 @@ impl Diff {
                     sprite: sprite.clone(),
                     costume_name: costume.0,
                     costume_path: costume.1,
+                    on_stage: costume.2,
                 })
             }
         }
@@ -167,19 +171,25 @@ impl Diff {
     }
 
     /// Return the path to every costume being used
-    fn _costumes(&self) -> HashMap<String, Vec<(String, String)>> {
-        let mut costumes: HashMap<String, Vec<(String, String)>> = HashMap::new();
+    fn _costumes(&self) -> HashMap<String, Vec<(String, String, bool)>> {
+        let mut costumes: HashMap<String, Vec<(String, String, bool)>> = HashMap::new();
         if let Some(sprites) = self.data["targets"].as_array() {
             for sprite in sprites {
                 if let Some(sprite_costumes) = sprite["costumes"].as_array() {
                     costumes.insert(
-                        sprite["name"].as_str().unwrap().to_string(),
+                        sprite["name"].as_str().unwrap().to_string()
+                            + if sprite["isStage"].as_bool().unwrap() {
+                                " (stage)"
+                            } else {
+                                ""
+                            },
                         sprite_costumes
                             .iter()
                             .map(|costume| {
                                 (
                                     costume["name"].as_str().unwrap().to_string(),
                                     Diff::get_costume_path(costume.clone()),
+                                    sprite["isStage"].as_bool().unwrap(),
                                 )
                                     .clone()
                             })
@@ -188,6 +198,7 @@ impl Diff {
                 }
             }
         }
+        dbg!(&costumes);
         costumes
     }
 
@@ -201,7 +212,7 @@ impl Diff {
             .iter()
             .map(|change| {
                 (
-                    change.sprite.clone(),
+                    change.sprite.clone() + if change.on_stage { " (stage)" } else { "" },
                     format!("{} {}", action, change.costume_name),
                 )
             })
@@ -229,17 +240,16 @@ impl Diff {
         let mut commits: Vec<String> = vec![];
         let mr_joe = self._blocks();
         let iterator = mr_joe.values().into_iter().zip(new._blocks());
-        for (old_blocks, (sprite, new_blocks)) in iterator {
+        for ((old_blocks, _), (sprite, (new_blocks, is_stage))) in iterator {
             if new_blocks - old_blocks != 0 {
                 let mut diff = new_blocks - old_blocks;
                 if sprite == "Sprite" {
                     diff = diff / 2;
                 }
                 commits.push(format!(
-                    "{}: {}{} blocks",
-                    sprite,
+                    "{sprite}{}: {}{diff} blocks",
+                    (if is_stage { " (stage)" } else { "" }),
                     (if diff > 0 { "+" } else { "" }),
-                    diff
                 ))
             }
         }
@@ -249,14 +259,17 @@ impl Diff {
     /// Return the current number of blocks per sprite
     ///
     /// Returns an empty BTreeMap if the targets key doesn't exist
-    fn _blocks(&self) -> BTreeMap<String, i32> {
+    fn _blocks(&self) -> BTreeMap<String, (i32, bool)> {
         if let Some(sprites) = self.data["targets"].as_array() {
             sprites
                 .iter()
                 .map(|x| {
                     (
                         x["name"].as_str().unwrap().to_string(),
-                        x["blocks"].as_object().unwrap().len() as i32,
+                        (
+                            x["blocks"].as_object().unwrap().len() as i32,
+                            x["isStage"].as_bool().unwrap(),
+                        ),
                     )
                 })
                 .collect::<BTreeMap<_, _>>()
@@ -279,7 +292,7 @@ impl Diff {
         let merged = self.format_costumes(costume_changes.merged, "modify".to_string());
 
         let _commits = [blocks, added, removed, merged].concat();
-
+        dbg!(&_commits);
         Vec::from_iter(
             group_items(_commits)
                 .iter()

@@ -223,18 +223,25 @@ impl Cmd<'_> {
                 .as_str(),
         )
         .expect("failed to parse project.old.json");
+        let targets = old_project["targets"].as_array().unwrap().iter();
 
-        let blocks = old_project["targets"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|t| t["name"].as_str().unwrap().to_string() == sprite_name.unwrap())
-            .map(|t| t["blocks"].as_object().unwrap())
-            .next()
-            .unwrap()
-            .to_owned();
+        let blocks = if sprite_name.unwrap() == "Stage (stage)" {
+            targets
+                .filter(|t| t["isStage"].as_bool().unwrap() == true)
+                .map(|t| t["blocks"].as_object().unwrap())
+                .next()
+        } else {
+            targets
+                .filter(|t| t["name"].as_str().unwrap().to_string() == sprite_name.unwrap())
+                .map(|t| t["blocks"].as_object().unwrap())
+                .next()
+        };
 
-        serde_json::Value::Object(blocks)
+        if let Some(bl) = blocks {
+            serde_json::Value::Object(bl.to_owned())
+        } else {
+            json!({})
+        }
     }
 
     fn push(data: CommandData) -> Value {

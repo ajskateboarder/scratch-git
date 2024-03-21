@@ -44,6 +44,7 @@ export class DiffModal extends HTMLDialogElement {
       style: "margin-left: 10px",
     });
     this.querySelector(".bottom-bar").append(this.closeButton);
+    console.log(this.querySelector(".bottom-bar"));
   }
 
   _showMe() {
@@ -78,7 +79,12 @@ export class DiffModal extends HTMLDialogElement {
       .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
       .filter((result) => result.diffed !== "")
       .map((result) => {
-        if (!result.diffed.trimStart().startsWith("when @greenFlag clicked")) {
+        if (
+          !["+", "-", "-\n+", ""]
+            .map((e) => e + "when @greenFlag clicked")
+            .map((e) => result.diffed.trimStart().startsWith(e))
+            .some((e) => e === true)
+        ) {
           return {
             ...result,
             diffed: " when @greenFlag clicked\n" + result.diffed.trimStart(),
@@ -87,15 +93,15 @@ export class DiffModal extends HTMLDialogElement {
         return result;
       });
 
-    this.scripts.innerHTML = "";
-
-    this.commits.innerText = diffs[script].diffed;
-
-    Scratchblocks.appendStyles();
-    Scratchblocks.renderMatching("#commits", {
-      style: "scratch3",
-      scale: 0.675,
-    });
+    try {
+      this.scripts.innerHTML = "";
+      this.commits.innerText = diffs[script].diffed ?? "";
+      Scratchblocks.appendStyles();
+      Scratchblocks.renderMatching("#commits", {
+        style: "scratch3",
+        scale: 0.675,
+      });
+    } catch {}
 
     this.closeButton.onclick = () => {
       this.close();
