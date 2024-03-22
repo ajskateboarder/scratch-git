@@ -198,7 +198,6 @@ impl Diff {
                 }
             }
         }
-        dbg!(&costumes);
         costumes
     }
 
@@ -239,16 +238,16 @@ impl Diff {
     pub fn blocks(&self, new: &Diff) -> Vec<String> {
         let mut commits: Vec<String> = vec![];
         let mr_joe = self._blocks();
+        dbg!(&mr_joe);
         let iterator = mr_joe.values().into_iter().zip(new._blocks());
-        for ((old_blocks, _), (sprite, (new_blocks, is_stage))) in iterator {
+        for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
             if new_blocks - old_blocks != 0 {
                 let mut diff = new_blocks - old_blocks;
                 if sprite == "Sprite" {
                     diff = diff / 2;
                 }
                 commits.push(format!(
-                    "{sprite}{}: {}{diff} blocks",
-                    (if is_stage { " (stage)" } else { "" }),
+                    "{sprite}: {}{diff} blocks",
                     (if diff > 0 { "+" } else { "" }),
                 ))
             }
@@ -265,7 +264,12 @@ impl Diff {
                 .iter()
                 .map(|x| {
                     (
-                        x["name"].as_str().unwrap().to_string(),
+                        x["name"].as_str().unwrap().to_string()
+                            + if x["isStage"].as_bool().unwrap() {
+                                " (stage)"
+                            } else {
+                                ""
+                            },
                         (
                             x["blocks"].as_object().unwrap().len() as i32,
                             x["isStage"].as_bool().unwrap(),
@@ -292,7 +296,6 @@ impl Diff {
         let merged = self.format_costumes(costume_changes.merged, "modify".to_string());
 
         let _commits = [blocks, added, removed, merged].concat();
-        dbg!(&_commits);
         Vec::from_iter(
             group_items(_commits)
                 .iter()

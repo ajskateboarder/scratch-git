@@ -232,7 +232,10 @@ impl Cmd<'_> {
                 .next()
         } else {
             targets
-                .filter(|t| t["name"].as_str().unwrap().to_string() == sprite_name.unwrap())
+                .filter(|t| {
+                    t["name"].as_str().unwrap().to_string() == sprite_name.unwrap()
+                        && !t["isStage"].as_bool().unwrap()
+                })
                 .map(|t| t["blocks"].as_object().unwrap())
                 .next()
         };
@@ -368,11 +371,18 @@ impl Cmd<'_> {
         .unwrap();
 
         let new_diff = Diff::new(_new_project);
-
         json!({
             "sprites": current_diff.commits(&new_diff)
                 .iter()
                 .map(|commit| commit.split(":").collect::<Vec<_>>()[0])
+                .map(|sprite| {
+                    let parts = sprite.split(" ").collect::<Vec<_>>();
+                    if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
+                        (parts[0], true)
+                    } else {
+                        (sprite, false)
+                    }
+                })
                 .collect::<Vec<_>>()
         })
     }

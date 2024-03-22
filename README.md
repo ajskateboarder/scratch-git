@@ -1,10 +1,12 @@
-# scratch-git
+# scratch.git
 
 Git version control integration for Scratch (TurboWarp) that just works
 
 https://github.com/ajskateboarder/scratch-git/assets/81255936/4374d0a8-1d89-4aad-a968-5919a63b6b27
 
 Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes. Building this will likely not work as-is.
+
+scratch.git works by modifying TurboWarp Desktop through a userscript. Git interfacing is done between the desktop GUI and the local computer through a WebSocket interface between the userscript and a small server.
 
 ## Usage
 
@@ -15,13 +17,23 @@ Some people are looking for better collaboration - not needing to form remix cha
 
 (For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript, [Rust](https://rustup.rs/) to compile the server, and [Python](https://python.org) to setup live debugging)
 
-2) Download the scratch-git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
+2) Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
-3) Unpack the zip or tar.gz and run the scratch-git executable - it'll run continuously until you close out the terminal or do Ctrl+C
+3) Unpack the zip or tar.gz and run the scratch.git executable - it'll run continuously until you close out the terminal or do Ctrl+C
 
-You should now see a new button labeled "Push changes" which runs pushes code from the backend. The save button in the top-right should also be able to make commits based on changes that you make to your project, with a diff-like view for sprite code.
+Currently, scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
 Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no Git skills required!!
+
+You should now see:
+
+- a welcome dialog to set up a project with scratch.git
+
+- a Git menu to view commits, configure an online repository on GitHub/GitLab/etc, and push the current commits
+
+- diff indicators that show up next to your sprites and stage when you save the project. These will show differences between the code before and after you save.
+
+These features closely mimic the kind of Git development seen in editors such as Visual Studio or VS Code, but in a more friendly manner.
 
 ## Developing
 

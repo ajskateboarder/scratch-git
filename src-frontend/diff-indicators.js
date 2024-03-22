@@ -49,7 +49,7 @@ export async function showIndicators(project) {
         });
     });
 
-    if (!changedSprites.includes(spriteName)) return;
+    if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
     let applyMargin = sprite.querySelector(`.${Cmp.DELETE_BUTTON}`) !== null;
     /** @type {HTMLElement} */
     let diffButton = new DOMParser()
@@ -95,8 +95,10 @@ export async function showIndicators(project) {
     });
   });
 
+  // creates a diff button for the stage
   let stageWrapper = document.querySelector(`.${Cmp.STAGE_WRAPPER}`);
-  if (changedSprites.includes("Stage (stage)")) {
+
+  if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
     let stageDiffButton = new DOMParser()
       .parseFromString(STAGE_DELETE, "text/html")
       .querySelector(`.${Cmp.DELETE_BUTTON}`);
@@ -111,7 +113,7 @@ export async function showIndicators(project) {
   stageWrapper.onclick = () => {
     [
       ...document.querySelectorAll(
-        `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}:not(.stageDiffButton)`
+        `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
       ),
     ]
       .filter((button) => !button.classList.contains("stageDiffButton"))

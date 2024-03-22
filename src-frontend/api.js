@@ -64,18 +64,17 @@ export class Project {
   /** Retreive sprites that have been changed since project changes
    * Sorted alphabetically
    *
-   * @returns {Promise<string[]>}
+   * @returns {Promise<string[][]>}
    */
   async getSprites() {
-    /** @type {string[]} */
+    /** @type {string[][]} */
     let sprites = (
       await this.#request({
         command: "get-changed-sprites",
         data: { Project: { project_name: this.project } },
       })
     ).sprites;
-    sprites.sort((a, b) => a.localeCompare(b));
-    return sprites;
+    return sprites.sort((a, b) => a[0].localeCompare(b[0]));
   }
 
   /** @param {string} sprite */
