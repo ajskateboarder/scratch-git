@@ -17,9 +17,7 @@ fn git_object_id(content: String) -> String {
             .expect("failed to pipe to stdin");
     });
     let output = child.wait_with_output().expect("failed to read stdout");
-    let diff = String::from_utf8_lossy(&output.stdout).trim().to_owned();
-    dbg!(&diff);
-    diff
+    String::from_utf8_lossy(&output.stdout).trim().to_owned()
 }
 
 #[derive(Serialize)]

@@ -238,8 +238,6 @@ impl Diff {
     pub fn blocks(&self, new: &Diff) -> Vec<String> {
         let mut commits: Vec<String> = vec![];
         let mr_joe = self._blocks();
-        dbg!(&mr_joe);
-        dbg!(new._blocks());
         let iterator = mr_joe.values().into_iter().zip(new._blocks());
         for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
             if new_blocks - old_blocks != 0 {
