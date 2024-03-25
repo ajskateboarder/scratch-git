@@ -110,6 +110,7 @@ export async function showIndicators(project) {
     };
     stageWrapper.querySelector("img").after(stageDiffButton);
   }
+
   stageWrapper.onclick = () => {
     [
       ...document.querySelectorAll(
