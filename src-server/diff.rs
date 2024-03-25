@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     vec,
@@ -239,13 +239,11 @@ impl Diff {
         let mut commits: Vec<String> = vec![];
         let mr_joe = self._blocks();
         dbg!(&mr_joe);
+        dbg!(new._blocks());
         let iterator = mr_joe.values().into_iter().zip(new._blocks());
         for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
             if new_blocks - old_blocks != 0 {
-                let mut diff = new_blocks - old_blocks;
-                if sprite == "Sprite" {
-                    diff = diff / 2;
-                }
+                let diff = new_blocks - old_blocks;
                 commits.push(format!(
                     "{sprite}: {}{diff} blocks",
                     (if diff > 0 { "+" } else { "" }),
@@ -259,6 +257,18 @@ impl Diff {
     ///
     /// Returns an empty BTreeMap if the targets key doesn't exist
     fn _blocks(&self) -> BTreeMap<String, (i32, bool)> {
+        fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
+            blocks
+                .iter()
+                .filter(|block| {
+                    block.1["opcode"]
+                        .as_str()
+                        .is_some_and(|op| !op.ends_with("_menu"))
+                })
+                .collect::<Vec<_>>()
+                .len() as i32
+        }
+
         if let Some(sprites) = self.data["targets"].as_array() {
             sprites
                 .iter()
@@ -271,7 +281,7 @@ impl Diff {
                                 ""
                             },
                         (
-                            x["blocks"].as_object().unwrap().len() as i32,
+                            _count_blocks(x["blocks"].as_object().unwrap()),
                             x["isStage"].as_bool().unwrap(),
                         ),
                     )

@@ -5,8 +5,10 @@ import { html } from "./utils";
 import api from "./api";
 import "./modals/index";
 
-import barStyles from "./media/bars.css";
-import miscStyles from "./media/misc.css";
+import BARS from "./media/bars.css";
+import MISC from "./media/misc.css";
+// import TOGGLE from "./media/switch.css";
+
 import { showIndicators } from "./diff-indicators";
 
 function injectStyles() {
@@ -17,7 +19,7 @@ function injectStyles() {
       defer
     />
   `;
-  const MENU_ITEM_CSS = `
+  const MENU_ITEM = `
     div.${Cmp.MENU_ITEM}:has(#push-status):hover {
       cursor: pointer;
     }
@@ -31,7 +33,7 @@ function injectStyles() {
       cursor: default;
     }`;
 
-  document.head.innerHTML += `<style>${MENU_ITEM_CSS}\n${barStyles}\n${miscStyles}</style>`;
+  document.head.innerHTML += `<style>${MENU_ITEM}\n${BARS}\n${MISC}</style>`;
 }
 
 export default async function () {

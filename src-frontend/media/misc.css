@@ -1,11 +1,7 @@
-.content {
-  display: flex;
-}
-
 .blocks {
   flex: 1;
   padding: 20px;
-  margin-left: 12.5%;
+  margin-left: 125px;
 }
 
 .indicator-button {
@@ -58,56 +54,62 @@ dialog[is="welcome-modal"] {
 .tab-btn {
   display: flex;
   align-items: center;
+
+  & i {
+    font-size: 17px;
+    margin-right: 10px;
+  }
 }
 
-.tab-btn i {
-  font-size: 17px;
-  margin-right: 10px;
-}
-
-.scratchblocks {
+#commitView {
   margin-left: 10px;
+
+  & .scratchblocks {
+    user-select: none;
+  }
 }
 
 .dark {
-  background-color: #111;
+  background-color: #111 !important;
   color: #eee;
-}
 
-.dark #scripts li button {
-  background-color: rgb(46, 46, 46);
-  color: #707070;
-}
+  & #scripts li button {
+    background-color: rgb(46, 46, 46);
+    color: #707070;
 
-.dark #scripts li button.active-tab {
-  background-color: rgb(76, 76, 76);
-  color: #eee;
+    & .active-tab {
+      background-color: rgb(76, 76, 76);
+      color: #eee;
+    }
+  }
 }
 
 #commits {
-  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
 }
 
 .commit {
   border: 1px solid grey;
   min-width: 100%;
   padding: 10px 20px;
-}
 
-.commit-group .commit:first-child {
-  border-radius: 5px;
-  border-bottom-left-radius: 0px;
-  border-bottom-right-radius: 0px;
-}
+  & .commit:first-child {
+    border-radius: 5px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
 
-.commit-group .commit:not(:first-child) {
-  border-top: none;
-}
+  & .commit:not(:first-child) {
+    border-top: none;
+  }
 
-.commit-group .commit:last-child {
-  border-radius: 5px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
+  & .commit:last-child {
+    border-radius: 5px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
 }
 
 .pagination {
