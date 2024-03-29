@@ -37,20 +37,21 @@ function injectStyles() {
 }
 
 export default async function () {
-  document.querySelector(
-    "body > div[style='display: none;']"
-  ).innerHTML += html`<dialog
-      is="diff-modal"
-      style="overflow-x: hidden"
-    ></dialog>
-    <dialog
-      is="commit-modal"
-      style="overflow-x: hidden; overflow-y: auto"
-    ></dialog>
-    <dialog
-      is="welcome-modal"
-      style="overflow-x: hidden; overflow-y: hidden"
-    ></dialog>`;
+  if (!document.querySelector("dialog[is='diff-modal']"))
+    document.querySelector(
+      "body > div[style='display: none;']"
+    ).innerHTML += html`<dialog
+        is="diff-modal"
+        style="overflow-x: hidden"
+      ></dialog>
+      <dialog
+        is="commit-modal"
+        style="overflow-x: hidden; overflow-y: auto"
+      ></dialog>
+      <dialog
+        is="welcome-modal"
+        style="overflow-x: hidden; overflow-y: hidden"
+      ></dialog>`;
 
   // setting an interval ensures the listeners always exist
   setInterval(() => {

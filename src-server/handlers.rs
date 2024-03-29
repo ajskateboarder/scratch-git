@@ -371,20 +371,19 @@ impl Cmd<'_> {
         .unwrap();
 
         let new_diff = Diff::new(_new_project);
-        json!({
-            "sprites": current_diff.commits(&new_diff)
-                .iter()
-                .map(|commit| commit.split(":").collect::<Vec<_>>()[0])
-                .map(|sprite| {
-                    let parts = sprite.split(" ").collect::<Vec<_>>();
-                    if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
-                        (parts[0], true)
-                    } else {
-                        (sprite, false)
-                    }
-                })
-                .collect::<Vec<_>>()
-        })
+        let sprites: Vec<_> = current_diff
+            .changed_sprites(&new_diff)
+            .into_iter()
+            .map(|sprite| {
+                let parts = sprite.split(" ").collect::<Vec<_>>();
+                if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
+                    (parts[0].to_owned(), true)
+                } else {
+                    (sprite, false)
+                }
+            })
+            .collect();
+        json!({ "sprites": sprites })
     }
 
     pub fn handle(msg: String) -> Result<Message, Error> {

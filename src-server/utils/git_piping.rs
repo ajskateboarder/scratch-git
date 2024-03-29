@@ -20,11 +20,11 @@ fn git_object_id(content: String) -> String {
     String::from_utf8_lossy(&output.stdout).trim().to_owned()
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct GitDiff {
-    removed: i32,
-    added: i32,
-    diffed: String,
+    pub removed: i32,
+    pub added: i32,
+    pub diffed: String,
 }
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
@@ -36,6 +36,7 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
             diffed: String::new(),
         };
     }
+    println!("Old\n--\n{old_content}\nNew\n--\n{new_content}");
     if !old_content.ends_with("\n") {
         old_content += "\n";
     }

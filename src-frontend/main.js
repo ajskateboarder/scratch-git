@@ -1,5 +1,5 @@
 import initialize from "./initialize";
-import "./reloader";
+
 
 (async () => {
   // avoids scenarios where scratch.git initializes before the editor is finished

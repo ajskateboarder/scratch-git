@@ -169,11 +169,11 @@ export class WelcomeModal extends HTMLDialogElement {
     let path;
     this.querySelector("#exitWelcome").onclick = () => {
       this.close();
-      if (this.loadedProject) window.location.reload();
+      // if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#exitWelcome2").onclick = () => {
       this.close();
-      if (this.loadedProject) window.location.reload();
+      // if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#goToStep1").onclick = () => {
       this.querySelector("#welcomeStep2").style.display = "none";

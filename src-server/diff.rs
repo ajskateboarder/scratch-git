@@ -1,3 +1,7 @@
+use crate::utils::git_piping::git_diff;
+use itertools::EitherOrBoth::{Both, Left, Right};
+use itertools::Itertools;
+use regex::Regex;
 use serde_json::{Map, Value};
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
@@ -59,15 +63,9 @@ fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
     ItemGrouping::method(&items)
 }
 
+#[derive(Debug)]
 pub struct Diff {
     data: Value,
-}
-
-#[derive(Debug)]
-pub struct Changes {
-    pub added: Vec<CostumeChange>,
-    pub removed: Vec<CostumeChange>,
-    pub merged: Vec<CostumeChange>,
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
@@ -75,6 +73,20 @@ pub struct CostumeChange {
     pub sprite: String,
     pub costume_name: String,
     pub costume_path: String,
+    pub on_stage: bool,
+}
+
+#[derive(Debug)]
+pub struct CostumeChanges {
+    pub added: Vec<CostumeChange>,
+    pub removed: Vec<CostumeChange>,
+    pub merged: Vec<CostumeChange>,
+}
+
+#[derive(Debug)]
+pub struct ScriptChanges {
+    pub added: usize,
+    pub removed: usize,
     pub on_stage: bool,
 }
 
@@ -100,7 +112,7 @@ impl Diff {
     }
 
     /// Return costumes that have changed between projects, but not added or removed
-    fn _merged_costumes(&self, new: &Self) -> Changes {
+    fn _merged_costumes<'a>(&'a self, new: &'a Self) -> CostumeChanges {
         let mut added = self.costumes(new);
         let mut removed = new.costumes(self);
 
@@ -129,7 +141,7 @@ impl Diff {
             }
         }
 
-        Changes {
+        CostumeChanges {
             added,
             removed,
             merged: Vec::from_iter(merged),
@@ -138,28 +150,39 @@ impl Diff {
 
     /// Return the costume differences between each sprite in two projects
     pub fn costumes(&self, new: &Self) -> Vec<CostumeChange> {
-        let mut new_costumes: Vec<CostumeChange> = vec![];
-        for (sprite, changed_item) in new._costumes() {
-            for costume in changed_item {
-                new_costumes.push(CostumeChange {
-                    sprite: sprite.clone(),
-                    costume_name: costume.0,
-                    costume_path: costume.1,
-                    on_stage: costume.2,
-                })
-            }
-        }
-        let mut old_costumes: Vec<CostumeChange> = vec![];
-        for (sprite, changed_item) in self._costumes() {
-            for costume in changed_item {
-                old_costumes.push(CostumeChange {
-                    sprite: sprite.clone(),
-                    costume_name: costume.0,
-                    costume_path: costume.1,
-                    on_stage: costume.2,
-                })
-            }
-        }
+        let new_costumes: Vec<CostumeChange> = new
+            ._costumes()
+            .into_iter()
+            .map(|(sprite, changes)| {
+                changes
+                    .iter()
+                    .map(|costume| CostumeChange {
+                        sprite: sprite.clone(),
+                        costume_name: costume.0.clone(),
+                        costume_path: costume.1.clone(),
+                        on_stage: costume.2,
+                    })
+                    .collect::<Vec<CostumeChange>>()
+            })
+            .flatten()
+            .collect();
+
+        let old_costumes: Vec<CostumeChange> = self
+            ._costumes()
+            .into_iter()
+            .map(|(sprite, changes)| {
+                changes
+                    .iter()
+                    .map(|costume| CostumeChange {
+                        sprite: sprite.clone(),
+                        costume_name: costume.0.clone(),
+                        costume_path: costume.1.clone(),
+                        on_stage: costume.2,
+                    })
+                    .collect::<Vec<CostumeChange>>()
+            })
+            .flatten()
+            .collect();
 
         let _old_set = HashSet::from_iter(old_costumes);
         let _new_set = HashSet::<CostumeChange>::from_iter(new_costumes.clone());
@@ -211,7 +234,7 @@ impl Diff {
             .iter()
             .map(|change| {
                 (
-                    change.sprite.clone() + if change.on_stage { " (stage)" } else { "" },
+                    change.sprite.to_owned() + if change.on_stage { " (stage)" } else { "" },
                     format!("{} {}", action, change.costume_name),
                 )
             })
@@ -232,9 +255,86 @@ impl Diff {
         commits.clone().into_iter().map(|(x, y)| (x, y)).collect()
     }
 
-    /// Return the block number difference between each sprite in two projects.
+    /// Formats scripts as a flat object representation with opcode, fields, and inputs
+    fn format_blocks(blocks: &Map<String, Value>) -> String {
+        let re = Regex::new(r#""[A-Za-z]""#).unwrap();
+        let top_ids = blocks
+            .iter()
+            .filter_map(|(id, val)| {
+                if val["parent"].is_null() {
+                    Some(id)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        let mut statements: Vec<String> = vec![];
+        for id in top_ids {
+            let mut _blocks: Vec<String> = vec![];
+            let mut current_block = &blocks[id];
+            while !current_block["next"].is_null() {
+                _blocks.push(format!(
+                    "{} {} {}",
+                    current_block["opcode"].as_str().unwrap(),
+                    serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap(),
+                    serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap()
+                ));
+                current_block = &blocks[current_block["next"].as_str().unwrap()]
+            }
+            statements.push(_blocks.join("\n"));
+        }
+        statements.sort_by_key(|blocks| blocks.to_lowercase());
+        re.replace_all(&statements.join("\n"), "\"\"").to_string()
+    }
+
+    pub fn changed_sprites(&self, new: &Diff) -> Vec<String> {
+        let sprites = self.data["targets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip_longest(new.data["targets"].as_array().unwrap())
+            .map(|x| match x {
+                Both(a, b) => (a, b),
+                Left(a) => (a, &Value::Null),
+                Right(b) => (&Value::Null, b),
+            });
+        sprites
+            .filter_map(|(old, new)| {
+                if old["blocks"].as_object() == new["blocks"].as_object() {
+                    return None;
+                }
+                if old.is_null() {
+                    return Some(new["name"].as_str().unwrap().to_owned());
+                }
+                if new.is_null() {
+                    return Some(old["name"].as_str().unwrap().to_owned());
+                }
+                let diff = git_diff(
+                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
+                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
+                );
+                if diff.added != 0 || diff.removed != 0 {
+                    let name = [
+                        old["name"].as_str().unwrap(),
+                        if old["isStage"].as_bool().unwrap() {
+                            " (stage)"
+                        } else {
+                            ""
+                        },
+                    ];
+                    Some(name.join("").to_owned())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
+    }
+
+    /// Return the number of blocks added and removed between every sprite in commit form
     ///
     /// `new` param is the Diff object which contains newer changes
+    ///
+    /// `no_menus` controls whether to include menus as part of the diff. This should be enabled for commit generation
     pub fn blocks(&self, new: &Diff) -> Vec<String> {
         let mut commits: Vec<String> = vec![];
         let mr_joe = self._blocks();
@@ -248,7 +348,7 @@ impl Diff {
                 ))
             }
         }
-        commits
+        todo!()
     }
 
     /// Return the current number of blocks per sprite

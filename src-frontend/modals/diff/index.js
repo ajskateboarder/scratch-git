@@ -121,14 +121,20 @@ export class DiffModal extends HTMLDialogElement {
         return result;
       });
 
+    let config = {
+      style:
+        window.ReduxStore.getState().scratchGui.theme.theme.blocks ===
+        "high-contrast"
+          ? "scratch3-high-contrast"
+          : "scratch3",
+      scale: 0.675,
+    };
+
     try {
       this.scripts.innerHTML = "";
       this.commits.innerText = diffs[script].diffed ?? "";
       Scratchblocks.appendStyles();
-      Scratchblocks.renderMatching("#commitView", {
-        style: "scratch3",
-        scale: 0.675,
-      });
+      Scratchblocks.renderMatching("#commitView", config);
       this.commits.innerHTML += "<br>";
     } catch {}
 
@@ -227,10 +233,7 @@ export class DiffModal extends HTMLDialogElement {
         } else {
           this.commits.innerText = diffs[script].diffed ?? "";
           Scratchblocks.appendStyles();
-          Scratchblocks.renderMatching("#commitView", {
-            style: "scratch3",
-            scale: 0.675,
-          });
+          Scratchblocks.renderMatching("#commitView", config);
           removeExtraEnds();
           this.commits.innerHTML += "<br>";
         }
@@ -250,10 +253,7 @@ export class DiffModal extends HTMLDialogElement {
         }
       } else {
         Scratchblocks.appendStyles();
-        Scratchblocks.renderMatching("#commitView", {
-          style: "scratch3",
-          scale: 0.675,
-        });
+        Scratchblocks.renderMatching("#commitView", config);
         this.commits.innerHTML += "<br>";
         removeExtraEnds();
         if (this.useHighlights.checked) highlightDiff();

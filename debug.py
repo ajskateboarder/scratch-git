@@ -139,6 +139,6 @@ def listen():
 
 if __name__ == "__main__":
     os.system("rollup -c")
-    shutil.copy2("userscript.js", tw_path())
     print("Copying to", tw_path())
+    shutil.copy2("userscript.js", tw_path())
     app.run(port=3333)
