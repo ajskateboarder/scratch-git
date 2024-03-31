@@ -1,7 +1,7 @@
 import { html } from "../../utils";
 import api from "../../api";
 import { Scratchblocks } from "../../lib/index";
-import { Cmp } from "../../dom/index";
+import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
 
@@ -44,6 +44,7 @@ export class DiffModal extends HTMLDialogElement {
       <main>
         <div class="content">
           <p id="commits"><br>
+          <hr>
             <p id="commitView"></p>
           </p>
           <div class="bottom-bar" style="
@@ -121,20 +122,64 @@ export class DiffModal extends HTMLDialogElement {
         return result;
       });
 
+    let blockTheme = window.ReduxStore.getState().scratchGui.theme.theme.blocks;
     let config = {
       style:
-        window.ReduxStore.getState().scratchGui.theme.theme.blocks ===
-        "high-contrast"
-          ? "scratch3-high-contrast"
-          : "scratch3",
+        blockTheme === "high-contrast" ? "scratch3-high-contrast" : "scratch3",
       scale: 0.675,
+    };
+
+    const diffBlocks = () => {
+      Scratchblocks.appendStyles();
+      Scratchblocks.renderMatching("#commitView", config);
+      let svg = this.querySelector(".scratchblocks svg > g");
+      svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
+        input.setAttribute("rx", "4");
+        input.setAttribute("ry", "4");
+      });
+      svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
+        input.setAttribute("rx", "13");
+        input.setAttribute("ry", "13");
+      });
+      if (blockTheme === "dark") {
+        svg.querySelectorAll(":scope > g").forEach((blocks) => {
+          blocks.querySelectorAll("path, rect").forEach((element) => {
+            let darkFill = DarkBlocks[element.classList.item(0)];
+            if (darkFill) {
+              element.style.fill = darkFill;
+            }
+          });
+          blocks.querySelectorAll("path, rect").forEach((element) => {
+            let darkFill = DarkBlocks[element.classList.item(0)];
+            if (darkFill) {
+              element.style.fill = darkFill;
+            }
+          });
+        });
+        svg.querySelectorAll("rect.sb3-input").forEach((input) => {
+          input.style.fill = "rgb(76, 76, 76)";
+        });
+        svg.querySelectorAll("text.sb3-label").forEach((input) => {
+          input.style.fill = "#fff";
+        });
+        return;
+      }
+      let dropdownChange = {
+        three: "brightness(0.78)",
+        "high-contrast": "brightness(1.12) saturate(0.7)",
+      }[blockTheme];
+      if (dropdownChange !== undefined) {
+        svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
+          console.log(input);
+          input.style.filter = dropdownChange;
+        });
+      }
     };
 
     try {
       this.scripts.innerHTML = "";
       this.commits.innerText = diffs[script].diffed ?? "";
-      Scratchblocks.appendStyles();
-      Scratchblocks.renderMatching("#commitView", config);
+      diffBlocks();
       this.commits.innerHTML += "<br>";
     } catch {}
 
@@ -164,6 +209,10 @@ export class DiffModal extends HTMLDialogElement {
       });
     };
 
+    let theme = getComputedStyle(document.body).getPropertyValue(
+      "--color-scheme"
+    );
+
     const highlightPlain = () => {
       let content = diffs[script].diffed ?? "";
       this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
@@ -174,11 +223,11 @@ export class DiffModal extends HTMLDialogElement {
             (e, i) =>
               `<span style="background-color: rgba(${
                 e.startsWith("-")
-                  ? "255,0,0"
+                  ? "255,0,0,0.5"
                   : e.startsWith("+")
-                  ? "0,255,0"
-                  : "255,255,255"
-              },0.5)">${i == 0 ? e.trimStart() : e}</span>`
+                  ? "0,255,0,0.5"
+                  : "0,0,0,0"
+              })">${i == 0 ? e.trimStart() : e}</span>`
           );
         this.commits.innerHTML = `<pre>${highlights.join("<br>")}</pre><br>`;
       }
@@ -232,8 +281,7 @@ export class DiffModal extends HTMLDialogElement {
           this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
         } else {
           this.commits.innerText = diffs[script].diffed ?? "";
-          Scratchblocks.appendStyles();
-          Scratchblocks.renderMatching("#commitView", config);
+          diffBlocks();
           removeExtraEnds();
           this.commits.innerHTML += "<br>";
         }
@@ -252,8 +300,7 @@ export class DiffModal extends HTMLDialogElement {
           this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
         }
       } else {
-        Scratchblocks.appendStyles();
-        Scratchblocks.renderMatching("#commitView", config);
+        diffBlocks();
         this.commits.innerHTML += "<br>";
         removeExtraEnds();
         if (this.useHighlights.checked) highlightDiff();
@@ -298,9 +345,6 @@ export class DiffModal extends HTMLDialogElement {
       .classList.add("active-tab");
 
     // dark mode
-    let theme = getComputedStyle(document.body).getPropertyValue(
-      "--color-scheme"
-    );
     if (theme === "dark") document.querySelector("aside").classList.add("dark");
     else document.querySelector("aside").classList.remove("dark");
     darkDiff(theme);

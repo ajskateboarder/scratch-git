@@ -36,7 +36,6 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
             diffed: String::new(),
         };
     }
-    println!("Old\n--\n{old_content}\nNew\n--\n{new_content}");
     if !old_content.ends_with("\n") {
         old_content += "\n";
     }

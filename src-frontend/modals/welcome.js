@@ -117,7 +117,7 @@ export class WelcomeModal extends HTMLDialogElement {
       innerHTML: html`<div class="finishContent">
         <h1>Welcome to scratch.git!</h1>
         <div style="font-weight: normal">
-          <p>Err IDK<br /><br /></p>
+          <p>To be written<br /><br /></p>
         </div>
         <div class="bottom-bar">
           <button
@@ -169,11 +169,9 @@ export class WelcomeModal extends HTMLDialogElement {
     let path;
     this.querySelector("#exitWelcome").onclick = () => {
       this.close();
-      // if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#exitWelcome2").onclick = () => {
       this.close();
-      // if (this.loadedProject) window.location.reload();
     };
     this.querySelector("#goToStep1").onclick = () => {
       this.querySelector("#welcomeStep2").style.display = "none";

@@ -1,5 +1,4 @@
 /** @file A lookup to create elements using scratch-gui classnames */
-// this could've used css selectors but ig i'm too lazy to move now
 
 /** @type {string[]} */
 const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
@@ -11,10 +10,7 @@ const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
 
 const s = (className) => classNames.filter((e) => e.includes(className))[0];
 
-/**
- * Accessors for parts of the UI
- * @enum
- */
+/** Accessors for parts of the UI */
 export const Cmp = {
   // menu
   MENU_CONTAINER: s("menu-bar_main-menu"),
@@ -59,4 +55,18 @@ export const Cmp = {
   DISABLED_BUTTON: s("button_mod-disabled"),
   GUI_PAGE_WRAPPER: s("gui_page-wrapper"),
 };
-window.Cmp = Cmp;
+
+/** Dark mode block fill colors that TurboWarp use */
+export const DarkBlocks = {
+  "sb3-motion": "#0F1E33",
+  "sb3-looks": "#1E1433",
+  "sb3-sound": "#291329",
+  "sb3-events": "#332600",
+  "sb3-control": "#332205",
+  "sb3-sensing": "#12232A",
+  "sb3-operators": "#112611",
+  "sb3-variables": "#331C05",
+  "sb3-list": "#331405",
+  "sb3-custom": "#331419",
+  "sb3-extension": "#03251C",
+};
