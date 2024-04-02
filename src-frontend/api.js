@@ -64,10 +64,10 @@ export class Project {
   /** Retreive sprites that have been changed since project changes
    * Sorted alphabetically
    *
-   * @returns {Promise<string[][]>}
+   * @returns {Promise<[string, boolean][]>}
    */
   async getSprites() {
-    /** @type {string[][]} */
+    /** @type {[string, boolean][]} */
     let sprites = (
       await this.#request({
         command: "get-changed-sprites",

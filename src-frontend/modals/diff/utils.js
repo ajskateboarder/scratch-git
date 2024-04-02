@@ -1,5 +1,3 @@
-import { ParseSB3Blocks } from "../../lib/index";
-
 const zip = (a, b) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
     a[i] ?? "",
@@ -11,22 +9,23 @@ const zip = (a, b) =>
  * @param {object} newProject
  */
 export function parseScripts(oldProject, newProject) {
-  // parseSB3Blocks is imported in frontend/initialize.js
-  const oldBlocks = Object.keys(oldProject)
-    .filter((key) => oldProject[key].opcode.startsWith("event_when"))
-    .map((script) =>
-      ParseSB3Blocks.toScratchblocks(script, oldProject, "en", {
-        tabs: "",
-      })
-    );
-
-  const newBlocks = Object.keys(newProject)
-    .filter((key) => newProject[key].opcode.startsWith("event_when"))
-    .map((script) =>
-      ParseSB3Blocks.toScratchblocks(script, newProject, "en", {
-        tabs: "",
-      })
-    );
+  let oldBlocks, newBlocks;
+  try {
+    oldBlocks = Object.keys(oldProject)
+      .filter((key) => oldProject[key].parent === null)
+      .map((script) =>
+        window.parseSB3Blocks.toScratchblocks(script, oldProject, "en", {
+          tabs: "",
+        })
+      );
+    newBlocks = Object.keys(newProject)
+      .filter((key) => newProject[key].parent === null)
+      .map((script) =>
+        window.parseSB3Blocks.toScratchblocks(script, newProject, "en", {
+          tabs: "",
+        })
+      );
+  } catch {}
 
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])

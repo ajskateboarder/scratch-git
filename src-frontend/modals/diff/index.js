@@ -1,6 +1,5 @@
 import { html } from "../../utils";
 import api from "../../api";
-import { Scratchblocks } from "../../lib/index";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
@@ -106,21 +105,7 @@ export class DiffModal extends HTMLDialogElement {
       )
     )
       .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
-      .filter((result) => result.diffed !== "")
-      .map((result) => {
-        if (
-          !["+", "-", "-\n+", ""]
-            .map((e) => e + "when @greenFlag clicked")
-            .map((e) => result.diffed.trimStart().startsWith(e))
-            .some((e) => e === true)
-        ) {
-          return {
-            ...result,
-            diffed: " when @greenFlag clicked\n" + result.diffed.trimStart(),
-          };
-        }
-        return result;
-      });
+      .filter((result) => result.diffed !== "");
 
     let blockTheme = window.ReduxStore.getState().scratchGui.theme.theme.blocks;
     let config = {
@@ -130,8 +115,8 @@ export class DiffModal extends HTMLDialogElement {
     };
 
     const diffBlocks = () => {
-      Scratchblocks.appendStyles();
-      Scratchblocks.renderMatching("#commitView", config);
+      window.scratchblocks.appendStyles();
+      window.scratchblocks.renderMatching("#commitView", config);
       let svg = this.querySelector(".scratchblocks svg > g");
       svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
         input.setAttribute("rx", "4");
@@ -141,6 +126,8 @@ export class DiffModal extends HTMLDialogElement {
         input.setAttribute("rx", "13");
         input.setAttribute("ry", "13");
       });
+
+      // darken blocks to match tw dark theme
       if (blockTheme === "dark") {
         svg.querySelectorAll(":scope > g").forEach((blocks) => {
           blocks.querySelectorAll("path, rect").forEach((element) => {
@@ -164,13 +151,14 @@ export class DiffModal extends HTMLDialogElement {
         });
         return;
       }
+
+      // adjust dropdown inputs to match tw
       let dropdownChange = {
-        three: "brightness(0.78)",
+        three: "brightness(0.83)",
         "high-contrast": "brightness(1.12) saturate(0.7)",
       }[blockTheme];
       if (dropdownChange !== undefined) {
         svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
-          console.log(input);
           input.style.filter = dropdownChange;
         });
       }
@@ -316,19 +304,21 @@ export class DiffModal extends HTMLDialogElement {
       let link = document.createElement("button");
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i.toString());
-      link.onclick = async () => {
-        document
-          .querySelectorAll(".tab-btn")
-          .forEach((e) => e.classList.remove("active-tab"));
-        link.classList.add("active-tab");
-        await this.diff(
-          project,
-          sprite,
-          parseInt(
-            this.querySelector("button.active-tab").getAttribute("script-no")
-          )
-        );
-      };
+      if (i !== script) {
+        link.onclick = async () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((e) => e.classList.remove("active-tab"));
+          link.classList.add("active-tab");
+          await this.diff(
+            project,
+            sprite,
+            parseInt(
+              this.querySelector("button.active-tab").getAttribute("script-no")
+            )
+          );
+        };
+      }
       link.innerHTML = `<i class="fa-solid fa-square-${
         diff.status === "added"
           ? "plus"

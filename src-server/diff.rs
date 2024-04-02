@@ -257,7 +257,7 @@ impl Diff {
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
     fn format_blocks(blocks: &Map<String, Value>) -> String {
-        let re = Regex::new(r#""[A-Za-z]""#).unwrap();
+        let re = Regex::new(r#"":\[1,".""#).unwrap();
         let top_ids = blocks
             .iter()
             .filter_map(|(id, val)| {
@@ -272,19 +272,36 @@ impl Diff {
         for id in top_ids {
             let mut _blocks: Vec<String> = vec![];
             let mut current_block = &blocks[id];
-            while !current_block["next"].is_null() {
+            loop {
                 _blocks.push(format!(
                     "{} {} {}",
                     current_block["opcode"].as_str().unwrap(),
                     serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap(),
                     serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap()
                 ));
-                current_block = &blocks[current_block["next"].as_str().unwrap()]
+                let next = &current_block["next"];
+                match next {
+                    Value::String(id) => current_block = &blocks[id],
+                    Value::Null => {
+                        let substack = &current_block["inputs"]["SUBSTACK"][1];
+                        match substack {
+                            Value::String(id) => current_block = &blocks[id],
+                            Value::Null => {
+                                break;
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    _ => unreachable!(),
+                }
             }
             statements.push(_blocks.join("\n"));
         }
         statements.sort_by_key(|blocks| blocks.to_lowercase());
-        re.replace_all(&statements.join("\n"), "\"\"").to_string()
+        let blocks = re
+            .replace_all(&statements.join("\n"), "\":[1,\"\"")
+            .to_string();
+        blocks
     }
 
     pub fn changed_sprites(&self, new: &Diff) -> Vec<String> {
@@ -309,9 +326,15 @@ impl Diff {
                 if new.is_null() {
                     return Some(old["name"].as_str().unwrap().to_owned());
                 }
+                println!("{}", &old["name"]);
                 let diff = git_diff(
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
+                );
+                println!(
+                    "{}\n\n{}",
+                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
+                    Diff::format_blocks(new["blocks"].as_object().unwrap())
                 );
                 if diff.added != 0 || diff.removed != 0 {
                     let name = [

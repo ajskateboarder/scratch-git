@@ -1,5 +1,5 @@
 import initialize from "./initialize";
-
+import "./lib/index";
 
 (async () => {
   // avoids scenarios where scratch.git initializes before the editor is finished
