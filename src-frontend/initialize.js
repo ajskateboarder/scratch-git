@@ -18,6 +18,10 @@ function injectStyles() {
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       defer
     />
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.nomodule.min.js"
+    ></script>
   `;
   const MENU_ITEM = `
     div.${Cmp.MENU_ITEM}:has(#push-status):hover {

@@ -3,19 +3,30 @@ import api from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
+import van from "../../lib/van";
+
+const {
+  tags: { div, label, input, span, ul, button, p, aside, main, br, hr },
+  state,
+} = van;
 
 /**
  * @param {string} name
  * @param {string} id
  */
-function setting(name, id) {
-  return html`<div class="${Cmp.SETTINGS_LABEL}" id="${id}">
-  <label class="${Cmp.SETTINGS_LABEL}">
-    <input class="${Cmp.SETTINGS_CHECKBOX} ${Cmp.CHECKBOX}" type="checkbox"></input>
-    <span>${name}</span>
-  </label>
-</div>`;
-}
+const Setting = (name, id) =>
+  div(
+    { className: Cmp.SETTINGS_LABEL, id },
+    label(
+      { className: Cmp.SETTINGS_LABEL },
+      input({
+        class: [Cmp.SETTINGS_CHECKBOX, Cmp.CHECKBOX].join(" "),
+        type: "checkbox",
+        checked: false,
+      }),
+      span(name)
+    )
+  );
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends HTMLDialogElement {
@@ -23,8 +34,6 @@ export class DiffModal extends HTMLDialogElement {
   scripts;
   /** @type {HTMLParagraphElement} */
   commits;
-  /** @type {HTMLButtonElement} */
-  closeButton;
   /** @type {HTMLInputElement} */
   useHighlights;
   /** @type {HTMLInputElement} */
@@ -36,43 +45,49 @@ export class DiffModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-    this.innerHTML += html`<div class="sidebar">
-      <aside>
-        <ul id="scripts"></ul>
-      </aside>
-      <main>
-        <div class="content">
-          <p id="commits"><br>
-          <hr>
-            <p id="commitView"></p>
-          </p>
-          <div class="bottom-bar" style="
-            margin: 0;
-            padding: 0;
-            width: 98%;
-            bottom: 15px;
-            justify-content: right">
-            <button
-              id="closeButton"
-              class="${Cmp.SETTINGS_BUTTON}"
-              style="margin-left: 10px"
-            >
-              Okay
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>`;
-    this.scripts = this.querySelector("#scripts");
-    this.commits = this.querySelector("#commitView");
-    this.closeButton = this.querySelector("#closeButton");
-    this.querySelector("#commits").innerHTML =
-      setting("Use highlights", "useHighlights") +
-      "&nbsp;&nbsp;" +
-      setting("Plain text", "plainText") +
-      this.querySelector("#commits").innerHTML;
-    this.useHighlights = this.querySelector("#useHighlights input");
-    this.plainText = this.querySelector("#plainText input");
+
+    const useHighlights = Setting("Use highlights", "useHighlights");
+    const plainText = Setting("Plain text", "plainText");
+    const commits = p(
+      { id: "commits" },
+      span({ style: "display: flex" }, useHighlights, plainText),
+      hr(),
+      br(),
+      p({ id: "commitView" })
+    );
+    const closeButton = button(
+      {
+        id: "closeButton",
+        class: Cmp.SETTINGS_BUTTON,
+        style: "margin-left: 10px",
+        onclick: () => {
+          useHighlights.checked = false;
+          plainText.checked = false;
+          this.close();
+        },
+      },
+      "Okay"
+    );
+
+    this.scripts = ul({ id: "scripts" });
+    this.useHighlights = useHighlights.querySelector("input");
+    this.plainText = plainText.querySelector("input");
+    this.commits = commits.querySelector("#commitView");
+
+    van.add(
+      this,
+      div(
+        { class: "sidebar" },
+        aside(this.scripts),
+        main(
+          div(
+            { class: "content" },
+            commits,
+            div({ classList: ["bottom-bar", "in-diff-modal"] }, closeButton)
+          )
+        )
+      )
+    );
   }
 
   _showMe() {
@@ -164,17 +179,10 @@ export class DiffModal extends HTMLDialogElement {
       }
     };
 
-    try {
-      this.scripts.innerHTML = "";
-      this.commits.innerText = diffs[script].diffed ?? "";
-      diffBlocks();
-      this.commits.innerHTML += "<br>";
-    } catch {}
-
-    this.closeButton.onclick = () => {
-      this.useHighlights.checked = false;
-      this.close();
-    };
+    this.scripts.innerHTML = "";
+    this.commits.innerText = diffs[script].diffed ?? "";
+    diffBlocks();
+    this.commits.innerHTML += "<br>";
 
     const highlightDiff = () => {
       let svg = this.querySelectorAll(".scratchblocks svg > g");
@@ -242,6 +250,8 @@ export class DiffModal extends HTMLDialogElement {
 
     // fixes git diff snipping artifacts
     const removeExtraEnds = () => {
+      console.log(this.plainText.checked);
+      if (this.plainText.checked) return;
       let svg = this.querySelector(".scratchblocks svg > g");
       svg.querySelectorAll(":scope > g").forEach((blocks) => {
         if (blocks.querySelectorAll("path").length === 1) {

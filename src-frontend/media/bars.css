@@ -5,6 +5,14 @@
     height: 100%;
     padding-right: 5px;
 
+    & .in diff-modal {
+        margin: 0;
+        padding: 0;
+        width: 98%;
+        bottom: 15px;
+        justify-content: right
+    }
+
     & main {
         overflow-y: auto;
         flex-grow: 1;

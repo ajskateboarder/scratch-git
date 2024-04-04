@@ -85,7 +85,6 @@ dialog[is="welcome-modal"] {
 }
 
 #commits {
-  display: flex;
   align-items: center;
   margin-left: 10px;
 }
