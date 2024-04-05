@@ -1,36 +1,60 @@
 /** @file Displays indicators and info on sprites that were changed */
 import { Cmp } from "./dom/index";
-import { html } from "./utils";
+import { van } from "./lib";
 
-const DELETE = html`<div
-  aria-label="Diff"
-  class="${Cmp.DELETE_BUTTON} ${Cmp.SELECTOR_ITEM_DELETE_BUTTON} diffButton"
-  role="button"
-  tabindex="0"
->
-  <div class="${Cmp.DELETE_BUTTON_VISIBLE}">
-    <i class="fa-solid fa-plus-minus fa-lg"></i>
-  </div>
-</div>`;
+const { div, i } = van.tags;
 
-const STAGE_DELETE = html`<div
-  aria-label="Diff"
-  class="${Cmp.DELETE_BUTTON} ${Cmp.SELECTOR_ITEM_DELETE_BUTTON} stageDiffButton"
-  role="button"
-  tabindex="0"
-  style="margin-top: 40px; scale: 0.8; z-index: 99999;"
->
-  <div class="delete-button_delete-button-visible_1BxMC">
-    <i class="fa-solid fa-plus-minus fa-sm"></i>
-  </div>
-</div>`;
+const BaseDelete = (children, props = {}) =>
+  div(
+    {
+      ariaLabel: "Diff",
+      role: "button",
+      tabIndex: 0,
+      ...props,
+    },
+    children
+  );
+
+/** @type {import("./global").ElemType<HTMLDivElement>} */
+const SpriteDiff = (props) =>
+  BaseDelete(
+    div(
+      { className: Cmp.DELETE_BUTTON_VISIBLE },
+      i({ className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" ") })
+    ),
+    {
+      className: [
+        Cmp.DELETE_BUTTON,
+        Cmp.SELECTOR_ITEM_DELETE_BUTTON,
+        "diff-button",
+      ].join(" "),
+      ...props,
+    }
+  );
+
+/** @type {import("./global").ElemType<HTMLDivElement>} */
+const StageDiff = (props) =>
+  BaseDelete(
+    div(
+      { className: Cmp.DELETE_BUTTON_VISIBLE },
+      i({ className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" ") })
+    ),
+    {
+      className: [
+        Cmp.DELETE_BUTTON,
+        Cmp.SELECTOR_ITEM_DELETE_BUTTON,
+        "stage-diff",
+      ].join(" "),
+      ...props,
+    }
+  );
 
 /** @param {import("./api").Project} project  */
 export async function showIndicators(project) {
   let changedSprites = await project.getSprites();
   [
-    ...document.querySelectorAll(`.diffButton`),
-    ...document.querySelectorAll(`.stageDiffButton`),
+    ...document.querySelectorAll(`.diff-button`),
+    ...document.querySelectorAll(`.stage-diff-button`),
   ].forEach((e) => e.remove());
   let sprites = [...document.querySelector(`.${Cmp.SPRITES}`).children];
 
@@ -43,7 +67,7 @@ export async function showIndicators(project) {
           `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
         ),
       ]
-        .filter((button) => !button.classList.contains("stageDiffButton"))
+        .filter((button) => !button.classList.contains("stage-diff-button"))
         .forEach((button) => {
           button.style.marginTop = "0px";
         });
@@ -52,27 +76,26 @@ export async function showIndicators(project) {
     if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
     let applyMargin = sprite.querySelector(`.${Cmp.DELETE_BUTTON}`) !== null;
     /** @type {HTMLElement} */
-    let diffButton = new DOMParser()
-      .parseFromString(DELETE, "text/html")
-      .querySelector(`.${Cmp.DELETE_BUTTON}`);
-
-    diffButton.style.marginTop = applyMargin ? "30px" : "0px";
-    diffButton.style.transition =
-      "scale 0.15 ease-out, box-shadow 0.15 ease-out";
-    diffButton.style.scale = "0.8";
-    diffButton.style.zIndex = "99999";
-    diffButton.onmouseover = () => {
-      diffButton.style.scale = "0.9";
-    };
-    diffButton.onmouseleave = () => {
-      diffButton.style.scale = "0.8";
-    };
-    diffButton.onclick = async (e) => {
-      e.stopPropagation();
-      await document
-        .querySelector("dialog[is='diff-modal']")
-        .diff(project, spriteName);
-    };
+    let diffButton = SpriteDiff({
+      style: `
+      margin-top: ${applyMargin ? "30px" : "0px"};
+      transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+      scale: 0.8;
+      z-index: 99999;
+    `,
+      onmouseover: () => {
+        diffButton.style.scale = "0.9";
+      },
+      onmouseleave: () => {
+        diffButton.style.scale = "0.8";
+      },
+      onclick: async (e) => {
+        e.stopPropagation();
+        await document
+          .querySelector("dialog[is='diff-modal']")
+          .diff(project, spriteName);
+      },
+    });
     divs[3].after(diffButton);
 
     sprite.addEventListener("click", async () => {
@@ -99,15 +122,14 @@ export async function showIndicators(project) {
   let stageWrapper = document.querySelector(`.${Cmp.STAGE_WRAPPER}`);
 
   if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
-    let stageDiffButton = new DOMParser()
-      .parseFromString(STAGE_DELETE, "text/html")
-      .querySelector(`.${Cmp.DELETE_BUTTON}`);
-    stageDiffButton.onclick = async (e) => {
-      e.stopPropagation();
-      await document
-        .querySelector("dialog[is='diff-modal']")
-        .diff(project, "Stage (stage)");
-    };
+    let stageDiffButton = StageDiff({
+      onclick: async (e) => {
+        e.stopPropagation();
+        await document
+          .querySelector("dialog[is='diff-modal']")
+          .diff(project, "Stage (stage)");
+      },
+    });
     stageWrapper.querySelector("img").after(stageDiffButton);
   }
 
@@ -117,7 +139,7 @@ export async function showIndicators(project) {
         `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
       ),
     ]
-      .filter((button) => !button.classList.contains("stageDiffButton"))
+      .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
   };
 }

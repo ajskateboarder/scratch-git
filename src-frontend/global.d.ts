@@ -1,3 +1,5 @@
+import { PropsWithKnownKeys } from "./lib/van";
+
 declare interface Window {
   vm: {
     runtime: {
@@ -20,3 +22,7 @@ declare interface Window {
     ): string;
   };
 }
+
+declare type ElemType<T extends keyof HTMLElement> = (
+  props: PropsWithKnownKeys<T>
+) => T;

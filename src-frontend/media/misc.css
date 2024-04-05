@@ -123,3 +123,9 @@ dialog[is="welcome-modal"] {
 #finishContent {
   text-align: left;
 }
+
+.stage-diff {
+  margin-top: 40px;
+  scale: 0.8;
+  z-index: 99999;
+}

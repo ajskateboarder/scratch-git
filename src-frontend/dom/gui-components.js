@@ -1,5 +1,8 @@
+import van from "../lib/van";
 import { html } from "../utils";
 import { Cmp } from "./accessors";
+
+const { div, img } = van.tags;
 
 /**
  * @typedef GitMenuFunctions
@@ -180,34 +183,40 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 /** Displays a custom scratch-gui alert
  * @param {{message: string; duration: number}} */
 export function scratchAlert({ message, duration }) {
-  document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = html`<div
-    class="${Cmp.ALERT_DIALOG} ${Cmp.ALERT_SUCCESS} ${Cmp.BOX}"
-    style="justify-content: space-between"
-  >
-    <div class="${Cmp.ALERT_MESSAGE}">${message}</div>
-    <div class="${Cmp.ALERT_BUTTONS}">
-      <div class="${Cmp.ALERT_CLOSE_CONTAINER} ${Cmp.BOX}">
-        <div
-          aria-label="Close"
-          class="${Cmp.CLOSE_BUTTON} ${Cmp.CLOSE_BUTTON_LARGE}"
-          role="button"
-          tabindex="0"
-        >
-          <!-- todo: why does this have an undefined class -->
-          <img class="${Cmp.CLOSE_ICON} undefined" src="${CLOSE_BUTTON_SVG}" />
-        </div>
-      </div>
-    </div>
-  </div>`;
+  const container = document.querySelector(`.${Cmp.ALERT_CONTAINER}`);
 
-  if (document.querySelector("body").getAttribute("theme") === "dark") {
-    document.querySelector(`.${Cmp.CLOSE_BUTTON}`).style.backgroundColor =
-      "rgba(0, 0, 0, 0.255)";
-  }
-  const remove = () =>
-    (document.querySelector(`.${Cmp.ALERT_CONTAINER}`).innerHTML = "");
-  document.querySelector(`.${Cmp.CLOSE_BUTTON}`).onclick = remove;
+  const remove = () => (container.innerHTML = "");
   setTimeout(remove, duration);
+
+  container.appendChild(
+    div(
+      {
+        className: [Cmp.ALERT_DIALOG, Cmp.ALERT_SUCCESS, Cmp.BOX].join(" "),
+        style: "justify-content: space-between",
+      },
+      div({ className: Cmp.ALERT_MESSAGE }, message),
+      div(
+        { className: Cmp.ALERT_BUTTONS },
+        div(
+          { className: [Cmp.ALERT_CLOSE_CONTAINER, Cmp.BOX].join(" ") },
+          div({
+            ariaLabel: "Close",
+            className: [Cmp.CLOSE_BUTTON, Cmp.CLOSE_BUTTON_LARGE].join(" "),
+            role: "button",
+            tabIndex: "0",
+            onclick: () => remove(),
+            ...(document.body.getAttribute("theme") === "dark" && {
+              style: "background-color: rgba(0, 0, 0, 0.255)",
+            }),
+          })
+        ),
+        img({
+          className: [Cmp.CLOSE_BUTTON, "undefined"].join(" "),
+          src: CLOSE_BUTTON_SVG,
+        })
+      )
+    )
+  );
 }
 
 /** Manages the intialization of the Git menu */
