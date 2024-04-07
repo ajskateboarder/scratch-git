@@ -98,10 +98,12 @@ export class Project {
    * @returns {Promise<string>}
    */
   async commit() {
-    return await this.#request({
-      command: "commit",
-      data: { Project: { project_name: this.project } },
-    });
+    return (
+      await this.#request({
+        command: "commit",
+        data: { Project: { project_name: this.project } },
+      })
+    ).message;
   }
 
   async push() {

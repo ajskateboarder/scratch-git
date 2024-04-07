@@ -72,25 +72,11 @@
 }
 
 .bottom-bar {
-    position: sticky;
     width: 100%;
     display: flex;
     justify-content: space-between;
     background-color: transparent;
     padding: 10px;
-    bottom: 0;
-
-    & select {
-        font-size: 14px;
-        background-color: var(--menu-bar-background-default);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: inherit;
-        font-weight: bold;
-    }
 }
 
 /* top bar */

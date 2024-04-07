@@ -24,5 +24,6 @@ declare interface Window {
 }
 
 declare type ElemType<T extends keyof HTMLElement> = (
-  props: PropsWithKnownKeys<T>
+  props: PropsWithKnownKeys<T>,
+  ...args: any[]
 ) => T;

@@ -1,6 +1,6 @@
 /** @file Please someone refactor this nonsense */
 
-import { Cmp, fileMenu, gitMenu } from "./dom/index";
+import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index";
 import { html } from "./utils";
 import api from "./api";
 import "./modals/index";
@@ -57,19 +57,23 @@ export default async function () {
         style="overflow-x: hidden; overflow-y: hidden"
       ></dialog>`;
 
+  const displayDiffs = async () => {
+    [
+      ...document.querySelectorAll(`.diff-button`),
+      ...document.querySelectorAll(`.stage-diff-button`),
+    ].forEach((e) => e.remove());
+    let project = await api.getCurrentProject();
+    await project.unzip();
+    showIndicators(project);
+  };
+
   // setting an interval ensures the listeners always exist
   setInterval(() => {
     try {
-      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = async () => {
-        let project = await api.getCurrentProject();
-        await project.unzip();
-        showIndicators(project);
-      };
+      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = displayDiffs;
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
-          let project = await api.getCurrentProject();
-          await project.unzip();
-          await showIndicators(project);
+          await displayDiffs();
         }
       };
     } catch {}
@@ -91,8 +95,12 @@ export default async function () {
     let project = await api.getCurrentProject();
     if (await project.exists()) {
       gitMenu.create({
-        commitViewHandler: async () =>
+        commitView: async () =>
           document.querySelector("dialog[is='commit-modal']").display(),
+        commitCreate: async () => {
+          let message = await project.commit();
+          scratchAlert({ message, duration: 5000 });
+        },
       });
     }
   }

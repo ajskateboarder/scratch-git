@@ -4,7 +4,7 @@ use itertools::Itertools;
 use regex::Regex;
 use serde_json::{Map, Value};
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     vec,
 };
 
@@ -85,9 +85,28 @@ pub struct CostumeChanges {
 
 #[derive(Debug)]
 pub struct ScriptChanges {
+    pub sprite: String,
     pub added: usize,
     pub removed: usize,
     pub on_stage: bool,
+}
+
+impl ScriptChanges {
+    /// Git commit representation of a script change
+    pub fn format(&self) -> String {
+        let mut commit = format!("{}: ", self.sprite);
+        if self.added > 0 {
+            commit += &format!("+{}", self.added);
+            if self.removed > 0 {
+                commit += ", "
+            }
+        }
+        if self.removed > 0 {
+            commit += &format!("-{}", self.removed)
+        }
+        commit += " blocks";
+        commit
+    }
 }
 
 impl Diff {
@@ -257,7 +276,7 @@ impl Diff {
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
     fn format_blocks(blocks: &Map<String, Value>) -> String {
-        let re = Regex::new(r#"":\[1,".""#).unwrap();
+        let re = Regex::new(r#"":\[(?:1|2),".""#).unwrap();
         let top_ids = blocks
             .iter()
             .filter_map(|(id, val)| {
@@ -304,80 +323,7 @@ impl Diff {
         blocks
     }
 
-    pub fn changed_sprites(&self, new: &Diff) -> Vec<String> {
-        let sprites = self.data["targets"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .zip_longest(new.data["targets"].as_array().unwrap())
-            .map(|x| match x {
-                Both(a, b) => (a, b),
-                Left(a) => (a, &Value::Null),
-                Right(b) => (&Value::Null, b),
-            });
-        sprites
-            .filter_map(|(old, new)| {
-                if old["blocks"].as_object() == new["blocks"].as_object() {
-                    return None;
-                }
-                if old.is_null() {
-                    return Some(new["name"].as_str().unwrap().to_owned());
-                }
-                if new.is_null() {
-                    return Some(old["name"].as_str().unwrap().to_owned());
-                }
-                println!("{}", &old["name"]);
-                let diff = git_diff(
-                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
-                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
-                );
-                println!(
-                    "{}\n\n{}",
-                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
-                    Diff::format_blocks(new["blocks"].as_object().unwrap())
-                );
-                if diff.added != 0 || diff.removed != 0 {
-                    let name = [
-                        old["name"].as_str().unwrap(),
-                        if old["isStage"].as_bool().unwrap() {
-                            " (stage)"
-                        } else {
-                            ""
-                        },
-                    ];
-                    Some(name.join("").to_owned())
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>()
-    }
-
-    /// Return the number of blocks added and removed between every sprite in commit form
-    ///
-    /// `new` param is the Diff object which contains newer changes
-    ///
-    /// `no_menus` controls whether to include menus as part of the diff. This should be enabled for commit generation
-    pub fn blocks(&self, new: &Diff) -> Vec<String> {
-        let mut commits: Vec<String> = vec![];
-        let mr_joe = self._blocks();
-        let iterator = mr_joe.values().into_iter().zip(new._blocks());
-        for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
-            if new_blocks - old_blocks != 0 {
-                let diff = new_blocks - old_blocks;
-                commits.push(format!(
-                    "{sprite}: {}{diff} blocks",
-                    (if diff > 0 { "+" } else { "" }),
-                ))
-            }
-        }
-        todo!()
-    }
-
-    /// Return the current number of blocks per sprite
-    ///
-    /// Returns an empty BTreeMap if the targets key doesn't exist
-    fn _blocks(&self) -> BTreeMap<String, (i32, bool)> {
+    pub fn blocks<'a>(&'a self, new: &'a Diff) -> Vec<ScriptChanges> {
         fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
             blocks
                 .iter()
@@ -390,28 +336,121 @@ impl Diff {
                 .len() as i32
         }
 
-        if let Some(sprites) = self.data["targets"].as_array() {
-            sprites
-                .iter()
-                .map(|x| {
-                    (
-                        x["name"].as_str().unwrap().to_string()
-                            + if x["isStage"].as_bool().unwrap() {
-                                " (stage)"
-                            } else {
-                                ""
-                            },
-                        (
-                            _count_blocks(x["blocks"].as_object().unwrap()),
-                            x["isStage"].as_bool().unwrap(),
-                        ),
-                    )
-                })
-                .collect::<BTreeMap<_, _>>()
-        } else {
-            BTreeMap::new()
-        }
+        let sprites = self.data["targets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip_longest(new.data["targets"].as_array().unwrap())
+            .map(|x| match x {
+                Both(a, b) => (a, b),
+                Left(a) => (a, &Value::Null),
+                Right(b) => (&Value::Null, b),
+            });
+
+        sprites
+            .clone()
+            .filter_map(|(&ref old, &ref new)| {
+                if old["blocks"].as_object() == new["blocks"].as_object() {
+                    return None;
+                }
+                if old.is_null() {
+                    return Some(ScriptChanges {
+                        sprite: new["name"].as_str().unwrap().to_string(),
+                        added: _count_blocks(&new["blocks"].as_object().unwrap()) as usize,
+                        removed: 0,
+                        on_stage: new["isStage"].as_bool().unwrap(),
+                    });
+                }
+                if new.is_null() {
+                    return Some(ScriptChanges {
+                        sprite: old["name"].as_str().unwrap().to_string(),
+                        added: 0,
+                        removed: _count_blocks(old["blocks"].as_object().unwrap()) as usize,
+                        on_stage: old["isStage"].as_bool().unwrap(),
+                    });
+                }
+                println!("{}", &old["name"]);
+                let diff = git_diff(
+                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
+                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
+                );
+                println!(
+                    "{}\n\n{}\n\n{}\n\n{:#?}",
+                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
+                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
+                    diff.diffed,
+                    diff
+                );
+                if diff.added != 0 || diff.removed != 0 {
+                    let name = [
+                        old["name"].as_str().unwrap(),
+                        if old["isStage"].as_bool().unwrap() {
+                            " (stage)"
+                        } else {
+                            ""
+                        },
+                    ];
+                    Some(ScriptChanges {
+                        sprite: name.join(""),
+                        added: diff.added as usize,
+                        removed: diff.removed.abs() as usize,
+                        on_stage: new["isStage"].as_bool().unwrap(),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
     }
+
+    /// Return the number of blocks added and removed between every sprite in commit form
+    ///
+    /// `new` param is the Diff object which contains newer changes
+    ///
+    /// `no_menus` controls whether to include menus as part of the diff. This should be enabled for commit generation
+    // pub fn blocks(&self, new: &Diff) -> Vec<String> {
+    //     let mut commits: Vec<String> = vec![];
+    //     let mr_joe = self._blocks();
+    //     let iterator = mr_joe.values().into_iter().zip(new._blocks());
+    //     for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
+    //         if new_blocks - old_blocks != 0 {
+    //             let diff = new_blocks - old_blocks;
+    //             commits.push(format!(
+    //                 "{sprite}: {}{diff} blocks",
+    //                 (if diff > 0 { "+" } else { "" }),
+    //             ))
+    //         }
+    //     }
+    //     commits
+    // }
+
+    /// Return the current number of blocks per sprite
+    ///
+    /// Returns an empty BTreeMap if the targets key doesn't exist
+    // fn _blocks(&self) -> BTreeMap<String, (i32, bool)> {
+
+    //     if let Some(sprites) = self.data["targets"].as_array() {
+    //         sprites
+    //             .iter()
+    //             .map(|x| {
+    //                 (
+    //                     x["name"].as_str().unwrap().to_string()
+    //                         + if x["isStage"].as_bool().unwrap() {
+    //                             " (stage)"
+    //                         } else {
+    //                             ""
+    //                         },
+    //                     (
+    //                         _count_blocks(x["blocks"].as_object().unwrap()),
+    //                         x["isStage"].as_bool().unwrap(),
+    //                     ),
+    //                 )
+    //             })
+    //             .collect::<BTreeMap<_, _>>()
+    //     } else {
+    //         BTreeMap::new()
+    //     }
+    // }
 
     /// Create commits for changes from the current project to a newer one
     pub fn commits(&self, new: &Diff) -> Vec<String> {
@@ -419,7 +458,12 @@ impl Diff {
         let blocks: Vec<_> = self
             .blocks(&new)
             .iter()
-            .map(|s| s.split(": ").map(|x| x.to_string()).collect::<Vec<_>>())
+            .map(|s| {
+                s.format()
+                    .split(": ")
+                    .map(|x| x.to_string())
+                    .collect::<Vec<_>>()
+            })
             .map(|v| (v[0].clone(), v[1].clone()))
             .collect::<Vec<(String, String)>>();
         let added = self.format_costumes(costume_changes.added, "add".to_string());

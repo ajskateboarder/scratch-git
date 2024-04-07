@@ -5,18 +5,15 @@ import { Cmp, DarkBlocks } from "../../dom/index";
 import { parseScripts, diff } from "./utils";
 import van from "../../lib/van";
 
-const {
-  tags: { div, label, input, span, ul, button, p, aside, main, br, hr },
-  state,
-} = van;
+const { div, label, input, span, ul, button, p, aside, main, br, hr } =
+  van.tags;
 
 /**
- * @param {string} name
- * @param {string} id
+ * @type {import("../../global").ElemType<HTMLDivElement>}
  */
-const Setting = (name, id) =>
+const Setting = (props, name) =>
   div(
-    { className: Cmp.SETTINGS_LABEL, id },
+    { className: Cmp.SETTINGS_LABEL, ...props },
     label(
       { className: Cmp.SETTINGS_LABEL },
       input({
@@ -39,6 +36,9 @@ export class DiffModal extends HTMLDialogElement {
   /** @type {HTMLInputElement} */
   plainText;
 
+  previousScripts;
+  currentScripts;
+
   constructor() {
     super();
   }
@@ -46,8 +46,8 @@ export class DiffModal extends HTMLDialogElement {
   connectedCallback() {
     if (this.querySelector("main")) return;
 
-    const useHighlights = Setting("Use highlights", "useHighlights");
-    const plainText = Setting("Plain text", "plainText");
+    const useHighlights = Setting({}, "Use highlights");
+    const plainText = Setting({ style: "margin-left: 10px;" }, "Plain text");
     const commits = p(
       { id: "commits" },
       span({ style: "display: flex" }, useHighlights, plainText),
@@ -106,11 +106,25 @@ export class DiffModal extends HTMLDialogElement {
    * @param {string} sprite
    * @param {number} script - 0 by default
    */
-  async diff(project, sprite, script = 0) {
+  async diff(project, sprite, script = 0, cached = false) {
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
-    const oldProject = await project.getPreviousScripts(sprite);
-    const newProject = await project.getCurrentScripts(sprite);
+
+    let oldProject, newProject;
+    if (cached) {
+      if (
+        this.previousScripts === undefined &&
+        this.currentScripts === undefined
+      ) {
+        this.previousScripts = await project.getPreviousScripts(sprite);
+        this.currentScripts = await project.getCurrentScripts(sprite);
+      }
+    } else {
+      this.previousScripts = await project.getPreviousScripts(sprite);
+      this.currentScripts = await project.getCurrentScripts(sprite);
+    }
+    oldProject = this.previousScripts;
+    newProject = this.currentScripts;
 
     const scripts = parseScripts(oldProject, newProject);
     // not sure why all this isn't just done by diff()
@@ -250,7 +264,6 @@ export class DiffModal extends HTMLDialogElement {
 
     // fixes git diff snipping artifacts
     const removeExtraEnds = () => {
-      console.log(this.plainText.checked);
       if (this.plainText.checked) return;
       let svg = this.querySelector(".scratchblocks svg > g");
       svg.querySelectorAll(":scope > g").forEach((blocks) => {
@@ -325,7 +338,8 @@ export class DiffModal extends HTMLDialogElement {
             sprite,
             parseInt(
               this.querySelector("button.active-tab").getAttribute("script-no")
-            )
+            ),
+            true
           );
         };
       }

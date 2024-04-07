@@ -1,6 +1,6 @@
 /** @file Displays indicators and info on sprites that were changed */
 import { Cmp } from "./dom/index";
-import { van } from "./lib";
+import { van } from "./lib/index";
 
 const { div, i } = van.tags;
 
@@ -20,7 +20,10 @@ const SpriteDiff = (props) =>
   BaseDelete(
     div(
       { className: Cmp.DELETE_BUTTON_VISIBLE },
-      i({ className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" ") })
+      i({
+        className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" "),
+        style: "color: white",
+      })
     ),
     {
       className: [
@@ -37,7 +40,10 @@ const StageDiff = (props) =>
   BaseDelete(
     div(
       { className: Cmp.DELETE_BUTTON_VISIBLE },
-      i({ className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" ") })
+      i({
+        className: ["fa-solid", "fa-plus-minus", "fa-sm"].join(" "),
+        style: "color: white",
+      })
     ),
     {
       className: [
@@ -52,10 +58,6 @@ const StageDiff = (props) =>
 /** @param {import("./api").Project} project  */
 export async function showIndicators(project) {
   let changedSprites = await project.getSprites();
-  [
-    ...document.querySelectorAll(`.diff-button`),
-    ...document.querySelectorAll(`.stage-diff-button`),
-  ].forEach((e) => e.remove());
   let sprites = [...document.querySelector(`.${Cmp.SPRITES}`).children];
 
   sprites.forEach((sprite) => {
@@ -79,15 +81,18 @@ export async function showIndicators(project) {
     let diffButton = SpriteDiff({
       style: `
       margin-top: ${applyMargin ? "30px" : "0px"};
+      border-radius: 20px;
       transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
       scale: 0.8;
       z-index: 99999;
     `,
       onmouseover: () => {
         diffButton.style.scale = "0.9";
+        diffButton.style.boxShadow = "0px 0px 0px 6px var(--looks-transparent)";
       },
       onmouseleave: () => {
         diffButton.style.scale = "0.8";
+        diffButton.style.boxShadow = "0px 0px 0px 2px var(--looks-transparent)";
       },
       onclick: async (e) => {
         e.stopPropagation();
@@ -123,6 +128,22 @@ export async function showIndicators(project) {
 
   if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
     let stageDiffButton = StageDiff({
+      style: `
+      transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+      scale: 0.8;
+      border-radius: 20px;
+      box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+    `,
+      onmouseover: () => {
+        stageDiffButton.style.scale = "0.9";
+        stageDiffButton.style.boxShadow =
+          "0px 0px 0px 6px var(--looks-transparent)";
+      },
+      onmouseleave: () => {
+        stageDiffButton.style.scale = "0.8";
+        stageDiffButton.style.boxShadow =
+          "0px 0px 0px 2px var(--looks-transparent)";
+      },
       onclick: async (e) => {
         e.stopPropagation();
         await document

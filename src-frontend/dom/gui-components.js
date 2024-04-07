@@ -6,10 +6,11 @@ const { div, img } = van.tags;
 
 /**
  * @typedef GitMenuFunctions
- * @property {() => any} pushHandler
- * @property {() => any} repoLocationHandler
- * @property {() => any} ghTokenHandler
- * @property {() => any} commitViewHandler
+ * @property {() => any} push
+ * @property {() => any} repoLocation
+ * @property {() => any} ghToken
+ * @property {() => any} commitView
+ * @property {() => any} commitCreate
  */
 
 class FileMenu {
@@ -95,12 +96,7 @@ class GitMenu {
    * Copy the File nav menu and edit it to become a Git one
    * @param {GitMenuFunctions}
    */
-  create({
-    pushHandler,
-    repoLocationHandler,
-    ghTokenHandler,
-    commitViewHandler,
-  }) {
+  create({ push, repoLocation, ghToken, commitView, commitCreate }) {
     if (this.initialized) return;
 
     // open, copy, and edit the file menu
@@ -124,17 +120,19 @@ class GitMenu {
     this.newMenu.appendChild(this.savedItems);
 
     this.item(1).label("Push project");
-    this.item(1).onclick(pushHandler);
+    this.item(1).onclick(push);
     this.item(2).label("Configure repository");
-    this.item(2).onclick(repoLocationHandler);
+    this.item(2).onclick(repoLocation);
     this.item(3).elem.classList.remove(Cmp.MENU_SECTION);
     this.item(3).label("Configure GitHub token");
-    this.item(3).onclick(ghTokenHandler);
+    this.item(3).onclick(ghToken);
     this.item(4).remove();
-    this.item(5).remove();
     this.item(4).remove();
     this.item(4).label("View commits");
-    this.item(4).onclick(commitViewHandler);
+    this.item(4).onclick(commitView);
+    this.item(5).elem.classList.remove(Cmp.MENU_SECTION);
+    this.item(5).label("Commit");
+    this.item(5).onclick(commitCreate);
 
     // make new menu toggle-able
     this.newMenu.onclick = () => {
@@ -199,21 +197,26 @@ export function scratchAlert({ message, duration }) {
         { className: Cmp.ALERT_BUTTONS },
         div(
           { className: [Cmp.ALERT_CLOSE_CONTAINER, Cmp.BOX].join(" ") },
-          div({
-            ariaLabel: "Close",
-            className: [Cmp.CLOSE_BUTTON, Cmp.CLOSE_BUTTON_LARGE].join(" "),
-            role: "button",
-            tabIndex: "0",
-            onclick: () => remove(),
-            ...(document.body.getAttribute("theme") === "dark" && {
-              style: "background-color: rgba(0, 0, 0, 0.255)",
-            }),
-          })
-        ),
-        img({
-          className: [Cmp.CLOSE_BUTTON, "undefined"].join(" "),
-          src: CLOSE_BUTTON_SVG,
-        })
+          div(
+            {
+              ariaLabel: "Close",
+              className: [Cmp.CLOSE_BUTTON, Cmp.CLOSE_BUTTON_LARGE].join(" "),
+              role: "button",
+              tabIndex: "0",
+              onclick: () => remove(),
+              ...(window.ReduxStore.getState().scratchGui.theme.theme.gui ===
+                "dark" && {
+                style: "background-color: rgba(0, 0, 0, 0.255)",
+              }),
+            },
+            img({
+              className: [Cmp.CLOSE_BUTTON, "undefined"].join(" "),
+              src: CLOSE_BUTTON_SVG,
+              style: `transform: rotate(45deg) scale(0.5);
+              `,
+            })
+          )
+        )
       )
     )
   );

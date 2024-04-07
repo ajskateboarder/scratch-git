@@ -11,7 +11,7 @@ use tungstenite::Message;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, from_str, json, Error, Value};
 
-use crate::diff::Diff;
+use crate::diff::{Diff, ScriptChanges};
 use crate::utils::extract::extract;
 use crate::utils::projects::ProjectConfig;
 
@@ -85,7 +85,7 @@ impl Cmd<'_> {
         };
 
         let Ok(file_path) = fs::canonicalize(&file_name) else {
-            return json!({ "project_name": "fail" });
+            return json!({ "message": "fail" });
         };
 
         match config.projects[&name] {
@@ -300,7 +300,7 @@ impl Cmd<'_> {
             .unwrap()
             .success()
         {
-            return json!({ "project_name": "fail" });
+            return json!({ "message": "fail" });
         }
 
         let mut binding = Command::new("git");
@@ -310,7 +310,7 @@ impl Cmd<'_> {
             .stderr(Stdio::piped())
             .current_dir(pth);
         if !git_commit.status().unwrap().success() {
-            return json!({ "project_name": "Nothing to add" });
+            return json!({ "message": "Nothing to add" });
         }
 
         json!({ "message": commit_message })
@@ -372,12 +372,12 @@ impl Cmd<'_> {
 
         let new_diff = Diff::new(_new_project);
         let sprites: Vec<_> = current_diff
-            .changed_sprites(&new_diff)
+            .blocks(&new_diff)
             .into_iter()
-            .map(|sprite| {
+            .map(|ScriptChanges { sprite, .. }| {
                 let parts = sprite.split(" ").collect::<Vec<_>>();
                 if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
-                    (parts[0].to_owned(), true)
+                    (parts[0].to_string(), true)
                 } else {
                     (sprite, false)
                 }

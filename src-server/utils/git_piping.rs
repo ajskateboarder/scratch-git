@@ -42,31 +42,49 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
     if !new_content.ends_with("\n") {
         new_content += "\n";
     }
+    let old_id = git_object_id(old_content.into());
+    let new_id = git_object_id(new_content.into());
     let proc = Command::new("git")
-        .args([
-            "diff",
-            "--no-color",
-            &git_object_id(old_content.into()),
-            &git_object_id(new_content.into()),
-        ])
+        .args(["diff", "--no-color", &old_id, &new_id])
         .stdout(Stdio::piped())
         .spawn()
         .expect("failed to run git diff");
-    let output = proc
+    let output = &proc
         .wait_with_output()
         .expect("failed to access output (?)");
-    let binding = &String::from_utf8_lossy(&output.stdout).trim().to_owned();
-    let result = &binding.split("@@").into_iter().collect::<Vec<_>>()[1..3];
-    let binding = result[0].to_string();
-    let add_rms = binding
-        .trim()
-        .split(" ")
-        .into_iter()
-        .map(|x| x.split(",").collect::<Vec<_>>()[0])
-        .collect::<Vec<_>>();
+    let output = String::from_utf8_lossy(&output.stdout);
+    let binding = &output.trim().split("@@").into_iter().collect::<Vec<_>>()[2..];
+
+    let patched_lines = binding.join("");
+    let patched_lines: Vec<_> = patched_lines.split("\n").collect();
+
+    let added = patched_lines
+        .iter()
+        .filter(|line| line.starts_with("+"))
+        .collect::<Vec<_>>()
+        .len() as i32;
+
+    let removed = patched_lines
+        .iter()
+        .filter(|line| line.starts_with("-"))
+        .collect::<Vec<_>>()
+        .len() as i32;
+
+    let patched = patched_lines
+        .iter()
+        .map(|line| {
+            let split = line.split(" ").collect::<Vec<&str>>();
+            if split[1].starts_with("-") && split[2].starts_with("+") && split[3] == "" {
+                return split[4..].join(" ");
+            }
+            line.to_string()
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
+
     GitDiff {
-        removed: add_rms[0].parse::<i32>().unwrap(),
-        added: add_rms[1].parse::<i32>().unwrap(),
-        diffed: result[1].to_string(),
+        removed,
+        added: added.try_into().unwrap(),
+        diffed: patched,
     }
 }

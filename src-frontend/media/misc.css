@@ -39,6 +39,8 @@ dialog[is="welcome-modal"] {
   white-space: normal;
   padding: 20px;
   box-sizing: border-box;
+  border-width: 2.5px;
+  border-radius: 10px;
 }
 
 dialog[is="diff-modal"] {
@@ -94,20 +96,24 @@ dialog[is="welcome-modal"] {
   min-width: 100%;
   padding: 10px 20px;
 
-  & .commit:first-child {
+  &:first-child {
     border-radius: 5px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
   }
 
-  & .commit:not(:first-child) {
+  &:not(:first-child) {
     border-top: none;
   }
 
-  & .commit:last-child {
+  &:last-child {
     border-radius: 5px;
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
+  }
+
+  &:only-child {
+    border-radius: 5px;
   }
 }
 
