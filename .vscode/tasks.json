@@ -4,7 +4,7 @@
     {
       "label": "Debug scratch-git (Linux)",
       "type": "shell",
-      "command": "nodemon -x 'bash ./.vscode/debug.sh' -w src-server -w src-frontend",
+      "command": "nodemon -x './.vscode/debug.sh' -w src-server -w src-frontend",
       "group": {
         "kind": "build",
         "isDefault": true

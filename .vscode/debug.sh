@@ -1,5 +1,10 @@
-killall turbowarp-desktop
-killall scratch-git
+#!/bin/sh
+
+set -e
+
+killall turbowarp-desktop || true
+killall scratch-git || true
 cargo build
-./target/debug/scratch-git --debug &
+node_modules/rollup/dist/bin/rollup -c
+target/debug/scratch-git --debug &
 /opt/TurboWarp/turbowarp-desktop >/dev/null

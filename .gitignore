@@ -6,7 +6,7 @@ scratch-git-test/**
 projects
 Project.sb3
 node_modules
-/*.json
+
 /target
 /*.sb3
 userscript.js
