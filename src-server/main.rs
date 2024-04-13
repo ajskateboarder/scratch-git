@@ -66,11 +66,11 @@ fn main() {
     println!("Script copied to {}", path.to_str().unwrap());
 
     let _ = fs::create_dir("projects");
+    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
     println!(
         "Open TurboWarp Desktop to begin using scratch.git, and make sure to keep this running!"
     );
 
-    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
     for stream in server.incoming() {
         spawn(move || match stream {
             Ok(stream) => {

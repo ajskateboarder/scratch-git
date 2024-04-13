@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 /// Return a generated blob ID from a string
@@ -28,7 +29,7 @@ pub struct GitDiff {
 }
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
-pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
+pub fn diff(mut old_content: String, mut new_content: String) -> GitDiff {
     if old_content == new_content {
         return GitDiff {
             removed: 0,
@@ -49,9 +50,7 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
         .stdout(Stdio::piped())
         .spawn()
         .expect("failed to run git diff");
-    let output = &proc
-        .wait_with_output()
-        .expect("failed to access output (?)");
+    let output = &proc.wait_with_output().expect("failed to access output");
     let output = String::from_utf8_lossy(&output.stdout);
     let binding = &output.trim().split("@@").into_iter().collect::<Vec<_>>()[2..];
 
@@ -74,7 +73,12 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
         .iter()
         .map(|line| {
             let split = line.split(" ").collect::<Vec<&str>>();
-            if split[1].starts_with("-") && split[2].starts_with("+") && split[3] == "" {
+            dbg!(&split);
+            if split.len() != 1
+                && split[1].starts_with("-")
+                && split[2].starts_with("+")
+                && split[3] == ""
+            {
                 return split[4..].join(" ");
             }
             line.to_string()
@@ -87,4 +91,15 @@ pub fn git_diff(mut old_content: String, mut new_content: String) -> GitDiff {
         added: added.try_into().unwrap(),
         diffed: patched,
     }
+}
+
+pub fn show_revision(cwd: &PathBuf, commit: &str) -> String {
+    let proc = Command::new("git")
+        .args(["show", commit])
+        .stdout(Stdio::piped())
+        .current_dir(cwd)
+        .spawn()
+        .expect("failed to run git show");
+    let output = &proc.wait_with_output().expect("failed to access output");
+    String::from_utf8_lossy(&output.stdout).to_string()
 }

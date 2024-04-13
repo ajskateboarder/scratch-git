@@ -1,8 +1,9 @@
-use crate::utils::git_piping::git_diff;
+use crate::utils::git;
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
 use regex::Regex;
 use serde_json::{Map, Value};
+use std::path::PathBuf;
 use std::{
     collections::{HashMap, HashSet},
     vec,
@@ -63,11 +64,6 @@ fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
     ItemGrouping::method(&items)
 }
 
-#[derive(Debug)]
-pub struct Diff {
-    data: Value,
-}
-
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct CostumeChange {
     pub sprite: String,
@@ -105,16 +101,40 @@ impl ScriptChanges {
             commit += &format!("-{}", self.removed)
         }
         commit += " blocks";
+        println!("{}", commit);
         commit
     }
 }
 
+#[derive(Debug)]
+pub struct Diff {
+    data: Value,
+}
+
+/// Commit generation methods for Scratch project assets and code
 impl Diff {
-    /// Commit generation methods for Scratch project assets and code
-    pub fn new(data: Value) -> Self {
-        data.get("targets")
-            .expect("Provided json should have targets key");
-        Self { data }
+    /// Construct a new diff from a project.json
+    ///
+    /// ```
+    /// let project = json!({"targets":[{"isStage":true,"name":"Stage","variables": ... "monitors":[],"extensions":[]}});
+    /// Diff::new(&project);
+    /// ```
+    pub fn new(data: &Value) -> Self {
+        data.get("targets").expect("targets key is required");
+        Diff { data: data.clone() }
+    }
+
+    /// Construct a new diff from a project.json located in a certain Git revision
+    ///
+    /// ```
+    /// let pth: PathBuf = "path/to/project".into();
+    /// // diff for previous commit
+    /// Diff::from_revision(&pth, "HEAD~1:project.json");
+    /// ```
+    pub fn from_revision(pth: &PathBuf, commit: &str) -> Self {
+        let json = git::show_revision(pth, commit);
+        let data = serde_json::from_str::<serde_json::Value>(&json).unwrap();
+        Diff { data: data.clone() }
     }
 
     /// Attempt to return the MD5 extension of a costume item (project.json)
@@ -247,7 +267,7 @@ impl Diff {
     pub fn format_costumes(
         &self,
         changes: Vec<CostumeChange>,
-        action: String,
+        action: &'static str,
     ) -> Vec<(String, String)> {
         let _changes: Vec<(String, String)> = changes
             .iter()
@@ -369,18 +389,12 @@ impl Diff {
                         on_stage: old["isStage"].as_bool().unwrap(),
                     });
                 }
-                println!("{}", &old["name"]);
-                let diff = git_diff(
+
+                let diff = git::diff(
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
                 );
-                println!(
-                    "{}\n\n{}\n\n{}\n\n{:#?}",
-                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
-                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
-                    diff.diffed,
-                    diff
-                );
+
                 if diff.added != 0 || diff.removed != 0 {
                     let name = [
                         old["name"].as_str().unwrap(),
@@ -403,55 +417,6 @@ impl Diff {
             .collect::<Vec<_>>()
     }
 
-    /// Return the number of blocks added and removed between every sprite in commit form
-    ///
-    /// `new` param is the Diff object which contains newer changes
-    ///
-    /// `no_menus` controls whether to include menus as part of the diff. This should be enabled for commit generation
-    // pub fn blocks(&self, new: &Diff) -> Vec<String> {
-    //     let mut commits: Vec<String> = vec![];
-    //     let mr_joe = self._blocks();
-    //     let iterator = mr_joe.values().into_iter().zip(new._blocks());
-    //     for ((old_blocks, _), (sprite, (new_blocks, _))) in iterator {
-    //         if new_blocks - old_blocks != 0 {
-    //             let diff = new_blocks - old_blocks;
-    //             commits.push(format!(
-    //                 "{sprite}: {}{diff} blocks",
-    //                 (if diff > 0 { "+" } else { "" }),
-    //             ))
-    //         }
-    //     }
-    //     commits
-    // }
-
-    /// Return the current number of blocks per sprite
-    ///
-    /// Returns an empty BTreeMap if the targets key doesn't exist
-    // fn _blocks(&self) -> BTreeMap<String, (i32, bool)> {
-
-    //     if let Some(sprites) = self.data["targets"].as_array() {
-    //         sprites
-    //             .iter()
-    //             .map(|x| {
-    //                 (
-    //                     x["name"].as_str().unwrap().to_string()
-    //                         + if x["isStage"].as_bool().unwrap() {
-    //                             " (stage)"
-    //                         } else {
-    //                             ""
-    //                         },
-    //                     (
-    //                         _count_blocks(x["blocks"].as_object().unwrap()),
-    //                         x["isStage"].as_bool().unwrap(),
-    //                     ),
-    //                 )
-    //             })
-    //             .collect::<BTreeMap<_, _>>()
-    //     } else {
-    //         BTreeMap::new()
-    //     }
-    // }
-
     /// Create commits for changes from the current project to a newer one
     pub fn commits(&self, new: &Diff) -> Vec<String> {
         let costume_changes = self._merged_costumes(&new);
@@ -466,9 +431,9 @@ impl Diff {
             })
             .map(|v| (v[0].clone(), v[1].clone()))
             .collect::<Vec<(String, String)>>();
-        let added = self.format_costumes(costume_changes.added, "add".to_string());
-        let removed = self.format_costumes(costume_changes.removed, "remove".to_string());
-        let merged = self.format_costumes(costume_changes.merged, "modify".to_string());
+        let added = self.format_costumes(costume_changes.added, "add");
+        let removed = self.format_costumes(costume_changes.removed, "remove");
+        let merged = self.format_costumes(costume_changes.merged, "modify");
 
         let _commits = [blocks, added, removed, merged].concat();
         Vec::from_iter(
