@@ -1,18 +1,19 @@
-/** @file Template and logic for the project initialization modal */
+//@ts-nocheck
 import { html } from "../utils";
 import { Cmp, fileMenu } from "../dom/index";
 import api from "../api";
 
 import thumbnail from "../media/thumb.svg";
+import van from "../lib/van";
 
-/** Handles project initialization */
+const { style, div, h1, p, br, button } = van.tags;
+
+/** Project initialization */
 export class WelcomeModal extends HTMLDialogElement {
-  /** @type {HTMLDivElement} */
-  step1;
-  /** @type {HTMLDivElement} */
-  step2;
-  /** @type {HTMLDivElement} */
-  step3;
+  step1: HTMLDivElement;
+  step2: HTMLDivElement;
+  step3: HTMLDivElement;
+  loadedProject: boolean;
 
   constructor() {
     super();
@@ -21,6 +22,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
+
     this.innerHTML += html`<style>
       .thumbnail {
         filter: hue-rotate(90deg) saturate(1.3);
@@ -142,9 +144,11 @@ export class WelcomeModal extends HTMLDialogElement {
     // so apparantly moving it elsewhere fixes it :/
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)!.appendChild(fragment);
     document
-      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .querySelector<HTMLDialogElement>(
+        `dialog[is="${this.getAttribute("is")}"]`
+      )!
       .showModal();
   }
 

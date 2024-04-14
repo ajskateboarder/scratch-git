@@ -1,15 +1,36 @@
 import { Cmp } from "../dom/index";
-import api from "../api";
-import { html, timeAgo } from "../utils";
-import van from "../lib/van";
+import api, { Commit } from "../api";
+import van, { State } from "../lib/van";
 
 const {
   tags: { div, button, h1, br, span },
   state,
 } = van;
 
-/** @param {import("../api").Commit} commit */
-const Commit = (commit) =>
+// https://stackoverflow.com/a/69122877/16019146
+export function timeAgo(input: Date | string) {
+  const date = input instanceof Date ? input : new Date(input);
+  const formatter = new Intl.RelativeTimeFormat("en");
+  const ranges = {
+    years: 3600 * 24 * 365,
+    months: 3600 * 24 * 30,
+    weeks: 3600 * 24 * 7,
+    days: 3600 * 24,
+    hours: 3600,
+    minutes: 60,
+    seconds: 1,
+  };
+  const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+  const matched = Object.keys(ranges).find(
+    (key) => ranges[key] < Math.abs(secondsElapsed)
+  ) as string;
+  return formatter.format(
+    Math.round(secondsElapsed / ranges[matched]),
+    matched as Intl.RelativeTimeFormatUnit
+  );
+}
+
+const Commit = (commit: Commit) =>
   div(
     { class: "commit" },
     span({ style: "font-size: 1rem" }, commit.subject),
@@ -26,12 +47,9 @@ const Commit = (commit) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends HTMLDialogElement {
-  /** @type {HTMLButtonElement} */
-  older;
-  /** @type {HTMLButtonElement} */
-  newer;
-  /** @type {import("../lib/van").State<import("../api").Commit[]>} */
-  commits;
+  older: HTMLButtonElement;
+  newer: HTMLButtonElement;
+  commits: State<Commit[]>;
 
   constructor() {
     super();
@@ -39,14 +57,14 @@ export class CommitModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("#comits")) return;
+    this.commits = state<Commit[]>([]);
+
     const closeButton = button(
       {
         id: "closeButton",
         class: Cmp.SETTINGS_BUTTON,
         style: "margin-left: 10px",
         onclick: () => {
-          useHighlights.checked = false;
-          plainText.checked = false;
           this.close();
         },
       },
@@ -64,6 +82,7 @@ export class CommitModal extends HTMLDialogElement {
       },
       "Newer"
     );
+
     this.older = button(
       {
         className: Cmp.SETTINGS_BUTTON,
@@ -75,7 +94,6 @@ export class CommitModal extends HTMLDialogElement {
       },
       "Older"
     );
-    this.commits = state([]);
 
     van.add(
       this,
@@ -113,24 +131,30 @@ export class CommitModal extends HTMLDialogElement {
   }
 
   _showMe() {
-    if (document.querySelector(`dialog[is="${this.getAttribute("is")}"]`).open)
+    if (
+      document.querySelector<HTMLDialogElement>(
+        `dialog[is="${this.getAttribute("is")}"]`
+      )!.open
+    )
       return;
     // directly attaching this modal to anything in #app will hide the project player
     // so apparantly moving it elsewhere fixes it :/
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)!.appendChild(fragment);
     document
-      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .querySelector<HTMLDialogElement>(
+        `dialog[is="${this.getAttribute("is")}"]`
+      )!
       .showModal();
   }
 
   async display() {
     let page = 0;
-    let commits = await (await api.getCurrentProject()).getCommits();
+    let commits_ = await (await api.getCurrentProject())!.getCommits();
 
-    commits = [...Array(Math.ceil(commits.length / 40))].map((_) =>
-      commits.splice(0, 40)
+    let commits = [...Array(Math.ceil(commits_.length / 40))].map((_) =>
+      commits_.splice(0, 40)
     );
     this.commits.val = commits[page];
 

@@ -5,24 +5,19 @@ import { html } from "./utils";
 import api from "./api";
 import "./modals/index";
 
+//@ts-ignore
 import BARS from "./media/bars.css";
+//@ts-ignore
 import MISC from "./media/misc.css";
-// import TOGGLE from "./media/switch.css";
 
 import { showIndicators } from "./diff-indicators";
+import van from "./lib/van";
+import { WelcomeModal } from "./modals/welcome";
+import { CommitModal } from "./modals/commit";
 
-function injectStyles() {
-  document.head.innerHTML += html`
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      defer
-    />
-    <script
-      type="text/javascript"
-      src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.nomodule.min.js"
-    ></script>
-  `;
+const { link, style } = van.tags;
+
+const Styles = () => {
   const MENU_ITEM = `
     div.${Cmp.MENU_ITEM}:has(#push-status):hover {
       cursor: pointer;
@@ -37,14 +32,25 @@ function injectStyles() {
       cursor: default;
     }`;
 
-  document.head.innerHTML += `<style>${MENU_ITEM}\n${BARS}\n${MISC}</style>`;
-}
+  return [
+    link({
+      rel: "stylesheet",
+      href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
+      defer: true,
+    }),
+    style(`
+    ${MENU_ITEM}
+    ${BARS}
+    ${MISC}
+    `),
+  ];
+};
 
 export default async function () {
   if (!document.querySelector("dialog[is='diff-modal']"))
     document.querySelector(
       "body > div[style='display: none;']"
-    ).innerHTML += html`<dialog
+    )!.innerHTML += html`<dialog
         is="diff-modal"
         style="overflow-x: hidden"
       ></dialog>
@@ -63,14 +69,15 @@ export default async function () {
       ...document.querySelectorAll(`.stage-diff-button`),
     ].forEach((e) => e.remove());
     let project = await api.getCurrentProject();
-    await project.unzip();
-    showIndicators(project);
+    await project!.unzip();
+    await showIndicators(project);
   };
 
   // setting an interval ensures the listeners always exist
   setInterval(() => {
     try {
-      document.querySelector(`.${Cmp.SAVE_STATUS}`).onclick = displayDiffs;
+      document.querySelector<HTMLDivElement>(`.${Cmp.SAVE_STATUS}`)!.onclick =
+        displayDiffs;
       document.onkeydown = async (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === "S") {
           await displayDiffs();
@@ -79,28 +86,28 @@ export default async function () {
     } catch {}
   }, 500);
 
-  injectStyles();
+  document.head.append(...Styles());
 
-  document.querySelectorAll(`.${Cmp.MENU_ITEM}`)[1].onclick = () => {
-    const isDark = document.body.getAttribute("theme") === "dark";
-    document.querySelectorAll(".git-button").forEach((element) => {
-      element.parentElement.style.backgroundColor = isDark
-        ? "#333"
-        : "hsla(0, 100%, 65%, 1)";
-    });
-  };
   if (!fileMenu.isProjectOpen()) {
-    document.querySelector("dialog[is='welcome-modal']").display();
+    document
+      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
+      .display();
   } else {
     let project = await api.getCurrentProject();
-    if (await project.exists()) {
+    if (await project!.exists()) {
+      let wip = () => alert("Work in progress!");
       gitMenu.create({
         commitView: async () =>
-          document.querySelector("dialog[is='commit-modal']").display(),
+          document
+            .querySelector<CommitModal>("dialog[is='commit-modal']")!
+            .display(),
         commitCreate: async () => {
-          let message = await project.commit();
+          let message = await project!.commit();
           scratchAlert({ message, duration: 5000 });
         },
+        push: wip,
+        ghToken: wip,
+        repoLocation: wip,
       });
     }
   }

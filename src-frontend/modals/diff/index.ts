@@ -1,21 +1,18 @@
-import { html } from "../../utils";
+import { guiTheme } from "../../utils";
 import api from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
-import van from "../../lib/van";
+import van, { ElemType } from "../../lib/van";
 
 const { div, label, input, span, ul, button, p, aside, main, br, hr } =
   van.tags;
 
-/**
- * @type {import("../../global").ElemType<HTMLDivElement>}
- */
-const Setting = (props, name) =>
+const Setting: ElemType<"div"> = (props, name) =>
   div(
-    { className: Cmp.SETTINGS_LABEL, ...props },
+    { class: Cmp.SETTINGS_LABEL, ...props },
     label(
-      { className: Cmp.SETTINGS_LABEL },
+      { class: Cmp.SETTINGS_LABEL },
       input({
         class: [Cmp.SETTINGS_CHECKBOX, Cmp.CHECKBOX].join(" "),
         type: "checkbox",
@@ -61,8 +58,8 @@ export class DiffModal extends HTMLDialogElement {
         class: Cmp.SETTINGS_BUTTON,
         style: "margin-left: 10px",
         onclick: () => {
-          useHighlights.checked = false;
-          plainText.checked = false;
+          useHighlights.querySelector("input")!.checked = false;
+          plainText.querySelector("input")!.checked = false;
           this.close();
         },
       },
@@ -83,7 +80,10 @@ export class DiffModal extends HTMLDialogElement {
           div(
             { class: "content" },
             commits,
-            div({ classList: ["bottom-bar", "in-diff-modal"] }, closeButton)
+            div(
+              { class: ["bottom-bar", "in-diff-modal"].join(" ") },
+              closeButton
+            )
           )
         )
       )
@@ -95,9 +95,11 @@ export class DiffModal extends HTMLDialogElement {
     // so apparantly moving it elsewhere fixes it :/
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`).appendChild(fragment);
+    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)!.appendChild(fragment);
     document
-      .querySelector(`dialog[is="${this.getAttribute("is")}"]`)
+      .querySelector<HTMLDialogElement>(
+        `dialog[is="${this.getAttribute("is")}"]`
+      )!
       .showModal();
   }
 
@@ -136,7 +138,7 @@ export class DiffModal extends HTMLDialogElement {
       .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
       .filter((result) => result.diffed !== "");
 
-    let blockTheme = window.ReduxStore.getState().scratchGui.theme.theme.blocks;
+    let blockTheme = guiTheme().blocks;
     let config = {
       style:
         blockTheme === "high-contrast" ? "scratch3-high-contrast" : "scratch3",
@@ -146,7 +148,7 @@ export class DiffModal extends HTMLDialogElement {
     const diffBlocks = () => {
       window.scratchblocks.appendStyles();
       window.scratchblocks.renderMatching("#commitView", config);
-      let svg = this.querySelector(".scratchblocks svg > g");
+      let svg = this.querySelector(".scratchblocks svg > g")!;
       svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
         input.setAttribute("rx", "4");
         input.setAttribute("ry", "4");
@@ -159,25 +161,33 @@ export class DiffModal extends HTMLDialogElement {
       // darken blocks to match tw dark theme
       if (blockTheme === "dark") {
         svg.querySelectorAll(":scope > g").forEach((blocks) => {
-          blocks.querySelectorAll("path, rect").forEach((element) => {
-            let darkFill = DarkBlocks[element.classList.item(0)];
-            if (darkFill) {
-              element.style.fill = darkFill;
-            }
+          blocks
+            .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
+            .forEach((element) => {
+              let darkFill = DarkBlocks[element.classList.item(0)!];
+              if (darkFill) {
+                element.style.fill = darkFill;
+              }
+            });
+          blocks
+            .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
+            .forEach((element) => {
+              let darkFill = DarkBlocks[element.classList.item(0)!];
+              if (darkFill) {
+                element.style.fill = darkFill;
+              }
+            });
+        });
+        svg
+          .querySelectorAll<SVGRectElement>("rect.sb3-input")
+          .forEach((input) => {
+            input.style.fill = "rgb(76, 76, 76)";
           });
-          blocks.querySelectorAll("path, rect").forEach((element) => {
-            let darkFill = DarkBlocks[element.classList.item(0)];
-            if (darkFill) {
-              element.style.fill = darkFill;
-            }
+        svg
+          .querySelectorAll<SVGTextElement>("text.sb3-label")
+          .forEach((input) => {
+            input.style.fill = "#fff";
           });
-        });
-        svg.querySelectorAll("rect.sb3-input").forEach((input) => {
-          input.style.fill = "rgb(76, 76, 76)";
-        });
-        svg.querySelectorAll("text.sb3-label").forEach((input) => {
-          input.style.fill = "#fff";
-        });
         return;
       }
 
@@ -187,9 +197,11 @@ export class DiffModal extends HTMLDialogElement {
         "high-contrast": "brightness(1.12) saturate(0.7)",
       }[blockTheme];
       if (dropdownChange !== undefined) {
-        svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
-          input.style.filter = dropdownChange;
-        });
+        svg
+          .querySelectorAll<SVGRectElement>("rect.sb3-input-dropdown")
+          .forEach((input) => {
+            input.style.filter = dropdownChange;
+          });
       }
     };
 
@@ -202,18 +214,23 @@ export class DiffModal extends HTMLDialogElement {
       let svg = this.querySelectorAll(".scratchblocks svg > g");
       svg.forEach((blocks) => {
         blocks.querySelectorAll("path.sb3-diff").forEach((diff) => {
-          let moddedBlock = diff.previousElementSibling.cloneNode(true);
+          let moddedBlock = diff.previousElementSibling!.cloneNode(
+            true
+          ) as SVGElement;
           let fillColor = diff.classList.contains("sb3-diff-ins")
             ? "green"
             : diff.classList.contains("sb3-diff-del")
             ? "red"
             : "grey";
           moddedBlock
-            .querySelectorAll("path,g,rect") // g selector isn't needed maybe but just in case..
+            .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
+              "path,g,rect"
+            ) // g selector isn't needed maybe but just in case..
             .forEach((element) => {
+              //@ts-ignore
               element.style = `fill: ${fillColor}; opacity: 0.5`;
             });
-          diff.previousElementSibling.after(moddedBlock);
+          diff.previousElementSibling!.after(moddedBlock);
           diff.remove();
         });
       });
@@ -247,16 +264,16 @@ export class DiffModal extends HTMLDialogElement {
       let svg = this.querySelectorAll(".scratchblocks svg > g");
       if (theme === "dark") {
         svg.forEach((blocks) => {
-          blocks
-            .querySelectorAll("path.sb3-diff")
-            .forEach(
-              (diff) => (diff.style = "stroke: white; stroke-width: 3.5px")
-            );
+          blocks.querySelectorAll<SVGPathElement>("path.sb3-diff").forEach(
+            //@ts-ignore
+            (diff) => (diff.style = "stroke: white; stroke-width: 3.5px")
+          );
         });
       } else {
         svg.forEach((blocks) => {
           blocks
-            .querySelectorAll("path.sb3-diff")
+            .querySelectorAll<SVGPathElement>("path.sb3-diff")
+            //@ts-ignore
             .forEach((diff) => (diff.style = ""));
         });
       }
@@ -265,14 +282,14 @@ export class DiffModal extends HTMLDialogElement {
     // fixes git diff snipping artifacts
     const removeExtraEnds = () => {
       if (this.plainText.checked) return;
-      let svg = this.querySelector(".scratchblocks svg > g");
+      let svg = this.querySelector(".scratchblocks svg > g")!;
       svg.querySelectorAll(":scope > g").forEach((blocks) => {
         if (blocks.querySelectorAll("path").length === 1) {
-          let block = blocks.querySelector("path");
+          let block = blocks.querySelector("path")!;
           if (
             block.classList.length === 1 &&
             block.classList.contains("sb3-control") &&
-            blocks.querySelector("text").innerHTML === "end"
+            blocks.querySelector("text")!.innerHTML === "end"
           ) {
             blocks.remove();
           }
@@ -337,7 +354,9 @@ export class DiffModal extends HTMLDialogElement {
             project,
             sprite,
             parseInt(
-              this.querySelector("button.active-tab").getAttribute("script-no")
+              this.querySelector("button.active-tab")!.getAttribute(
+                "script-no"
+              )!
             ),
             true
           );
@@ -355,12 +374,13 @@ export class DiffModal extends HTMLDialogElement {
     });
 
     document
-      .querySelector(`button[script-no="${script}"]`)
+      .querySelector(`button[script-no="${script}"]`)!
       .classList.add("active-tab");
 
     // dark mode
-    if (theme === "dark") document.querySelector("aside").classList.add("dark");
-    else document.querySelector("aside").classList.remove("dark");
+    if (theme === "dark")
+      document.querySelector("aside")!.classList.add("dark");
+    else document.querySelector("aside")!.classList.remove("dark");
     darkDiff(theme);
     removeExtraEnds();
     this.useHighlights.checked = false;

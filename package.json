@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
     "rollup": "^4.14.1",
-    "rollup-plugin-string": "^3.0.0"
+    "rollup-plugin-string": "^3.0.0",
+    "tslib": "^2.6.2"
   }
 }

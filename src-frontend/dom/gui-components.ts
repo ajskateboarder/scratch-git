@@ -14,22 +14,26 @@ const { div, img } = van.tags;
  */
 
 class FileMenu {
+  menu: HTMLDivElement;
+  eventHandlers: string;
+
   constructor() {
-    this.menu = document.querySelectorAll(`div.${Cmp.MENU_ITEM}`)[1];
+    this.menu = document.querySelectorAll<HTMLDivElement>(
+      `div.${Cmp.MENU_ITEM}`
+    )[1];
     this.eventHandlers = Object.keys(this.menu).filter((e) =>
       e.startsWith("__reactEventHandlers")
     )[0];
+  }
 
-    /** @type {(open: boolean) => void} */
-    this.clickMenu = (open) => {
-      // we pass a fake event object to control whether to open or close the file menu
-      // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
-      this.menu[this.eventHandlers].onClick({
-        target: {
-          closest: () => (open ? this.menu : document.body),
-        },
-      });
-    };
+  clickMenu(open: boolean) {
+    // we pass a fake event object to control whether to open or close the file menu
+    // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
+    this.menu[this.eventHandlers].onClick({
+      target: {
+        closest: () => (open ? this.menu : document.body),
+      },
+    });
   }
 
   /** Opens a file picker dialog to load projects into TurboWarp */
@@ -58,22 +62,22 @@ class FileMenu {
 export const fileMenu = new FileMenu();
 
 class GitMenu {
+  savedItems: HTMLElement | undefined;
+  newMenu: HTMLElement | undefined;
+  open: boolean;
+  initialized: boolean;
+
   constructor() {
-    /** @type {HTMLElement} */
-    this.savedItems = undefined;
-    /** @type {HTMLElement} */
-    this.newMenu = undefined;
     this.open = false;
     this.initialized = false;
   }
 
-  /** @param {number?} index */
-  item(index = 1) {
-    const li = this.savedItems.querySelectorAll("li")[index - 1];
+  item(index: number = 1) {
+    const li = this.savedItems!.querySelectorAll("li")[index - 1];
     return {
       label: (text) => {
         try {
-          li.querySelector("span").innerText = text;
+          li.querySelector("span")!.innerText = text;
         } catch (e) {
           li.innerText = text;
         }
@@ -82,8 +86,8 @@ class GitMenu {
       onclick: (handler) => {
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
-          this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
-          this.savedItems.style.display = "none";
+          this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+          this.savedItems!.style.display = "none";
           this.open = false;
           await handler();
         });
@@ -102,20 +106,20 @@ class GitMenu {
     // open, copy, and edit the file menu
     fileMenu.clickMenu(false);
     fileMenu.clickMenu(true);
-    this.newMenu = fileMenu.menu.cloneNode(true);
+    this.newMenu = fileMenu.menu.cloneNode(true) as HTMLDivElement;
     fileMenu.menu.after(this.newMenu);
     this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
-    this.newMenu.querySelector("span").innerText = "Git";
+    this.newMenu.querySelector("span")!.innerText = "Git";
     this.savedItems = this.newMenu
-      .querySelector("ul")
-      .parentElement.cloneNode(true);
-    this.newMenu.querySelector("img").replaceWith(
+      .querySelector("ul")!
+      .parentElement!.cloneNode(true) as HTMLElement;
+    this.newMenu.querySelector("img")!.replaceWith(
       Object.assign(document.createElement("i"), {
         className: "fa fa-code-fork fa-lg",
       })
     );
     this.savedItems.classList.add("git-menu");
-    this.newMenu.querySelector("ul").parentElement.remove();
+    this.newMenu.querySelector("ul")!.parentElement!.remove();
     this.savedItems.style.display = "none";
     this.newMenu.appendChild(this.savedItems);
 
@@ -136,28 +140,27 @@ class GitMenu {
 
     // make new menu toggle-able
     this.newMenu.onclick = () => {
-      if (this.savedItems.style.display === "none") {
-        this.newMenu.classList.add(Cmp.MENU_ITEM_ACTIVE);
-        this.savedItems.style.display = "block";
+      if (this.savedItems!.style.display === "none") {
+        this.newMenu!.classList.add(Cmp.MENU_ITEM_ACTIVE);
+        this.savedItems!.style.display = "block";
         this.open = true;
       } else {
-        this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
-        this.savedItems.style.display = "none";
+        this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+        this.savedItems!.style.display = "none";
         this.open = false;
       }
     };
 
     // close new menu upon clicking anywhere outside of the menu
-    document.querySelector("#app").onmouseup = (e) => {
-      /** @type {Event} */
-      const event = e;
+    document.querySelector<HTMLDivElement>("#app")!.onmouseup = (e) => {
       if (
-        event.target !== this.newMenu &&
-        event.target.parentNode !== this.newMenu &&
+        e.target !== this.newMenu &&
+        //@ts-ignore
+        e.target!.parentNode !== this.newMenu &&
         this.open
       ) {
-        this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
-        this.savedItems.style.display = "none";
+        this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+        this.savedItems!.style.display = "none";
         this.open = false;
       }
     };
@@ -178,10 +181,15 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT\
 0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
 
-/** Displays a custom scratch-gui alert
- * @param {{message: string; duration: number}} */
-export function scratchAlert({ message, duration }) {
-  const container = document.querySelector(`.${Cmp.ALERT_CONTAINER}`);
+/** Displays a custom scratch-gui alert */
+export function scratchAlert({
+  message,
+  duration,
+}: {
+  message: string;
+  duration: number;
+}) {
+  const container = document.querySelector(`.${Cmp.ALERT_CONTAINER}`)!;
 
   const remove = () => (container.innerHTML = "");
   setTimeout(remove, duration);

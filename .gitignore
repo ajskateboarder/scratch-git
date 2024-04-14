@@ -1,14 +1,9 @@
-**/env
-scratch-git-test
-scratch-git-test/**
-**/__pycache__
-*.sb3
 projects
-Project.sb3
 node_modules
-
 /target
-/*.sb3
 userscript.js
+*.sb3
+Project.sb3
+/*.sb3
 *zip
 scratch-git_*
