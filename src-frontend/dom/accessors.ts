@@ -4,7 +4,7 @@
 const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
   .map((e) => Array.from(e))
   .flatMap((e) => e)
-  .map((e) => e.selectorText)
+  .map((e: any) => e.selectorText)
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 

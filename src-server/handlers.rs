@@ -11,8 +11,9 @@ use tungstenite::Message;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, from_str, json, Error, Value};
 
-use crate::diff::Diff;
+use crate::diff::{Diff, ScriptChanges};
 use crate::utils::extract::extract;
+use crate::utils::git;
 use crate::utils::projects::ProjectConfig;
 
 fn get_project_path(projects: &Value, project_name: &str) -> PathBuf {
@@ -55,10 +56,7 @@ impl Cmd<'_> {
         else {
             return json!({});
         };
-        json!(crate::utils::git_piping::git_diff(
-            old_content.to_string(),
-            new_content.to_string()
-        ))
+        json!(git::diff(old_content.to_string(), new_content.to_string()))
     }
 
     fn create_project(data: CommandData) -> Value {
@@ -85,7 +83,7 @@ impl Cmd<'_> {
         };
 
         let Ok(file_path) = fs::canonicalize(&file_name) else {
-            return json!({ "project_name": "fail" });
+            return json!({ "message": "fail" });
         };
 
         match config.projects[&name] {
@@ -151,18 +149,15 @@ impl Cmd<'_> {
             return json!({ "project_name": "fail" });
         }
 
-        if !String::from_utf8(
-            Command::new("git")
-                .args(["commit", "-m", "Initial commit"])
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .current_dir(project_path)
-                .output()
-                .unwrap()
-                .stdout,
-        )
-        .unwrap()
-        .contains("Initial commit")
+        let mut git = Command::new("git");
+        let commit = git
+            .args(["commit", "-m", "Initial commit"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(project_path);
+        if !String::from_utf8(commit.output().unwrap().stdout)
+            .unwrap()
+            .contains("Initial commit")
         {
             return json!({ "project_name": "fail" });
         }
@@ -274,7 +269,7 @@ impl Cmd<'_> {
                 .as_str(),
         )
         .unwrap();
-        let current_diff = Diff::new(_current_project);
+        let current_diff = Diff::new(&_current_project);
 
         let _new_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.json"))
@@ -282,12 +277,9 @@ impl Cmd<'_> {
                 .as_str(),
         )
         .unwrap();
-        let new_diff = Diff::new(_new_project);
+        let new_diff = Diff::new(&_new_project);
 
-        let costume_removals = new_diff.costumes(&current_diff);
-        let commit_message = current_diff.commits(&new_diff).join(", ");
-
-        for change in costume_removals {
+        for change in new_diff.costumes(&current_diff) {
             fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
         }
 
@@ -300,17 +292,26 @@ impl Cmd<'_> {
             .unwrap()
             .success()
         {
-            return json!({ "project_name": "fail" });
+            return json!({ "message": "fail" });
         }
 
-        let mut binding = Command::new("git");
-        let git_commit = binding
-            .args(["commit", "-m", commit_message.as_str()])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(pth);
-        if !git_commit.status().unwrap().success() {
-            return json!({ "project_name": "Nothing to add" });
+        let mut git = Command::new("git");
+        let commit = git.args(["commit", "-m", "temporary"]).current_dir(&pth);
+
+        if !commit.status().unwrap().success() {
+            return json!({ "message": "fail" });
+        }
+
+        let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json");
+        let commit_message = previous_revision.commits(&new_diff).join(", ");
+
+        let mut git = Command::new("git");
+        let commit = git
+            .args(["commit", "--amend", "-m", &commit_message])
+            .current_dir(&pth);
+
+        if !commit.status().unwrap().success() {
+            return json!({ "message": "fail" });
         }
 
         json!({ "message": commit_message })
@@ -362,7 +363,7 @@ impl Cmd<'_> {
         };
         let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();
 
-        let current_diff = Diff::new(_current_project);
+        let current_diff = Diff::new(&_current_project);
         let _new_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.json"))
                 .unwrap()
@@ -370,14 +371,14 @@ impl Cmd<'_> {
         )
         .unwrap();
 
-        let new_diff = Diff::new(_new_project);
+        let new_diff = Diff::new(&_new_project);
         let sprites: Vec<_> = current_diff
-            .changed_sprites(&new_diff)
+            .blocks(&new_diff)
             .into_iter()
-            .map(|sprite| {
+            .map(|ScriptChanges { sprite, .. }| {
                 let parts = sprite.split(" ").collect::<Vec<_>>();
                 if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
-                    (parts[0].to_owned(), true)
+                    (parts[0].to_string(), true)
                 } else {
                     (sprite, false)
                 }

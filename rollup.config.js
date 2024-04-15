@@ -1,12 +1,16 @@
-const { string } = require("rollup-plugin-string");
+import typescript from "@rollup/plugin-typescript";
+import { string } from "rollup-plugin-string";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 
-module.exports = {
-  input: "src-frontend/main.js",
+export default {
+  input: "src-frontend/main.ts",
   output: { file: "userscript.js", format: "iife" },
   logLevel: "silent",
   plugins: [
     string({
       include: "src-frontend/media/*",
     }),
+    nodeResolve(),
+    typescript(),
   ],
 };

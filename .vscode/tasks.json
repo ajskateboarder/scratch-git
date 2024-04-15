@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Debug scratch-git",
+      "label": "Debug scratch-git (Linux)",
       "type": "shell",
-      "command": "nodemon -x 'pkill python3; python3 debug.py' -w src-server -w src-frontend &; sleep 4; cargo run -- --debug &; /opt/TurboWarp/turbowarp-desktop >/dev/null",
+      "command": "./.vscode/debug.sh",
       "group": {
         "kind": "build",
         "isDefault": true

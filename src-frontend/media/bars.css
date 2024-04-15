@@ -5,6 +5,14 @@
     height: 100%;
     padding-right: 5px;
 
+    & .in diff-modal {
+        margin: 0;
+        padding: 0;
+        width: 98%;
+        bottom: 15px;
+        justify-content: right
+    }
+
     & main {
         overflow-y: auto;
         flex-grow: 1;
@@ -64,25 +72,11 @@
 }
 
 .bottom-bar {
-    position: sticky;
     width: 100%;
     display: flex;
     justify-content: space-between;
     background-color: transparent;
     padding: 10px;
-    bottom: 0;
-
-    & select {
-        font-size: 14px;
-        background-color: var(--menu-bar-background-default);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: inherit;
-        font-weight: bold;
-    }
 }
 
 /* top bar */

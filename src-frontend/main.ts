@@ -1,5 +1,11 @@
 import initialize from "./initialize";
 import "./lib/index";
+declare global {
+  interface Window {
+    ReduxStore: any;
+    vm: any;
+  }
+}
 
 (async () => {
   // avoids scenarios where scratch.git initializes before the editor is finished

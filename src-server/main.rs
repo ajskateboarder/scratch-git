@@ -7,7 +7,7 @@ use std::{
     io::{stdin, BufRead},
     net::{TcpListener, TcpStream},
     path::PathBuf,
-    process::{exit, Command},
+    process::exit,
     thread::spawn,
 };
 use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
@@ -52,7 +52,12 @@ fn main() {
             PathBuf::from(stdin().lock().lines().next().unwrap().unwrap())
         }
     };
-    let mut debug = false;
+
+    let debug = if let Some(arg) = env::args().nth(1) {
+        arg == "--debug"
+    } else {
+        false
+    };
 
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
@@ -60,27 +65,12 @@ fn main() {
     }
     println!("Script copied to {}", path.to_str().unwrap());
 
-    if let Some(arg) = env::args().nth(1) {
-        if arg == "--debug" {
-            if !Command::new("curl")
-                .args(["-X", "GET", "http://localhost:3333/update"])
-                .status()
-                .unwrap()
-                .success()
-            {
-                println!("Error: failed to post to http://localhost:3333/update. Do you have the debug server running?");
-                exit(1);
-            }
-            debug = true;
-        }
-    }
-
     let _ = fs::create_dir("projects");
+    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
     println!(
         "Open TurboWarp Desktop to begin using scratch.git, and make sure to keep this running!"
     );
 
-    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
     for stream in server.incoming() {
         spawn(move || match stream {
             Ok(stream) => {

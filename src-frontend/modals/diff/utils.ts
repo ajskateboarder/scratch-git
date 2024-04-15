@@ -30,6 +30,7 @@ export function parseScripts(oldProject, newProject) {
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
+    //@ts-ignore
     .map(([[oldContent, newContent], scriptNo]) => {
       let status =
         oldContent !== "" && newContent !== ""
@@ -43,12 +44,10 @@ export function parseScripts(oldProject, newProject) {
   return changed;
 }
 
-/**
- * @param {string} oldContent
- * @param {string} newContent
- * @returns {Promise<{added: number; removed: number; diffed: string}>}
- */
-export function diff(oldContent, newContent) {
+export function diff(
+  oldContent: string,
+  newContent: string
+): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket("ws://localhost:8000");
     ws.onopen = () => {

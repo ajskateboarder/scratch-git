@@ -39,6 +39,16 @@ dialog[is="welcome-modal"] {
   white-space: normal;
   padding: 20px;
   box-sizing: border-box;
+  border-width: 2.5px;
+  border-radius: 10px;
+}
+
+.thumbnail {
+  filter: hue-rotate(90deg) saturate(1.3);
+  display: flex;
+  flex-grow: 1;
+  justify-content: right;
+  align-items: center;
 }
 
 dialog[is="diff-modal"] {
@@ -69,6 +79,26 @@ dialog[is="welcome-modal"] {
   }
 }
 
+#commitList {
+  position: absolute;
+  left: 47%;
+  transform: translateX(-50%);
+  width: 65%
+}
+
+.round-left-button {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  user-select: none
+}
+
+.round-right-button {
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  user-select: none
+}
+
+
 .dark {
   background-color: #111 !important;
   color: #eee;
@@ -85,7 +115,6 @@ dialog[is="welcome-modal"] {
 }
 
 #commits {
-  display: flex;
   align-items: center;
   margin-left: 10px;
 }
@@ -95,20 +124,24 @@ dialog[is="welcome-modal"] {
   min-width: 100%;
   padding: 10px 20px;
 
-  & .commit:first-child {
+  &:first-child {
     border-radius: 5px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
   }
 
-  & .commit:not(:first-child) {
+  &:not(:first-child) {
     border-top: none;
   }
 
-  & .commit:last-child {
+  &:last-child {
     border-radius: 5px;
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
+  }
+
+  &:only-child {
+    border-radius: 5px;
   }
 }
 
@@ -123,4 +156,24 @@ dialog[is="welcome-modal"] {
 
 #finishContent {
   text-align: left;
+}
+
+#step1,
+#step3 {
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+  width: 100%
+}
+
+#step2 {
+  display: none;
+  flex-direction: column;
+  padding: 20px
+}
+
+.stage-diff {
+  margin-top: 40px;
+  scale: 0.8;
+  z-index: 99999;
 }

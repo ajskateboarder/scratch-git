@@ -40,15 +40,13 @@ These features closely mimic the kind of Git development seen in editors such as
 Install the build dependencies:
 
 ```bash
-npm install -g rollup nodemon
-npm install rollup-plugin-string
+npm install
 ```
 
-And run the following to reload the frontend and backend whenever changes are saved:
+And run the debug script (Linux only for now):
 
 ```bash
-python3 debug.py &
-nodemon -x "cargo run -- --debug" -w src
+.vscode/debug.sh
 ```
 
 Alternatively, if you are using VSCode, there is a build task you can configure to run with <kbd>Ctrl+Shift+B</kbd>.
