@@ -1,2 +1,2 @@
-export * from "./accessors"
-export * from "./gui-components"
+export * from "./accessors.ts";
+export * from "./gui-components.ts";

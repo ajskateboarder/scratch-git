@@ -1,19 +1,19 @@
 /** @file Please someone refactor this nonsense */
 
-import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index";
-import { html } from "./utils";
-import api from "./api";
-import "./modals/index";
+import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index.ts";
+import { html } from "./utils.ts";
+import api from "./api.ts";
+import "./modals/index.ts";
 
 //@ts-ignore
 import BARS from "./media/bars.css";
 //@ts-ignore
 import MISC from "./media/misc.css";
 
-import { showIndicators } from "./diff-indicators";
-import van from "./lib/van";
-import { WelcomeModal } from "./modals/welcome";
-import { CommitModal } from "./modals/commit";
+import { showIndicators } from "./diff-indicators.ts";
+import van from "./lib/van.js";
+import { WelcomeModal } from "./modals/welcome.tsx";
+import { CommitModal } from "./modals/commit.ts";
 
 const { link, style } = van.tags;
 

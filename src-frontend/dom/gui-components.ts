@@ -1,6 +1,5 @@
-import van from "../lib/van";
-import { html } from "../utils";
-import { Cmp } from "./accessors";
+import van from "../lib/van.js";
+import { Cmp } from "./accessors.ts";
 
 const { div, img } = van.tags;
 

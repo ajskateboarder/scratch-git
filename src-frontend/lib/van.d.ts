@@ -65,9 +65,18 @@ export interface Van {
 
 declare const van: Van;
 
-export type ElemType<T extends keyof HTMLElementTagNameMap> = (
-  props: PropsWithKnownKeys<HTMLElementTagNameMap[T]>,
-  ...args: any[]
-) => HTMLElementTagNameMap[T];
+export type VanNode =
+  | VanElement
+  | VanNode[]
+  | (() => VanNode)
+  | undefined
+  | Primitive
+  | string
+  | null;
+
+export interface ComponentProps<T extends keyof HTMLElementTagNameMap> {
+  children?: VanNode;
+  props?: PropsWithKnownKeys<HTMLElementTagNameMap[T]>;
+}
 
 export default van;

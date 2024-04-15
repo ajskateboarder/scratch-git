@@ -43,6 +43,14 @@ dialog[is="welcome-modal"] {
   border-radius: 10px;
 }
 
+.thumbnail {
+  filter: hue-rotate(90deg) saturate(1.3);
+  display: flex;
+  flex-grow: 1;
+  justify-content: right;
+  align-items: center;
+}
+
 dialog[is="diff-modal"] {
   padding: 0;
 }
@@ -70,6 +78,26 @@ dialog[is="welcome-modal"] {
     user-select: none;
   }
 }
+
+#commitList {
+  position: absolute;
+  left: 47%;
+  transform: translateX(-50%);
+  width: 65%
+}
+
+.round-left-button {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  user-select: none
+}
+
+.round-right-button {
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  user-select: none
+}
+
 
 .dark {
   background-color: #111 !important;
@@ -128,6 +156,20 @@ dialog[is="welcome-modal"] {
 
 #finishContent {
   text-align: left;
+}
+
+#step1,
+#step3 {
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+  width: 100%
+}
+
+#step2 {
+  display: none;
+  flex-direction: column;
+  padding: 20px
 }
 
 .stage-diff {

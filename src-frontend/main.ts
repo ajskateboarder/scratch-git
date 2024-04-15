@@ -1,6 +1,5 @@
 import initialize from "./initialize";
 import "./lib/index";
-
 declare global {
   interface Window {
     ReduxStore: any;

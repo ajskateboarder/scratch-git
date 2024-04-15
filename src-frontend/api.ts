@@ -98,14 +98,13 @@ export class Project extends Socket {
 
   /** Retreive sprites that have been changed since project changes, sorted alphabetically*/
   async getSprites(): Promise<[string, boolean][]> {
-    /** @type {[string, boolean][]} */
-    let sprites = (
+    let sprites: [string, boolean][] = (
       await this.request({
         command: "get-changed-sprites",
         data: { Project: { project_name: this.projectName } },
       })
     ).sprites;
-    return sprites.sort((a, b) => a[0].localeCompare(b[0]));
+    return sprites.sort(([a, _b], [b, _c]) => a.localeCompare(b));
   }
 
   async getCurrentScripts(sprite: string) {
@@ -152,7 +151,7 @@ export class Project extends Socket {
 }
 
 export class ProjectExistsException extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = this.constructor.name;
   }

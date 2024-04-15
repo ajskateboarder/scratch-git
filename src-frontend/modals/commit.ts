@@ -1,6 +1,6 @@
-import { Cmp } from "../dom/index";
-import api, { Commit } from "../api";
-import van, { State } from "../lib/van";
+import { Cmp } from "../dom/index.ts";
+import api, { Commit } from "../api.ts";
+import van, { State } from "../lib/van.js";
 
 const {
   tags: { div, button, h1, br, span },
@@ -22,8 +22,8 @@ export function timeAgo(input: Date | string) {
   };
   const secondsElapsed = (date.getTime() - Date.now()) / 1000;
   const matched = Object.keys(ranges).find(
-    (key) => ranges[key] < Math.abs(secondsElapsed)
-  ) as string;
+    (key) => ranges[key as keyof typeof ranges] < Math.abs(secondsElapsed)
+  ) as keyof typeof ranges;
   return formatter.format(
     Math.round(secondsElapsed / ranges[matched]),
     matched as Intl.RelativeTimeFormatUnit
