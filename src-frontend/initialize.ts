@@ -10,7 +10,7 @@ import BARS from "./media/bars.css";
 import MISC from "./media/misc.css";
 
 import { showIndicators } from "./diff-indicators.ts";
-import van from "./lib/van.js";
+import van from "vanjs-core";
 import { WelcomeModal } from "./modals/welcome.tsx";
 import { CommitModal } from "./modals/commit.ts";
 

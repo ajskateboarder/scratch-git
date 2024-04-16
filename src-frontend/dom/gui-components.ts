@@ -1,4 +1,4 @@
-import van from "../lib/van.js";
+import van from "vanjs-core";
 import { Cmp } from "./accessors.ts";
 
 const { div, img } = van.tags;

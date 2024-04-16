@@ -1,7 +1,7 @@
 /** @file Displays indicators and info on sprites that were changed */
 import { type Project } from "./api";
 import { Cmp } from "./dom/index";
-import { van } from "./lib/index";
+import van from "vanjs-core";
 import { DiffModal } from "./modals/diff";
 
 const { div, i } = van.tags;

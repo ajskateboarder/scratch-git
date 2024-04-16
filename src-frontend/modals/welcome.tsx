@@ -3,7 +3,8 @@ import api, { ProjectExistsException } from "../api.js";
 
 //@ts-ignore
 import thumbnail from "../media/thumb.svg";
-import van, { type ComponentProps, type State } from "../lib/van.js";
+import van, { type State } from "vanjs-core";
+import { ComponentProps } from "../lib/van";
 
 const BottomBar = ({ children, props }: ComponentProps<"div">) => {
   return (
@@ -69,9 +70,13 @@ const Step1 = (that: WelcomeModal) => {
         <br />
         <br />
       </p>
-      {openProject}
-      <input type="checkbox" name="dontshowagain" />
-      <label htmlFor="dontshowagain"> Don't show again</label>
+      <div className="a-gap">
+        {openProject}
+        <span>
+          <input type="checkbox" name="dontshowagain" />
+          <label htmlFor="dontshowagain"> Don't show again</label>
+        </span>
+      </div>
       <br />
       <br />
       <BottomBar>

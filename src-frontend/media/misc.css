@@ -43,6 +43,12 @@ dialog[is="welcome-modal"] {
   border-radius: 10px;
 }
 
+.a-gap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .thumbnail {
   filter: hue-rotate(90deg) saturate(1.3);
   display: flex;
@@ -88,6 +94,7 @@ dialog[is="welcome-modal"] {
   & .commit-search {
     border-radius: 5px;
     border: 1px solid #111;
+    padding: 6px;
   }
 }
 
@@ -117,6 +124,10 @@ dialog[is="welcome-modal"] {
       color: #eee;
     }
   }
+}
+
+.dark.commit-search {
+  border: 1px solid #fff !important;
 }
 
 #commits {
@@ -153,6 +164,7 @@ dialog[is="welcome-modal"] {
 .pagination {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 10px;
 }
 

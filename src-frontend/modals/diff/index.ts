@@ -3,7 +3,7 @@ import api, { Project } from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
-import van from "../../lib/van";
+import van from "vanjs-core";
 
 const { div, label, input, span, ul, button, p, aside, main, br, hr } =
   van.tags;

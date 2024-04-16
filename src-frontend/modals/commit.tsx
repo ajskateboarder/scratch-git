@@ -1,9 +1,10 @@
 import { Cmp } from "../dom/index.ts";
 import api, { type Commit } from "../api.ts";
-import van, { State } from "../lib/van.js";
+import van, { type State } from "vanjs-core";
+import { guiTheme } from "../utils.ts";
 
 // https://stackoverflow.com/a/69122877/16019146
-export function timeAgo(input: Date | string) {
+function timeAgo(input: Date | string) {
   const date = input instanceof Date ? input : new Date(input);
   const formatter = new Intl.RelativeTimeFormat("en");
   const ranges = {
@@ -25,12 +26,24 @@ export function timeAgo(input: Date | string) {
   );
 }
 
+function highlight(fullText: string, search: string) {
+  if (search !== "") {
+    let text = new Option(fullText).innerHTML;
+    let newText = text.replace(
+      new RegExp(search.replace("+", "\\+"), "g"),
+      `<mark>${search}</mark>`
+    );
+    return span({ innerHTML: newText });
+  }
+  return fullText;
+}
+
 const { div, span, br } = van.tags;
 
-const Commit = (commit: Commit) =>
+const Commit = (commit: Commit, search: string) =>
   div(
     { class: "commit" },
-    span({ style: "font-size: 1rem" }, commit.subject),
+    span({ style: "font-size: 1rem" }, highlight(commit.subject, search)),
     br(),
     span(
       { style: "font-size: 0.75rem" },
@@ -46,17 +59,30 @@ const Commit = (commit: Commit) =>
 export class CommitModal extends HTMLDialogElement {
   older?: HTMLButtonElement;
   newer?: HTMLButtonElement;
-  commits?: State<Commit[]>;
-  searchQuery?: State<string>;
+
+  state?: {
+    commits?: State<Commit[]>;
+    searchQuery?: State<string>;
+    currentPage?: State<number>;
+  };
 
   constructor() {
     super();
   }
 
+  private static paginate(list: any[], length: number) {
+    return [...Array(Math.ceil(list.length / length))].map((_) =>
+      list.splice(0, length)
+    );
+  }
+
   connectedCallback() {
     if (this.querySelector("#commitList")) return;
-    this.commits = van.state([]);
-    this.searchQuery = van.state("");
+    this.state = {
+      commits: van.state([]),
+      searchQuery: van.state(""),
+      currentPage: van.state(0),
+    };
 
     const closeButton = (
       <button
@@ -84,13 +110,13 @@ export class CommitModal extends HTMLDialogElement {
 
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
-        this.commits!.val.map((e) => {
-          if (this.searchQuery!.val !== "") {
-            if (e.subject.includes(this.searchQuery!.val)) {
-              return Commit(e);
+        this.state!.commits!.val.map((e) => {
+          if (this.state!.searchQuery!.val !== "") {
+            if (e.subject.includes(this.state!.searchQuery!.val)) {
+              return Commit(e, this.state!.searchQuery!.val);
             }
           } else {
-            return Commit(e);
+            return Commit(e, "");
           }
         })
       )
@@ -107,9 +133,15 @@ export class CommitModal extends HTMLDialogElement {
           </span>
           <input
             type="text"
-            className="commit-search"
+            className={`commit-search${
+              guiTheme().gui === "dark" ? " dark" : ""
+            }`}
             placeholder="Search commits"
-            onInput={(e) => (this.searchQuery!.val = (e.target as any).value)}
+            onInput={(e) => {
+              this.state!.currentPage!.val = 0;
+              this.newer!.disabled = true;
+              this.state!.searchQuery!.val = (e.target as any).value;
+            }}
           />
         </div>
         <br />
@@ -144,13 +176,10 @@ export class CommitModal extends HTMLDialogElement {
   }
 
   async display() {
-    let page = 0;
     let commits_ = await (await api.getCurrentProject())!.getCommits();
+    let commits = CommitModal.paginate(commits_, 40);
 
-    let commits = [...Array(Math.ceil(commits_.length / 40))].map((_) =>
-      commits_.splice(0, 40)
-    );
-    this.commits!.val = commits[page];
+    this.state!.commits!.val = commits[this.state!.currentPage!.val];
 
     if (commits.length === 1) {
       this.newer!.disabled = true;
@@ -158,7 +187,17 @@ export class CommitModal extends HTMLDialogElement {
     }
 
     this.older!.onclick = () => {
-      this.commits!.val = commits[++page];
+      let page = ++this.state!.currentPage!.val;
+      this.state!.commits!.val = CommitModal.paginate(
+        commits
+          .flat()
+          .filter(
+            (e) =>
+              this.state!.searchQuery!.val !== "" ||
+              e.subject.includes(this.state!.searchQuery!.val)
+          ),
+        40
+      )[page];
       this.older!.disabled = page === commits.length - 1;
       this.newer!.disabled = page !== commits.length - 1;
       if (page !== 0 && page !== commits.length - 1) {
@@ -168,7 +207,17 @@ export class CommitModal extends HTMLDialogElement {
     };
 
     this.newer!.onclick = () => {
-      this.commits!.val = commits[--page];
+      let page = --this.state!.currentPage!.val;
+      this.state!.commits!.val = CommitModal.paginate(
+        commits
+          .flat()
+          .filter(
+            (e) =>
+              this.state!.searchQuery!.val !== "" ||
+              e.subject.includes(this.state!.searchQuery!.val)
+          ),
+        40
+      )[page];
       this.newer!.disabled = page === 0;
       this.older!.disabled = page !== 0;
       if (page !== 0 && page !== commits.length - 1) {
