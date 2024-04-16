@@ -83,7 +83,12 @@ dialog[is="welcome-modal"] {
   position: absolute;
   left: 47%;
   transform: translateX(-50%);
-  width: 65%
+  width: 65%;
+
+  & .commit-search {
+    border-radius: 5px;
+    border: 1px solid #111;
+  }
 }
 
 .round-left-button {
@@ -148,6 +153,7 @@ dialog[is="welcome-modal"] {
 .pagination {
   display: flex;
   justify-content: center;
+  gap: 10px;
 }
 
 #pathInput::file-selector-button {
