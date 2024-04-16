@@ -3,14 +3,13 @@ import { Cmp } from "./accessors.ts";
 
 const { div, img } = van.tags;
 
-/**
- * @typedef GitMenuFunctions
- * @property {() => any} push
- * @property {() => any} repoLocation
- * @property {() => any} ghToken
- * @property {() => any} commitView
- * @property {() => any} commitCreate
- */
+type GitMenuFunctions = {
+  push: () => any;
+  repoLocation: () => any;
+  ghToken: () => any;
+  commitView: () => any;
+  commitCreate: () => any;
+};
 
 class FileMenu {
   menu: HTMLDivElement;
@@ -28,7 +27,7 @@ class FileMenu {
   clickMenu(open: boolean) {
     // we pass a fake event object to control whether to open or close the file menu
     // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
-    this.menu[this.eventHandlers].onClick({
+    (this.menu as any)[this.eventHandlers].onClick({
       target: {
         closest: () => (open ? this.menu : document.body),
       },
@@ -38,7 +37,7 @@ class FileMenu {
   /** Opens a file picker dialog to load projects into TurboWarp */
   openProject() {
     this.clickMenu(true);
-    const loadFromComputer = this.menu.querySelectorAll("li")[2];
+    const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
     loadFromComputer[this.eventHandlers].onClick();
     this.clickMenu(false);
     this.clickMenu(true);
@@ -74,7 +73,7 @@ class GitMenu {
   item(index: number = 1) {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
     return {
-      label: (text) => {
+      label: (text: string) => {
         try {
           li.querySelector("span")!.innerText = text;
         } catch (e) {
@@ -82,7 +81,7 @@ class GitMenu {
         }
       },
       remove: () => li.remove(),
-      onclick: (handler) => {
+      onclick: (handler: () => any) => {
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
           this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
@@ -97,9 +96,14 @@ class GitMenu {
 
   /**
    * Copy the File nav menu and edit it to become a Git one
-   * @param {GitMenuFunctions}
    */
-  create({ push, repoLocation, ghToken, commitView, commitCreate }) {
+  create({
+    push,
+    repoLocation,
+    ghToken,
+    commitView,
+    commitCreate,
+  }: GitMenuFunctions) {
     if (this.initialized) return;
 
     // open, copy, and edit the file menu

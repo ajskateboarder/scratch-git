@@ -1,14 +1,14 @@
 import { guiTheme } from "../../utils";
-import api from "../../api";
+import api, { Project } from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
 import { parseScripts, diff } from "./utils";
-import van, { ElemType } from "../../lib/van";
+import van from "../../lib/van";
 
 const { div, label, input, span, ul, button, p, aside, main, br, hr } =
   van.tags;
 
-const Setting: ElemType<"div"> = (props, name) =>
+const Setting = (props: {}, name: string) =>
   div(
     { class: Cmp.SETTINGS_LABEL, ...props },
     label(
@@ -24,17 +24,14 @@ const Setting: ElemType<"div"> = (props, name) =>
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends HTMLDialogElement {
-  /** @type {HTMLUListElement} */
-  scripts;
-  /** @type {HTMLParagraphElement} */
-  commits;
-  /** @type {HTMLInputElement} */
-  useHighlights;
-  /** @type {HTMLInputElement} */
-  plainText;
+  //@ts-ignore
+  scripts: HTMLUListElement; //@ts-ignore
+  commits: HTMLParagraphElement; //@ts-ignore
+  useHighlights: HTMLInputElement; //@ts-ignore
+  plainText: HTMLInputElement; //@ts-ignore
 
-  previousScripts;
-  currentScripts;
+  previousScripts: any;
+  currentScripts: any;
 
   constructor() {
     super();
@@ -67,9 +64,9 @@ export class DiffModal extends HTMLDialogElement {
     );
 
     this.scripts = ul({ id: "scripts" });
-    this.useHighlights = useHighlights.querySelector("input");
-    this.plainText = plainText.querySelector("input");
-    this.commits = commits.querySelector("#commitView");
+    this.useHighlights = useHighlights.querySelector("input")!;
+    this.plainText = plainText.querySelector("input")!;
+    this.commits = commits.querySelector("#commitView")!;
 
     van.add(
       this,
@@ -103,14 +100,15 @@ export class DiffModal extends HTMLDialogElement {
       .showModal();
   }
 
-  /**
-   * @param {import("../../api").Project} project
-   * @param {string} sprite
-   * @param {number} script - 0 by default
-   */
-  async diff(project, sprite, script = 0, cached = false) {
+  async diff(
+    project: Project | undefined,
+    sprite: string,
+    script = 0,
+    cached = false
+  ) {
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
+    project = project!;
 
     let oldProject, newProject;
     if (cached) {
@@ -164,7 +162,10 @@ export class DiffModal extends HTMLDialogElement {
           blocks
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
-              let darkFill = DarkBlocks[element.classList.item(0)!];
+              let darkFill =
+                DarkBlocks[
+                  element.classList.item(0) as keyof typeof DarkBlocks
+                ];
               if (darkFill) {
                 element.style.fill = darkFill;
               }
@@ -172,7 +173,10 @@ export class DiffModal extends HTMLDialogElement {
           blocks
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
-              let darkFill = DarkBlocks[element.classList.item(0)!];
+              let darkFill =
+                DarkBlocks[
+                  element.classList.item(0) as keyof typeof DarkBlocks
+                ];
               if (darkFill) {
                 element.style.fill = darkFill;
               }
@@ -236,9 +240,7 @@ export class DiffModal extends HTMLDialogElement {
       });
     };
 
-    let theme = getComputedStyle(document.body).getPropertyValue(
-      "--color-scheme"
-    );
+    let uiTheme = guiTheme().gui;
 
     const highlightPlain = () => {
       let content = diffs[script].diffed ?? "";
@@ -260,7 +262,7 @@ export class DiffModal extends HTMLDialogElement {
       }
     };
 
-    const darkDiff = (theme) => {
+    const darkDiff = (theme: "dark" | "light") => {
       let svg = this.querySelectorAll(".scratchblocks svg > g");
       if (theme === "dark") {
         svg.forEach((blocks) => {
@@ -314,9 +316,7 @@ export class DiffModal extends HTMLDialogElement {
           this.commits.innerHTML += "<br>";
         }
       }
-      darkDiff(
-        getComputedStyle(document.body).getPropertyValue("--color-scheme")
-      );
+      darkDiff(uiTheme);
     };
 
     this.plainText.onchange = () => {
@@ -333,9 +333,7 @@ export class DiffModal extends HTMLDialogElement {
         removeExtraEnds();
         if (this.useHighlights.checked) highlightDiff();
       }
-      darkDiff(
-        getComputedStyle(document.body).getPropertyValue("--color-scheme")
-      );
+      darkDiff(uiTheme);
     };
 
     // assign diff displaying to diffs
@@ -378,10 +376,10 @@ export class DiffModal extends HTMLDialogElement {
       .classList.add("active-tab");
 
     // dark mode
-    if (theme === "dark")
+    if (uiTheme === "dark")
       document.querySelector("aside")!.classList.add("dark");
     else document.querySelector("aside")!.classList.remove("dark");
-    darkDiff(theme);
+    darkDiff(uiTheme);
     removeExtraEnds();
     this.useHighlights.checked = false;
     this.plainText.checked = false;

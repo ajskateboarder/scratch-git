@@ -1,12 +1,12 @@
 /** @file Displays indicators and info on sprites that were changed */
+import { type Project } from "./api";
 import { Cmp } from "./dom/index";
 import { van } from "./lib/index";
-import { ElemType } from "./lib/van";
 import { DiffModal } from "./modals/diff";
 
 const { div, i } = van.tags;
 
-const BaseDelete: ElemType<"div"> = (props, children: HTMLDivElement) =>
+const BaseDelete = (props: {}, children: HTMLDivElement) =>
   div(
     {
       ariaLabel: "Diff",
@@ -17,7 +17,7 @@ const BaseDelete: ElemType<"div"> = (props, children: HTMLDivElement) =>
     children
   );
 
-const SpriteDiff: ElemType<"div"> = (props) =>
+const SpriteDiff = (props: {}) =>
   BaseDelete(
     {
       className: [
@@ -36,7 +36,7 @@ const SpriteDiff: ElemType<"div"> = (props) =>
     )
   );
 
-const StageDiff: ElemType<"div"> = (props) =>
+const StageDiff = (props: {}) =>
   BaseDelete(
     {
       className: [
@@ -55,8 +55,7 @@ const StageDiff: ElemType<"div"> = (props) =>
     )
   );
 
-/** @param {import("./api").Project} project  */
-export async function showIndicators(project) {
+export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites();
   // @ts-ignore
   let sprites = [...document.querySelector(`.${Cmp.SPRITES}`).children];
@@ -80,7 +79,6 @@ export async function showIndicators(project) {
 
     if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
     let applyMargin = sprite.querySelector(`.${Cmp.DELETE_BUTTON}`) !== null;
-    /** @type {HTMLElement} */
     let diffButton = SpriteDiff({
       style: `
       margin-top: ${applyMargin ? "30px" : "0px"};
@@ -97,7 +95,7 @@ export async function showIndicators(project) {
         diffButton.style.scale = "0.8";
         diffButton.style.boxShadow = "0px 0px 0px 2px var(--looks-transparent)";
       },
-      onclick: async (e) => {
+      onclick: async (e: Event) => {
         e.stopPropagation();
         (document.querySelector("dialog[is='diff-modal']") as DiffModal).diff(
           project,
@@ -154,7 +152,7 @@ export async function showIndicators(project) {
         stageDiffButton.style.boxShadow =
           "0px 0px 0px 2px var(--looks-transparent)";
       },
-      onclick: async (e) => {
+      onclick: async (e: Event) => {
         e.stopPropagation();
         document
           .querySelector<DiffModal>("dialog[is='diff-modal']")!

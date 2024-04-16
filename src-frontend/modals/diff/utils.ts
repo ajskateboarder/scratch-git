@@ -1,14 +1,11 @@
-const zip = (a, b) =>
+const zip = (a: any[], b: any[]) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
     a[i] ?? "",
     b[i] ?? "",
   ]);
 
-/** Parse scripts in a project that have been modified
- * @param {object} oldProject
- * @param {object} newProject
- */
-export function parseScripts(oldProject, newProject) {
+/** Parse scripts in a project that have been modified */
+export function parseScripts(oldProject: any, newProject: any) {
   let oldBlocks, newBlocks;
   try {
     oldBlocks = Object.keys(oldProject)
@@ -25,7 +22,10 @@ export function parseScripts(oldProject, newProject) {
           tabs: "",
         })
       );
-  } catch {}
+  } catch (e: any) {
+    console.error(e.stack);
+    throw new Error("failed to parse blocks");
+  }
 
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])

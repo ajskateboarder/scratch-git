@@ -1,5 +1,5 @@
 import { Cmp } from "../dom/index.ts";
-import api, { Commit } from "../api.ts";
+import api, { type Commit } from "../api.ts";
 import van, { State } from "../lib/van.js";
 
 // https://stackoverflow.com/a/69122877/16019146

@@ -1,14 +1,13 @@
 /** @file A lookup to create elements using scratch-gui classnames */
 
-/** @type {string[]} */
-const classNames = [...[...document.styleSheets].map((e) => e.cssRules)]
+const classNames: string[] = [...[...document.styleSheets].map((e) => e.cssRules)]
   .map((e) => Array.from(e))
   .flatMap((e) => e)
   .map((e: any) => e.selectorText)
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 
-const s = (className) => classNames.filter((e) => e.includes(className))[0];
+const s = (className: string) => classNames.filter((e) => e.includes(className))[0];
 
 /** Accessors for parts of the UI */
 export const Cmp = {

@@ -1,7 +1,6 @@
 /** @file Please someone refactor this nonsense */
 
 import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index.ts";
-import { html } from "./utils.ts";
 import api from "./api.ts";
 import "./modals/index.ts";
 
@@ -50,7 +49,7 @@ export default async function () {
   if (!document.querySelector("dialog[is='diff-modal']"))
     document.querySelector(
       "body > div[style='display: none;']"
-    )!.innerHTML += html`<dialog
+    )!.innerHTML += `<dialog
         is="diff-modal"
         style="overflow-x: hidden"
       ></dialog>
@@ -68,9 +67,9 @@ export default async function () {
       ...document.querySelectorAll(`.diff-button`),
       ...document.querySelectorAll(`.stage-diff-button`),
     ].forEach((e) => e.remove());
-    let project = await api.getCurrentProject();
+    let project = await api.getCurrentProject()!;
     await project!.unzip();
-    await showIndicators(project);
+    await showIndicators(project!);
   };
 
   // setting an interval ensures the listeners always exist
