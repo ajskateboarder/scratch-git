@@ -59,6 +59,7 @@ const Commit = (commit: Commit, search: string) =>
 export class CommitModal extends HTMLDialogElement {
   older?: HTMLButtonElement;
   newer?: HTMLButtonElement;
+  search?: HTMLInputElement;
 
   state?: {
     commits?: State<Commit[]>;
@@ -108,6 +109,14 @@ export class CommitModal extends HTMLDialogElement {
       </button>
     ) as HTMLButtonElement;
 
+    this.search = (
+      <input
+        type="text"
+        className={`commit-search${guiTheme().gui === "dark" ? " dark" : ""}`}
+        placeholder="Search commits"
+      />
+    ) as HTMLInputElement;
+
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
         this.state!.commits!.val.map((e) => {
@@ -131,18 +140,7 @@ export class CommitModal extends HTMLDialogElement {
             {this.newer}
             {this.older}
           </span>
-          <input
-            type="text"
-            className={`commit-search${
-              guiTheme().gui === "dark" ? " dark" : ""
-            }`}
-            placeholder="Search commits"
-            onInput={(e) => {
-              this.state!.currentPage!.val = 0;
-              this.newer!.disabled = true;
-              this.state!.searchQuery!.val = (e.target as any).value;
-            }}
-          />
+          {this.search}
         </div>
         <br />
         {commitGroup}
@@ -177,6 +175,7 @@ export class CommitModal extends HTMLDialogElement {
 
   async display() {
     let commits_ = await (await api.getCurrentProject())!.getCommits();
+    console.log(commits_);
     let commits = CommitModal.paginate(commits_, 40);
 
     this.state!.commits!.val = commits[this.state!.currentPage!.val];
@@ -224,6 +223,28 @@ export class CommitModal extends HTMLDialogElement {
         this.older!.disabled = false;
         this.newer!.disabled = false;
       }
+    };
+
+    this.search!.oninput = async (s) => {
+      let search = (s.target! as any).value;
+      this.state!.searchQuery!.val = search;
+      if (search === "") {
+        let page = this.state!.currentPage!.val;
+        this.newer!.disabled = page === 0;
+        this.older!.disabled = page !== 0;
+        if (page !== 0 && page !== commits.length - 1) {
+          this.older!.disabled = false;
+          this.newer!.disabled = false;
+        }
+        this.state!.commits!.val = commits[page];
+        return;
+      }
+      commits_ = await (await api.getCurrentProject())!.getCommits();
+      this.state!.commits!.val = commits_
+        .flat()
+        .filter((e) => e.subject.includes(search));
+      this.older!.disabled = true;
+      this.newer!.disabled = true;
     };
 
     if (!this.open) this._showMe();

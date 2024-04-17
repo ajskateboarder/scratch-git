@@ -13,6 +13,6 @@ export default {
     }),
     nodeResolve(),
     typescript(),
-    terser(),
+    // terser(),
   ],
 };
