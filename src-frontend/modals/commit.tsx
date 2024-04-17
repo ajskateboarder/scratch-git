@@ -55,6 +55,11 @@ const Commit = (commit: Commit, search: string) =>
     )
   );
 
+const paginate = (list: any[], length: number) =>
+  [...Array(Math.ceil(list.length / length))].map((_) =>
+    list.splice(0, length)
+  );
+
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends HTMLDialogElement {
   older?: HTMLButtonElement;
@@ -62,25 +67,19 @@ export class CommitModal extends HTMLDialogElement {
   search?: HTMLInputElement;
 
   state?: {
-    commits?: State<Commit[]>;
-    searchQuery?: State<string>;
-    currentPage?: State<number>;
+    paginatedCommits: State<Commit[]>;
+    searchQuery: State<string>;
+    currentPage: State<number>;
   };
 
   constructor() {
     super();
   }
 
-  private static paginate(list: any[], length: number) {
-    return [...Array(Math.ceil(list.length / length))].map((_) =>
-      list.splice(0, length)
-    );
-  }
-
   connectedCallback() {
     if (this.querySelector("#commitList")) return;
     this.state = {
-      commits: van.state([]),
+      paginatedCommits: van.state([]),
       searchQuery: van.state(""),
       currentPage: van.state(0),
     };
@@ -119,10 +118,10 @@ export class CommitModal extends HTMLDialogElement {
 
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
-        this.state!.commits!.val.map((e) => {
-          if (this.state!.searchQuery!.val !== "") {
-            if (e.subject.includes(this.state!.searchQuery!.val)) {
-              return Commit(e, this.state!.searchQuery!.val);
+        this.state!.paginatedCommits.val.map((e) => {
+          if (this.state!.searchQuery.val !== "") {
+            if (e.subject.includes(this.state!.searchQuery.val)) {
+              return Commit(e, this.state!.searchQuery.val);
             }
           } else {
             return Commit(e, "");
@@ -176,9 +175,9 @@ export class CommitModal extends HTMLDialogElement {
   async display() {
     let commits_ = await (await api.getCurrentProject())!.getCommits();
     console.log(commits_);
-    let commits = CommitModal.paginate(commits_, 40);
+    let commits = paginate(commits_, 40);
 
-    this.state!.commits!.val = commits[this.state!.currentPage!.val];
+    this.state!.paginatedCommits.val = commits[this.state!.currentPage.val];
 
     if (commits.length === 1) {
       this.newer!.disabled = true;
@@ -186,14 +185,14 @@ export class CommitModal extends HTMLDialogElement {
     }
 
     this.older!.onclick = () => {
-      let page = ++this.state!.currentPage!.val;
-      this.state!.commits!.val = CommitModal.paginate(
+      let page = ++this.state!.currentPage.val;
+      this.state!.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
-              this.state!.searchQuery!.val !== "" ||
-              e.subject.includes(this.state!.searchQuery!.val)
+              this.state!.searchQuery.val !== "" ||
+              e.subject.includes(this.state!.searchQuery.val)
           ),
         40
       )[page];
@@ -206,14 +205,14 @@ export class CommitModal extends HTMLDialogElement {
     };
 
     this.newer!.onclick = () => {
-      let page = --this.state!.currentPage!.val;
-      this.state!.commits!.val = CommitModal.paginate(
+      let page = --this.state!.currentPage.val;
+      this.state!.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
-              this.state!.searchQuery!.val !== "" ||
-              e.subject.includes(this.state!.searchQuery!.val)
+              this.state!.searchQuery.val !== "" ||
+              e.subject.includes(this.state!.searchQuery.val)
           ),
         40
       )[page];
@@ -227,20 +226,20 @@ export class CommitModal extends HTMLDialogElement {
 
     this.search!.oninput = async (s) => {
       let search = (s.target! as any).value;
-      this.state!.searchQuery!.val = search;
+      this.state!.searchQuery.val = search;
       if (search === "") {
-        let page = this.state!.currentPage!.val;
+        let page = this.state!.currentPage.val;
         this.newer!.disabled = page === 0;
         this.older!.disabled = page !== 0;
         if (page !== 0 && page !== commits.length - 1) {
           this.older!.disabled = false;
           this.newer!.disabled = false;
         }
-        this.state!.commits!.val = commits[page];
+        this.state!.paginatedCommits.val = commits[page];
         return;
       }
       commits_ = await (await api.getCurrentProject())!.getCommits();
-      this.state!.commits!.val = commits_
+      this.state!.paginatedCommits.val = commits_
         .flat()
         .filter((e) => e.subject.includes(search));
       this.older!.disabled = true;
