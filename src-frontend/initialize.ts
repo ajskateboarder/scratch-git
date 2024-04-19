@@ -49,10 +49,7 @@ export default async function () {
   if (!document.querySelector("dialog[is='diff-modal']"))
     document.querySelector(
       "body > div[style='display: none;']"
-    )!.innerHTML += `<dialog
-        is="diff-modal"
-        style="overflow-x: hidden"
-      ></dialog>
+    )!.innerHTML += `<dialog is="diff-modal"></dialog>
       <dialog
         is="commit-modal"
         style="overflow-x: hidden; overflow-y: auto"

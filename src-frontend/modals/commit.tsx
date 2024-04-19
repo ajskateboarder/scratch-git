@@ -4,7 +4,7 @@ import van, { type State } from "vanjs-core";
 import { guiTheme } from "../utils.ts";
 
 // https://stackoverflow.com/a/69122877/16019146
-function timeAgo(input: Date | string) {
+const timeAgo = (input: Date | string) => {
   const date = input instanceof Date ? input : new Date(input);
   const formatter = new Intl.RelativeTimeFormat("en");
   const ranges = {
@@ -24,9 +24,9 @@ function timeAgo(input: Date | string) {
     Math.round(secondsElapsed / ranges[matched]),
     matched as Intl.RelativeTimeFormatUnit
   );
-}
+};
 
-function highlight(fullText: string, search: string) {
+const highlight = (fullText: string, search: string) => {
   if (search !== "") {
     let text = new Option(fullText).innerHTML;
     let newText = text.replace(
@@ -36,7 +36,7 @@ function highlight(fullText: string, search: string) {
     return span({ innerHTML: newText });
   }
   return fullText;
-}
+};
 
 const { div, span, br } = van.tags;
 

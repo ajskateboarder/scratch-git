@@ -60,11 +60,18 @@
         background-color: grey;
         height: 1px;
         border: 0;
+        width: 95%;
     }
 
     .content {
         margin-top: 10px;
+        overflow-x: hidden;
     }
+}
+
+.display-error {
+    text-align: center;
+    font-weight: bold;
 }
 
 .bottom {

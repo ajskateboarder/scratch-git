@@ -5,7 +5,7 @@ import { Cmp, DarkBlocks } from "../../dom/index";
 import { parseScripts, diff } from "./utils";
 import van from "vanjs-core";
 
-const { div, label, input, span, ul, button, p, aside, main, br, hr } =
+const { div, label, input, span, ul, button, p, aside, main, br, hr, i, a } =
   van.tags;
 
 const Setting = (props: {}, name: string) =>
@@ -126,7 +126,8 @@ export class DiffModal extends HTMLDialogElement {
     oldProject = this.previousScripts;
     newProject = this.currentScripts;
 
-    const scripts = parseScripts(oldProject, newProject);
+    let scripts = parseScripts(oldProject, newProject);
+
     // not sure why all this isn't just done by diff()
     const diffs = (
       await Promise.all(
@@ -134,7 +135,26 @@ export class DiffModal extends HTMLDialogElement {
       )
     )
       .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
-      .filter((result) => result.diffed !== "");
+      .filter((result) => result.diffed !== "" || result.status === "error");
+
+    if (diffs[script].status === "error") {
+      this.useHighlights.checked = false;
+      this.useHighlights.disabled = true;
+      (this.useHighlights.parentElement!.style as any) =
+        "opacity: 0.5; user-select: none";
+      this.plainText.checked = false;
+      this.plainText.disabled = true;
+      (this.plainText.parentElement!.style as any) =
+        "opacity: 0.5; user-select: none";
+      this.commits.innerText = "Failed to display blocks.";
+    } else {
+      this.useHighlights.checked = true;
+      this.useHighlights.disabled = false;
+      (this.useHighlights.parentElement!.style as any) = "";
+      this.plainText.checked = true;
+      this.plainText.disabled = false;
+      (this.plainText.parentElement!.style as any) = "";
+    }
 
     let blockTheme = guiTheme().blocks;
     let config = {
@@ -210,7 +230,7 @@ export class DiffModal extends HTMLDialogElement {
     };
 
     this.scripts.innerHTML = "";
-    this.commits.innerText = diffs[script].diffed ?? "";
+    this.commits.innerText = diffs[script]?.diffed ?? "";
     diffBlocks();
     this.commits.innerHTML += "<br>";
 
@@ -342,6 +362,7 @@ export class DiffModal extends HTMLDialogElement {
       let link = document.createElement("button");
       link.classList.add("tab-btn");
       link.setAttribute("script-no", i.toString());
+
       if (i !== script) {
         link.onclick = async () => {
           document
@@ -360,13 +381,17 @@ export class DiffModal extends HTMLDialogElement {
           );
         };
       }
-      link.innerHTML = `<i class="fa-solid fa-square-${
-        diff.status === "added"
-          ? "plus"
-          : diff.status === "removed"
-          ? "xmark"
-          : "minus"
-      }"></i> Script ${diff.scriptNo}`;
+
+      const icon = {
+        added: "fa-solid fa-square-plus",
+        removed: "fa-solid fa-square-xmark",
+        modified: "fa-solid fa-square-minus",
+        error: "fa-solid fa-triangle-exclamation",
+      };
+      console.log(diff);
+      link.innerHTML = `<i class="${icon[diff.status]}"></i> Script ${
+        diff.scriptNo
+      }`;
       newItem.appendChild(link);
       this.scripts.appendChild(newItem);
     });
@@ -383,6 +408,33 @@ export class DiffModal extends HTMLDialogElement {
     removeExtraEnds();
     this.useHighlights.checked = false;
     this.plainText.checked = false;
+
+    if (diffs[script].status === "error") {
+      this.commits.classList.add("display-error");
+      this.commits.innerHTML = "";
+      this.commits.append(
+        p(
+          { style: "font-size: 15px" },
+          i({ class: "fa-solid fa-circle-exclamation" }),
+          br(),
+          p(
+            "Sorry, but we could not display blocks for this change. (likely because it has an empty if block)",
+            br(),
+            "However, this change can still be commited.",
+            br(),
+            a(
+              {
+                style: "font-size: 13px; text-decoration: none; color: grey",
+                href: "https://github.com/apple502j/parse-sb3-blocks/issues/9",
+              },
+              "see apple502j/parse-sb3-blocks#9"
+            )
+          )
+        )
+      );
+    } else {
+      this.commits.classList.remove("display-error");
+    }
 
     if (!this.open) this._showMe();
   }

@@ -73,7 +73,6 @@ pub fn diff(mut old_content: String, mut new_content: String) -> GitDiff {
         .iter()
         .map(|line| {
             let split = line.split(" ").collect::<Vec<&str>>();
-            dbg!(&split);
             if split.len() != 1
                 && split[1].starts_with("-")
                 && split[2].starts_with("+")
