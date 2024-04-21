@@ -62,7 +62,7 @@ export default async function () {
   const displayDiffs = async () => {
     [
       ...document.querySelectorAll(`.diff-button`),
-      ...document.querySelectorAll(`.stage-diff-button`),
+      ...document.querySelectorAll(`.stage-diff`),
     ].forEach((e) => e.remove());
     let project = await api.getCurrentProject()!;
     await project!.unzip();

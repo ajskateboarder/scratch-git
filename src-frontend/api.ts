@@ -46,7 +46,13 @@ export class Socket extends WebSocket {
   receive(): Promise<any> {
     return new Promise((resolve, reject) => {
       this.onmessage = (message) => {
-        return resolve(JSON.parse(message.data));
+        try {
+          let json = JSON.parse(message.data);
+          return resolve(json);
+        } catch (e: any) {
+          console.log(e.stack);
+          throw new Error(message.data);
+        }
       };
 
       this.onerror = (error) => {

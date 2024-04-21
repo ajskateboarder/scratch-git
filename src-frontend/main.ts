@@ -6,6 +6,7 @@ declare global {
     vm: any;
     scratchblocks: any;
     parseSB3Blocks: any;
+    Blockly: any;
   }
 }
 
