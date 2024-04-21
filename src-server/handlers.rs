@@ -1,3 +1,4 @@
+use dunce::canonicalize;
 use std::fs;
 use std::{
     path::{Path, PathBuf},
@@ -38,7 +39,7 @@ enum CommandData<'a> {
         old_content: String,
         new_content: String,
     },
-    FilePath(&'a str),
+    FilePath(String),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -63,7 +64,7 @@ impl Cmd<'_> {
         let CommandData::FilePath(file_name) = data else {
             return json!({});
         };
-        let binding = Path::new(file_name)
+        let binding = Path::new(&file_name)
             .file_name()
             .unwrap()
             .to_os_string()
@@ -73,16 +74,16 @@ impl Cmd<'_> {
         let name = binding.split(".").collect::<Vec<_>>()[0];
         let mut config = project_config().lock().unwrap();
 
-        let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
+        let project_path_result = canonicalize(Path::new("projects").join(&name));
         let project_path = match project_path_result {
             Ok(file) => file,
             Err(_) => {
                 let _ = fs::create_dir(Path::new("projects").join(&name));
-                fs::canonicalize(Path::new("projects").join(&name)).unwrap()
+                canonicalize(Path::new("projects").join(&name)).unwrap()
             }
         };
 
-        let Ok(file_path) = fs::canonicalize(&file_name) else {
+        let Ok(file_path) = canonicalize(&file_name) else {
             return json!({ "message": "fail" });
         };
 
@@ -123,38 +124,45 @@ impl Cmd<'_> {
         )
         .unwrap();
 
-        let init_repo = Command::new("git")
-            .args(["init"])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(&project_path)
-            .output()
-            .expect("failed to intialize git repo");
-        if !String::from_utf8(init_repo.stdout)
-            .unwrap()
-            .contains("Git repository")
-        {
+        let init_repo = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "init"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.arg("init");
+            git
+        }
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .current_dir(&project_path)
+        .output()
+        .expect("failed to intialize git repo");
+
+        let response = String::from_utf8(init_repo.stdout).unwrap();
+
+        if !response.contains("Git repository") {
             return json!({ "project_name": "fail" });
         }
 
-        if !Command::new("git")
-            .args(["add", "."])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(&project_path)
-            .status()
-            .unwrap()
-            .success()
-        {
+        if !git::add(&project_path) {
             return json!({ "project_name": "fail" });
         }
 
-        let mut git = Command::new("git");
-        let commit = git
-            .args(["commit", "-m", "Initial commit"])
+        let mut commit = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "commit", "-m", "Initial commit"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["commit", "-m", "Initial commit"]);
+            git
+        };
+        let commit = commit
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(project_path);
+
         if !String::from_utf8(commit.output().unwrap().stdout)
             .unwrap()
             .contains("Initial commit")
@@ -247,14 +255,23 @@ impl Cmd<'_> {
             return json!({});
         };
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
-        json!({ "status": if !Command::new("git")
-            .arg("push")
+        let mut push = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "push"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.arg("push");
+            git
+        };
+        let push = push
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(&pth)
-            .status()
-            .unwrap()
-            .success() { "fail" } else { "success" } })
+            .current_dir(&pth);
+        json!({ "status": if !push
+                .status()
+                .unwrap()
+                .success() { "fail" } else { "success" } })
     }
 
     fn commit(data: CommandData) -> Value {
@@ -262,9 +279,10 @@ impl Cmd<'_> {
             return json!({});
         };
 
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let project_path =
+            get_project_path(&project_config().lock().unwrap().projects, &project_name);
         let _current_project = serde_json::from_str::<serde_json::Value>(
-            &fs::read_to_string(pth.join("project.old.json"))
+            &fs::read_to_string(project_path.join("project.old.json"))
                 .unwrap()
                 .as_str(),
         )
@@ -272,7 +290,7 @@ impl Cmd<'_> {
         let current_diff = Diff::new(&_current_project);
 
         let _new_project = serde_json::from_str::<serde_json::Value>(
-            &fs::read_to_string(pth.join("project.json"))
+            &fs::read_to_string(project_path.join("project.json"))
                 .unwrap()
                 .as_str(),
         )
@@ -280,35 +298,42 @@ impl Cmd<'_> {
         let new_diff = Diff::new(&_new_project);
 
         for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
+            fs::remove_file(project_path.join(change.costume_path))
+                .expect("failed to remove asset");
         }
 
-        if !Command::new("git")
-            .args(["add", "."])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(&pth)
-            .status()
-            .unwrap()
-            .success()
-        {
+        if !git::add(&project_path) {
             return json!({ "message": "fail" });
         }
 
-        let mut git = Command::new("git");
-        let commit = git.args(["commit", "-m", "temporary"]).current_dir(&pth);
+        let mut commit = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "commit", "-m", "temporary"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["commit", "-m", "temporary"]);
+            git
+        };
+        let commit = commit.current_dir(&project_path);
 
         if !commit.status().unwrap().success() {
             return json!({ "message": "fail" });
         }
 
-        let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json");
+        let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");
         let commit_message = previous_revision.commits(&new_diff).join(", ");
 
-        let mut git = Command::new("git");
-        let commit = git
-            .args(["commit", "--amend", "-m", &commit_message])
-            .current_dir(&pth);
+        let mut commit = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "commit", "--amend", "-m", &commit_message]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["commit", "--amend", "-m", &commit_message]);
+            git
+        };
+        let commit = commit.current_dir(&project_path);
 
         if !commit.status().unwrap().success() {
             return json!({ "message": "fail" });
@@ -322,13 +347,22 @@ impl Cmd<'_> {
             return json!({});
         };
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let format = "--pretty=format:{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},";
 
-        let git_log = Command::new("git")
-            .args([
-                "log",
-                &("--pretty=format:".to_owned()+
-                "{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},")
-            ]).current_dir(pth).output().unwrap().stdout;
+        let git_log = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "log", format]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["log", format]);
+            git
+        }
+        .current_dir(pth)
+        .output()
+        .unwrap()
+        .stdout;
+
         let binding = String::from_utf8(git_log).unwrap();
         let binding = if binding.as_str().matches("\"commit\"").count() > 1 {
             format!(
@@ -358,7 +392,7 @@ impl Cmd<'_> {
         let project_old_json = match binding {
             Ok(fh) => fh.as_str(),
             Err(_) => {
-                return json!({ "status": "you forgot to unzip the project dingus" });
+                return json!({ "status": "unzip the project first that should do it" });
             }
         };
         let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();

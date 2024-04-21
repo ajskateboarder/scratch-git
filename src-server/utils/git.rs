@@ -5,12 +5,19 @@ use std::process::{Command, Stdio};
 
 /// Return a generated blob ID from a string
 fn git_object_id(content: String) -> String {
-    let mut child = Command::new("git")
-        .args(["hash-object", "-w", "--stdin"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("failed to open git hash-object");
+    let mut child = if cfg!(target_os = "windows") {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "git", "hash-object", "-w", "--stdin"]);
+        cmd
+    } else {
+        let mut git = Command::new("git");
+        git.args(["hash-object", "-w", "--stdin"]);
+        git
+    }
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
+    .spawn()
+    .expect("failed to open git hash-object");
     let mut stdin = child.stdin.take().expect("failed to open stdin");
     std::thread::spawn(move || {
         stdin
@@ -45,11 +52,18 @@ pub fn diff(mut old_content: String, mut new_content: String) -> GitDiff {
     }
     let old_id = git_object_id(old_content.into());
     let new_id = git_object_id(new_content.into());
-    let proc = Command::new("git")
-        .args(["diff", "--no-color", &old_id, &new_id])
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("failed to run git diff");
+    let proc = if cfg!(target_os = "windows") {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "git", "diff", "--no-color", &old_id, &new_id]);
+        cmd
+    } else {
+        let mut git = Command::new("git");
+        git.args(["diff", "--no-color", &old_id, &new_id]);
+        git
+    }
+    .stdout(Stdio::piped())
+    .spawn()
+    .expect("failed to spawn git diff");
     let output = &proc.wait_with_output().expect("failed to access output");
     let output = String::from_utf8_lossy(&output.stdout);
     let binding = &output.trim().split("@@").into_iter().collect::<Vec<_>>()[2..];
@@ -93,12 +107,36 @@ pub fn diff(mut old_content: String, mut new_content: String) -> GitDiff {
 }
 
 pub fn show_revision(cwd: &PathBuf, commit: &str) -> String {
-    let proc = Command::new("git")
-        .args(["show", commit])
+    let proc = if cfg!(target_os = "windows") {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "git", "show", commit]);
+        cmd
+    } else {
+        let mut git = Command::new("git");
+        git.args(["show", commit]);
+        git
+    }
+    .current_dir(cwd)
+    .output()
+    .expect("failed to spawn git show");
+    String::from_utf8_lossy(&proc.stdout).to_string()
+}
+
+/// Stages all files in a Git project - returns true if the command was successful
+pub fn add(cwd: &PathBuf) -> bool {
+    let mut add = if cfg!(target_os = "windows") {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "git", "add", "."]);
+        cmd
+    } else {
+        let mut git = Command::new("git");
+        git.args(["add", "."]);
+        git
+    };
+    let add = add
         .stdout(Stdio::piped())
-        .current_dir(cwd)
-        .spawn()
-        .expect("failed to run git show");
-    let output = &proc.wait_with_output().expect("failed to access output");
-    String::from_utf8_lossy(&output.stdout).to_string()
+        .stderr(Stdio::piped())
+        .current_dir(&cwd);
+
+    return add.status().unwrap().success();
 }

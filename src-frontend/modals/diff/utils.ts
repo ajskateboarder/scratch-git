@@ -7,11 +7,15 @@ const zip = (a: any[], b: any[]) =>
   ]);
 
 type ScriptParse = {
-  oldContent: any;
-  newContent: any;
-  status: "error" | "modified" | "added" | "removed";
-  scriptNo: number | any[];
-}[];
+  results: {
+    oldContent: any;
+    newContent: any;
+    status: "error" | "modified" | "added" | "removed";
+    scriptNo: number | any[];
+    script: string;
+  }[];
+  changedIds: string[];
+};
 
 /** Parse scripts in a project that have been modified */
 export function parseScripts(oldProject: any, newProject: any): ScriptParse {
@@ -25,22 +29,32 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
       } catch {
         return parseError;
       }
-    });
+    })
+    .sort((a, b) => a.localeCompare(b));
 
   let newBlocks = Object.keys(newProject)
     .filter((key) => newProject[key].parent === null)
     .map((script, i) => {
       if (oldBlocks[i] === parseError) {
-        return parseError;
+        return { content: parseError };
       }
       try {
-        return window.parseSB3Blocks.toScratchblocks(script, newProject, "en", {
-          tabs: "",
-        });
+        return {
+          content: window.parseSB3Blocks.toScratchblocks(
+            script,
+            newProject,
+            "en",
+            {
+              tabs: "",
+            }
+          ),
+          script,
+        };
       } catch {
-        return parseError;
+        return { content: parseError };
       }
-    });
+    })
+    .sort((a, b) => a.content.localeCompare(b.content));
 
   oldBlocks = oldBlocks.map((e, i) =>
     newBlocks[i] === undefined ? undefined : e
@@ -55,7 +69,7 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
         (b as unknown as string) === parseError
     )
     //@ts-ignore
-    .map(([[oldContent, newContent], scriptNo]) => {
+    .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
       if (oldContent === parseError || newContent === parseError) {
         return { oldContent: "", newContent: "", status: "error", scriptNo };
       }
@@ -65,11 +79,11 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
           : oldContent === "" && newContent !== ""
           ? "added"
           : "removed";
-      return { oldContent, newContent, status, scriptNo };
+      return { oldContent, newContent, status, scriptNo, script };
     });
 
   //@ts-ignore
-  return changed;
+  return { results: changed };
 }
 
 export function diff(

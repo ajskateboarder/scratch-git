@@ -16,3 +16,4 @@ zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 tungstenite = "0.21.0"
 regex = "1.10.4"
 itertools = "0.12.1"
+dunce = "1.0.4"

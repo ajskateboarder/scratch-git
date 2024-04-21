@@ -40,12 +40,6 @@
             &:hover {
                 background-color: #ccd3dd;
             }
-
-            & .active-tab {
-                color: var(--menu-bar-background-default);
-                background-color: white;
-                outline: none;
-            }
         }
     }
 
@@ -67,6 +61,12 @@
         margin-top: 10px;
         overflow-x: hidden;
     }
+}
+
+.active-tab {
+    color: var(--menu-bar-background-default) !important;
+    background-color: white !important;
+    outline: none;
 }
 
 .display-error {

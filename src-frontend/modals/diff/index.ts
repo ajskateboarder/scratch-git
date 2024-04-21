@@ -131,10 +131,12 @@ export class DiffModal extends HTMLDialogElement {
     // not sure why all this isn't just done by diff()
     const diffs = (
       await Promise.all(
-        scripts.map((script) => diff(script.oldContent, script.newContent))
+        scripts.results.map((script) =>
+          diff(script.oldContent, script.newContent)
+        )
       )
     )
-      .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
+      .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
       .filter((result) => result.diffed !== "" || result.status === "error");
 
     if (diffs[script].status === "error") {

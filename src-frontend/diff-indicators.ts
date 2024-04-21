@@ -3,6 +3,7 @@ import { type Project } from "./api";
 import { Cmp } from "./dom/index";
 import van from "vanjs-core";
 import { DiffModal } from "./modals/diff";
+import { diff, parseScripts } from "./modals/diff/utils";
 
 const { div, i } = van.tags;
 
@@ -55,10 +56,71 @@ const StageDiff = (props: {}) =>
     )
   );
 
+/** Receive Blockly IDs to top-level blocks that were changed */
+async function changedBlocklyScripts(
+  project: Project,
+  sprite: (string | boolean)[],
+  loadedJSON: any
+) {
+  let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
+  let currentScripts = await project.getCurrentScripts(spriteName);
+
+  let scripts = parseScripts(
+    await project.getPreviousScripts(spriteName),
+    currentScripts
+  );
+
+  let diffs = (
+    await Promise.all(
+      scripts.results.map((script) => {
+        return diff(script.oldContent, script.newContent);
+      })
+    )
+  )
+    .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
+    .filter((result) => result.diffed !== "" && result.status !== "error");
+
+  let target = loadedJSON.targets.find((e: any) =>
+    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
+  );
+
+  let topLevels = Object.keys(target.blocks).filter(
+    (k) => target.blocks[k].parent === null
+  );
+  return diffs
+    .map(
+      (e) =>
+        window.Blockly.getMainWorkspace().topBlocks_[
+          topLevels.indexOf(e.script)
+        ]?.id
+    )
+    .filter((e) => e !== undefined);
+}
+
+/** Applies a diff block glow that displays while a script runs */
+function applyDiffFilter() {
+  if (document.querySelector("filter#blocklyStackDiffFilter")) return;
+
+  let defs = document.querySelector(".blocklySvg defs")!;
+  defs.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
+    <feComponentTransfer result="outBlur">
+      <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
+    </feComponentTransfer>
+    <feFlood flood-color="#b10d99" flood-opacity="1" result="outColor"></feFlood>
+    <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
+    <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
+  </filter>`;
+}
+
+/** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites();
-  // @ts-ignore
-  let sprites = [...document.querySelector(`.${Cmp.SPRITES}`).children];
+  let sprites = [...document.querySelector(`.${Cmp.SPRITES}`)!.children];
+  let loadedJSON = JSON.parse(window.vm.toJSON());
+
+  const nameOfSprite = (element: HTMLElement) =>
+    element.querySelectorAll("div")[2].innerText;
 
   sprites.forEach((sprite) => {
     let divs = sprite
@@ -123,10 +185,35 @@ export async function showIndicators(project: Project) {
         }
       );
       diffButton.style.marginTop =
-        changedSpriteElement.querySelectorAll("div")[2].innerText === spriteName
-          ? "30px"
-          : "0px";
+        nameOfSprite(changedSpriteElement) === spriteName ? "30px" : "0px";
+      applyDiffFilter();
+      (
+        await changedBlocklyScripts(
+          project,
+          changedSprites.find((e) => e[0] === spriteName)!,
+          loadedJSON
+        )
+      ).forEach((e) => {
+        console.log(
+          window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_
+        );
+      });
     });
+  });
+
+  let selectedSpriteName = nameOfSprite(
+    document.querySelector(`.${Cmp.SELECTED_SPRITE}`)!
+  );
+  applyDiffFilter();
+  (
+    await changedBlocklyScripts(
+      project,
+      changedSprites.find((e) => e[0] === selectedSpriteName)!,
+      loadedJSON
+    )
+  ).forEach((e) => {
+    let group = window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
+    group.setAttribute("filter", "url(#blocklyStackDiffFilter)");
   });
 
   // creates a diff button for the stage
@@ -162,7 +249,7 @@ export async function showIndicators(project: Project) {
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
-  stageWrapper.onclick = () => {
+  stageWrapper.onclick = async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
         `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
@@ -170,5 +257,13 @@ export async function showIndicators(project: Project) {
     ])
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
+    applyDiffFilter();
+    (await changedBlocklyScripts(project, ["Stage", true], loadedJSON)).forEach(
+      (e) => {
+        console.log(
+          window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_
+        );
+      }
+    );
   };
 }
