@@ -1,3 +1,4 @@
+use dunce::canonicalize;
 use std::fs;
 use std::{
     path::{Path, PathBuf},
@@ -73,16 +74,16 @@ impl Cmd<'_> {
         let name = binding.split(".").collect::<Vec<_>>()[0];
         let mut config = project_config().lock().unwrap();
 
-        let project_path_result = fs::canonicalize(Path::new("projects").join(&name));
+        let project_path_result = canonicalize(Path::new("projects").join(&name));
         let project_path = match project_path_result {
             Ok(file) => file,
             Err(_) => {
                 let _ = fs::create_dir(Path::new("projects").join(&name));
-                fs::canonicalize(Path::new("projects").join(&name)).unwrap()
+                canonicalize(Path::new("projects").join(&name)).unwrap()
             }
         };
 
-        let Ok(file_path) = fs::canonicalize(&file_name) else {
+        let Ok(file_path) = canonicalize(&file_name) else {
             return json!({ "message": "fail" });
         };
 
@@ -137,10 +138,10 @@ impl Cmd<'_> {
         .current_dir(&project_path)
         .output()
         .expect("failed to intialize git repo");
-        if !String::from_utf8(init_repo.stdout)
-            .unwrap()
-            .contains("Git repository")
-        {
+
+        let response = String::from_utf8(init_repo.stdout).unwrap();
+
+        if !response.contains("Git repository") {
             return json!({ "project_name": "fail" });
         }
 
@@ -254,32 +255,23 @@ impl Cmd<'_> {
             return json!({});
         };
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
-        #[cfg(target_os = "windows")]
-        {
+        let mut push = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            let push = cmd
-                .args(["/C", "git", "push"])
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .current_dir(&pth);
-            json!({ "status": if !push
-                .status()
-                .unwrap()
-                .success() { "fail" } else { "success" } })
-        }
-        #[cfg(unix)]
-        {
+            cmd.args(["/C", "git", "push"]);
+            cmd
+        } else {
             let mut git = Command::new("git");
-            let push = git
-                .arg("push")
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .current_dir(&pth);
-            json!({ "status": if !push
+            git.arg("push");
+            git
+        };
+        let push = push
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(&pth);
+        json!({ "status": if !push
                 .status()
                 .unwrap()
                 .success() { "fail" } else { "success" } })
-        }
     }
 
     fn commit(data: CommandData) -> Value {
