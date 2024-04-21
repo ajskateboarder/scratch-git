@@ -5,15 +5,9 @@ use std::process::{Command, Stdio};
 
 /// Return a generated blob ID from a string
 fn git_object_id(content: String) -> String {
-    // let mut child = Command::new("git")
-    //     .args(["hash-object", "-w", "--stdin"])
-    //     .stdin(Stdio::piped())
-    //     .stdout(Stdio::piped())
-    //     .spawn()
-    //     .expect("failed to open git hash-object");
     let mut child = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
-        cmd.args(["/C", "git", "hash-object", "w", "--stdin"]);
+        cmd.args(["/C", "git", "hash-object", "-w", "--stdin"]);
         cmd
     } else {
         let mut git = Command::new("git");
@@ -145,5 +139,5 @@ pub fn add(cwd: &PathBuf) -> bool {
         .stderr(Stdio::piped())
         .current_dir(&cwd);
 
-    return add.status().unwrap().success();
+    return !add.status().unwrap().success();
 }
