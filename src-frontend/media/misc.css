@@ -85,6 +85,8 @@ dialog[is="welcome-modal"] {
   }
 }
 
+.screen 
+
 #commitList {
   position: absolute;
   left: 47%;
@@ -172,8 +174,15 @@ dialog[is="welcome-modal"] {
   display: none;
 }
 
-#finishContent {
+.finishContent {
   text-align: left;
+  font-weight: normal;
+  width: fit-content;
+}
+
+#creationError {
+  text-wrap: pretty;
+  font-family: system-ui;
 }
 
 #step1,

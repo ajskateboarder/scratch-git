@@ -161,6 +161,7 @@ export class CommitModal extends HTMLDialogElement {
       )!.open
     )
       return;
+    this.state!.currentPage.val = 0;
 
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);

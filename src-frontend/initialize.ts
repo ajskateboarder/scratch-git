@@ -46,18 +46,21 @@ const Styles = () => {
 };
 
 export default async function () {
-  if (!document.querySelector("dialog[is='diff-modal']"))
-    document.querySelector(
-      "body > div[style='display: none;']"
-    )!.innerHTML += `<dialog is="diff-modal"></dialog>
-      <dialog
-        is="commit-modal"
-        style="overflow-x: hidden; overflow-y: auto"
-      ></dialog>
-      <dialog
-        is="welcome-modal"
-        style="overflow-x: hidden; overflow-y: hidden"
-      ></dialog>`;
+  if (!document.querySelector("dialog[is='diff-modal']")) {
+    const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
+    
+    const SAVE_AREA = `${MENU} > div:nth-child(4)`;
+    console.log(MENU, SAVE_AREA);
+    document.querySelector(SAVE_AREA)!.innerHTML += `<dialog is="diff-modal"></dialog>
+          <dialog
+            is="commit-modal"
+            style="overflow-x: hidden; overflow-y: auto"
+          ></dialog>
+          <dialog
+            is="welcome-modal"
+            style="overflow-x: hidden; overflow-y: hidden"
+          ></dialog>`;
+  }
 
   const displayDiffs = async () => {
     [

@@ -190,12 +190,11 @@ class ProjectManager extends Socket {
       throw new ProjectExistsException(
         `${projectPath
           .split("/")
-          .pop()} is already a project.<wbr /> Either load the existing<wbr /> project or make a copy of<wbr /> the project file.`
+          .pop()} is already a project. Either load the existing project or make a copy of the project file.`
       );
     } else if (response.project_name === "fail") {
       throw new Error(
-        `An uncaught error has occured.<wbr />
-        Please check the server logs and<wbr /> <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
+        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
       );
     }
 

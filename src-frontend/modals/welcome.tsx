@@ -65,20 +65,22 @@ const Step1 = (that: WelcomeModal) => {
 
   return (
     <Screen title="Welcome to scratch.git" stepNumber={1}>
-      <p>
-        Please load a project for Git development to get started.
+      <div style={{ fontWeight: "normal" }}>
+        <p>
+          Please load a project for Git development to get started.
+          <br />
+          <br />
+        </p>
+        <div className="a-gap">
+          {openProject}
+          <span>
+            <input type="checkbox" name="dontshowagain" />
+            <label htmlFor="dontshowagain"> Don't show again</label>
+          </span>
+        </div>
         <br />
         <br />
-      </p>
-      <div className="a-gap">
-        {openProject}
-        <span>
-          <input type="checkbox" name="dontshowagain" />
-          <label htmlFor="dontshowagain"> Don't show again</label>
-        </span>
       </div>
-      <br />
-      <br />
       <BottomBar>
         <button
           style="align-items: right; margin-left: -10px; "
@@ -109,12 +111,23 @@ const Step2 = (that: WelcomeModal) => {
         try {
           await api.createProject(path);
         } catch (e: unknown) {
+          creationError.innerHTML = "";
           let err = e as ProjectExistsException;
           if (err.name === "ProjectExistsException") {
-            creationError.innerHTML = err.message;
+            creationError.append(
+              <span>
+                <i className="fa fa-solid fa-circle-exclamation"></i>{" "}
+                {err.message}
+              </span>
+            );
             return;
           } else if (err.name === "Error") {
-            creationError.innerHTML = err.message;
+            creationError.append(
+              <span>
+                <i className="fa fa-solid fa-circle-exclamation"></i>{" "}
+                {err.message}
+              </span>
+            );
             throw err;
           }
         }
@@ -140,7 +153,7 @@ const Step2 = (that: WelcomeModal) => {
 
   return (
     <Screen title="Configure project location" stepNumber={2}>
-      <div style="font-weight: normal">
+      <div className="finishContent">
         <p>
           Please select the location of your project file. This is so
           scratch.git can find your project locally to use with your repository.
@@ -167,7 +180,7 @@ const Step2 = (that: WelcomeModal) => {
 const Step3 = (that: WelcomeModal) => {
   return (
     <Screen title="Welcome to scratch.git!" stepNumber={3}>
-      <div style="font-weight: normal">
+      <div className="finishContent">
         <p>
           To be written
           <br />
@@ -219,26 +232,13 @@ export class WelcomeModal extends HTMLDialogElement {
       van.add(this, this.steps[this.currentStep.val], thumb);
       document.querySelector<HTMLDivElement>(".screen")!.style.display = "flex";
     });
-
-    this.currentStep.val = 0;
-  }
-
-  _showMe() {
-    // directly attaching this modal to anything in #app will hide the project player
-    // so apparantly moving it elsewhere fixes it :/
-    const fragment = document.createDocumentFragment();
-    fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)!.appendChild(fragment);
-    document
-      .querySelector<HTMLDialogElement>(
-        `dialog[is="${this.getAttribute("is")}"]`
-      )!
-      .showModal();
   }
 
   async display() {
     if (!this.open) {
-      this._showMe();
+      this.steps = [Step1(this), Step2(this), Step3(this)];
+      this.currentStep.val = 0;
+      this.showModal();
     }
   }
 }
