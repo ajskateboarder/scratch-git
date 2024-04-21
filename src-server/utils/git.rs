@@ -145,5 +145,5 @@ pub fn add(cwd: &PathBuf) -> bool {
         .stderr(Stdio::piped())
         .current_dir(&cwd);
 
-    return !add.status().unwrap().success();
+    return add.status().unwrap().success();
 }
