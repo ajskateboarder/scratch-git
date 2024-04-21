@@ -97,7 +97,7 @@ async function changedBlocklyScripts(
     .filter((e) => e !== undefined);
 }
 
-/** Applies a diff block glow similar to the glow that displays while a script runs */
+/** Applies a diff block glow that displays while a script runs */
 function applyDiffFilter() {
   if (document.querySelector("filter#blocklyStackDiffFilter")) return;
 
@@ -107,12 +107,13 @@ function applyDiffFilter() {
     <feComponentTransfer result="outBlur">
       <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
     </feComponentTransfer>
-    <feFlood flood-color="#FFF200" flood-opacity="1" result="outColor"></feFlood>
+    <feFlood flood-color="#b10d99" flood-opacity="1" result="outColor"></feFlood>
     <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
     <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
   </filter>`;
 }
 
+/** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites();
   let sprites = [...document.querySelector(`.${Cmp.SPRITES}`)!.children];
@@ -185,6 +186,7 @@ export async function showIndicators(project: Project) {
       );
       diffButton.style.marginTop =
         nameOfSprite(changedSpriteElement) === spriteName ? "30px" : "0px";
+      applyDiffFilter();
       (
         await changedBlocklyScripts(
           project,
@@ -202,6 +204,7 @@ export async function showIndicators(project: Project) {
   let selectedSpriteName = nameOfSprite(
     document.querySelector(`.${Cmp.SELECTED_SPRITE}`)!
   );
+  applyDiffFilter();
   (
     await changedBlocklyScripts(
       project,
@@ -210,7 +213,7 @@ export async function showIndicators(project: Project) {
     )
   ).forEach((e) => {
     let group = window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
-    group.style = "filter: drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4))";
+    group.setAttribute("filter", "url(#blocklyStackDiffFilter)");
   });
 
   // creates a diff button for the stage
@@ -254,6 +257,7 @@ export async function showIndicators(project: Project) {
     ])
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
+    applyDiffFilter();
     (await changedBlocklyScripts(project, ["Stage", true], loadedJSON)).forEach(
       (e) => {
         console.log(
