@@ -47,11 +47,11 @@ const Styles = () => {
 
 export default async function () {
   if (!document.querySelector("dialog[is='diff-modal']")) {
-    const MENU = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
+    const menu = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
     
-    const SAVE_AREA = `${MENU} > div:nth-child(4)`;
-    console.log(MENU, SAVE_AREA);
-    document.querySelector(SAVE_AREA)!.innerHTML += `<dialog is="diff-modal"></dialog>
+    const saveArea = document.querySelector<HTMLElement>(`${menu} > div:nth-child(4)`)!;
+    saveArea.style.opacity = "0";
+    saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
           <dialog
             is="commit-modal"
             style="overflow-x: hidden; overflow-y: auto"
