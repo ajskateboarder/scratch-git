@@ -117,10 +117,9 @@ pub fn show_revision(cwd: &PathBuf, commit: &str) -> String {
         git
     }
     .current_dir(cwd)
-    .spawn()
+    .output()
     .expect("failed to spawn git show");
-    let output = &proc.wait_with_output().expect("failed to access output");
-    String::from_utf8_lossy(&output.stdout).to_string()
+    String::from_utf8_lossy(&proc.stdout).to_string()
 }
 
 /// Stages all files in a Git project - returns true if the command was successful
@@ -139,5 +138,5 @@ pub fn add(cwd: &PathBuf) -> bool {
         .stderr(Stdio::piped())
         .current_dir(&cwd);
 
-    return !add.status().unwrap().success();
+    return add.status().unwrap().success();
 }

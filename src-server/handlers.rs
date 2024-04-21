@@ -306,6 +306,21 @@ impl Cmd<'_> {
             return json!({ "message": "fail" });
         }
 
+        let mut commit = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "commit", "-m", "temporary"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["commit", "-m", "temporary"]);
+            git
+        };
+        let commit = commit.current_dir(&project_path);
+
+        if !commit.status().unwrap().success() {
+            return json!({ "message": "fail" });
+        }
+
         let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");
         let commit_message = previous_revision.commits(&new_diff).join(", ");
 
@@ -318,10 +333,7 @@ impl Cmd<'_> {
             git.args(["commit", "--amend", "-m", &commit_message]);
             git
         };
-        let commit = commit
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(project_path);
+        let commit = commit.current_dir(&project_path);
 
         if !commit.status().unwrap().success() {
             return json!({ "message": "fail" });
