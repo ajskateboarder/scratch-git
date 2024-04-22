@@ -80,7 +80,7 @@ export default async function () {
       document.querySelector<HTMLDivElement>(`.${Cmp.SAVE_STATUS}`)!.onclick =
         displayDiffs;
       document.onkeydown = async (e) => {
-        if (e.ctrlKey && e.shiftKey && e.key === "S") {
+        if (e.ctrlKey && e.key === "s") {
           await displayDiffs();
         }
       };
