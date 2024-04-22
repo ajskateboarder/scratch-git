@@ -6,8 +6,7 @@
     "rollup": "^4.14.1",
     "rollup-plugin-string": "^3.0.0",
     "tslib": "^2.6.2",
-    "vanjs-core": "^1.5.0",
-    "vanjs-jsx": "^0.2.1"
+    "vanjs-core": "^1.5.0"
   },
   "type": "module"
 }

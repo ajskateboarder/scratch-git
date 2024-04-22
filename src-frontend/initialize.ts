@@ -2,22 +2,19 @@
 
 import { Cmp, fileMenu, gitMenu, scratchAlert } from "./dom/index.ts";
 import api from "./api.ts";
-import "./modals/index.ts";
+import { CommitModal, WelcomeModal, DiffModal } from "./modals/index.ts";
 
-//@ts-ignore
-import BARS from "./media/bars.css";
-//@ts-ignore
-import MISC from "./media/misc.css";
+// @ts-ignore
+import styles from "./styles.css";
 
 import { showIndicators } from "./diff-indicators.ts";
 import van from "vanjs-core";
-import { WelcomeModal } from "./modals/welcome.tsx";
-import { CommitModal } from "./modals/commit.ts";
 
 const { link, style } = van.tags;
 
 const Styles = () => {
-  const MENU_ITEM = `
+  // TODO: unused styles?
+  const menuContents = `
     div.${Cmp.MENU_ITEM}:has(#push-status):hover {
       cursor: pointer;
     }
@@ -38,18 +35,23 @@ const Styles = () => {
       defer: true,
     }),
     style(`
-    ${MENU_ITEM}
-    ${BARS}
-    ${MISC}
+    ${menuContents}
+    ${styles}
     `),
   ];
 };
 
 export default async function () {
   if (!document.querySelector("dialog[is='diff-modal']")) {
+    customElements.define("commit-modal", CommitModal, { extends: "dialog" });
+    customElements.define("diff-modal", DiffModal, { extends: "dialog" });
+    customElements.define("welcome-modal", WelcomeModal, { extends: "dialog" });
+
     const menu = `#app > div > div.${Cmp.MENU_POSITION}.${Cmp.MENU_BAR} > div.${Cmp.MENU_CONTAINER}`;
-    
-    const saveArea = document.querySelector<HTMLElement>(`${menu} > div:nth-child(4)`)!;
+
+    const saveArea = document.querySelector<HTMLElement>(
+      `${menu} > div:nth-child(4)`
+    )!;
     saveArea.style.opacity = "0";
     saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
           <dialog

@@ -17,11 +17,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-
-    /* For vanjs-jsx */
-    "jsx": "react-jsxdev",
-    "jsxImportSource": "vanjs-jsx"
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src-frontend"]
 }

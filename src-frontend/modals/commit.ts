@@ -2,6 +2,10 @@ import { Cmp } from "../dom/index.ts";
 import api, { type Commit } from "../api.ts";
 import van, { type State } from "vanjs-core";
 
+const {
+  tags: { div, h1, button, br, span, input },
+} = van;
+
 // https://stackoverflow.com/a/69122877/16019146
 const timeAgo = (input: Date | string) => {
   const date = input instanceof Date ? input : new Date(input);
@@ -36,8 +40,6 @@ const highlight = (fullText: string, search: string) => {
   }
   return fullText;
 };
-
-const { div, span, br } = van.tags;
 
 const Commit = (commit: Commit, search: string) =>
   div(
@@ -83,41 +85,39 @@ export class CommitModal extends HTMLDialogElement {
       currentPage: van.state(0),
     };
 
-    const closeButton = (
-      <button
-        className={Cmp.SETTINGS_BUTTON}
-        style="margin-left: 10px"
-        onClick={() => this.close()}
-      >
-        Close
-      </button>
+    const closeButton = button(
+      {
+        class: Cmp.SETTINGS_BUTTON,
+        style: "margin-left: 10px",
+        onclick: () => this.close(),
+      },
+      "Close"
     );
 
-    this.newer = (
-      <button className={[Cmp.SETTINGS_BUTTON, "round-right-button"].join(" ")}>
-        Newer
-      </button>
-    ) as HTMLButtonElement;
+    this.newer = button(
+      {
+        class: [Cmp.SETTINGS_BUTTON, "round-right-button"].join(" "),
+        disabled: true,
+      },
+      "Newer"
+    );
 
-    this.newer.disabled = true;
+    this.older = button(
+      {
+        class: [Cmp.SETTINGS_BUTTON, "round-left-button"].join(" "),
+      },
+      "Older"
+    );
 
-    this.older = (
-      <button className={[Cmp.SETTINGS_BUTTON, "round-left-button"].join(" ")}>
-        Older
-      </button>
-    ) as HTMLButtonElement;
-
-    this.search = (
-      <input
-        type="text"
-        className={`commit-search${
-          window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
-            ? " dark"
-            : ""
-        }`}
-        placeholder="Search commits"
-      />
-    ) as HTMLInputElement;
+    this.search = input({
+      type: "text",
+      class: `commit-search${
+        window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
+          ? " dark"
+          : ""
+      }`,
+      placeholder: "Search commits",
+    });
 
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
@@ -135,25 +135,21 @@ export class CommitModal extends HTMLDialogElement {
 
     van.add(
       this,
-      <div id="commitList">
-        <h1>Commits</h1>
-        <div className="pagination">
-          <span>
-            {this.newer}
-            {this.older}
-          </span>
-          {this.search}
-        </div>
-        <br />
-        {commitGroup}
-        <br />
-        <div
-          className="bottom-bar"
-          style="margin: 0; padding: 0; bottom: 10px; margin-left: 10px"
-        >
-          {closeButton}
-        </div>
-      </div>
+      div(
+        { id: "commitList" },
+        h1("Commits"),
+        div({ class: "pagination" }, span(this.newer, this.older), this.search),
+        br(),
+        commitGroup,
+        br(),
+        div(
+          {
+            class: "bottom-bar",
+            style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
+          },
+          closeButton
+        )
+      )
     );
   }
 
