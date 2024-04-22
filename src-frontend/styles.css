@@ -85,7 +85,7 @@ dialog[is="welcome-modal"] {
   }
 }
 
-.screen #commitList {
+#commitList {
   position: absolute;
   left: 47%;
   transform: translateX(-50%);

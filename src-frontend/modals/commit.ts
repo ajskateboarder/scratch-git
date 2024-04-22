@@ -32,8 +32,8 @@ const timeAgo = (input: Date | string) => {
 const highlight = (fullText: string, search: string) => {
   if (search !== "") {
     let text = new Option(fullText).innerHTML;
-    let newText = text.replace(
-      new RegExp(search.replace("+", "\\+"), "g"),
+    let newText = text.replaceAll(
+      new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),
       `<mark>${search}</mark>`
     );
     return span({ innerHTML: newText });
