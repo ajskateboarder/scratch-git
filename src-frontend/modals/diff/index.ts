@@ -1,4 +1,3 @@
-import { guiTheme } from "../../utils";
 import api, { Project } from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
@@ -158,7 +157,9 @@ export class DiffModal extends HTMLDialogElement {
       (this.plainText.parentElement!.style as any) = "";
     }
 
-    let blockTheme = guiTheme().blocks;
+    let { blocks: blockTheme, gui: uiTheme } =
+      window.ReduxStore.getState().scratchGui.theme.theme;
+
     let config = {
       style:
         blockTheme === "high-contrast" ? "scratch3-high-contrast" : "scratch3",
@@ -261,8 +262,6 @@ export class DiffModal extends HTMLDialogElement {
         });
       });
     };
-
-    let uiTheme = guiTheme().gui;
 
     const highlightPlain = () => {
       let content = diffs[script].diffed ?? "";

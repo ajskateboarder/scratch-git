@@ -2,7 +2,18 @@ import initialize from "./initialize";
 import "./lib/index";
 declare global {
   interface Window {
-    ReduxStore: any;
+    ReduxStore: {
+      getState: () => {
+        scratchGui: {
+          theme: {
+            theme: {
+              blocks: "three" | "dark" | "high-contrast";
+              gui: "light" | "dark";
+            };
+          };
+        };
+      };
+    };
     vm: any;
     scratchblocks: any;
     parseSB3Blocks: any;

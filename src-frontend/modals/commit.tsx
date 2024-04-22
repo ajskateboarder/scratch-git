@@ -1,7 +1,6 @@
 import { Cmp } from "../dom/index.ts";
 import api, { type Commit } from "../api.ts";
 import van, { type State } from "vanjs-core";
-import { guiTheme } from "../utils.ts";
 
 // https://stackoverflow.com/a/69122877/16019146
 const timeAgo = (input: Date | string) => {
@@ -111,7 +110,11 @@ export class CommitModal extends HTMLDialogElement {
     this.search = (
       <input
         type="text"
-        className={`commit-search${guiTheme().gui === "dark" ? " dark" : ""}`}
+        className={`commit-search${
+          window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
+            ? " dark"
+            : ""
+        }`}
         placeholder="Search commits"
       />
     ) as HTMLInputElement;
