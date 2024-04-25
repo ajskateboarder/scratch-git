@@ -1,11 +1,25 @@
 import api, { Project } from "../../api";
 import { Cmp, DarkBlocks } from "../../dom/index";
 
-import { parseScripts, diff } from "./utils";
+import { parseScripts, diff, scrollBlockIntoView } from "./utils";
 import van from "vanjs-core";
 
-const { div, label, input, span, ul, button, p, aside, main, br, hr, i, a } =
-  van.tags;
+const {
+  div,
+  label,
+  input,
+  span,
+  ul,
+  button,
+  p,
+  aside,
+  main,
+  br,
+  hr,
+  i,
+  a,
+  li,
+} = van.tags;
 
 const Setting = (props: {}, name: string) =>
   div(
@@ -20,6 +34,13 @@ const Setting = (props: {}, name: string) =>
       span(name)
     )
   );
+
+const StatusIcon = {
+  added: "fa-solid fa-square-plus",
+  removed: "fa-solid fa-square-xmark",
+  modified: "fa-solid fa-square-minus",
+  error: "fa-solid fa-triangle-exclamation",
+};
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends HTMLDialogElement {
@@ -101,7 +122,7 @@ export class DiffModal extends HTMLDialogElement {
 
   async diff(
     project: Project | undefined,
-    sprite: string,
+    spriteName: string,
     script = 0,
     cached = false
   ) {
@@ -109,18 +130,18 @@ export class DiffModal extends HTMLDialogElement {
     if (!project) project = await api.getCurrentProject();
     project = project!;
 
-    let oldProject, newProject;
+    let oldProject: any, newProject: any;
     if (cached) {
       if (
         this.previousScripts === undefined &&
         this.currentScripts === undefined
       ) {
-        this.previousScripts = await project.getPreviousScripts(sprite);
-        this.currentScripts = await project.getCurrentScripts(sprite);
+        this.previousScripts = await project.getPreviousScripts(spriteName);
+        this.currentScripts = await project.getCurrentScripts(spriteName);
       }
     } else {
-      this.previousScripts = await project.getPreviousScripts(sprite);
-      this.currentScripts = await project.getCurrentScripts(sprite);
+      this.previousScripts = await project.getPreviousScripts(spriteName);
+      this.currentScripts = await project.getCurrentScripts(spriteName);
     }
     oldProject = this.previousScripts;
     newProject = this.currentScripts;
@@ -137,6 +158,7 @@ export class DiffModal extends HTMLDialogElement {
     )
       .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
       .filter((result) => result.diffed !== "" || result.status === "error");
+    console.log(diffs);
 
     if (diffs[script].status === "error") {
       this.useHighlights.checked = false;
@@ -356,23 +378,44 @@ export class DiffModal extends HTMLDialogElement {
       }
       darkDiff(uiTheme);
     };
-
+    console.log(diffs);
     // assign diff displaying to diffs
-    diffs.forEach(async (diff, i) => {
-      let newItem = document.createElement("li");
-      let link = document.createElement("button");
-      link.classList.add("tab-btn");
-      link.setAttribute("script-no", i.toString());
+    diffs.forEach(async (diff, scriptNo) => {
+      let diffButton = li(
+        button(
+          { class: "tab-btn" },
+          i({ class: `${StatusIcon[diff.status]} change-icon` }),
+          `Script ${diff.scriptNo}`,
+          diff.status === "modified" || diff.status === "added"
+            ? button(
+                {
+                  class: `${Cmp.SETTINGS_BUTTON} open-script`,
+                  onclick: async (e: Event) => {
+                    e.stopPropagation();
+                    this.close();
+                    scrollBlockIntoView(
+                      (window as any).changedScripts[scriptNo]
+                    );
+                  },
+                },
+                i({ class: "fa-solid fa-up-right-from-square" })
+              )
+            : undefined
+        )
+      );
+      diffButton
+        .querySelector("button")!
+        .setAttribute("script-no", scriptNo.toString());
 
-      if (i !== script) {
-        link.onclick = async () => {
+      if (scriptNo !== script) {
+        diffButton.onclick = async () => {
           document
             .querySelectorAll(".tab-btn")
             .forEach((e) => e.classList.remove("active-tab"));
-          link.classList.add("active-tab");
+          diffButton.querySelector("button")!.classList.add("active-tab");
           await this.diff(
             project,
-            sprite,
+            spriteName,
             parseInt(
               this.querySelector("button.active-tab")!.getAttribute(
                 "script-no"
@@ -383,18 +426,7 @@ export class DiffModal extends HTMLDialogElement {
         };
       }
 
-      const icon = {
-        added: "fa-solid fa-square-plus",
-        removed: "fa-solid fa-square-xmark",
-        modified: "fa-solid fa-square-minus",
-        error: "fa-solid fa-triangle-exclamation",
-      };
-      console.log(diff);
-      link.innerHTML = `<i class="${icon[diff.status]}"></i> Script ${
-        diff.scriptNo
-      }`;
-      newItem.appendChild(link);
-      this.scripts.appendChild(newItem);
+      this.scripts.appendChild(diffButton);
     });
 
     document

@@ -303,7 +303,7 @@ impl Cmd<'_> {
         }
 
         if !git::add(&project_path) {
-            return json!({ "message": "fail" });
+            return json!({ "message": "Nothing to add" });
         }
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -318,7 +318,7 @@ impl Cmd<'_> {
         let commit = commit.current_dir(&project_path);
 
         if !commit.status().unwrap().success() {
-            return json!({ "message": "fail" });
+            return json!({ "message": "Nothing to commit" });
         }
 
         let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");

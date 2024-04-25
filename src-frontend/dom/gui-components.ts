@@ -5,8 +5,7 @@ const { div, img } = van.tags;
 
 type GitMenuFunctions = {
   push: () => any;
-  repoLocation: () => any;
-  ghToken: () => any;
+  repoConfig: () => any;
   commitView: () => any;
   commitCreate: () => any;
 };
@@ -97,13 +96,7 @@ class GitMenu {
   /**
    * Copy the File nav menu and edit it to become a Git one
    */
-  create({
-    push,
-    repoLocation,
-    ghToken,
-    commitView,
-    commitCreate,
-  }: GitMenuFunctions) {
+  create({ push, repoConfig, commitView, commitCreate }: GitMenuFunctions) {
     if (this.initialized) return;
 
     // open, copy, and edit the file menu
@@ -129,17 +122,15 @@ class GitMenu {
     this.item(1).label("Push project");
     this.item(1).onclick(push);
     this.item(2).label("Configure repository");
-    this.item(2).onclick(repoLocation);
-    this.item(3).elem.classList.remove(Cmp.MENU_SECTION);
-    this.item(3).label("Configure GitHub token");
-    this.item(3).onclick(ghToken);
+    this.item(2).onclick(repoConfig);
     this.item(4).remove();
     this.item(4).remove();
-    this.item(4).label("View commits");
-    this.item(4).onclick(commitView);
-    this.item(5).elem.classList.remove(Cmp.MENU_SECTION);
-    this.item(5).label("Commit");
-    this.item(5).onclick(commitCreate);
+    this.item(4).remove();
+    this.item(4).elem.classList.remove(Cmp.MENU_SECTION);
+    this.item(4).label("Commit");
+    this.item(4).onclick(commitCreate);
+    this.item(3).label("View commits");
+    this.item(3).onclick(commitView);
 
     // make new menu toggle-able
     this.newMenu.onclick = () => {

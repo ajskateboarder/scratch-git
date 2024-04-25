@@ -119,11 +119,15 @@ async function highlightChanged(
 ) {
   applyDiffFilter();
   document
-    .querySelectorAll(`g[style="filter: url(#blocklyStackDiffFilter);"]`)
-    .forEach((e) => e.remove());
-  (await changedBlocklyScripts(project, sprite, loadedJSON)).forEach((e) => {
-    let group = window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
-    group.style = "filter: url(#blocklyStackDiffFilter)";
+    .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
+    .forEach((e) => (e.style.filter = ""));
+  let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
+  (window as any).changedScripts = changedScripts;
+  changedScripts.forEach((e) => {
+    let group: HTMLElement =
+      window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
+    group.style.filter = "url(#blocklyStackDiffFilter)";
+    group.setAttribute("was-changed", "true");
   });
 }
 

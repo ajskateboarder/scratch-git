@@ -60,6 +60,21 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
     newBlocks[i] === undefined ? undefined : e
   );
 
+  let justTheStatements = newBlocks.map((e) => e.content);
+  if (newBlocks.length < oldBlocks.length) {
+    oldBlocks.forEach((_, i) => {
+      if (justTheStatements.includes(oldBlocks[i])) {
+        newBlocks.splice(i, 0, { content: "" });
+      }
+    });
+  } else if (oldBlocks.length > newBlocks.length) {
+    newBlocks.forEach((_, i) => {
+      if (oldBlocks.includes(justTheStatements[i])) {
+        oldBlocks.splice(i, 0, "");
+      }
+    });
+  }
+
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(
@@ -87,8 +102,8 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
 }
 
 export function diff(
-  oldContent: string,
-  newContent: string
+  oldContent: string = "",
+  newContent: string = ""
 ): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket("ws://localhost:8000");
@@ -109,4 +124,44 @@ export function diff(
       return reject(error);
     };
   });
+}
+
+// https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/Utils.js
+
+function topStack(block: any) {
+  let base = block;
+  while (base.getOutputShape() && base.getSurroundParent()) {
+    base = base.getSurroundParent();
+  }
+  return base;
+}
+
+export function scrollBlockIntoView(blockOrId: string) {
+  let workspace = window.Blockly.getMainWorkspace();
+  let offsetX = 32;
+  let offsetY = 32;
+  let block = workspace.getBlockById(blockOrId);
+
+  let root = block.getRootBlock();
+  let base = topStack(block);
+  let ePos = base.getRelativeToSurfaceXY(),
+    rPos = root.getRelativeToSurfaceXY(),
+    scale = workspace.scale,
+    x = rPos.x * scale,
+    y = ePos.y * scale,
+    xx = block.width + x,
+    yy = block.height + y,
+    s = workspace.getMetrics();
+
+  if (
+    x < s.viewLeft + offsetX - 4 ||
+    xx > s.viewLeft + s.viewWidth ||
+    y < s.viewTop + offsetY - 4 ||
+    yy > s.viewTop + s.viewHeight
+  ) {
+    let sx = x - s.contentLeft - offsetX,
+      sy = y - s.contentTop - offsetY;
+
+    workspace.scrollbar.set(sx, sy);
+  }
 }

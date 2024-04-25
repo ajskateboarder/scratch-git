@@ -71,9 +71,15 @@ dialog[is="welcome-modal"] {
   display: flex;
   align-items: center;
 
-  & i {
+  & .change-icon {
     font-size: 17px;
     margin-right: 10px;
+  }
+
+  & .open-script {
+    font-size: 10px;
+    padding: 5px;
+    margin-left: 10px;
   }
 }
 
@@ -115,7 +121,7 @@ dialog[is="welcome-modal"] {
   background-color: #111 !important;
   color: #eee;
 
-  & #scripts li button {
+  & #scripts li .tab-btn {
     background-color: rgb(46, 46, 46);
     color: #707070;
 
@@ -236,7 +242,7 @@ dialog[is="welcome-modal"] {
   & li {
     list-style-type: none;
 
-    & button {
+    & .tab-btn {
       padding: 15px 30px;
       border: 0.5px solid grey;
       background-color: #d9e3f2;

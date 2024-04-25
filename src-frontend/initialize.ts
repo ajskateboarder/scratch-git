@@ -107,8 +107,7 @@ export default async function () {
           scratchAlert({ message, duration: 5000 });
         },
         push: wip,
-        ghToken: wip,
-        repoLocation: wip,
+        repoConfig: wip,
       });
     }
   }
