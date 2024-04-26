@@ -189,13 +189,16 @@ export class DiffModal extends HTMLDialogElement {
     };
 
     const diffBlocks = () => {
-      window.scratchblocks.appendStyles();
-      window.scratchblocks.renderMatching("#commitView", config);
+      window._lib.scratchblocks.appendStyles();
+      window._lib.scratchblocks.renderMatching("#commitView", config);
+
       let svg = this.querySelector(".scratchblocks svg > g")!;
+
       svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
         input.setAttribute("rx", "4");
         input.setAttribute("ry", "4");
       });
+
       svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
         input.setAttribute("rx", "13");
         input.setAttribute("ry", "13");
@@ -378,7 +381,7 @@ export class DiffModal extends HTMLDialogElement {
       }
       darkDiff(uiTheme);
     };
-    console.log(diffs);
+
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
       let diffButton = li(

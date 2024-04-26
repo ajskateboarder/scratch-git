@@ -23,9 +23,14 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
       try {
-        return window.parseSB3Blocks.toScratchblocks(script, oldProject, "en", {
-          tabs: "",
-        });
+        return window._lib.parseSB3Blocks.toScratchblocks(
+          script,
+          oldProject,
+          "en",
+          {
+            tabs: "",
+          }
+        );
       } catch {
         return parseError;
       }
@@ -40,7 +45,7 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
       }
       try {
         return {
-          content: window.parseSB3Blocks.toScratchblocks(
+          content: window._lib.parseSB3Blocks.toScratchblocks(
             script,
             newProject,
             "en",

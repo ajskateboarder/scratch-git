@@ -1,5 +1,6 @@
 import initialize from "./initialize";
 import "./lib/index";
+
 declare global {
   interface Window {
     ReduxStore: {
@@ -15,8 +16,10 @@ declare global {
       };
     };
     vm: any;
-    scratchblocks: any;
-    parseSB3Blocks: any;
+    _lib: {
+      scratchblocks: any;
+      parseSB3Blocks: any;
+    };
     Blockly: any;
   }
 }

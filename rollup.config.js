@@ -1,10 +1,10 @@
 import typescript from "@rollup/plugin-typescript";
 import { string } from "rollup-plugin-string";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import terser from "@rollup/plugin-terser";
+// import terser from "@rollup/plugin-terser";
 
 export default {
-  input: "src-frontend/main.ts",
+  input: "src-frontend/index.ts",
   output: { file: "userscript.js", format: "iife" },
   logLevel: "silent",
   plugins: [
@@ -13,6 +13,7 @@ export default {
     }),
     nodeResolve(),
     typescript(),
+    // TODO: apply terser in releases
     // terser(),
   ],
 };

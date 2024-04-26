@@ -1,12 +1,15 @@
 {
   "dependencies": {
+    "vanjs-core": "^1.5.0"
+  },
+  "type": "module",
+  "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "rollup": "^4.14.1",
     "rollup-plugin-string": "^3.0.0",
-    "tslib": "^2.6.2",
-    "vanjs-core": "^1.5.0"
-  },
-  "type": "module"
+    "typescript": "5.4.5",
+    "tslib": "^2.6.2"
+  }
 }
