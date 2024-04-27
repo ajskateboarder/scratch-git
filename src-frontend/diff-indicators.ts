@@ -3,7 +3,7 @@ import type { Project } from "./api.ts";
 import { sprites } from "./dom/index";
 import van from "vanjs-core";
 import type { DiffModal } from "./modals/diff";
-import { diff, parseScripts } from "./modals/diff/utils";
+import { parseScripts } from "./modals/diff/scripts.ts";
 
 const { div, i } = van.tags;
 
@@ -58,26 +58,19 @@ async function changedBlocklyScripts(
   sprite: (string | boolean)[],
   loadedJSON: any
 ) {
+  console.log("i was called", project, sprite);
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
 
-  let scripts = parseScripts(
+  let diffs = await parseScripts(
     await project.getPreviousScripts(spriteName),
     await project.getCurrentScripts(spriteName)
   );
-
-  let diffs = (
-    await Promise.all(
-      scripts.results.map((script) => {
-        return diff(script.oldContent, script.newContent);
-      })
-    )
-  )
-    .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
-    .filter((result) => result.diffed !== "" && result.status !== "error");
+  console.log(diffs);
 
   let target = loadedJSON.targets.find((e: any) =>
     spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
   );
+
   let topLevels = Object.keys(target.blocks).filter(
     (k) => target.blocks[k].parent === null
   );
@@ -95,9 +88,8 @@ async function changedBlocklyScripts(
 function applyDiffFilter() {
   if (document.querySelector("filter#blocklyStackDiffFilter")) return;
 
-  document.querySelector(
-    ".blocklySvg defs"
-  )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+  document.querySelector(".blocklySvg defs")!.innerHTML +=
+    `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
     <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
     <feComponentTransfer result="outBlur">
       <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -118,7 +110,7 @@ async function highlightChanged(
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
     .forEach((e) => (e.style.filter = ""));
   let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
-  (window as any).changedScripts = changedScripts;
+  window.changedScripts = changedScripts;
   changedScripts.forEach((e) => {
     let group: HTMLElement =
       window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
@@ -134,7 +126,7 @@ const nameOfSprite = (element: HTMLElement) =>
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites();
   let _sprites = <HTMLElement[]>[
-    ...document.querySelector(`.${sprites}`)!.children,
+    ...document.querySelector(`.${sprites.sprites}`)!.children,
   ];
   let loadedJSON = JSON.parse(window.vm.toJSON());
 
@@ -225,20 +217,6 @@ export async function showIndicators(project: Project) {
     });
   });
 
-  // let pick =  document.querySelector(`.${sprites.SELECTED_SPRITE}`) ? (e) =>
-  // e[0] === nameOfSprite(document.querySelector(`.${sprites.SELECTED_SPRITE}`)!) :
-
-  let selectedSprite: HTMLDivElement = document.querySelector(
-    `.${sprites.selectedSprite}`
-  )!;
-  let sprite = (
-    selectedSprite
-      ? changedSprites.find((e) => e[0] === nameOfSprite(selectedSprite))
-      : ["Stage", true]
-  )!;
-
-  await highlightChanged(project, sprite, loadedJSON);
-
   // creates a diff button for the stage
   let stageWrapper: HTMLDivElement = document.querySelector(
     `.${sprites.stageWrapper}`
@@ -282,4 +260,16 @@ export async function showIndicators(project: Project) {
       .forEach((button) => (button.style.marginTop = "0px"));
     await highlightChanged(project, ["Stage", true], loadedJSON);
   };
+
+  let selectedSprite: HTMLDivElement = document.querySelector(
+    `.${sprites.selectedSprite}`
+  )!;
+
+  let sprite = (
+    selectedSprite
+      ? changedSprites.find((e) => e[0] === nameOfSprite(selectedSprite))
+      : ["Stage", true]
+  )!;
+
+  await highlightChanged(project, sprite, loadedJSON);
 }

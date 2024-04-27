@@ -10,13 +10,13 @@ class FileMenu {
     this.menu = document.querySelectorAll<HTMLDivElement>(
       `div.${menu.menuItem}`
     )[1];
-    this.eventHandlers = Object.keys(this.menu).filter((e) =>
+    this.eventHandlers = Object.keys(this.menu).find((e) =>
       e.startsWith("__reactEventHandlers")
-    )[0];
+    )!;
   }
 
   toggleMenu(open: boolean) {
-    // we pass a fake event object to control whether to open or close the file menu
+    // we pass a fake event object to control the menu
     // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
     (this.menu as any)[this.eventHandlers].onClick({
       target: {
@@ -53,15 +53,13 @@ export const fileMenu = new FileMenu();
 class GitMenu {
   savedItems: HTMLElement | undefined;
   newMenu: HTMLElement | undefined;
-  open: boolean;
-  initialized: boolean;
+  open: boolean = false;
+  initialized: boolean = false;
 
-  constructor() {
-    this.open = false;
-    this.initialized = false;
-  }
+  constructor() {}
 
-  item(index: number = 1) {
+  // this way of modifying the menu sucks, but don't fix what ain't broke i guess
+  item(index: number) {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
     return {
       label: (text: string) => {
@@ -88,7 +86,12 @@ class GitMenu {
   /**
    * Copy the File nav menu and edit it to become a Git one
    */
-  create({ push, repoConfig, commitView, commitCreate }: {
+  create({
+    push,
+    repoConfig,
+    commitView,
+    commitCreate,
+  }: {
     push: () => any;
     repoConfig: () => any;
     commitView: () => any;

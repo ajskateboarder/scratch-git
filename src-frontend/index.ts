@@ -34,9 +34,20 @@ declare global {
     };
     vm: any;
     _lib: {
-      scratchblocks: any;
-      parseSB3Blocks: any;
+      scratchblocks: {
+        appendStyles: () => void;
+        renderMatching: (loc: string, config: {}) => void;
+      };
+      parseSB3Blocks: {
+        toScratchblocks: (
+          script: string,
+          json: {},
+          language: string,
+          config: {}
+        ) => string;
+      };
     };
+    changedScripts: any;
     Blockly: any;
   }
 }

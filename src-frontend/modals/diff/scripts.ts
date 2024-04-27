@@ -1,3 +1,5 @@
+import { diff } from "../../api";
+
 const parseError = Math.random() + "\t\nparseError";
 
 const zip = (a: any[], b: any[]) =>
@@ -20,7 +22,7 @@ type ScriptParse = {
 };
 
 /** Parse scripts in a project that have been modified */
-export function parseScripts(oldProject: any, newProject: any): ScriptParse {
+function _parseScripts(oldProject: any, newProject: any): ScriptParse {
   let oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
@@ -63,24 +65,10 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
+  // @ts-ignore
   oldBlocks = oldBlocks.map((e, i) =>
     newBlocks[i] === undefined ? undefined : e
   );
-
-  let justTheStatements = newBlocks.map((e) => e.content);
-  if (newBlocks.length < oldBlocks.length) {
-    oldBlocks.forEach((_, i) => {
-      if (justTheStatements.includes(oldBlocks[i])) {
-        newBlocks.splice(i, 0, { content: "" });
-      }
-    });
-  } else if (oldBlocks.length > newBlocks.length) {
-    newBlocks.forEach((_, i) => {
-      if (oldBlocks.includes(justTheStatements[i])) {
-        oldBlocks.splice(i, 0, "");
-      }
-    });
-  }
 
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
@@ -99,75 +87,24 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
-          ? "added"
-          : "removed";
+            ? "added"
+            : "removed";
       return { oldContent, newContent, status, scriptNo, script };
     });
 
   return { results: changed } as ScriptParse;
 }
 
-export function diff(
-  oldContent: string = "",
-  newContent: string = ""
-): Promise<{ added: number; removed: number; diffed: string }> {
-  return new Promise((resolve, reject) => {
-    let ws = new WebSocket("ws://localhost:8000");
-    ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          command: "diff",
-          data: {
-            GitDiff: { old_content: oldContent, new_content: newContent },
-          },
-        })
-      );
-    };
-    ws.onmessage = (message) => {
-      return resolve(JSON.parse(message.data));
-    };
-    ws.onerror = (error) => {
-      return reject(error);
-    };
-  });
-}
-
-// https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/Utils.js
-
-function topStack(block: any) {
-  let base = block;
-  while (base.getOutputShape() && base.getSurroundParent()) {
-    base = base.getSurroundParent();
-  }
-  return base;
-}
-
-export function scrollBlockIntoView(blockOrId: string) {
-  let workspace = window.Blockly.getMainWorkspace();
-  let offsetX = 32;
-  let offsetY = 32;
-  let block = workspace.getBlockById(blockOrId);
-
-  let root = block.getRootBlock();
-  let base = topStack(block);
-  let ePos = base.getRelativeToSurfaceXY(),
-    rPos = root.getRelativeToSurfaceXY(),
-    scale = workspace.scale,
-    x = rPos.x * scale,
-    y = ePos.y * scale,
-    xx = block.width + x,
-    yy = block.height + y,
-    s = workspace.getMetrics();
-
-  if (
-    x < s.viewLeft + offsetX - 4 ||
-    xx > s.viewLeft + s.viewWidth ||
-    y < s.viewTop + offsetY - 4 ||
-    yy > s.viewTop + s.viewHeight
-  ) {
-    let sx = x - s.contentLeft - offsetX,
-      sy = y - s.contentTop - offsetY;
-
-    workspace.scrollbar.set(sx, sy);
-  }
+/** Parses all scripts in a sprite and diffs them */
+export async function parseScripts(previousScripts: {}, currentScripts: {}) {
+  let scripts = _parseScripts(previousScripts, currentScripts);
+  return (
+    await Promise.all(
+      scripts.results.map((script) =>
+        diff(script.oldContent, script.newContent)
+      )
+    )
+  )
+    .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
+    .filter((result) => result.diffed !== "" || result.status === "error");
 }

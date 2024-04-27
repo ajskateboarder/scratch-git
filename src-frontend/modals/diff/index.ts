@@ -1,7 +1,8 @@
 import api, { Project } from "../../api";
 import { settings } from "../../dom/index";
 
-import { parseScripts, diff, scrollBlockIntoView, type ScriptStatus } from "./utils";
+import { parseScripts, type ScriptStatus } from "./scripts";
+import { scrollBlockIntoView, flash } from "./blocks";
 import van from "vanjs-core";
 
 interface Diff {
@@ -143,8 +144,8 @@ export class DiffModal extends HTMLDialogElement {
         let fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-          ? "red"
-          : "grey";
+            ? "red"
+            : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
             "path,g,rect"
@@ -156,64 +157,67 @@ export class DiffModal extends HTMLDialogElement {
         diff.remove();
       });
     });
-  };
+  }
 
-    /** Highlights diff with plain text */
-    highlightPlain(diffs: Diff[], script: number) {
-      let content = diffs[script].diffed ?? "";
-      this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
-      if (this.useHighlights.checked) {
-        let highlights = content
-          .split("\n")
-          .map(
-            (e, i) =>
-              `<span style="background-color: rgba(${
-                e.startsWith("-")
-                  ? "255,0,0,0.5"
-                  : e.startsWith("+")
+  /** Highlights diff with plain text */
+  highlightPlain(diffs: Diff[], script: number) {
+    let content = diffs[script].diffed ?? "";
+    this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
+    if (this.useHighlights.checked) {
+      let highlights = content
+        .split("\n")
+        .map(
+          (e, i) =>
+            `<span style="background-color: rgba(${
+              e.startsWith("-")
+                ? "255,0,0,0.5"
+                : e.startsWith("+")
                   ? "0,255,0,0.5"
                   : "0,0,0,0"
-              })">${i == 0 ? e.trimStart() : e}</span>`
-          );
-        this.commits.innerHTML = `<pre>${highlights.join("<br>")}</pre><br>`;
-      }
-    };
+            })">${i == 0 ? e.trimStart() : e}</span>`
+        );
+      this.commits.innerHTML = `<pre>${highlights.join("<br>")}</pre><br>`;
+    }
+  }
 
-    /** Enables dark diffing upon modal open */
-    darkDiff(theme: "dark" | "light") {
-      let svg = this.querySelectorAll(".scratchblocks svg > g");
-      if (theme === "dark") {
-        svg.forEach((blocks) => {
-          blocks.querySelectorAll<SVGPathElement>("path.sb3-diff").forEach(
-            (diff) => (diff.style.cssText = "stroke: white; stroke-width: 3.5px")
+  /** Enables dark diffing upon modal open */
+  darkDiff(theme: "dark" | "light") {
+    let svg = this.querySelectorAll(".scratchblocks svg > g");
+    if (theme === "dark") {
+      svg.forEach((blocks) => {
+        blocks
+          .querySelectorAll<SVGPathElement>("path.sb3-diff")
+          .forEach(
+            (diff) =>
+              (diff.style.cssText = "stroke: white; stroke-width: 3.5px")
           );
-        });
-      } else {
-        svg.forEach((blocks) => {
-          blocks
-            .querySelectorAll<SVGPathElement>("path.sb3-diff")
-            .forEach((diff) => (diff.style.cssText = ""));
-        });
-      }
-    };
-
-    /** Fixes git diff snipping with loop statements */
-    removeExtraEnds() {
-      if (this.plainText.checked) return;
-      let svg = this.querySelector(".scratchblocks svg > g")!;
-      svg.querySelectorAll(":scope > g").forEach((blocks) => {
-        if (blocks.querySelectorAll("path").length === 1) {
-          let block = blocks.querySelector("path")!;
-          if (
-            block.classList.length === 1 &&
-            block.classList.contains("sb3-control") &&
-            blocks.querySelector("text")!.innerHTML === "end"
-          ) {
-            blocks.remove();
-          }
-        }
       });
-    };
+    } else {
+      svg.forEach((blocks) => {
+        blocks
+          .querySelectorAll<SVGPathElement>("path.sb3-diff")
+          .forEach((diff) => (diff.style.cssText = ""));
+      });
+    }
+  }
+
+  /** Fixes git diff snipping with loop statements */
+  removeExtraEnds() {
+    if (this.plainText.checked) return;
+    let svg = this.querySelector(".scratchblocks svg > g")!;
+    svg.querySelectorAll(":scope > g").forEach((blocks) => {
+      if (blocks.querySelectorAll("path").length === 1) {
+        let block = blocks.querySelector("path")!;
+        if (
+          block.classList.length === 1 &&
+          block.classList.contains("sb3-control") &&
+          blocks.querySelector("text")!.innerHTML === "end"
+        ) {
+          blocks.remove();
+        }
+      }
+    });
+  }
 
   async diff(
     project: Project | undefined,
@@ -225,7 +229,7 @@ export class DiffModal extends HTMLDialogElement {
     if (!project) project = await api.getCurrentProject();
     project = project!;
 
-    let oldProject: any, newProject: any;
+    let oldScripts: any, newScripts: any;
     if (cached) {
       if (
         this.previousScripts === undefined &&
@@ -238,22 +242,10 @@ export class DiffModal extends HTMLDialogElement {
       this.previousScripts = await project.getPreviousScripts(spriteName);
       this.currentScripts = await project.getCurrentScripts(spriteName);
     }
-    oldProject = this.previousScripts;
-    newProject = this.currentScripts;
+    oldScripts = this.previousScripts;
+    newScripts = this.currentScripts;
 
-    let scripts = parseScripts(oldProject, newProject);
-
-    // not sure why all this isn't just done by diff()
-    const diffs = (
-      await Promise.all(
-        scripts.results.map((script) =>
-          diff(script.oldContent, script.newContent)
-        )
-      )
-    )
-      .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
-      .filter((result) => result.diffed !== "" || result.status === "error");
-    console.log(diffs);
+    const diffs = await parseScripts(oldScripts, newScripts);
 
     if (diffs[script].status === "error") {
       this.useHighlights.checked = false;
@@ -356,7 +348,7 @@ export class DiffModal extends HTMLDialogElement {
     this.commits.innerText = diffs[script]?.diffed ?? "";
     diffBlocks();
     this.commits.innerHTML += "<br>";
-    
+
     this.useHighlights.onchange = () => {
       if (this.useHighlights.checked) {
         this.highlightDiff();
@@ -408,9 +400,10 @@ export class DiffModal extends HTMLDialogElement {
                   onclick: async (e: Event) => {
                     e.stopPropagation();
                     this.close();
-                    scrollBlockIntoView(
-                      (window as any).changedScripts[scriptNo]
-                    );
+                    // wonder if this is flaky?
+                    let id = window.changedScripts[scriptNo];
+                    scrollBlockIntoView(id);
+                    flash(window.Blockly.getMainWorkspace().getBlockById(id));
                   },
                 },
                 i({ class: "fa-solid fa-up-right-from-square" })

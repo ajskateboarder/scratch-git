@@ -41,6 +41,7 @@ dialog[is="welcome-modal"] {
   box-sizing: border-box;
   border-width: 2.5px;
   border-radius: 10px;
+  font-weight: normal;
 }
 
 .a-gap {
@@ -76,10 +77,15 @@ dialog[is="welcome-modal"] {
     margin-right: 10px;
   }
 
-  & .open-script {
+  .open-script {
     font-size: 10px;
     padding: 5px;
     margin-left: 10px;
+    filter: none;
+
+    &:hover {
+      filter: brightness(1.7);
+    }
   }
 }
 
@@ -139,6 +145,8 @@ dialog[is="welcome-modal"] {
 #commits {
   align-items: center;
   margin-left: 10px;
+  user-select: none;
+  font-weight: normal;
 }
 
 .commit {

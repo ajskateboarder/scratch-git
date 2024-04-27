@@ -1,5 +1,5 @@
 import api, { type Commit } from "../api.ts";
-import { misc, settings } from "../dom/index.ts";
+import { settings } from "../dom/index.ts";
 import van, { type State } from "vanjs-core";
 
 const {
@@ -79,6 +79,7 @@ export class CommitModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("#commitList")) return;
+
     this.state = {
       paginatedCommits: van.state([]),
       searchQuery: van.state(""),
@@ -151,25 +152,6 @@ export class CommitModal extends HTMLDialogElement {
         )
       )
     );
-  }
-
-  _showMe() {
-    if (
-      document.querySelector<HTMLDialogElement>(
-        `dialog[is="${this.getAttribute("is")}"]`
-      )!.open
-    )
-      return;
-    this.state.currentPage.val = 0;
-
-    const fragment = document.createDocumentFragment();
-    fragment.appendChild(this);
-    document.querySelector(`.${misc.guiWrapper}`)!.appendChild(fragment);
-    document
-      .querySelector<HTMLDialogElement>(
-        `dialog[is="${this.getAttribute("is")}"]`
-      )!
-      .showModal();
   }
 
   async display() {
@@ -246,6 +228,9 @@ export class CommitModal extends HTMLDialogElement {
       this.newer.disabled = true;
     };
 
-    if (!this.open) this._showMe();
+    if (!this.open) {
+      this.state.currentPage.val = 0;
+      this.showModal();
+    }
   }
 }

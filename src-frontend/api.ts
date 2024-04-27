@@ -9,33 +9,6 @@ export type Commit = {
   shortDate: string;
 };
 
-enum Var {
-  Project,
-  GitDiff,
-  FilePath,
-}
-
-type Command<T extends Var> = {
-  command: {
-    [Var.GitDiff]: "diff";
-    [Var.FilePath]: "create-project";
-    [Var.Project]:
-      | "exists"
-      | "unzip"
-      | "commit"
-      | "push"
-      | "current-project"
-      | "previous-project"
-      | "get-commits"
-      | "get-changed-sprites";
-  }[T];
-  data: {
-    [Var.GitDiff]: { GitDiff: { old_content: string; new_content: string } };
-    [Var.FilePath]: { FilePath: { file_name: string } };
-    [Var.Project]: { Project: { project_name: string; sprite_name?: string } };
-  }[T];
-};
-
 const SOCKET_URL = "ws://localhost:8000";
 
 export class Socket extends WebSocket {
@@ -61,7 +34,7 @@ export class Socket extends WebSocket {
     });
   }
 
-  async request<T extends Var>({ command, data }: Command<T>) {
+  async request({ command, data }: any) {
     if (this.readyState == this.CONNECTING) {
       this.onopen = () => this.send(JSON.stringify({ command, data }));
     } else {
@@ -231,6 +204,31 @@ class ProjectManager extends Socket {
 
     return new Project(projectName);
   }
+}
+
+export function diff(
+  oldContent: string = "",
+  newContent: string = ""
+): Promise<{ added: number; removed: number; diffed: string }> {
+  return new Promise((resolve, reject) => {
+    let ws = new WebSocket(SOCKET_URL);
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          command: "diff",
+          data: {
+            GitDiff: { old_content: oldContent, new_content: newContent },
+          },
+        })
+      );
+    };
+    ws.onmessage = (message) => {
+      return resolve(JSON.parse(message.data));
+    };
+    ws.onerror = (error) => {
+      return reject(error);
+    };
+  });
 }
 
 export default new ProjectManager(SOCKET_URL);

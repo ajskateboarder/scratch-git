@@ -9,22 +9,27 @@ const classNames: string[] = [
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 
-const s = (className: string) =>
-  classNames.filter((e) => e.includes(className))[0];
+const s = (className: string) => {
+  let _className = classNames.find((e) => e.includes(className))!.split(",")[0];
+  if (_className.includes(".")) {
+    _className = _className.split(".")[1];
+  }
+  return _className.split(":")[0];
+};
 
 export const menu = {
   container: s("menu-bar_main-menu"),
   menuBar: s("menu-bar_menu-bar"),
   menuPos: s("gui_menu-bar-position"),
   menuItem: s("menu-bar_menu-bar-item"),
-  activeMenuItem: s("menu-bar_active").split(",")[0].split(".")[1],
+  activeMenuItem: s("menu-bar_active"),
   menuSection: s("menu_menu-section"),
 };
 
 export const alert = {
   alertContainer: s("alerts_alerts-inner-container"),
   alertDialog: s("alert_alert"),
-  alertSuccess: s("alert_success").split(".")[1],
+  alertSuccess: s("alert_success"),
   alertMessage: s("alert_alert-message"),
   alertButtons: s("alert_alert-buttons"),
   alertClose: s("alert_alert-close-button-container"),
@@ -36,8 +41,8 @@ export const sprites = {
   deleteIcon: s("delete-button_delete-icon"),
   spriteSelDelete: s("sprite-selector-item_delete-button"),
   sprites: s("sprite-selector_items-wrapper"),
-  spriteName: s("sprite-selector-item_sprite-name").split(",")[0],
-  selectedSprite: s("sprite-selector-item_is-selected").split(".")[1],
+  spriteName: s("sprite-selector-item_sprite-name"),
+  selectedSprite: s("sprite-selector-item_is-selected"),
   stageWrapper: s("target-pane_stage-selector-wrapper"),
 };
 
@@ -53,6 +58,6 @@ export const misc = {
   saveStatus: s("save-status_save-now"),
   box: s("box_box"),
   close: s("close-button_close-button"),
-  largeClose: s("close-button_large").split(".")[1].split(":")[0],
+  largeClose: s("close-button_large"),
   guiWrapper: s("gui_page-wrapper"),
 };
