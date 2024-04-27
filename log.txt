@@ -1,2 +1,0 @@
-Script copied to /home/adijo/.config/turbowarp-desktop
-Open TurboWarp Desktop to begin using scratch.git, and make sure to keep this running!
