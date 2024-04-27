@@ -1,5 +1,5 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
-import { Cmp } from "./dom/index";
+import { menu } from "./dom/index";
 
 export type Commit = {
   author: { date: string; email: string; name: string };
@@ -206,17 +206,17 @@ class ProjectManager extends Socket {
     /** @type {HTMLDivElement} */
     let projectName: string;
 
-    if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
+    if (document.querySelector(`.${menu.menuItem}:nth-child(5)`)) {
       projectName = (
-        document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)?.parentElement
+        document.querySelector(`.${menu.menuItem}:nth-child(5)`)?.parentElement
           ?.nextElementSibling?.nextElementSibling?.children[0] as any
       ).value;
     } else {
       const projectNameElement: any = await new Promise((resolve) => {
         const observer = new MutationObserver(() => {
-          if (document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`)) {
+          if (document.querySelector(`.${menu.menuItem}:nth-child(5)`)) {
             observer.disconnect();
-            resolve(document.querySelector(`.${Cmp.MENU_ITEM}:nth-child(5)`));
+            resolve(document.querySelector(`.${menu.menuItem}:nth-child(5)`));
           }
         });
         observer.observe(document.body, {

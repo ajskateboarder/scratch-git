@@ -6,11 +6,13 @@ const zip = (a: any[], b: any[]) =>
     b[i] ?? "",
   ]);
 
+export type ScriptStatus = "error" | "modified" | "added" | "removed";
+
 type ScriptParse = {
   results: {
     oldContent: any;
     newContent: any;
-    status: "error" | "modified" | "added" | "removed";
+    status: ScriptStatus;
     scriptNo: number | any[];
     script: string;
   }[];
@@ -88,12 +90,12 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
         (a as unknown as string) === parseError ||
         (b as unknown as string) === parseError
     )
-    //@ts-ignore
+    // @ts-ignore - 'number | any[]' must have a '[Symbol.iterator]()' method that returns an iterator
     .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
       if (oldContent === parseError || newContent === parseError) {
         return { oldContent: "", newContent: "", status: "error", scriptNo };
       }
-      let status =
+      let status: ScriptStatus =
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
@@ -102,8 +104,7 @@ export function parseScripts(oldProject: any, newProject: any): ScriptParse {
       return { oldContent, newContent, status, scriptNo, script };
     });
 
-  //@ts-ignore
-  return { results: changed };
+  return { results: changed } as ScriptParse;
 }
 
 export function diff(

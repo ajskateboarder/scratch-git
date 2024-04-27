@@ -1,8 +1,8 @@
 /** @file Displays indicators and info on sprites that were changed */
-import { type Project } from "./api";
-import { Cmp } from "./dom/index";
+import type { Project } from "./api.ts";
+import { sprites } from "./dom/index";
 import van from "vanjs-core";
-import { DiffModal } from "./modals/diff";
+import type { DiffModal } from "./modals/diff";
 import { diff, parseScripts } from "./modals/diff/utils";
 
 const { div, i } = van.tags;
@@ -21,15 +21,13 @@ const BaseDelete = (props: {}, children: HTMLDivElement) =>
 const SpriteDiff = (props: {}) =>
   BaseDelete(
     {
-      className: [
-        Cmp.DELETE_BUTTON,
-        Cmp.SELECTOR_ITEM_DELETE_BUTTON,
-        "diff-button",
-      ].join(" "),
+      className: [sprites.delete, sprites.spriteSelDelete, "diff-button"].join(
+        " "
+      ),
       ...props,
     },
     div(
-      { className: Cmp.DELETE_BUTTON_VISIBLE },
+      { className: sprites.visibleDelete },
       i({
         className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" "),
         style: "color: white",
@@ -40,15 +38,13 @@ const SpriteDiff = (props: {}) =>
 const StageDiff = (props: {}) =>
   BaseDelete(
     {
-      className: [
-        Cmp.DELETE_BUTTON,
-        Cmp.SELECTOR_ITEM_DELETE_BUTTON,
-        "stage-diff",
-      ].join(" "),
+      className: [sprites.delete, sprites.spriteSelDelete, "stage-diff"].join(
+        " "
+      ),
       ...props,
     },
     div(
-      { className: Cmp.DELETE_BUTTON_VISIBLE },
+      { className: sprites.visibleDelete },
       i({
         className: ["fa-solid", "fa-plus-minus", "fa-sm"].join(" "),
         style: "color: white",
@@ -137,12 +133,12 @@ const nameOfSprite = (element: HTMLElement) =>
 /** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites();
-  let sprites = <HTMLElement[]>[
-    ...document.querySelector(`.${Cmp.SPRITES}`)!.children,
+  let _sprites = <HTMLElement[]>[
+    ...document.querySelector(`.${sprites}`)!.children,
   ];
   let loadedJSON = JSON.parse(window.vm.toJSON());
 
-  sprites.forEach((sprite) => {
+  _sprites.forEach((sprite) => {
     let divs = sprite
       .querySelector("div")!
       .querySelectorAll("div") as NodeListOf<HTMLDivElement>;
@@ -150,9 +146,9 @@ export async function showIndicators(project: Project) {
 
     sprite.addEventListener("click", () => {
       if (
-        document.querySelector(`.${Cmp.SELECTED_SPRITE}`) &&
+        document.querySelector(`.${sprites.selectedSprite}`) &&
         spriteName ===
-          nameOfSprite(document.querySelector(`.${Cmp.SELECTED_SPRITE}`)!) &&
+          nameOfSprite(document.querySelector(`.${sprites.selectedSprite}`)!) &&
         sprite.querySelector<HTMLDivElement>(".diff-button")?.style
           .marginTop === "30px"
       ) {
@@ -161,7 +157,7 @@ export async function showIndicators(project: Project) {
 
       (<HTMLDivElement[]>[
         ...document.querySelectorAll(
-          `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
+          `.${sprites.delete}.${sprites.spriteSelDelete}`
         ),
       ])
         .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -172,7 +168,7 @@ export async function showIndicators(project: Project) {
 
     if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
 
-    let applyMargin = sprite.querySelector(`.${Cmp.DELETE_BUTTON}`) !== null;
+    let applyMargin = sprite.querySelector(`.${sprites.delete}`) !== null;
     let diffButton = SpriteDiff({
       style: `
       margin-top: ${applyMargin ? "30px" : "0px"};
@@ -203,11 +199,13 @@ export async function showIndicators(project: Project) {
       const changedSprite: HTMLDivElement = await new Promise((resolve) => {
         const observer = new MutationObserver(() => {
           resolve(
-            document.querySelector<HTMLDivElement>(`.${Cmp.SELECTED_SPRITE}`)!
+            document.querySelector<HTMLDivElement>(
+              `.${sprites.selectedSprite}`
+            )!
           );
         });
         observer.observe(
-          document.querySelector(`.${Cmp.SELECTED_SPRITE}`) ?? document.body,
+          document.querySelector(`.${sprites.selectedSprite}`) ?? document.body,
           {
             childList: true,
             subtree: true,
@@ -227,11 +225,11 @@ export async function showIndicators(project: Project) {
     });
   });
 
-  // let pick =  document.querySelector(`.${Cmp.SELECTED_SPRITE}`) ? (e) =>
-  // e[0] === nameOfSprite(document.querySelector(`.${Cmp.SELECTED_SPRITE}`)!) :
+  // let pick =  document.querySelector(`.${sprites.SELECTED_SPRITE}`) ? (e) =>
+  // e[0] === nameOfSprite(document.querySelector(`.${sprites.SELECTED_SPRITE}`)!) :
 
   let selectedSprite: HTMLDivElement = document.querySelector(
-    `.${Cmp.SELECTED_SPRITE}`
+    `.${sprites.selectedSprite}`
   )!;
   let sprite = (
     selectedSprite
@@ -243,7 +241,7 @@ export async function showIndicators(project: Project) {
 
   // creates a diff button for the stage
   let stageWrapper: HTMLDivElement = document.querySelector(
-    `.${Cmp.STAGE_WRAPPER}`
+    `.${sprites.stageWrapper}`
   )!;
 
   if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
@@ -277,7 +275,7 @@ export async function showIndicators(project: Project) {
   stageWrapper.onclick = async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
-        `.${Cmp.DELETE_BUTTON}.${Cmp.SELECTOR_ITEM_DELETE_BUTTON}`
+        `.${sprites.delete}.${sprites.spriteSelDelete}`
       ),
     ])
       .filter((button) => !button.classList.contains("stage-diff-button"))

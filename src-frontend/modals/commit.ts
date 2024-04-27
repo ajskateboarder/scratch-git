@@ -1,5 +1,5 @@
-import { Cmp } from "../dom/index.ts";
 import api, { type Commit } from "../api.ts";
+import { misc, settings } from "../dom/index.ts";
 import van, { type State } from "vanjs-core";
 
 const {
@@ -63,11 +63,11 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends HTMLDialogElement {
-  older?: HTMLButtonElement;
-  newer?: HTMLButtonElement;
-  search?: HTMLInputElement;
+  older!: HTMLButtonElement;
+  newer!: HTMLButtonElement;
+  search!: HTMLInputElement;
 
-  state?: {
+  state!: {
     paginatedCommits: State<Commit[]>;
     searchQuery: State<string>;
     currentPage: State<number>;
@@ -87,7 +87,7 @@ export class CommitModal extends HTMLDialogElement {
 
     const closeButton = button(
       {
-        class: Cmp.SETTINGS_BUTTON,
+        class: settings.settingsButton,
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
@@ -96,7 +96,7 @@ export class CommitModal extends HTMLDialogElement {
 
     this.newer = button(
       {
-        class: [Cmp.SETTINGS_BUTTON, "round-right-button"].join(" "),
+        class: [settings.settingsButton, "round-right-button"].join(" "),
         disabled: true,
       },
       "Newer"
@@ -104,7 +104,7 @@ export class CommitModal extends HTMLDialogElement {
 
     this.older = button(
       {
-        class: [Cmp.SETTINGS_BUTTON, "round-left-button"].join(" "),
+        class: [settings.settingsButton, "round-left-button"].join(" "),
       },
       "Older"
     );
@@ -121,10 +121,10 @@ export class CommitModal extends HTMLDialogElement {
 
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
-        this.state!.paginatedCommits.val.map((e) => {
-          if (this.state!.searchQuery.val !== "") {
-            if (e.subject.includes(this.state!.searchQuery.val)) {
-              return Commit(e, this.state!.searchQuery.val);
+        this.state.paginatedCommits.val.map((e) => {
+          if (this.state.searchQuery.val !== "") {
+            if (e.subject.includes(this.state.searchQuery.val)) {
+              return Commit(e, this.state.searchQuery.val);
             }
           } else {
             return Commit(e, "");
@@ -160,11 +160,11 @@ export class CommitModal extends HTMLDialogElement {
       )!.open
     )
       return;
-    this.state!.currentPage.val = 0;
+    this.state.currentPage.val = 0;
 
     const fragment = document.createDocumentFragment();
     fragment.appendChild(this);
-    document.querySelector(`.${Cmp.GUI_PAGE_WRAPPER}`)!.appendChild(fragment);
+    document.querySelector(`.${misc.guiWrapper}`)!.appendChild(fragment);
     document
       .querySelector<HTMLDialogElement>(
         `dialog[is="${this.getAttribute("is")}"]`
@@ -177,73 +177,73 @@ export class CommitModal extends HTMLDialogElement {
     console.log(commits_);
     let commits = paginate(commits_, 40);
 
-    this.state!.paginatedCommits.val = commits[this.state!.currentPage.val];
+    this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 
     if (commits.length === 1) {
-      this.newer!.disabled = true;
-      this.older!.disabled = true;
+      this.newer.disabled = true;
+      this.older.disabled = true;
     }
 
-    this.older!.onclick = () => {
-      let page = ++this.state!.currentPage.val;
-      this.state!.paginatedCommits.val = paginate(
+    this.older.onclick = () => {
+      let page = ++this.state.currentPage.val;
+      this.state.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
-              this.state!.searchQuery.val !== "" ||
-              e.subject.includes(this.state!.searchQuery.val)
+              this.state.searchQuery.val !== "" ||
+              e.subject.includes(this.state.searchQuery.val)
           ),
         40
       )[page];
-      this.older!.disabled = page === commits.length - 1;
-      this.newer!.disabled = page !== commits.length - 1;
+      this.older.disabled = page === commits.length - 1;
+      this.newer.disabled = page !== commits.length - 1;
       if (page !== 0 && page !== commits.length - 1) {
-        this.older!.disabled = false;
-        this.newer!.disabled = false;
+        this.older.disabled = false;
+        this.newer.disabled = false;
       }
     };
 
-    this.newer!.onclick = () => {
-      let page = --this.state!.currentPage.val;
-      this.state!.paginatedCommits.val = paginate(
+    this.newer.onclick = () => {
+      let page = --this.state.currentPage.val;
+      this.state.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
-              this.state!.searchQuery.val !== "" ||
-              e.subject.includes(this.state!.searchQuery.val)
+              this.state.searchQuery.val !== "" ||
+              e.subject.includes(this.state.searchQuery.val)
           ),
         40
       )[page];
-      this.newer!.disabled = page === 0;
-      this.older!.disabled = page !== 0;
+      this.newer.disabled = page === 0;
+      this.older.disabled = page !== 0;
       if (page !== 0 && page !== commits.length - 1) {
-        this.older!.disabled = false;
-        this.newer!.disabled = false;
+        this.older.disabled = false;
+        this.newer.disabled = false;
       }
     };
 
-    this.search!.oninput = async (s) => {
+    this.search.oninput = async (s) => {
       let search = (s.target! as any).value;
-      this.state!.searchQuery.val = search;
+      this.state.searchQuery.val = search;
       if (search === "") {
-        let page = this.state!.currentPage.val;
-        this.newer!.disabled = page === 0;
-        this.older!.disabled = page !== 0;
+        let page = this.state.currentPage.val;
+        this.newer.disabled = page === 0;
+        this.older.disabled = page !== 0;
         if (page !== 0 && page !== commits.length - 1) {
-          this.older!.disabled = false;
-          this.newer!.disabled = false;
+          this.older.disabled = false;
+          this.newer.disabled = false;
         }
-        this.state!.paginatedCommits.val = commits[page];
+        this.state.paginatedCommits.val = commits[page];
         return;
       }
       commits_ = await (await api.getCurrentProject())!.getCommits();
-      this.state!.paginatedCommits.val = commits_
+      this.state.paginatedCommits.val = commits_
         .flat()
         .filter((e) => e.subject.includes(search));
-      this.older!.disabled = true;
-      this.newer!.disabled = true;
+      this.older.disabled = true;
+      this.newer.disabled = true;
     };
 
     if (!this.open) this._showMe();

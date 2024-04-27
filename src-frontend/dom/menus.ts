@@ -1,14 +1,6 @@
-import van from "vanjs-core";
-import { Cmp } from "./accessors.ts";
+/** @file Manages creation of Git menu and alerts */
 
-const { div, img } = van.tags;
-
-type GitMenuFunctions = {
-  push: () => any;
-  repoConfig: () => any;
-  commitView: () => any;
-  commitCreate: () => any;
-};
+import { menu } from "./accessors.ts";
 
 class FileMenu {
   menu: HTMLDivElement;
@@ -16,14 +8,14 @@ class FileMenu {
 
   constructor() {
     this.menu = document.querySelectorAll<HTMLDivElement>(
-      `div.${Cmp.MENU_ITEM}`
+      `div.${menu.menuItem}`
     )[1];
     this.eventHandlers = Object.keys(this.menu).filter((e) =>
       e.startsWith("__reactEventHandlers")
     )[0];
   }
 
-  clickMenu(open: boolean) {
+  toggleMenu(open: boolean) {
     // we pass a fake event object to control whether to open or close the file menu
     // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
     (this.menu as any)[this.eventHandlers].onClick({
@@ -35,22 +27,22 @@ class FileMenu {
 
   /** Opens a file picker dialog to load projects into TurboWarp */
   openProject() {
-    this.clickMenu(true);
+    this.toggleMenu(true);
     const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
     loadFromComputer[this.eventHandlers].onClick();
-    this.clickMenu(false);
-    this.clickMenu(true);
+    this.toggleMenu(false);
+    this.toggleMenu(true);
   }
 
   /** Returns if a project is currently open */
   isProjectOpen() {
-    this.clickMenu(true);
+    this.toggleMenu(true);
     const savedMenu = new DOMParser().parseFromString(
       this.menu.innerHTML,
       "text/html"
     );
-    this.clickMenu(false);
-    this.clickMenu(true);
+    this.toggleMenu(false);
+    this.toggleMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
 }
@@ -83,7 +75,7 @@ class GitMenu {
       onclick: (handler: () => any) => {
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
-          this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+          this.newMenu!.classList.remove(menu.activeMenuItem);
           this.savedItems!.style.display = "none";
           this.open = false;
           await handler();
@@ -96,15 +88,20 @@ class GitMenu {
   /**
    * Copy the File nav menu and edit it to become a Git one
    */
-  create({ push, repoConfig, commitView, commitCreate }: GitMenuFunctions) {
+  create({ push, repoConfig, commitView, commitCreate }: {
+    push: () => any;
+    repoConfig: () => any;
+    commitView: () => any;
+    commitCreate: () => any;
+  }) {
     if (this.initialized) return;
 
     // open, copy, and edit the file menu
-    fileMenu.clickMenu(false);
-    fileMenu.clickMenu(true);
+    fileMenu.toggleMenu(false);
+    fileMenu.toggleMenu(true);
     this.newMenu = fileMenu.menu.cloneNode(true) as HTMLDivElement;
     fileMenu.menu.after(this.newMenu);
-    this.newMenu.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+    this.newMenu.classList.remove(menu.activeMenuItem);
     this.newMenu.querySelector("span")!.innerText = "Git";
     this.savedItems = this.newMenu
       .querySelector("ul")!
@@ -126,7 +123,7 @@ class GitMenu {
     this.item(4).remove();
     this.item(4).remove();
     this.item(4).remove();
-    this.item(4).elem.classList.remove(Cmp.MENU_SECTION);
+    this.item(4).elem.classList.remove(menu.menuSection);
     this.item(4).label("Commit");
     this.item(4).onclick(commitCreate);
     this.item(3).label("View commits");
@@ -135,11 +132,11 @@ class GitMenu {
     // make new menu toggle-able
     this.newMenu.onclick = () => {
       if (this.savedItems!.style.display === "none") {
-        this.newMenu!.classList.add(Cmp.MENU_ITEM_ACTIVE);
+        this.newMenu!.classList.add(menu.activeMenuItem);
         this.savedItems!.style.display = "block";
         this.open = true;
       } else {
-        this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+        this.newMenu!.classList.remove(menu.activeMenuItem);
         this.savedItems!.style.display = "none";
         this.open = false;
       }
@@ -149,79 +146,18 @@ class GitMenu {
     document.querySelector<HTMLDivElement>("#app")!.onmouseup = (e) => {
       if (
         e.target !== this.newMenu &&
-        //@ts-ignore
-        e.target!.parentNode !== this.newMenu &&
+        (e.target as HTMLElement)!.parentNode !== this.newMenu &&
         this.open
       ) {
-        this.newMenu!.classList.remove(Cmp.MENU_ITEM_ACTIVE);
+        this.newMenu!.classList.remove(menu.activeMenuItem);
         this.savedItems!.style.display = "none";
         this.open = false;
       }
     };
 
-    fileMenu.clickMenu(true);
+    fileMenu.toggleMenu(true);
     this.initialized = true;
   }
-}
-
-// taken directly from Scratch
-const CLOSE_BUTTON_SVG =
-  "data:image/svg+xml;base64,\
-PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d\
-3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3LjQ4IDcuNDgiPjxkZWZzPjxzdH\
-lsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojZmZmO3N0cm9rZS1saW5lY2FwOnJvdW5kO\
-3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2Utd2lkdGg6MnB4O308L3N0eWxlPjwvZGVm\
-cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
-0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT\
-0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
-
-/** Displays a custom scratch-gui alert */
-export function scratchAlert({
-  message,
-  duration,
-}: {
-  message: string;
-  duration: number;
-}) {
-  const container = document.querySelector(`.${Cmp.ALERT_CONTAINER}`)!;
-
-  const remove = () => (container.innerHTML = "");
-  setTimeout(remove, duration);
-
-  container.appendChild(
-    div(
-      {
-        className: [Cmp.ALERT_DIALOG, Cmp.ALERT_SUCCESS, Cmp.BOX].join(" "),
-        style: "justify-content: space-between",
-      },
-      div({ className: Cmp.ALERT_MESSAGE }, message),
-      div(
-        { className: Cmp.ALERT_BUTTONS },
-        div(
-          { className: [Cmp.ALERT_CLOSE_CONTAINER, Cmp.BOX].join(" ") },
-          div(
-            {
-              ariaLabel: "Close",
-              className: [Cmp.CLOSE_BUTTON, Cmp.CLOSE_BUTTON_LARGE].join(" "),
-              role: "button",
-              tabIndex: "0",
-              onclick: () => remove(),
-              ...(window.ReduxStore.getState().scratchGui.theme.theme.gui ===
-                "dark" && {
-                style: "background-color: rgba(0, 0, 0, 0.255)",
-              }),
-            },
-            img({
-              className: [Cmp.CLOSE_BUTTON, "undefined"].join(" "),
-              src: CLOSE_BUTTON_SVG,
-              style: `transform: rotate(45deg) scale(0.5);
-              `,
-            })
-          )
-        )
-      )
-    )
-  );
 }
 
 /** Manages the intialization of the Git menu */

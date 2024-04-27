@@ -12,63 +12,47 @@ const classNames: string[] = [
 const s = (className: string) =>
   classNames.filter((e) => e.includes(className))[0];
 
-/** Accessors for parts of the UI */
-export const Cmp = {
-  // menu
-  MENU_CONTAINER: s("menu-bar_main-menu"),
-  MENU_BAR: s("menu-bar_menu-bar"),
-  MENU_POSITION: s("gui_menu-bar-position"),
-  MENU_ITEM: s("menu-bar_menu-bar-item"),
-  MENU_ITEM_ACTIVE: s("menu-bar_active").split(",")[0].split(".")[1],
-  MENU_ACCOUNTINFOGROUP: s("menu-bar_account-info-group"),
-  MENU_SECTION: s("menu_menu-section"),
-
-  // alerts
-  ALERT_CONTAINER: s("alerts_alerts-inner-container"),
-  ALERT_DIALOG: s("alert_alert"),
-  ALERT_SUCCESS: s("alert_success").split(".")[1],
-  ALERT_MESSAGE: s("alert_alert-message"),
-  ALERT_BUTTONS: s("alert_alert-buttons"),
-  ALERT_CLOSE_CONTAINER: s("alert_alert-close-button-container"),
-  ALERT_CLOSE_BUTTON: s("alert_alert-close-button"),
-
-  // sprites/stage
-  DELETE_BUTTON: s("delete-button_delete-button"),
-  DELETE_BUTTON_VISIBLE: s("delete-button_delete-button-visible"),
-  DELETE_BUTTON_ICON: s("delete-button_delete-icon"),
-  SELECTOR_ITEM_DELETE_BUTTON: s("sprite-selector-item_delete-button"),
-  SPRITES: s("sprite-selector_items-wrapper"),
-  SPRITE_NAME: s("sprite-selector-item_sprite-name").split(",")[0],
-  SELECTED_SPRITE: s("sprite-selector-item_is-selected").split(".")[1],
-  STAGE_WRAPPER: s("target-pane_stage-selector-wrapper"),
-
-  // settings
-  SETTINGS_LABEL: s("settings-modal_label"),
-  SETTINGS_CHECKBOX: s("settings-modal_checkbox"),
-  CHECKBOX: s("checkbox_checkbox"),
-
-  // misc
-  SAVE_STATUS: s("save-status_save-now"),
-  BOX: s("box_box"),
-  SETTINGS_BUTTON: s("settings-modal_button"),
-  CLOSE_BUTTON: s("close-button_close-button"),
-  CLOSE_BUTTON_LARGE: s("close-button_large").split(".")[1].split(":")[0],
-  CLOSE_ICON: s("close-button_close-icon"),
-  DISABLED_BUTTON: s("button_mod-disabled"),
-  GUI_PAGE_WRAPPER: s("gui_page-wrapper"),
+export const menu = {
+  container: s("menu-bar_main-menu"),
+  menuBar: s("menu-bar_menu-bar"),
+  menuPos: s("gui_menu-bar-position"),
+  menuItem: s("menu-bar_menu-bar-item"),
+  activeMenuItem: s("menu-bar_active").split(",")[0].split(".")[1],
+  menuSection: s("menu_menu-section"),
 };
 
-/** Dark mode block fill colors that TurboWarp use */
-export const DarkBlocks = {
-  "sb3-motion": "#0F1E33",
-  "sb3-looks": "#1E1433",
-  "sb3-sound": "#291329",
-  "sb3-events": "#332600",
-  "sb3-control": "#332205",
-  "sb3-sensing": "#12232A",
-  "sb3-operators": "#112611",
-  "sb3-variables": "#331C05",
-  "sb3-list": "#331405",
-  "sb3-custom": "#331419",
-  "sb3-extension": "#03251C",
+export const alert = {
+  alertContainer: s("alerts_alerts-inner-container"),
+  alertDialog: s("alert_alert"),
+  alertSuccess: s("alert_success").split(".")[1],
+  alertMessage: s("alert_alert-message"),
+  alertButtons: s("alert_alert-buttons"),
+  alertClose: s("alert_alert-close-button-container"),
+};
+
+export const sprites = {
+  delete: s("delete-button_delete-button"),
+  visibleDelete: s("delete-button_delete-button-visible"),
+  deleteIcon: s("delete-button_delete-icon"),
+  spriteSelDelete: s("sprite-selector-item_delete-button"),
+  sprites: s("sprite-selector_items-wrapper"),
+  spriteName: s("sprite-selector-item_sprite-name").split(",")[0],
+  selectedSprite: s("sprite-selector-item_is-selected").split(".")[1],
+  stageWrapper: s("target-pane_stage-selector-wrapper"),
+};
+
+export const settings = {
+  settingsLabel: s("settings-modal_label"),
+  settingsCheckbox: s("settings-modal_checkbox"),
+  settingsButton: s("settings-modal_button"),
+  checkbox: s("checkbox_checkbox"),
+  disabledButton: s("button_mod-disabled"),
+};
+
+export const misc = {
+  saveStatus: s("save-status_save-now"),
+  box: s("box_box"),
+  close: s("close-button_close-button"),
+  largeClose: s("close-button_large").split(".")[1].split(":")[0],
+  guiWrapper: s("gui_page-wrapper"),
 };
