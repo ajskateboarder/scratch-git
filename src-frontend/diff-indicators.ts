@@ -58,14 +58,12 @@ async function changedBlocklyScripts(
   sprite: (string | boolean)[],
   loadedJSON: any
 ) {
-  console.log("i was called", project, sprite);
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
 
   let diffs = await parseScripts(
     await project.getPreviousScripts(spriteName),
     await project.getCurrentScripts(spriteName)
   );
-  console.log(diffs);
 
   let target = loadedJSON.targets.find((e: any) =>
     spriteName.includes("(stage)") ? e.isStage : e.name === spriteName

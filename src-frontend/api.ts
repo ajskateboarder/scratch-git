@@ -11,14 +11,16 @@ export type Commit = {
 
 const SOCKET_URL = "ws://localhost:8000";
 
-export class Socket extends WebSocket {
-  constructor(url: string) {
-    super(url);
+class Socket {
+  protected ws: WebSocket;
+
+  constructor(ws: WebSocket) {
+    this.ws = ws;
   }
 
   receive(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.onmessage = (message) => {
+      this.ws.onmessage = (message) => {
         try {
           let json = JSON.parse(message.data);
           return resolve(json);
@@ -28,17 +30,17 @@ export class Socket extends WebSocket {
         }
       };
 
-      this.onerror = (error) => {
+      this.ws.onerror = (error) => {
         return reject(error);
       };
     });
   }
 
   async request({ command, data }: any) {
-    if (this.readyState == this.CONNECTING) {
-      this.onopen = () => this.send(JSON.stringify({ command, data }));
+    if (this.ws.readyState == this.ws.CONNECTING) {
+      this.ws.onopen = () => this.ws.send(JSON.stringify({ command, data }));
     } else {
-      this.send(JSON.stringify({ command, data }));
+      this.ws.send(JSON.stringify({ command, data }));
     }
 
     return await this.receive();
@@ -49,8 +51,8 @@ export class Project extends Socket {
   projectName: string;
 
   /** Constructs a project */
-  constructor(projectName: string) {
-    super(SOCKET_URL);
+  constructor(projectName: string, ws: WebSocket) {
+    super(ws);
     this.projectName = projectName;
   }
 
@@ -138,12 +140,12 @@ export class ProjectExistsException extends Error {
 
 // class factory jumpscare
 class ProjectManager extends Socket {
-  constructor(url: string) {
-    super(url);
+  constructor(ws: WebSocket) {
+    super(ws);
   }
 
   async getProject(projectName: string): Promise<Project> {
-    return new Project(projectName);
+    return new Project(projectName, this.ws);
   }
 
   /**
@@ -151,7 +153,7 @@ class ProjectManager extends Socket {
    * @throws {ProjectExistsException}
    */
   async createProject(projectPath: string): Promise<Project> {
-    this.send(
+    this.ws.send(
       JSON.stringify({
         command: "create-project",
         data: { FilePath: projectPath },
@@ -171,7 +173,7 @@ class ProjectManager extends Socket {
       );
     }
 
-    return new Project(response.project_name);
+    return new Project(response.project_name, this.ws);
   }
 
   /** Get the current project based on the project name */
@@ -202,7 +204,7 @@ class ProjectManager extends Socket {
           .children[0].value;
     }
 
-    return new Project(projectName);
+    return new Project(projectName, this.ws);
   }
 }
 
@@ -231,4 +233,4 @@ export function diff(
   });
 }
 
-export default new ProjectManager(SOCKET_URL);
+export default new ProjectManager(new WebSocket(SOCKET_URL));

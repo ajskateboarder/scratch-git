@@ -16,22 +16,8 @@ interface Diff {
   diffed: string;
 }
 
-const {
-  div,
-  label,
-  input,
-  span,
-  ul,
-  button,
-  p,
-  aside,
-  main,
-  br,
-  hr,
-  i,
-  a,
-  li,
-} = van.tags;
+const { div, label, input, span, ul, button, p, aside, main, br, hr, i, li } =
+  van.tags;
 
 const Setting = (props: {}, name: string) =>
   div(
@@ -247,25 +233,6 @@ export class DiffModal extends HTMLDialogElement {
 
     const diffs = await parseScripts(oldScripts, newScripts);
 
-    if (diffs[script].status === "error") {
-      this.useHighlights.checked = false;
-      this.useHighlights.disabled = true;
-      (this.useHighlights.parentElement!.style as any) =
-        "opacity: 0.5; user-select: none";
-      this.plainText.checked = false;
-      this.plainText.disabled = true;
-      (this.plainText.parentElement!.style as any) =
-        "opacity: 0.5; user-select: none";
-      this.commits.innerText = "Failed to display blocks.";
-    } else {
-      this.useHighlights.checked = true;
-      this.useHighlights.disabled = false;
-      (this.useHighlights.parentElement!.style as any) = "";
-      this.plainText.checked = true;
-      this.plainText.disabled = false;
-      (this.plainText.parentElement!.style as any) = "";
-    }
-
     let { blocks: blockTheme, gui: uiTheme } =
       window.ReduxStore.getState().scratchGui.theme.theme;
 
@@ -451,33 +418,6 @@ export class DiffModal extends HTMLDialogElement {
 
     this.useHighlights.checked = false;
     this.plainText.checked = false;
-
-    if (diffs[script].status === "error") {
-      this.commits.classList.add("display-error");
-      this.commits.innerHTML = "";
-      this.commits.append(
-        p(
-          { style: "font-size: 15px" },
-          i({ class: "fa-solid fa-circle-exclamation" }),
-          br(),
-          p(
-            "Sorry, but we could not display blocks for this change. (likely because it has an empty if block)",
-            br(),
-            "However, this change can still be commited.",
-            br(),
-            a(
-              {
-                style: "font-size: 13px; text-decoration: none; color: grey",
-                href: "https://github.com/apple502j/parse-sb3-blocks/issues/9",
-              },
-              "see apple502j/parse-sb3-blocks#9"
-            )
-          )
-        )
-      );
-    } else {
-      this.commits.classList.remove("display-error");
-    }
 
     if (!this.open) this.showModal();
   }

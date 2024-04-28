@@ -10,16 +10,16 @@ scratch.git works by modifying TurboWarp Desktop through a userscript. Git inter
 
 ## Usage
 
-1) Install these things:
+1. Install these things:
 
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 
 (For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript, [Rust](https://rustup.rs/) to compile the server, and [Python](https://python.org) to setup live debugging)
 
-2) Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
+2. Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
-3) Unpack the zip or tar.gz and run the scratch.git executable - it'll run continuously until you close out the terminal or do Ctrl+C
+3. Unpack the zip or tar.gz and run the scratch.git executable - it'll run continuously until you close out the terminal or do Ctrl+C
 
 Currently, scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
@@ -57,7 +57,7 @@ scratch-git uses a derivative of [Convential Commits](https://www.conventionalco
 
 Changes are done by sprite and are separated by commas.
 
-Commits start with the name of the sprite you are making changes to (e.g. Sprite1, Stage) with a comma afterwards (similar to CC).
+Commits start with the name of the sprite you are making changes to (e.g. Sprite1, Stage) with a colon afterwards (similar to CC).
 
 Commits then specify the change they are making using one of the following statements:
 
