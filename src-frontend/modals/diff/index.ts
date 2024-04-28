@@ -16,8 +16,22 @@ interface Diff {
   diffed: string;
 }
 
-const { div, label, input, span, ul, button, p, aside, main, br, hr, i, li } =
-  van.tags;
+const {
+  div,
+  label,
+  input,
+  span,
+  ul,
+  button,
+  p,
+  pre,
+  aside,
+  main,
+  br,
+  hr,
+  i,
+  li,
+} = van.tags;
 
 const Setting = (props: {}, name: string) =>
   div(
@@ -59,7 +73,7 @@ const DarkBlocks = {
 export class DiffModal extends HTMLDialogElement {
   scripts!: HTMLUListElement;
   commits!: HTMLParagraphElement;
-  useHighlights!: HTMLInputElement;
+  highlights!: HTMLInputElement;
   plainText!: HTMLInputElement;
 
   previousScripts: any;
@@ -74,29 +88,29 @@ export class DiffModal extends HTMLDialogElement {
 
     const useHighlights = Setting({}, "Use highlights");
     const plainText = Setting({ style: "margin-left: 10px;" }, "Plain text");
-    const commits = p(
-      { id: "commits" },
-      span({ style: "display: flex" }, useHighlights, plainText),
-      hr(),
-      br(),
-      p({ id: "commitView" })
-    );
     const closeButton = button(
       {
         id: "closeButton",
-        class: settings.settingsButton,
-        style: "margin-left: 10px",
+        class: [settings.settingsButton, "close-button"].join(" "),
         onclick: () => {
           useHighlights.querySelector("input")!.checked = false;
           plainText.querySelector("input")!.checked = false;
           this.close();
         },
       },
-      "Okay"
+      i({ class: "fa-solid fa-xmark" })
+    );
+
+    const commits = p(
+      { id: "commits" },
+      span({ style: "display: flex" }, useHighlights, plainText, closeButton),
+      hr(),
+      br(),
+      pre({ id: "commitView" })
     );
 
     this.scripts = ul({ id: "scripts" });
-    this.useHighlights = useHighlights.querySelector("input")!;
+    this.highlights = useHighlights.querySelector("input")!;
     this.plainText = plainText.querySelector("input")!;
     this.commits = commits.querySelector("#commitView")!;
 
@@ -105,16 +119,7 @@ export class DiffModal extends HTMLDialogElement {
       div(
         { class: "sidebar" },
         aside(this.scripts),
-        main(
-          div(
-            { class: "content" },
-            commits,
-            div(
-              { class: ["bottom-bar", "in-diff-modal"].join(" ") },
-              closeButton
-            )
-          )
-        )
+        main(div({ class: "content" }, commits))
       )
     );
   }
@@ -149,20 +154,27 @@ export class DiffModal extends HTMLDialogElement {
   highlightPlain(diffs: Diff[], script: number) {
     let content = diffs[script].diffed ?? "";
     this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
-    if (this.useHighlights.checked) {
+    if (this.highlights.checked) {
       let highlights = content
+        .trimStart()
         .split("\n")
-        .map(
-          (e, i) =>
-            `<span style="background-color: rgba(${
-              e.startsWith("-")
-                ? "255,0,0,0.5"
-                : e.startsWith("+")
-                  ? "0,255,0,0.5"
-                  : "0,0,0,0"
-            })">${i == 0 ? e.trimStart() : e}</span>`
+        .map((e, i) =>
+          span(
+            {
+              style: `background-color: rgba(${e.startsWith("-") ? "255,0,0,0.5" : e.startsWith("+") ? "0,255,0,0.5" : "0,0,0,0"})`,
+            },
+            i == 0 ? e.trimStart() : e
+          )
         );
-      this.commits.innerHTML = `<pre>${highlights.join("<br>")}</pre><br>`;
+      if (highlights[0].innerText === "") {
+        highlights = highlights.slice(1);
+      }
+      this.commits.innerHTML = "";
+      this.commits.append(
+        pre(
+          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
+        )
+      );
     }
   }
 
@@ -296,10 +308,13 @@ export class DiffModal extends HTMLDialogElement {
     this.scripts.innerHTML = "";
     this.commits.innerText = diffs[script]?.diffed ?? "";
     diffBlocks();
-    this.commits.innerHTML += "<br>";
 
-    this.useHighlights.onchange = () => {
-      if (this.useHighlights.checked) {
+    this.highlights.onchange = () => {
+      localStorage.setItem(
+        "scratch-git:highlights",
+        this.highlights.checked.toString()
+      );
+      if (this.highlights.checked) {
         this.highlightDiff();
         if (this.plainText.checked) {
           this.highlightPlain(diffs, script);
@@ -307,28 +322,34 @@ export class DiffModal extends HTMLDialogElement {
       } else {
         if (this.plainText.checked) {
           let content = diffs[script].diffed ?? "";
-          this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
+          this.commits.innerHTML = "";
+          this.commits.append(pre(content.trimStart()));
         } else {
           this.commits.innerText = diffs[script].diffed ?? "";
           diffBlocks();
-          this.commits.innerHTML += "<br>";
         }
       }
       this.darkDiff(uiTheme);
     };
 
-    this.plainText.onchange = () => {
+    this.plainText.onchange = (e) => {
+      localStorage.setItem(
+        "scratch-git:plaintext",
+        this.plainText.checked.toString()
+      );
       if (this.plainText.checked) {
-        if (this.useHighlights.checked) {
+        if (this.highlights.checked) {
           this.highlightPlain(diffs, script);
         } else {
           let content = diffs[script].diffed ?? "";
-          this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
+          this.commits.innerHTML = "";
+          this.commits.append(pre(content.trimStart()));
         }
       } else {
-        diffBlocks();
-        this.commits.innerHTML += "<br>";
-        if (this.useHighlights.checked) this.highlightDiff();
+        if (e.type !== "init") {
+          diffBlocks();
+          if (this.highlights.checked) this.highlightDiff();
+        }
       }
       this.darkDiff(uiTheme);
     };
@@ -348,7 +369,7 @@ export class DiffModal extends HTMLDialogElement {
                     e.stopPropagation();
                     this.close();
                     // wonder if this is flaky?
-                    let id = window.changedScripts[scriptNo];
+                    let id = window._changedScripts[scriptNo];
                     scrollBlockIntoView(id);
                     flash(window.Blockly.getMainWorkspace().getBlockById(id));
                   },
@@ -395,8 +416,14 @@ export class DiffModal extends HTMLDialogElement {
 
     this.darkDiff(uiTheme);
 
-    this.useHighlights.checked = false;
-    this.plainText.checked = false;
+    this.highlights.checked = JSON.parse(
+      localStorage.getItem("scratch-git:highlights")!
+    );
+    this.plainText.checked = JSON.parse(
+      localStorage.getItem("scratch-git:plaintext")!
+    );
+    this.plainText.onchange(new Event("init"));
+    this.highlights.onchange(new Event("init"));
 
     if (!this.open) this.showModal();
   }

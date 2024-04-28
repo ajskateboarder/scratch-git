@@ -108,7 +108,7 @@ async function highlightChanged(
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
     .forEach((e) => (e.style.filter = ""));
   let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
-  window.changedScripts = changedScripts;
+  window._changedScripts = changedScripts;
   changedScripts.forEach((e) => {
     let group: HTMLElement =
       window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;

@@ -33,6 +33,7 @@ declare global {
       };
     };
     vm: any;
+    Blockly: any;
     _lib: {
       scratchblocks: {
         appendStyles: () => void;
@@ -47,8 +48,7 @@ declare global {
         ) => string;
       };
     };
-    changedScripts: any;
-    Blockly: any;
+    _changedScripts: string[];
   }
 }
 
@@ -155,6 +155,15 @@ async function initialize() {
 
 (async () => {
   // avoids scenarios where scratch.git initializes before the editor is finished
+  localStorage.setItem(
+    "scratch-git:highlights",
+    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
+  );
+  localStorage.setItem(
+    "scratch-git:plaintext",
+    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
+  );
+
   window.vm.runtime.on(
     "ASSET_PROGRESS",
     async (finished: number, total: number) => {
