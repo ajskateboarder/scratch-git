@@ -193,7 +193,7 @@ dialog[is="welcome-modal"] {
 }
 
 #creationError {
-  text-wrap: pretty;
+  text-wrap: balance;
   font-family: system-ui;
 }
 

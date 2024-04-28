@@ -57,7 +57,7 @@ impl Cmd<'_> {
         else {
             return json!({});
         };
-        json!(git::diff(old_content.to_string(), new_content.to_string()))
+        json!(git::diff(old_content.to_string(), new_content.to_string(), 2000))
     }
 
     fn create_project(data: CommandData) -> Value {
@@ -71,7 +71,7 @@ impl Cmd<'_> {
             .to_str()
             .unwrap()
             .to_string();
-        let name = binding.split(".").collect::<Vec<_>>()[0];
+        let name = binding.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
 
         let project_path_result = canonicalize(Path::new("projects").join(&name));

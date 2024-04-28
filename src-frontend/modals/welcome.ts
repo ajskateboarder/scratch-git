@@ -6,7 +6,7 @@ import thumbnail from "./thumbnail.svg";
 import van, { type State } from "vanjs-core";
 
 const {
-  tags: { div, h1, button, p, br, span, input, label, pre, i },
+  tags: { div, h1, button, p, br, span, input, pre, i },
 } = van;
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
@@ -75,7 +75,7 @@ export class WelcomeModal extends HTMLDialogElement {
       },
       "Next"
     );
-  
+
     const openProject = button(
       {
         style: "width: 50%",
@@ -95,20 +95,17 @@ export class WelcomeModal extends HTMLDialogElement {
       },
       "Open project"
     );
-  
+
     return Screen(
       { title: "Welcome to scratch.git", stepNumber: 1 },
       div(
         { style: "font-weight: normal" },
-        p("Please load a project for Git development to get started", br(), br()),
-        div(
-          { class: "a-gap" },
-          openProject,
-          span(
-            input({ type: "checkbox", name: "dontshowagain" }),
-            label({ for: "dontshowagain" }, "Don't show again")
-          )
+        p(
+          "Please load a project for Git development to get started",
+          br(),
+          br()
         ),
+        div({ class: "a-gap" }, openProject),
         br(),
         br()
       ),
@@ -124,13 +121,13 @@ export class WelcomeModal extends HTMLDialogElement {
         goToStep2
       )
     );
-  };
-  
+  }
+
   step2() {
     let path: string;
-  
+
     const creationError = pre({ id: "creationError" });
-  
+
     const goToStep3 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -157,7 +154,7 @@ export class WelcomeModal extends HTMLDialogElement {
       },
       "Next"
     );
-  
+
     const openProjectPath = input({
       type: "file",
       class: settings.settingsButton,
@@ -168,7 +165,7 @@ export class WelcomeModal extends HTMLDialogElement {
         path = (openProjectPath.files![0] as any).path; // .path is an electron-specific attr
       },
     });
-  
+
     return Screen(
       { title: "Configure project location", stepNumber: 2 },
       div(
@@ -193,8 +190,8 @@ export class WelcomeModal extends HTMLDialogElement {
         goToStep3
       )
     );
-  };
-  
+  }
+
   step3() {
     return Screen(
       { title: "Welcome to scratch.git!", stepNumber: 3 },
@@ -210,5 +207,5 @@ export class WelcomeModal extends HTMLDialogElement {
         )
       )
     );
-  };
+  }
 }

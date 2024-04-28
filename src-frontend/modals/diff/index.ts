@@ -187,24 +187,6 @@ export class DiffModal extends HTMLDialogElement {
     }
   }
 
-  /** Fixes git diff snipping with loop statements */
-  removeExtraEnds() {
-    if (this.plainText.checked) return;
-    let svg = this.querySelector(".scratchblocks svg > g")!;
-    svg.querySelectorAll(":scope > g").forEach((blocks) => {
-      if (blocks.querySelectorAll("path").length === 1) {
-        let block = blocks.querySelector("path")!;
-        if (
-          block.classList.length === 1 &&
-          block.classList.contains("sb3-control") &&
-          blocks.querySelector("text")!.innerHTML === "end"
-        ) {
-          blocks.remove();
-        }
-      }
-    });
-  }
-
   async diff(
     project: Project | undefined,
     spriteName: string,
@@ -329,7 +311,6 @@ export class DiffModal extends HTMLDialogElement {
         } else {
           this.commits.innerText = diffs[script].diffed ?? "";
           diffBlocks();
-          this.removeExtraEnds();
           this.commits.innerHTML += "<br>";
         }
       }
@@ -347,7 +328,6 @@ export class DiffModal extends HTMLDialogElement {
       } else {
         diffBlocks();
         this.commits.innerHTML += "<br>";
-        this.removeExtraEnds();
         if (this.useHighlights.checked) this.highlightDiff();
       }
       this.darkDiff(uiTheme);
@@ -414,7 +394,6 @@ export class DiffModal extends HTMLDialogElement {
     else document.querySelector("aside")!.classList.remove("dark");
 
     this.darkDiff(uiTheme);
-    this.removeExtraEnds();
 
     this.useHighlights.checked = false;
     this.plainText.checked = false;
