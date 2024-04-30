@@ -172,6 +172,7 @@ export class DiffModal extends HTMLDialogElement {
       this.commits.innerHTML = "";
       this.commits.append(
         pre(
+          // @ts-ignore
           highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
         )
       );

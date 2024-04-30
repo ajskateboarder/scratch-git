@@ -61,16 +61,15 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
-  // @ts-ignore
-  oldBlocks = oldBlocks.map((e, i) =>
-    newBlocks[i] === undefined ? undefined : e
-  );
-
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
     // @ts-ignore - 'number | any[]' must have a '[Symbol.iterator]()' method that returns an iterator
     .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
+      if (newContent === undefined) {
+        newContent = "";
+      }
+
       let status: ScriptStatus =
         oldContent !== "" && newContent !== ""
           ? "modified"

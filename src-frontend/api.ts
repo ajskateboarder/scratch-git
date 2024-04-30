@@ -209,8 +209,8 @@ class ProjectManager extends Socket {
 }
 
 export function diff(
-  oldContent: string = "",
-  newContent: string = ""
+  oldContent: string,
+  newContent: string
 ): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket(SOCKET_URL);
