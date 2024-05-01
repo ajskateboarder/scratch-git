@@ -1,18 +1,18 @@
 /** @file Manages creation of Git menu and alerts */
 
-import { menu } from "./accessors.ts";
+import { menu } from "../accessors";
 
 /** Manages functions with the file menu */
-export const fileMenu = new class FileMenu {
+export const fileMenu = new (class FileMenu {
   menu: HTMLDivElement;
   private eventHandlers: string;
 
   constructor() {
     this.menu = document.querySelectorAll<HTMLDivElement>(
-      `div.${menu.menuItem}`
+      `div.${menu.menuItem}`,
     )[1];
     this.eventHandlers = Object.keys(this.menu).find((e) =>
-      e.startsWith("__reactEventHandlers")
+      e.startsWith("__reactEventHandlers"),
     )!;
   }
 
@@ -40,15 +40,15 @@ export const fileMenu = new class FileMenu {
     this.toggleMenu(true);
     const savedMenu = new DOMParser().parseFromString(
       this.menu.innerHTML,
-      "text/html"
+      "text/html",
     );
     this.toggleMenu(false);
     this.toggleMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
-}
+})();
 
-export const gitMenu = new class GitMenu {
+export const gitMenu = new (class GitMenu {
   protected savedItems: HTMLElement | undefined;
   protected newMenu: HTMLElement | undefined;
   protected open: boolean = false;
@@ -110,7 +110,7 @@ export const gitMenu = new class GitMenu {
     this.newMenu.querySelector("img")!.replaceWith(
       Object.assign(document.createElement("i"), {
         className: "fa fa-code-fork fa-lg",
-      })
+      }),
     );
     this.savedItems.classList.add("git-menu");
     this.newMenu.querySelector("ul")!.parentElement!.remove();
@@ -159,4 +159,4 @@ export const gitMenu = new class GitMenu {
     fileMenu.toggleMenu(true);
     this.initialized = true;
   }
-}
+})();

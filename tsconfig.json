@@ -18,6 +18,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": [
+        "./src-frontend/*",
+      ]
+    }
   },
   "include": ["src-frontend"]
 }

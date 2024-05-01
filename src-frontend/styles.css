@@ -119,15 +119,14 @@ dialog[is="welcome-modal"] {
 .round-left-button {
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
-  user-select: none
+  user-select: none;
 }
 
 .round-right-button {
   border-top-right-radius: 0px;
   border-bottom-right-radius: 0px;
-  user-select: none
+  user-select: none;
 }
-
 
 .dark {
   background-color: #111 !important;
@@ -208,20 +207,22 @@ dialog[is="welcome-modal"] {
   display: none;
   flex-direction: column;
   padding: 20px;
-  width: 100%
+  width: 100%;
 }
 
 #step2 {
   display: none;
   flex-direction: column;
-  padding: 20px
+  padding: 20px;
 }
 
 .stage-diff {
   margin-top: 40px;
   scale: 0.8;
   z-index: 99999;
-  transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+  transition:
+    scale 0.15 ease-out,
+    box-shadow 0.15 ease-out;
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0px 0px 0px 2px var(--looks-transparent);
@@ -239,7 +240,7 @@ dialog[is="welcome-modal"] {
     padding: 0;
     width: 98%;
     bottom: 15px;
-    justify-content: right
+    justify-content: right;
   }
 
   & main {

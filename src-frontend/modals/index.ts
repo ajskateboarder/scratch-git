@@ -1,3 +1,3 @@
-export { WelcomeModal } from "./welcome.ts";
-export { DiffModal } from "./diff/index.ts";
-export { CommitModal } from "./commit.ts";
+export { WelcomeModal } from "../modals/welcome";
+export { DiffModal } from "../modals/diff";
+export { CommitModal } from "../modals/commit";

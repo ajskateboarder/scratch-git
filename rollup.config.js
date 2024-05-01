@@ -9,7 +9,7 @@ export default {
   logLevel: "silent",
   plugins: [
     string({
-      include: ["src-frontend/modals/thumbnail.svg", "src-frontend/styles.css"],
+      include: ["src-frontend/components/modals/thumbnail.svg", "src-frontend/styles.css"],
     }),
     nodeResolve(),
     typescript(),

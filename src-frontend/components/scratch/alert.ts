@@ -1,5 +1,5 @@
 import van from "vanjs-core";
-import { misc, alert } from ".";
+import { misc, alert } from "..";
 
 const { div, img } = van.tags;
 
@@ -54,10 +54,10 @@ export function scratchAlert({
               className: [misc.close, "undefined"].join(" "),
               src: CLOSE_BUTTON_SVG,
               style: "transform: rotate(45deg) scale(0.5)",
-            })
-          )
-        )
-      )
-    )
+            }),
+          ),
+        ),
+      ),
+    ),
   );
 }

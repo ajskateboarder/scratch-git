@@ -1,7 +1,7 @@
-import api, { ProjectExistsException } from "../api.ts";
-import { settings, fileMenu } from "../dom/index.ts";
+import api, { ProjectExistsException } from "@/api";
+import { settings, fileMenu } from "@/components";
 // @ts-ignore
-import thumbnail from "./thumbnail.svg";
+import thumbnail from "thumbnail.svg";
 import van, { type State } from "vanjs-core";
 
 const {
@@ -22,7 +22,7 @@ const Screen = (
 ) =>
   div(
     { class: "screen", id: `step${stepNumber}` },
-    div({ class: "finishContent" }, h1(title), children)
+    div({ class: "finishContent" }, h1(title), children),
   );
 
 /** Project initialization */
@@ -42,7 +42,7 @@ export class WelcomeModal extends HTMLDialogElement {
     const thumb = span(
       { class: "thumbnail" },
       new DOMParser().parseFromString(thumbnail, "image/svg+xml")
-        .documentElement
+        .documentElement,
     );
 
     if (!this.querySelector(".screen")) {
@@ -72,7 +72,7 @@ export class WelcomeModal extends HTMLDialogElement {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      "Next"
+      "Next",
     );
 
     const openProject = button(
@@ -92,7 +92,7 @@ export class WelcomeModal extends HTMLDialogElement {
           });
         },
       },
-      "Open project"
+      "Open project",
     );
 
     return Screen(
@@ -102,11 +102,11 @@ export class WelcomeModal extends HTMLDialogElement {
         p(
           "Please load a project for Git development to get started",
           br(),
-          br()
+          br(),
         ),
         div({ class: "a-gap" }, openProject),
         br(),
-        br()
+        br(),
       ),
       BottomBar(
         button(
@@ -115,10 +115,10 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => this.close(),
           },
-          "Close"
+          "Close",
         ),
-        goToStep2
-      )
+        goToStep2,
+      ),
     );
   }
 
@@ -142,8 +142,8 @@ export class WelcomeModal extends HTMLDialogElement {
               span(
                 i({ class: "fa fa-solid fa-circle-exclamation" }),
                 " ",
-                err.message
-              )
+                err.message,
+              ),
             );
             if (err.name === "Error") throw err;
             return;
@@ -151,7 +151,7 @@ export class WelcomeModal extends HTMLDialogElement {
           ++this.currentStep.val;
         },
       },
-      "Next"
+      "Next",
     );
 
     const openProjectPath = input({
@@ -172,10 +172,10 @@ export class WelcomeModal extends HTMLDialogElement {
         p(
           "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
           br(),
-          br()
+          br(),
         ),
         openProjectPath,
-        creationError
+        creationError,
       ),
       BottomBar(
         button(
@@ -184,10 +184,10 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
-          "Back"
+          "Back",
         ),
-        goToStep3
-      )
+        goToStep3,
+      ),
     );
   }
 
@@ -202,9 +202,9 @@ export class WelcomeModal extends HTMLDialogElement {
             style: "align-items: right; margin-left: -10px",
             class: settings.settingsButton,
             onclick: () => this.close(),
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
   }
 }

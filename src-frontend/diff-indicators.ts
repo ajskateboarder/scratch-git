@@ -1,76 +1,29 @@
 /** @file Displays indicators and info on sprites that were changed */
-import type { Project } from "./api.ts";
-import { sprites } from "./dom/index";
-import van from "vanjs-core";
-import type { DiffModal } from "./modals/diff";
-import { parseScripts } from "./modals/diff/scripts.ts";
-
-const { div, i } = van.tags;
-
-const BaseDelete = (props: {}, children: HTMLDivElement) =>
-  div(
-    {
-      ariaLabel: "Diff",
-      role: "button",
-      tabIndex: 0,
-      ...props,
-    },
-    children
-  );
-
-const SpriteDiff = (props: {}) =>
-  BaseDelete(
-    {
-      className: [sprites.delete, sprites.spriteSelDelete, "diff-button"].join(
-        " "
-      ),
-      ...props,
-    },
-    div(
-      { className: sprites.visibleDelete },
-      i({
-        className: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" "),
-        style: "color: white",
-      })
-    )
-  );
-
-const StageDiff = (props: {}) =>
-  BaseDelete(
-    {
-      className: [sprites.delete, sprites.spriteSelDelete, "stage-diff"].join(
-        " "
-      ),
-      ...props,
-    },
-    div(
-      { className: sprites.visibleDelete },
-      i({
-        className: ["fa-solid", "fa-plus-minus", "fa-sm"].join(" "),
-        style: "color: white",
-      })
-    )
-  );
+import type { Project } from "./api";
+import { sprites } from "./components/index";
+import type { DiffModal } from "./modals";
+import { parseScripts } from "./scripts";
+import { SpriteDiff, StageDiff } from "./components/diff-buttons";
 
 /** Receive Blockly IDs to top-level blocks that were changed */
 async function changedBlocklyScripts(
   project: Project,
   sprite: (string | boolean)[],
-  loadedJSON: any
+  loadedJSON: any,
 ) {
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
 
   let diffs = await parseScripts(
     await project.getPreviousScripts(spriteName),
-    await project.getCurrentScripts(spriteName)
+    await project.getCurrentScripts(spriteName),
   );
 
   let target = loadedJSON.targets.find((e: any) =>
-    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
+    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName,
   );
 
   let topLevels = Object.keys(target.blocks).filter(
-    (k) => target.blocks[k].parent === null
+    (k) => target.blocks[k].parent === null,
   );
 
   return diffs
@@ -78,7 +31,7 @@ async function changedBlocklyScripts(
       (e) =>
         window.Blockly.getMainWorkspace().topBlocks_[
           topLevels.indexOf(e.script)
-        ]?.id
+        ]?.id,
     )
     .filter((e) => e !== undefined);
 }
@@ -101,7 +54,7 @@ function applyDiffFilter() {
 async function highlightChanged(
   project: Project,
   sprite: (string | boolean)[],
-  loadedJSON: any
+  loadedJSON: any,
 ) {
   applyDiffFilter();
   document
@@ -123,10 +76,10 @@ const nameOfSprite = (element: HTMLElement) =>
 /** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites(),
-      _sprites = <HTMLElement[]>[
-        ...document.querySelector(`.${sprites.sprites}`)!.children,
-      ],
-      loadedJSON = JSON.parse(window.vm.toJSON());
+    _sprites = <HTMLElement[]>[
+      ...document.querySelector(`.${sprites.sprites}`)!.children,
+    ],
+    loadedJSON = JSON.parse(window.vm.toJSON());
 
   _sprites.forEach((sprite) => {
     let divs = sprite
@@ -147,7 +100,7 @@ export async function showIndicators(project: Project) {
 
       (<HTMLDivElement[]>[
         ...document.querySelectorAll(
-          `.${sprites.delete}.${sprites.spriteSelDelete}`
+          `.${sprites.delete}.${sprites.spriteSelDelete}`,
         ),
       ])
         .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -178,7 +131,7 @@ export async function showIndicators(project: Project) {
         e.stopPropagation();
         (document.querySelector("dialog[is='diff-modal']") as DiffModal).diff(
           project,
-          spriteName
+          spriteName,
         );
       },
     });
@@ -186,22 +139,25 @@ export async function showIndicators(project: Project) {
 
     // on sprite click, adjust diff buttons and highlight changed scripts
     sprite.addEventListener("click", async () => {
-      let movedToSprite = nameOfSprite(await new Promise((resolve) => {
-        const observer = new MutationObserver(() => {
-          resolve(
-            document.querySelector<HTMLDivElement>(
-              `.${sprites.selectedSprite}`
-            )!
+      let movedToSprite = nameOfSprite(
+        await new Promise((resolve) => {
+          const observer = new MutationObserver(() => {
+            resolve(
+              document.querySelector<HTMLDivElement>(
+                `.${sprites.selectedSprite}`,
+              )!,
+            );
+          });
+          observer.observe(
+            document.querySelector(`.${sprites.selectedSprite}`) ??
+              document.body,
+            {
+              childList: true,
+              subtree: true,
+            },
           );
-        });
-        observer.observe(
-          document.querySelector(`.${sprites.selectedSprite}`) ?? document.body,
-          {
-            childList: true,
-            subtree: true,
-          }
-        );
-      }));
+        }),
+      );
 
       diffButton.style.marginTop =
         movedToSprite === spriteName ? "30px" : "0px";
@@ -209,14 +165,14 @@ export async function showIndicators(project: Project) {
       await highlightChanged(
         project,
         changedSprites.find((e) => e[0] === spriteName)!,
-        loadedJSON
+        loadedJSON,
       );
     });
   });
 
   // creates a diff button for the stage
   let stageWrapper: HTMLDivElement = document.querySelector(
-    `.${sprites.stageWrapper}`
+    `.${sprites.stageWrapper}`,
   )!;
 
   if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
@@ -250,7 +206,7 @@ export async function showIndicators(project: Project) {
   stageWrapper.onclick = async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
-        `.${sprites.delete}.${sprites.spriteSelDelete}`
+        `.${sprites.delete}.${sprites.spriteSelDelete}`,
       ),
     ])
       .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -259,7 +215,7 @@ export async function showIndicators(project: Project) {
   };
 
   let selectedSprite: HTMLDivElement = document.querySelector(
-    `.${sprites.selectedSprite}`
+    `.${sprites.selectedSprite}`,
   )!;
 
   let sprite = (
