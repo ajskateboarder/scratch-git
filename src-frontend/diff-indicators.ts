@@ -122,11 +122,11 @@ const nameOfSprite = (element: HTMLElement) =>
 
 /** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
-  let changedSprites = await project.getSprites();
-  let _sprites = <HTMLElement[]>[
-    ...document.querySelector(`.${sprites.sprites}`)!.children,
-  ];
-  let loadedJSON = JSON.parse(window.vm.toJSON());
+  let changedSprites = await project.getSprites(),
+      _sprites = <HTMLElement[]>[
+        ...document.querySelector(`.${sprites.sprites}`)!.children,
+      ],
+      loadedJSON = JSON.parse(window.vm.toJSON());
 
   _sprites.forEach((sprite) => {
     let divs = sprite
@@ -151,11 +151,10 @@ export async function showIndicators(project: Project) {
         ),
       ])
         .filter((button) => !button.classList.contains("stage-diff-button"))
-        .forEach((button) => {
-          button.style.marginTop = "0px";
-        });
+        .forEach((button) => (button.style.marginTop = "0px"));
     });
 
+    // was the selected sprite changed?
     if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
 
     let applyMargin = sprite.querySelector(`.${sprites.delete}`) !== null;
@@ -185,8 +184,9 @@ export async function showIndicators(project: Project) {
     });
     divs[3].after(diffButton);
 
+    // on sprite click, adjust diff buttons and highlight changed scripts
     sprite.addEventListener("click", async () => {
-      const changedSprite: HTMLDivElement = await new Promise((resolve) => {
+      let movedToSprite = nameOfSprite(await new Promise((resolve) => {
         const observer = new MutationObserver(() => {
           resolve(
             document.querySelector<HTMLDivElement>(
@@ -201,11 +201,10 @@ export async function showIndicators(project: Project) {
             subtree: true,
           }
         );
-      });
-      let changedSpriteName = nameOfSprite(changedSprite);
+      }));
 
       diffButton.style.marginTop =
-        changedSpriteName === spriteName ? "30px" : "0px";
+        movedToSprite === spriteName ? "30px" : "0px";
 
       await highlightChanged(
         project,

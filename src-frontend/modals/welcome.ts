@@ -1,6 +1,5 @@
 import api, { ProjectExistsException } from "../api.ts";
 import { settings, fileMenu } from "../dom/index.ts";
-import type { ComponentProps } from "../lib/van";
 // @ts-ignore
 import thumbnail from "./thumbnail.svg";
 import van, { type State } from "vanjs-core";
@@ -15,7 +14,7 @@ const Screen = (
   {
     stepNumber,
     title,
-  }: ComponentProps<"div"> & {
+  }: {
     stepNumber: number;
     title: string;
   },
@@ -46,14 +45,14 @@ export class WelcomeModal extends HTMLDialogElement {
         .documentElement
     );
 
-    if (!document.querySelector(".screen")) {
+    if (!this.querySelector(".screen")) {
       van.add(this, this.steps[this.currentStep.val], thumb);
     }
 
     van.derive(() => {
-      document.querySelector(".screen")?.remove();
+      this.querySelector(".screen")?.remove();
       van.add(this, this.steps[this.currentStep.val], thumb);
-      document.querySelector<HTMLDivElement>(".screen")!.style.display = "flex";
+      this.querySelector<HTMLDivElement>(".screen")!.style.display = "flex";
     });
   }
 

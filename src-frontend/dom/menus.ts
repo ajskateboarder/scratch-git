@@ -2,9 +2,10 @@
 
 import { menu } from "./accessors.ts";
 
-class FileMenu {
+/** Manages functions with the file menu */
+export const fileMenu = new class FileMenu {
   menu: HTMLDivElement;
-  eventHandlers: string;
+  private eventHandlers: string;
 
   constructor() {
     this.menu = document.querySelectorAll<HTMLDivElement>(
@@ -47,14 +48,11 @@ class FileMenu {
   }
 }
 
-/** Manages functions with the file menu */
-export const fileMenu = new FileMenu();
-
-class GitMenu {
-  savedItems: HTMLElement | undefined;
-  newMenu: HTMLElement | undefined;
-  open: boolean = false;
-  initialized: boolean = false;
+export const gitMenu = new class GitMenu {
+  protected savedItems: HTMLElement | undefined;
+  protected newMenu: HTMLElement | undefined;
+  protected open: boolean = false;
+  protected initialized: boolean = false;
 
   constructor() {}
 
@@ -162,6 +160,3 @@ class GitMenu {
     this.initialized = true;
   }
 }
-
-/** Manages the intialization of the Git menu */
-export const gitMenu = new GitMenu();

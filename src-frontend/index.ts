@@ -87,10 +87,8 @@ async function initialize() {
     customElements.define("diff-modal", DiffModal, { extends: "dialog" });
     customElements.define("welcome-modal", WelcomeModal, { extends: "dialog" });
 
-    const _menu = `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container}`;
-
     const saveArea = document.querySelector<HTMLElement>(
-      `${_menu} > div:nth-child(4)`
+      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
     saveArea.innerHTML += `<dialog is="diff-modal"></dialog>

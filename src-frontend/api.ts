@@ -214,6 +214,7 @@ export function diff(
 ): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket(SOCKET_URL);
+    
     ws.onopen = () => {
       ws.send(
         JSON.stringify({

@@ -53,8 +53,7 @@ export function scratchAlert({
             img({
               className: [misc.close, "undefined"].join(" "),
               src: CLOSE_BUTTON_SVG,
-              style: `transform: rotate(45deg) scale(0.5);
-              `,
+              style: "transform: rotate(45deg) scale(0.5)",
             })
           )
         )
