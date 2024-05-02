@@ -9,59 +9,54 @@ import { SpriteDiff, StageDiff } from "./components/diff-buttons";
 async function changedBlocklyScripts(
   project: Project,
   sprite: (string | boolean)[],
-  loadedJSON: any,
+  loadedJSON: any
 ) {
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
+  let workspace = window.Blockly.getMainWorkspace();
 
   let diffs = await parseScripts(
     await project.getPreviousScripts(spriteName),
-    await project.getCurrentScripts(spriteName),
+    await project.getCurrentScripts(spriteName)
   );
 
   let target = loadedJSON.targets.find((e: any) =>
-    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName,
+    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
   );
 
   let topLevels = Object.keys(target.blocks).filter(
-    (k) => target.blocks[k].parent === null,
+    (k) => target.blocks[k].parent === null
   );
 
   return diffs
-    .map(
-      (e) =>
-        window.Blockly.getMainWorkspace().topBlocks_[
-          topLevels.indexOf(e.script)
-        ]?.id,
-    )
+    .map((e) => workspace.topBlocks_[topLevels.indexOf(e.script)]?.id)
     .filter((e) => e !== undefined);
-}
-
-function applyDiffFilter() {
-  if (document.querySelector("filter#blocklyStackDiffFilter")) return;
-
-  document.querySelector(".blocklySvg defs")!.innerHTML +=
-    `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
-    <feComponentTransfer result="outBlur">
-      <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
-    </feComponentTransfer>
-    <feFlood flood-color="#ed25cf" flood-opacity="1" result="outColor"></feFlood>
-    <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
-    <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
-  </filter>`;
 }
 
 async function highlightChanged(
   project: Project,
   sprite: (string | boolean)[],
-  loadedJSON: any,
+  loadedJSON: any
 ) {
-  applyDiffFilter();
+  if (!document.querySelector("filter#blocklyStackDiffFilter")) {
+    document.querySelector(".blocklySvg defs")!.innerHTML +=
+      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
+      <feComponentTransfer result="outBlur">
+        <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
+      </feComponentTransfer>
+      <feFlood flood-color="#ed25cf" flood-opacity="1" result="outColor"></feFlood>
+      <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
+      <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
+    </filter>`;
+  }
+
   document
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
     .forEach((e) => (e.style.filter = ""));
+
   let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
   window._changedScripts = changedScripts;
+
   changedScripts.forEach((e) => {
     let group: HTMLElement =
       window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
@@ -100,7 +95,7 @@ export async function showIndicators(project: Project) {
 
       (<HTMLDivElement[]>[
         ...document.querySelectorAll(
-          `.${sprites.delete}.${sprites.spriteSelDelete}`,
+          `.${sprites.delete}.${sprites.spriteSelDelete}`
         ),
       ])
         .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -131,7 +126,7 @@ export async function showIndicators(project: Project) {
         e.stopPropagation();
         (document.querySelector("dialog[is='diff-modal']") as DiffModal).diff(
           project,
-          spriteName,
+          spriteName
         );
       },
     });
@@ -144,8 +139,8 @@ export async function showIndicators(project: Project) {
           const observer = new MutationObserver(() => {
             resolve(
               document.querySelector<HTMLDivElement>(
-                `.${sprites.selectedSprite}`,
-              )!,
+                `.${sprites.selectedSprite}`
+              )!
             );
           });
           observer.observe(
@@ -154,9 +149,9 @@ export async function showIndicators(project: Project) {
             {
               childList: true,
               subtree: true,
-            },
+            }
           );
-        }),
+        })
       );
 
       diffButton.style.marginTop =
@@ -165,14 +160,14 @@ export async function showIndicators(project: Project) {
       await highlightChanged(
         project,
         changedSprites.find((e) => e[0] === spriteName)!,
-        loadedJSON,
+        loadedJSON
       );
     });
   });
 
   // creates a diff button for the stage
   let stageWrapper: HTMLDivElement = document.querySelector(
-    `.${sprites.stageWrapper}`,
+    `.${sprites.stageWrapper}`
   )!;
 
   if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
@@ -200,22 +195,24 @@ export async function showIndicators(project: Project) {
           .diff(project, "Stage (stage)");
       },
     });
+
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
   stageWrapper.onclick = async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
-        `.${sprites.delete}.${sprites.spriteSelDelete}`,
+        `.${sprites.delete}.${sprites.spriteSelDelete}`
       ),
     ])
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
+
     await highlightChanged(project, ["Stage", true], loadedJSON);
   };
 
   let selectedSprite: HTMLDivElement = document.querySelector(
-    `.${sprites.selectedSprite}`,
+    `.${sprites.selectedSprite}`
   )!;
 
   let sprite = (

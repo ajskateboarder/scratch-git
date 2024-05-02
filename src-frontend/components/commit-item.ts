@@ -18,11 +18,11 @@ const timeAgo = (input: Date | string) => {
   };
   const secondsElapsed = (date.getTime() - Date.now()) / 1000;
   const matched = Object.keys(ranges).find(
-    (key) => ranges[key as keyof typeof ranges] < Math.abs(secondsElapsed),
+    (key) => ranges[key as keyof typeof ranges] < Math.abs(secondsElapsed)
   ) as keyof typeof ranges;
   return formatter.format(
     Math.round(secondsElapsed / ranges[matched]),
-    matched as Intl.RelativeTimeFormatUnit,
+    matched as Intl.RelativeTimeFormatUnit
   );
 };
 
@@ -31,7 +31,7 @@ const highlight = (fullText: string, search: string) => {
     let text = new Option(fullText).innerHTML;
     let newText = text.replaceAll(
       new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),
-      `<mark>${search}</mark>`,
+      `<mark>${search}</mark>`
     );
     return span({ innerHTML: newText });
   }
@@ -48,7 +48,7 @@ export const CommitItem = (commit: Commit, search: string) =>
       commit.author.name,
       span(
         { style: "font-weight: lighter", title: commit.author.date },
-        ` commited ${timeAgo(commit.author.date)}`,
-      ),
-    ),
+        ` commited ${timeAgo(commit.author.date)}`
+      )
+    )
   );

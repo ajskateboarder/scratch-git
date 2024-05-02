@@ -1,6 +1,9 @@
 /** @file Manages creation of Git menu and alerts */
 
 import { menu } from "../accessors";
+import van from "vanjs-core";
+
+const { i } = van.tags;
 
 /** Manages functions with the file menu */
 export const fileMenu = new (class FileMenu {
@@ -9,10 +12,10 @@ export const fileMenu = new (class FileMenu {
 
   constructor() {
     this.menu = document.querySelectorAll<HTMLDivElement>(
-      `div.${menu.menuItem}`,
+      `div.${menu.menuItem}`
     )[1];
     this.eventHandlers = Object.keys(this.menu).find((e) =>
-      e.startsWith("__reactEventHandlers"),
+      e.startsWith("__reactEventHandlers")
     )!;
   }
 
@@ -40,7 +43,7 @@ export const fileMenu = new (class FileMenu {
     this.toggleMenu(true);
     const savedMenu = new DOMParser().parseFromString(
       this.menu.innerHTML,
-      "text/html",
+      "text/html"
     );
     this.toggleMenu(false);
     this.toggleMenu(true);
@@ -108,9 +111,9 @@ export const gitMenu = new (class GitMenu {
       .querySelector("ul")!
       .parentElement!.cloneNode(true) as HTMLElement;
     this.newMenu.querySelector("img")!.replaceWith(
-      Object.assign(document.createElement("i"), {
-        className: "fa fa-code-fork fa-lg",
-      }),
+      i({
+        class: "fa fa-code-fork fa-lg",
+      })
     );
     this.savedItems.classList.add("git-menu");
     this.newMenu.querySelector("ul")!.parentElement!.remove();

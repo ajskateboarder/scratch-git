@@ -30,18 +30,18 @@ export function scratchAlert({
   container.appendChild(
     div(
       {
-        className: [alert.alertDialog, alert.alertSuccess, misc.box].join(" "),
+        class: [alert.alertDialog, alert.alertSuccess, misc.box].join(" "),
         style: "justify-content: space-between",
       },
-      div({ className: alert.alertMessage }, message),
+      div({ class: alert.alertMessage }, message),
       div(
-        { className: alert.alertButtons },
+        { class: alert.alertButtons },
         div(
-          { className: [alert.alertClose, misc.box].join(" ") },
+          { class: [alert.alertClose, misc.box].join(" ") },
           div(
             {
               ariaLabel: "Close",
-              className: [misc.close, misc.largeClose].join(" "),
+              class: [misc.close, misc.largeClose].join(" "),
               role: "button",
               tabIndex: "0",
               onclick: () => remove(),
@@ -51,13 +51,13 @@ export function scratchAlert({
               }),
             },
             img({
-              className: [misc.close, "undefined"].join(" "),
+              class: [misc.close, "undefined"].join(" "),
               src: CLOSE_BUTTON_SVG,
               style: "transform: rotate(45deg) scale(0.5)",
-            }),
-          ),
-        ),
-      ),
-    ),
+            })
+          )
+        )
+      )
+    )
   );
 }

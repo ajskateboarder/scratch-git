@@ -3,11 +3,11 @@ import { settings } from "@/components";
 import van, { type State } from "vanjs-core";
 import { CommitItem } from "@/components";
 
-const {h1, button, input, div, span, br} = van.tags;
+const { h1, button, input, div, span, br } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
-    list.splice(0, length),
+    list.splice(0, length)
   );
 
 /** Displays a log of all commits to a Git project */
@@ -41,7 +41,7 @@ export class CommitModal extends HTMLDialogElement {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      "Close",
+      "Close"
     );
 
     this.newer = button(
@@ -49,14 +49,14 @@ export class CommitModal extends HTMLDialogElement {
         class: [settings.settingsButton, "round-right-button"].join(" "),
         disabled: true,
       },
-      "Newer",
+      "Newer"
     );
 
     this.older = button(
       {
         class: [settings.settingsButton, "round-left-button"].join(" "),
       },
-      "Older",
+      "Older"
     );
 
     this.search = input({
@@ -79,8 +79,8 @@ export class CommitModal extends HTMLDialogElement {
           } else {
             return CommitItem(e, "");
           }
-        }),
-      ),
+        })
+      )
     );
 
     van.add(
@@ -97,9 +97,9 @@ export class CommitModal extends HTMLDialogElement {
             class: "bottom-bar",
             style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
           },
-          closeButton,
-        ),
-      ),
+          closeButton
+        )
+      )
     );
   }
 
@@ -123,9 +123,9 @@ export class CommitModal extends HTMLDialogElement {
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val),
+              e.subject.includes(this.state.searchQuery.val)
           ),
-        40,
+        40
       )[page];
       this.older.disabled = page === commits.length - 1;
       this.newer.disabled = page !== commits.length - 1;
@@ -143,9 +143,9 @@ export class CommitModal extends HTMLDialogElement {
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val),
+              e.subject.includes(this.state.searchQuery.val)
           ),
-        40,
+        40
       )[page];
       this.newer.disabled = page === 0;
       this.older.disabled = page !== 0;

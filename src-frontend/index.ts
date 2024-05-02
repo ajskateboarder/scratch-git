@@ -13,7 +13,7 @@ import {
 import { CommitModal, WelcomeModal, DiffModal } from "./modals";
 
 // @ts-ignore
-import styles from "styles.css";
+import styles from "./styles.css";
 import van from "vanjs-core";
 
 const { link, style } = van.tags;
@@ -44,7 +44,7 @@ declare global {
           script: string,
           json: {},
           language: string,
-          config: {},
+          config: {}
         ) => string;
       };
     };
@@ -88,7 +88,7 @@ async function initialize() {
     customElements.define("welcome-modal", WelcomeModal, { extends: "dialog" });
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
+      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
     saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
@@ -129,7 +129,7 @@ async function initialize() {
 
   if (!fileMenu.isProjectOpen()) {
     document
-      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
+      .querySelector<typeof WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
     let project = await api.getCurrentProject();
@@ -155,11 +155,11 @@ async function initialize() {
   // avoids scenarios where scratch.git initializes before the editor is finished
   localStorage.setItem(
     "scratch-git:highlights",
-    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false"),
+    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
   );
   localStorage.setItem(
     "scratch-git:plaintext",
-    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false"),
+    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
   );
 
   window.vm.runtime.on(
@@ -168,6 +168,6 @@ async function initialize() {
       if (finished === total && finished > 0 && total > 0) {
         setTimeout(async () => await initialize(), 0.1);
       }
-    },
+    }
   );
 })();
