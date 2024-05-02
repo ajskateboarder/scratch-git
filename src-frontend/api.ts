@@ -1,5 +1,5 @@
 /** @file A tiny wrapper over the local APIs to work with Git projects */
-import { menu } from "./dom/index";
+import { menu } from "./components/index";
 
 export type Commit = {
   author: { date: string; email: string; name: string };
@@ -157,7 +157,7 @@ class ProjectManager extends Socket {
       JSON.stringify({
         command: "create-project",
         data: { FilePath: projectPath },
-      })
+      }),
     );
 
     let response = await this.receive();
@@ -165,11 +165,11 @@ class ProjectManager extends Socket {
       throw new ProjectExistsException(
         `${projectPath
           .split("/")
-          .pop()} is already a project. Either load the existing project or make a copy of the project file.`
+          .pop()} is already a project. Either load the existing project or make a copy of the project file.`,
       );
     } else if (response.project_name === "fail") {
       throw new Error(
-        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
+        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`,
       );
     }
 
@@ -210,11 +210,11 @@ class ProjectManager extends Socket {
 
 export function diff(
   oldContent: string,
-  newContent: string
+  newContent: string,
 ): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket(SOCKET_URL);
-    
+
     ws.onopen = () => {
       ws.send(
         JSON.stringify({
@@ -222,7 +222,7 @@ export function diff(
           data: {
             GitDiff: { old_content: oldContent, new_content: newContent },
           },
-        })
+        }),
       );
     };
     ws.onmessage = (message) => {

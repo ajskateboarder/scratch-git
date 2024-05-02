@@ -1,10 +1,14 @@
 # scratch.git
 
-Git version control integration for Scratch (TurboWarp) that just works
+Git version control integration for Scratch (TurboWarp) that just works and makes sense
 
 https://github.com/ajskateboarder/scratch-git/assets/81255936/4374d0a8-1d89-4aad-a968-5919a63b6b27
 
-Some people are looking for better collaboration - not needing to form remix chains - and versioning with Scratch, so this a first step toward that. This integration is very work-in-progress, so expect bugs and significant changes. Building this will likely not work as-is.
+The goals of this interface is to:
+
+- teach children about code versioning through a dead-simple interface
+- make it easier to track changes
+- make collaboration efficient, relying less on remixing
 
 scratch.git works by modifying TurboWarp Desktop through a userscript. Git interfacing is done between the desktop GUI and the local computer through a WebSocket interface between the userscript and a small server.
 
@@ -15,7 +19,7 @@ scratch.git works by modifying TurboWarp Desktop through a userscript. Git inter
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 
-(For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript, [Rust](https://rustup.rs/) to compile the server, and [Python](https://python.org) to setup live debugging)
+(For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript and [Rust](https://rustup.rs/) to compile the server)
 
 2. Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 

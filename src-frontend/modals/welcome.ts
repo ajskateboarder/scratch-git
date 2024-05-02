@@ -1,5 +1,5 @@
-import api, { ProjectExistsException } from "../api.ts";
-import { settings, fileMenu } from "../dom/index.ts";
+import api, { ProjectExistsException } from "@/api";
+import { settings, fileMenu } from "@/components";
 // @ts-ignore
 import thumbnail from "./thumbnail.svg";
 import van, { type State } from "vanjs-core";

@@ -1,9 +1,12 @@
 /** @file Manages creation of Git menu and alerts */
 
-import { menu } from "./accessors.ts";
+import { menu } from "../accessors";
+import van from "vanjs-core";
+
+const { i } = van.tags;
 
 /** Manages functions with the file menu */
-export const fileMenu = new class FileMenu {
+export const fileMenu = new (class FileMenu {
   menu: HTMLDivElement;
   private eventHandlers: string;
 
@@ -46,9 +49,9 @@ export const fileMenu = new class FileMenu {
     this.toggleMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
-}
+})();
 
-export const gitMenu = new class GitMenu {
+export const gitMenu = new (class GitMenu {
   protected savedItems: HTMLElement | undefined;
   protected newMenu: HTMLElement | undefined;
   protected open: boolean = false;
@@ -108,8 +111,8 @@ export const gitMenu = new class GitMenu {
       .querySelector("ul")!
       .parentElement!.cloneNode(true) as HTMLElement;
     this.newMenu.querySelector("img")!.replaceWith(
-      Object.assign(document.createElement("i"), {
-        className: "fa fa-code-fork fa-lg",
+      i({
+        class: "fa fa-code-fork fa-lg",
       })
     );
     this.savedItems.classList.add("git-menu");
@@ -159,4 +162,4 @@ export const gitMenu = new class GitMenu {
     fileMenu.toggleMenu(true);
     this.initialized = true;
   }
-}
+})();

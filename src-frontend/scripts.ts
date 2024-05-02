@@ -1,4 +1,4 @@
-import { diff } from "../../api";
+import { diff } from "./api";
 
 const zip = (a: any[], b: any[]) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
@@ -30,12 +30,12 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', "")
+            .replaceAll(',"SUBSTACK":[1,null]', ""),
         ),
         "en",
         {
           tabs: "",
-        }
+        },
       );
     })
     .sort((a, b) => a.localeCompare(b));
@@ -49,12 +49,12 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', "")
+              .replaceAll(',"SUBSTACK":[1,null]', ""),
           ),
           "en",
           {
             tabs: "",
-          }
+          },
         ),
         script,
       };
@@ -88,8 +88,8 @@ export async function parseScripts(previousScripts: {}, currentScripts: {}) {
   return (
     await Promise.all(
       scripts.results.map((script) =>
-        diff(script.oldContent, script.newContent)
-      )
+        diff(script.oldContent, script.newContent),
+      ),
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))

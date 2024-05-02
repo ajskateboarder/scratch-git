@@ -1,7 +1,7 @@
 import "./lib/index";
 
-import api from "./api.ts";
-import { showIndicators } from "./diff-indicators.ts";
+import api from "./api";
+import { showIndicators } from "./diff-indicators";
 import {
   menu,
   settings,
@@ -9,8 +9,8 @@ import {
   gitMenu,
   scratchAlert,
   misc,
-} from "./dom/index.ts";
-import { CommitModal, WelcomeModal, DiffModal } from "./modals/index.ts";
+} from "./components";
+import { CommitModal, WelcomeModal, DiffModal } from "./modals";
 
 // @ts-ignore
 import styles from "./styles.css";
@@ -129,7 +129,7 @@ async function initialize() {
 
   if (!fileMenu.isProjectOpen()) {
     document
-      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
+      .querySelector<typeof WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
     let project = await api.getCurrentProject();

@@ -1,60 +1,9 @@
-import api, { type Commit } from "../api.ts";
-import { settings } from "../dom/index.ts";
+import api, { type Commit } from "@/api";
+import { settings } from "@/components";
 import van, { type State } from "vanjs-core";
+import { CommitItem } from "@/components";
 
-const {
-  tags: { div, h1, button, br, span, input },
-} = van;
-
-// https://stackoverflow.com/a/69122877/16019146
-const timeAgo = (input: Date | string) => {
-  const date = input instanceof Date ? input : new Date(input);
-  const formatter = new Intl.RelativeTimeFormat("en");
-  const ranges = {
-    years: 3600 * 24 * 365,
-    months: 3600 * 24 * 30,
-    weeks: 3600 * 24 * 7,
-    days: 3600 * 24,
-    hours: 3600,
-    minutes: 60,
-    seconds: 1,
-  };
-  const secondsElapsed = (date.getTime() - Date.now()) / 1000;
-  const matched = Object.keys(ranges).find(
-    (key) => ranges[key as keyof typeof ranges] < Math.abs(secondsElapsed)
-  ) as keyof typeof ranges;
-  return formatter.format(
-    Math.round(secondsElapsed / ranges[matched]),
-    matched as Intl.RelativeTimeFormatUnit
-  );
-};
-
-const highlight = (fullText: string, search: string) => {
-  if (search !== "") {
-    let text = new Option(fullText).innerHTML;
-    let newText = text.replaceAll(
-      new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),
-      `<mark>${search}</mark>`
-    );
-    return span({ innerHTML: newText });
-  }
-  return fullText;
-};
-
-const Commit = (commit: Commit, search: string) =>
-  div(
-    { class: "commit" },
-    span({ style: "font-size: 1rem" }, highlight(commit.subject, search)),
-    br(),
-    span(
-      { style: "font-size: 0.75rem" },
-      commit.author.name,
-      span(
-        { style: "font-weight: lighter", title: commit.author.date },
-        ` commited ${timeAgo(commit.author.date)}`
-      )
-    )
-  );
+const { h1, button, input, div, span, br } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
@@ -125,10 +74,10 @@ export class CommitModal extends HTMLDialogElement {
         this.state.paginatedCommits.val.map((e) => {
           if (this.state.searchQuery.val !== "") {
             if (e.subject.includes(this.state.searchQuery.val)) {
-              return Commit(e, this.state.searchQuery.val);
+              return CommitItem(e, this.state.searchQuery.val);
             }
           } else {
-            return Commit(e, "");
+            return CommitItem(e, "");
           }
         })
       )
