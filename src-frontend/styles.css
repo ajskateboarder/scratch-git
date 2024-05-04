@@ -44,6 +44,13 @@ dialog[is="welcome-modal"] {
   font-weight: normal;
 }
 
+.commit-view {
+  background-color: #f1f1f1;
+  padding: 10px;
+  width: fit-content;
+  border-radius: 10px;
+}
+
 .a-gap {
   display: flex;
   align-items: center;
@@ -116,6 +123,12 @@ dialog[is="welcome-modal"] {
   }
 }
 
+.copy-button {
+  margin-left: auto;
+  margin-right: 0px;
+  display: block;
+}
+
 .round-left-button {
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
@@ -129,12 +142,18 @@ dialog[is="welcome-modal"] {
 }
 
 .dark {
-  background-color: #111 !important;
-  color: #eee;
+  & aside {
+    background-color: #111 !important;
+    color: #eee;
+  }
 
-  & #scripts li .tab-btn {
+  & .tab-btn {
     background-color: rgb(46, 46, 46);
     color: #707070;
+  }
+
+  .commit-view {
+    background-color: #202020;
   }
 }
 

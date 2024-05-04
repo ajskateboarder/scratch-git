@@ -129,7 +129,7 @@ async function initialize() {
 
   if (!fileMenu.isProjectOpen()) {
     document
-      .querySelector<typeof WelcomeModal>("dialog[is='welcome-modal']")!
+      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
     let project = await api.getCurrentProject();

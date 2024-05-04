@@ -4,7 +4,7 @@ import { settings } from "@/components";
 import { parseScripts, type ScriptStatus } from "@/scripts";
 import { scrollBlockIntoView, flash } from "./block-utils";
 import van from "vanjs-core";
-import { Checkbox } from "@/components/checkbox";
+import { Checkbox, Copy } from "@/components";
 
 interface Diff {
   oldContent: any;
@@ -17,20 +17,7 @@ interface Diff {
   diffed: string;
 }
 
-const {
-  div,
-  span,
-  ul,
-  button,
-  p,
-  pre,
-  aside,
-  main,
-  br,
-  hr,
-  i,
-  li,
-} = van.tags;
+const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
 const StatusIcon = {
   added: "fa-solid fa-square-plus",
@@ -64,6 +51,8 @@ export class DiffModal extends HTMLDialogElement {
   previousScripts: any;
   currentScripts: any;
 
+  copyCallback!: () => string | SVGElement;
+
   constructor() {
     super();
   }
@@ -83,39 +72,48 @@ export class DiffModal extends HTMLDialogElement {
           this.close();
         },
       },
-      i({ class: "fa-solid fa-xmark" }),
+      i({ class: "fa-solid fa-xmark" })
     );
+
+    this.copyCallback = () =>
+      (this.querySelector(".scratchblocks svg") as SVGElement) ??
+      (this.querySelector(".commit-wrap") as HTMLElement).innerText;
 
     const commits = p(
       { id: "commits" },
       span({ style: "display: flex" }, useHighlights, plainText, closeButton),
       hr(),
       br(),
-      pre({ id: "commitView" }),
+      pre(
+        { class: "commit-view" },
+        Copy(this.copyCallback),
+        pre({ class: "commit-wrap" })
+      )
     );
 
     this.scripts = ul({ id: "scripts" });
     this.highlights = useHighlights.querySelector("input")!;
     this.plainText = plainText.querySelector("input")!;
-    this.commits = commits.querySelector("#commitView")!;
+    this.commits = commits.querySelector(".commit-wrap")!;
 
     van.add(
       this,
       div(
         { class: "sidebar" },
         aside(this.scripts),
-        main(div({ class: "content" }, commits)),
-      ),
+        main(div({ class: "content" }, commits))
+      )
     );
   }
 
   // highlights diff as blocks
   highlightDiff() {
     let svg = this.querySelectorAll(".scratchblocks svg > g");
+
     svg.forEach((blocks) => {
       blocks.querySelectorAll("path.sb3-diff").forEach((diff) => {
         let moddedBlock = diff.previousElementSibling!.cloneNode(
-          true,
+          true
         ) as SVGElement;
         let fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
@@ -124,7 +122,7 @@ export class DiffModal extends HTMLDialogElement {
             : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
-            "path,g,rect",
+            "path,g,rect"
           ) // g selector isn't needed maybe but just in case..
           .forEach((element) => {
             element.style.cssText = `fill: ${fillColor}; opacity: 0.5`;
@@ -133,24 +131,25 @@ export class DiffModal extends HTMLDialogElement {
         diff.remove();
       });
     });
+
+    this.copyCallback = () =>
+      this.querySelector(".scratchblocks svg") as SVGElement;
   }
 
   /** Highlights diff with plain text */
   highlightPlain(diffs: Diff[], script: number) {
-    let content = diffs[script].diffed ?? "";
-    this.commits.innerHTML = `<pre>${content.trimStart()}</pre><br>`;
+    let content = diffs[script].diffed.trimStart() ?? "";
+    this.commits.innerHTML = `<pre>${content}</pre><br>`;
+
     if (this.highlights.checked) {
-      let highlights = content
-        .trimStart()
-        .split("\n")
-        .map((e, i) =>
-          span(
-            {
-              style: `background-color: rgba(${e.startsWith("-") ? "255,0,0,0.5" : e.startsWith("+") ? "0,255,0,0.5" : "0,0,0,0"})`,
-            },
-            i == 0 ? e.trimStart() : e,
-          ),
-        );
+      let highlights = content.split("\n").map((e, i) =>
+        span(
+          {
+            style: `background-color: rgba(${e.startsWith("-") ? "255,0,0,0.5" : e.startsWith("+") ? "0,255,0,0.5" : "0,0,0,0"})`,
+          },
+          i == 0 ? e.trimStart() : e
+        )
+      );
       if (highlights[0].innerText === "") {
         highlights = highlights.slice(1);
       }
@@ -158,10 +157,12 @@ export class DiffModal extends HTMLDialogElement {
       this.commits.append(
         pre(
           // @ts-ignore
-          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null),
-        ),
+          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
+        )
       );
     }
+
+    this.copyCallback = () => content;
   }
 
   /** Enables dark diffing upon modal open */
@@ -173,7 +174,7 @@ export class DiffModal extends HTMLDialogElement {
           .querySelectorAll<SVGPathElement>("path.sb3-diff")
           .forEach(
             (diff) =>
-              (diff.style.cssText = "stroke: white; stroke-width: 3.5px"),
+              (diff.style.cssText = "stroke: white; stroke-width: 3.5px")
           );
       });
     } else {
@@ -189,7 +190,7 @@ export class DiffModal extends HTMLDialogElement {
     project: Project | undefined,
     spriteName: string,
     script = 0,
-    cached = false,
+    cached = false
   ) {
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
@@ -224,7 +225,7 @@ export class DiffModal extends HTMLDialogElement {
 
     const diffBlocks = () => {
       window._lib.scratchblocks.appendStyles();
-      window._lib.scratchblocks.renderMatching("#commitView", config);
+      window._lib.scratchblocks.renderMatching(".commit-wrap", config);
 
       let svg = this.querySelector(".scratchblocks svg > g")!;
 
@@ -298,7 +299,7 @@ export class DiffModal extends HTMLDialogElement {
     this.highlights.onchange = () => {
       localStorage.setItem(
         "scratch-git:highlights",
-        this.highlights.checked.toString(),
+        this.highlights.checked.toString()
       );
       if (this.highlights.checked) {
         this.highlightDiff();
@@ -321,7 +322,7 @@ export class DiffModal extends HTMLDialogElement {
     this.plainText.onchange = (e) => {
       localStorage.setItem(
         "scratch-git:plaintext",
-        this.plainText.checked.toString(),
+        this.plainText.checked.toString()
       );
       if (this.plainText.checked) {
         if (this.highlights.checked) {
@@ -354,17 +355,17 @@ export class DiffModal extends HTMLDialogElement {
                   onclick: async (e: Event) => {
                     e.stopPropagation();
                     this.close();
-                    // wonder if this is flaky?
                     let id = window._changedScripts[scriptNo];
                     scrollBlockIntoView(id);
                     flash(window.Blockly.getMainWorkspace().getBlockById(id));
                   },
                 },
-                i({ class: "fa-solid fa-up-right-from-square" }),
+                i({ class: "fa-solid fa-up-right-from-square" })
               )
-            : undefined,
-        ),
+            : undefined
+        )
       );
+
       diffButton
         .querySelector("button")!
         .setAttribute("script-no", scriptNo.toString());
@@ -380,10 +381,10 @@ export class DiffModal extends HTMLDialogElement {
             spriteName,
             parseInt(
               this.querySelector("button.active-tab")!.getAttribute(
-                "script-no",
-              )!,
+                "script-no"
+              )!
             ),
-            true,
+            true
           );
         };
       }
@@ -397,16 +398,16 @@ export class DiffModal extends HTMLDialogElement {
 
     // dark mode
     if (uiTheme === "dark")
-      document.querySelector("aside")!.classList.add("dark");
-    else document.querySelector("aside")!.classList.remove("dark");
+      document.querySelector(".sidebar")!.classList.add("dark");
+    else document.querySelector(".sidebar")!.classList.remove("dark");
 
     this.darkDiff(uiTheme);
 
     this.highlights.checked = JSON.parse(
-      localStorage.getItem("scratch-git:highlights")!,
+      localStorage.getItem("scratch-git:highlights")!
     );
     this.plainText.checked = JSON.parse(
-      localStorage.getItem("scratch-git:plaintext")!,
+      localStorage.getItem("scratch-git:plaintext")!
     );
     this.plainText.onchange(new Event("init"));
     this.highlights.onchange(new Event("init"));
