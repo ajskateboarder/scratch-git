@@ -296,7 +296,7 @@ impl Diff {
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
     fn format_blocks(blocks: &Map<String, Value>) -> String {
-        let re = Regex::new(r#"":\[(?:1|2),".""#).unwrap();
+        let re = Regex::new(r#"":\[(?:1|2|3),".*""#).unwrap();
         let top_ids = blocks
             .iter()
             .filter_map(|(id, val)| {
