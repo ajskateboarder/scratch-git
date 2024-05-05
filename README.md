@@ -1,6 +1,10 @@
-# scratch.git
+<picture>
+<img alt="" src="./logo.svg" align=right width=100 />
+</picture>
 
-Git version control integration for Scratch (TurboWarp) that just works and makes sense
+<h1>scratch.git</h1>
+
+> Git version control integration for Scratch (TurboWarp) that just works and makes sense
 
 https://github.com/ajskateboarder/scratch-git/assets/81255936/4374d0a8-1d89-4aad-a968-5919a63b6b27
 
@@ -10,22 +14,20 @@ The goals of this interface is to:
 - make it easier to track changes
 - make collaboration efficient, relying less on remixing
 
+## Usage
+
 scratch.git works by modifying TurboWarp Desktop through a userscript. Git interfacing is done between the desktop GUI and the local computer through a WebSocket interface between the userscript and a small server.
 
-## Usage
+To get started:
 
 1. Install these things:
 
 - [TurboWarp Desktop](https://desktop.turbowarp.org/)
 - [Git](https://git-scm.com) (in case you didn't read the title)
 
-(For development, you'll need a recent version of [Node.js](https://nodejs.org) to compile the userscript and [Rust](https://rustup.rs/) to compile the server)
-
 2. Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
 3. Unpack the zip or tar.gz and run the scratch.git executable - it'll run continuously until you close out the terminal or do Ctrl+C
-
-Currently, scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
 Congrats, you are now a 🦄✨~ _**1000x** developer_ ~✨🦄, no Git skills required!!
 
@@ -38,6 +40,8 @@ You should now see:
 - diff indicators that show up next to your sprites and stage when you save the project. These will show differences between the code before and after you save.
 
 These features closely mimic the kind of Git development seen in editors such as Visual Studio or VS Code, but in a more friendly manner.
+
+Currently, scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
 ## Developing
 
@@ -94,6 +98,6 @@ Thanks to:
 
 - @tjvr for the [scratchblocks](https://github.com/scratchblocks/scratchblocks) library
 
-- @rokcoder-scratch for the inspiration, [sb3-commit](https://github.com/rokcoder-scratch/sb3-commit)
+- @rokcoder-scratch for inspiration, [sb3-commit](https://github.com/rokcoder-scratch/sb3-commit)
 
-- @GarboMuffin for making TurboWarp easily extensible
+- @GarboMuffin for TurboWarp

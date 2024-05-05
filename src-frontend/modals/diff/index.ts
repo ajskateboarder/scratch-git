@@ -355,6 +355,15 @@ export class DiffModal extends HTMLDialogElement {
                   onclick: async (e: Event) => {
                     e.stopPropagation();
                     this.close();
+                    if (
+                      window.ReduxStore.getState().scratchGui.editorTab
+                        .activeTabIndex !== 0
+                    ) {
+                      window.ReduxStore.dispatch({
+                        type: "scratch-gui/navigation/ACTIVATE_TAB",
+                        activeTabIndex: 0,
+                      });
+                    }
                     let id = window._changedScripts[scriptNo];
                     scrollBlockIntoView(id);
                     flash(window.Blockly.getMainWorkspace().getBlockById(id));

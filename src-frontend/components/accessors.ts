@@ -60,4 +60,5 @@ export const misc = {
   close: s("close-button_close-button"),
   largeClose: s("close-button_large"),
   guiWrapper: s("gui_page-wrapper"),
+  selectedTab: s("react-tabs_react-tabs__tab--selected"),
 };

@@ -1,6 +1,6 @@
 /** @file Displays indicators and info on sprites that were changed */
 import type { Project } from "./api";
-import { sprites } from "./components/index";
+import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
@@ -11,6 +11,8 @@ async function changedBlocklyScripts(
   sprite: (string | boolean)[],
   loadedJSON: any
 ) {
+  if (sprite === undefined) return;
+
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
   let workspace = window.Blockly.getMainWorkspace();
 
@@ -29,7 +31,7 @@ async function changedBlocklyScripts(
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels.indexOf(e.script)]?.id)
-    .filter((e) => e !== undefined);
+    .filter((e) => e !== undefined) as string[];
 }
 
 async function highlightChanged(
@@ -55,6 +57,9 @@ async function highlightChanged(
     .forEach((e) => (e.style.filter = ""));
 
   let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
+
+  if (changedScripts === undefined) return;
+
   window._changedScripts = changedScripts;
 
   changedScripts.forEach((e) => {
@@ -222,4 +227,23 @@ export async function showIndicators(project: Project) {
   )!;
 
   await highlightChanged(project, sprite, loadedJSON);
+
+  const observer = new MutationObserver(async ([mutation, _]) => {
+    if ((mutation.target as HTMLElement).classList.contains(misc.selectedTab)) {
+      let selectedSprite: HTMLDivElement = document.querySelector(
+        `.${sprites.selectedSprite}`
+      )!;
+      let sprite_ = (
+        selectedSprite
+          ? changedSprites.find((e) => e[0] === nameOfSprite(selectedSprite))
+          : ["Stage", true]
+      )!;
+      await highlightChanged(project, sprite_, loadedJSON);
+    }
+  });
+
+  observer.observe(document.querySelector(`#react-tabs-0`)!, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 }

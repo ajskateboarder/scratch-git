@@ -18,40 +18,6 @@ import van from "vanjs-core";
 
 const { link, style } = van.tags;
 
-declare global {
-  interface Window {
-    ReduxStore: {
-      getState: () => {
-        scratchGui: {
-          theme: {
-            theme: {
-              blocks: "three" | "dark" | "high-contrast";
-              gui: "light" | "dark";
-            };
-          };
-        };
-      };
-    };
-    vm: any;
-    Blockly: any;
-    _lib: {
-      scratchblocks: {
-        appendStyles: () => void;
-        renderMatching: (loc: string, config: {}) => void;
-      };
-      parseSB3Blocks: {
-        toScratchblocks: (
-          script: string,
-          json: {},
-          language: string,
-          config: {}
-        ) => string;
-      };
-    };
-    _changedScripts: string[];
-  }
-}
-
 const Styles = () => {
   // TODO: unused styles?
   const menuContents = `
