@@ -28,7 +28,8 @@ If you found a bug which only seems to happen with one or more particular projec
 
 **Desktop (please complete the following information):**
  - OS: (Windows, Linux, MacOS, etc.)
- - TurboWarp version (this can be found by going to the ? button in the top right and clicking "About")
+ - TurboWarp version (go to the "?" button in the top right and click "About")
+- Git version (run `git --version`)
 
 **Additional context**
 Add any other context about the problem here.
