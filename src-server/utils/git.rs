@@ -106,6 +106,7 @@ pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> G
     }
 }
 
+/// Fetch the revision of a certain file
 pub fn show_revision(cwd: &PathBuf, commit: &str) -> String {
     let proc = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");

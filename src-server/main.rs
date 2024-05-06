@@ -12,8 +12,8 @@ use std::{
 };
 use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
-use crate::handlers::Cmd;
-use crate::utils::tw_path::turbowarp_path;
+use handlers::handle_command;
+use utils::tw_path::turbowarp_path;
 
 fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
     match err {
@@ -30,7 +30,7 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
                 if debug {
                     println!("<- Received message: {}", msg.to_string());
                 }
-                let response = match Cmd::handle(msg.to_string()) {
+                let response = match handle_command(msg.to_string(), debug) {
                     Ok(res) => res,
                     Err(e) => Message::Text(e.to_string()),
                 };
