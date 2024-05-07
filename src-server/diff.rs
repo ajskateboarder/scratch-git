@@ -1,4 +1,4 @@
-use crate::utils::git;
+use crate::git;
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
 use regex::Regex;
@@ -393,7 +393,7 @@ impl Diff {
                 let diff = git::diff(
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
-                    2000
+                    2000,
                 );
 
                 if diff.added != 0 || diff.removed != 0 {

@@ -13,16 +13,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::{self, from_str, json, Error, Value};
 
 use crate::diff::{Diff, ScriptChanges};
-use crate::utils::extract::extract;
-use crate::utils::git;
-use crate::utils::projects::ProjectConfig;
+use crate::extract::extract;
+use crate::git;
+use crate::projects::ProjectConfig;
 
-fn  get_project_path(projects: &Value, project_name: &str) -> PathBuf {
+fn get_project_path(projects: &Value, project_name: &str) -> PathBuf {
     let base_loc = &projects[project_name]["base"].as_str().unwrap().to_string();
     Path::new(&base_loc).to_path_buf()
 }
 
-fn  project_config() -> &'static Mutex<ProjectConfig> {
+fn project_config() -> &'static Mutex<ProjectConfig> {
     static CONFIG: OnceLock<Mutex<ProjectConfig>> = OnceLock::new();
     CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json")))
 }
@@ -53,11 +53,11 @@ pub struct CmdHandler {
 }
 
 impl CmdHandler {
-    fn  new(debug: bool) -> CmdHandler {
+    fn new(debug: bool) -> CmdHandler {
         CmdHandler { debug }
     }
 
-    fn  diff(&self, data: CmdData) -> Value {
+    fn diff(&self, data: CmdData) -> Value {
         let CmdData::GitDiff {
             old_content,
             new_content,
@@ -65,10 +65,14 @@ impl CmdHandler {
         else {
             return json!({});
         };
-        json!(git::diff(old_content.to_string(), new_content.to_string(), 2000))
+        json!(git::diff(
+            old_content.to_string(),
+            new_content.to_string(),
+            2000
+        ))
     }
 
-    fn  create_project(&self, data: CmdData) -> Value {
+    fn create_project(&self, data: CmdData) -> Value {
         let CmdData::FilePath(file_name) = data else {
             return json!({});
         };
@@ -81,8 +85,10 @@ impl CmdHandler {
             .to_string();
         let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
-        
-        if self.debug { println!("create_project: got project name: {name}") }
+
+        if self.debug {
+            println!("create_project: got project name: {name}")
+        }
 
         let project_path_result = canonicalize(Path::new("projects").join(&name));
         let project_path = match project_path_result {
@@ -94,7 +100,9 @@ impl CmdHandler {
         };
 
         let Ok(file_path) = canonicalize(&file_name) else {
-            if self.debug { println!("create_project: failed to find project file") }
+            if self.debug {
+                println!("create_project: failed to find project file")
+            }
 
             return json!({ "message": "fail" });
         };
@@ -155,12 +163,16 @@ impl CmdHandler {
         let response = String::from_utf8(init_repo.stdout).unwrap();
 
         if !response.contains("Git repository") {
-            if self.debug { println!("create_project: git init did not state that new repo was made") }
+            if self.debug {
+                println!("create_project: git init did not state that new repo was made")
+            }
             return json!({ "project_name": "fail" });
         }
 
         if !git::add(&project_path) {
-            if self.debug { println!("create_project: assets could not be added") }
+            if self.debug {
+                println!("create_project: assets could not be added")
+            }
             return json!({ "project_name": "fail" });
         }
 
@@ -173,22 +185,24 @@ impl CmdHandler {
             git.args(["commit", "-m", "Initial commit"]);
             git
         };
-        
+
         let commit = commit
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(project_path);
         let commit = String::from_utf8(commit.output().unwrap().stdout).unwrap();
-        
+
         if !commit.contains("Initial commit") {
-            if self.debug { println!("create_project: initial commit could not be created. reason:\n\n{commit}") }
+            if self.debug {
+                println!("create_project: initial commit could not be created. reason:\n\n{commit}")
+            }
             return json!({ "project_name": "fail" });
         }
 
         json!({ "project_name": name.replace("projects/", "") })
     }
 
-    fn  exists(&self, data: CmdData) -> Value {
+    fn exists(&self, data: CmdData) -> Value {
         let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
@@ -196,7 +210,7 @@ impl CmdHandler {
         json!({ "exists": projects[project_name] != Value::Null })
     }
 
-    fn  unzip(&self, data: CmdData) -> Value {
+    fn unzip(&self, data: CmdData) -> Value {
         let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
@@ -224,7 +238,7 @@ impl CmdHandler {
         json!({ "status": "success" })
     }
 
-    fn  get_project(&self, data: CmdData, old: bool) -> Value {
+    fn get_project(&self, data: CmdData, old: bool) -> Value {
         let CmdData::Project {
             project_name,
             sprite_name,
@@ -265,7 +279,7 @@ impl CmdHandler {
         }
     }
 
-    fn  push(&self, data: CmdData) -> Value {
+    fn push(&self, data: CmdData) -> Value {
         let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
@@ -296,9 +310,12 @@ impl CmdHandler {
 
         let project_path =
             get_project_path(&project_config().lock().unwrap().projects, &project_name);
-        
-        if self.debug { 
-            println!("commit: path to project is {}", project_path.to_string_lossy());
+
+        if self.debug {
+            println!(
+                "commit: path to project is {}",
+                project_path.to_string_lossy()
+            );
             println!("commit: path exists? {}", project_path.exists())
         }
 
@@ -339,7 +356,12 @@ impl CmdHandler {
         let commit = commit.current_dir(&project_path).status().unwrap();
 
         if !commit.success() {
-            if self.debug { println!("commit: failed to make commit: error code {:?}", commit.code().unwrap_or(-2000000000)) }
+            if self.debug {
+                println!(
+                    "commit: failed to make commit: error code {:?}",
+                    commit.code().unwrap_or(-2000000000)
+                )
+            }
             // TODO: make error message less generic
             return json!({ "message": "Nothing to commit" });
         }
@@ -409,7 +431,7 @@ impl CmdHandler {
         serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output")
     }
 
-    fn  get_changed_sprites(&self, data: CmdData) -> Value {
+    fn get_changed_sprites(&self, data: CmdData) -> Value {
         let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
@@ -420,7 +442,9 @@ impl CmdHandler {
         let project_old_json = match binding {
             Ok(fh) => fh.as_str(),
             Err(_) => {
-                if self.debug { println!("get_changed_sprites: project.old.json does not exist, try commiting this first") }
+                if self.debug {
+                    println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
+                }
                 return json!({ "status": "unzip the project first that should do it" });
             }
         };

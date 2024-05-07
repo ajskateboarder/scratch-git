@@ -1,6 +1,9 @@
 pub mod diff;
+pub mod extract;
+pub mod git;
 pub mod handlers;
-pub mod utils;
+pub mod projects;
+pub mod tw_path;
 
 use std::{
     env, fs,
@@ -13,7 +16,7 @@ use std::{
 use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
 use handlers::handle_command;
-use utils::tw_path::turbowarp_path;
+use tw_path::turbowarp_path;
 
 fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
     match err {

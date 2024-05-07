@@ -54,11 +54,25 @@ pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> G
     let new_id = git_object_id(new_content.into());
     let proc = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
-        cmd.args(["/C", "git", "diff", format!("-U{context}").as_str(), "--no-color", &old_id, &new_id]);
+        cmd.args([
+            "/C",
+            "git",
+            "diff",
+            format!("-U{context}").as_str(),
+            "--no-color",
+            &old_id,
+            &new_id,
+        ]);
         cmd
     } else {
         let mut git = Command::new("git");
-        git.args(["diff", format!("-U{context}").as_str(), "--no-color", &old_id, &new_id]);
+        git.args([
+            "diff",
+            format!("-U{context}").as_str(),
+            "--no-color",
+            &old_id,
+            &new_id,
+        ]);
         git
     }
     .stdout(Stdio::piped())
