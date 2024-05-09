@@ -49,14 +49,14 @@ export class CommitModal extends HTMLDialogElement {
         class: [settings.settingsButton, "round-right-button"].join(" "),
         disabled: true,
       },
-      "Newer"
+      "< Newer"
     );
 
     this.older = button(
       {
         class: [settings.settingsButton, "round-left-button"].join(" "),
       },
-      "Older"
+      "Older >"
     );
 
     this.search = input({
@@ -105,7 +105,6 @@ export class CommitModal extends HTMLDialogElement {
 
   async display() {
     let commits_ = await (await api.getCurrentProject())!.getCommits();
-    console.log(commits_);
     let commits = paginate(commits_, 40);
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];

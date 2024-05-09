@@ -13,6 +13,9 @@ interface Window {
           activeTabIndex: 0 | 1 | 2;
         };
       };
+      locales: {
+        locale: string;
+      };
     };
   };
   vm: any;

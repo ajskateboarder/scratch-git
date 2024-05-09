@@ -48,7 +48,7 @@ export const CommitItem = (commit: Commit, search: string) =>
       commit.author.name,
       span(
         { style: "font-weight: lighter", title: commit.author.date },
-        ` commited ${timeAgo(commit.author.date)}`
+        ` committed ${timeAgo(commit.author.date)}`
       )
     )
   );

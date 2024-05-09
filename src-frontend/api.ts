@@ -169,7 +169,7 @@ class ProjectManager extends Socket {
       );
     } else if (response.project_name === "fail") {
       throw new Error(
-        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">file an issue on GitHub</a> with system info.`
+        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">make a bug report on GitHub</a>.`
       );
     }
 

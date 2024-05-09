@@ -15,19 +15,12 @@ import { CommitModal, WelcomeModal, DiffModal } from "./modals";
 // @ts-ignore
 import styles from "./styles.css";
 import van from "vanjs-core";
+import { getLocale } from "./l10n";
 
 const { link, style } = van.tags;
 
 const Styles = () => {
-  // TODO: unused styles?
   const menuContents = `
-    div.${menu.menuItem}:has(#push-status):hover {
-      cursor: pointer;
-    }
-    div.${menu.menuItem}:has(#allcommits-log):hover {
-      cursor: pointer;
-    }
-    
     .${settings.settingsButton}[disabled] {
       background-color: var(--menu-bar-background-default);
       color: rgba(255, 255, 255, 0.4);
@@ -91,12 +84,14 @@ async function initialize() {
     } catch {}
   }, 500);
 
+  let locale = getLocale();
+
   document.head.append(...Styles());
 
   if (!fileMenu.isProjectOpen()) {
     document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
-      .display();
+      .display(locale);
   } else {
     let project = await api.getCurrentProject();
     if (await project!.exists()) {
