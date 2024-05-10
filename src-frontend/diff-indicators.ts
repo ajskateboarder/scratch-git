@@ -1,17 +1,35 @@
 /** @file Displays indicators and info on sprites that were changed */
-import type { Project } from "./api";
+import type { Project, Sprite } from "./api";
 import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
 
-/** Receive Blockly IDs to top-level blocks that were changed */
+/** Receive Blockly IDs to top-level blocks that were changed
+ *
+ * @param project - a {@link Project}
+ * @param sprite - the {@link Sprite} in which blocks were changed
+ * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
+ */
 async function changedBlocklyScripts(
   project: Project,
-  sprite: (string | boolean)[],
+  sprite: Sprite,
   loadedJSON: any
 ) {
-  if (sprite === undefined) return;
+  if (sprite === undefined) {
+    console.warn("provided sprite for diffing was undefined");
+    return;
+  }
+
+  const topLevels = () => {
+    let target = loadedJSON.targets.find((e: any) =>
+      spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
+    );
+
+    return Object.keys(target.blocks).filter(
+      (k) => target.blocks[k].parent === null
+    );
+  };
 
   let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
   let workspace = window.Blockly.getMainWorkspace();
@@ -21,14 +39,6 @@ async function changedBlocklyScripts(
     await project.getCurrentScripts(spriteName)
   );
 
-  let target = loadedJSON.targets.find((e: any) =>
-    spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
-  );
-
-  let topLevels = Object.keys(target.blocks).filter(
-    (k) => target.blocks[k].parent === null
-  );
-
   return diffs
     .map((e) => workspace.topBlocks_[topLevels.indexOf(e.script)]?.id)
     .filter((e) => e !== undefined) as string[];
@@ -36,12 +46,13 @@ async function changedBlocklyScripts(
 
 async function highlightChanged(
   project: Project,
-  sprite: (string | boolean)[],
+  sprite: Sprite,
   loadedJSON: any
 ) {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
-    document.querySelector(".blocklySvg defs")!.innerHTML +=
-      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    document.querySelector(
+      ".blocklySvg defs"
+    )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
       <feComponentTransfer result="outBlur">
         <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -135,6 +146,7 @@ export async function showIndicators(project: Project) {
         );
       },
     });
+
     divs[3].after(diffButton);
 
     // on sprite click, adjust diff buttons and highlight changed scripts
@@ -204,7 +216,7 @@ export async function showIndicators(project: Project) {
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
-  stageWrapper.onclick = async () => {
+  stageWrapper.addEventListener(async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
         `.${sprites.delete}.${sprites.spriteSelDelete}`
@@ -214,7 +226,7 @@ export async function showIndicators(project: Project) {
       .forEach((button) => (button.style.marginTop = "0px"));
 
     await highlightChanged(project, ["Stage", true], loadedJSON);
-  };
+  });
 
   let selectedSprite: HTMLDivElement = document.querySelector(
     `.${sprites.selectedSprite}`
@@ -228,7 +240,7 @@ export async function showIndicators(project: Project) {
 
   await highlightChanged(project, sprite, loadedJSON);
 
-  const observer = new MutationObserver(async ([mutation, _]) => {
+  new MutationObserver(async ([mutation, _]) => {
     if ((mutation.target as HTMLElement).classList.contains(misc.selectedTab)) {
       let selectedSprite: HTMLDivElement = document.querySelector(
         `.${sprites.selectedSprite}`
@@ -240,9 +252,7 @@ export async function showIndicators(project: Project) {
       )!;
       await highlightChanged(project, sprite_, loadedJSON);
     }
-  });
-
-  observer.observe(document.querySelector(`#react-tabs-0`)!, {
+  }).observe(document.querySelector(`#react-tabs-0`)!, {
     attributes: true,
     attributeFilter: ["class"],
   });
