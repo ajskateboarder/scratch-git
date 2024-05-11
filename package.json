@@ -9,8 +9,12 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "rollup": "^4.14.1",
+    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-string": "^3.0.0",
     "tslib": "^2.6.2",
     "typescript": "5.4.5"
+  },
+  "nodemonConfig": {
+    "ext": "ts"
   }
 }
