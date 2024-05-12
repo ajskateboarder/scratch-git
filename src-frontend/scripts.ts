@@ -1,4 +1,5 @@
 import { diff } from "./api";
+import { toScratchblocks } from "./lib";
 
 const zip = (a: any[], b: any[]) =>
   Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
@@ -24,18 +25,18 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
   let oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
-      return window._lib.parseSB3Blocks.toScratchblocks(
+      return toScratchblocks(
         script,
         // fixes parsing error
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', ""),
+            .replaceAll(',"SUBSTACK":[1,null]', "")
         ),
         "en",
         {
           tabs: "",
-        },
+        }
       );
     })
     .sort((a, b) => a.localeCompare(b));
@@ -44,17 +45,17 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
     .filter((key) => newProject[key].parent === null)
     .map((script) => {
       return {
-        content: window._lib.parseSB3Blocks.toScratchblocks(
+        content: toScratchblocks(
           script,
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', ""),
+              .replaceAll(',"SUBSTACK":[1,null]', "")
           ),
           "en",
           {
             tabs: "",
-          },
+          }
         ),
         script,
       };
@@ -88,8 +89,8 @@ export async function parseScripts(previousScripts: {}, currentScripts: {}) {
   return (
     await Promise.all(
       scripts.results.map((script) =>
-        diff(script.oldContent, script.newContent),
-      ),
+        diff(script.oldContent, script.newContent)
+      )
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))

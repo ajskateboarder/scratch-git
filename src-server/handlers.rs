@@ -40,6 +40,7 @@ enum CmdData<'a> {
         new_content: String,
     },
     FilePath(String),
+    URL(String)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -208,6 +209,26 @@ impl CmdHandler {
         };
         let projects = &project_config().lock().unwrap().projects;
         json!({ "exists": projects[project_name] != Value::Null })
+    }
+
+    fn remote_exists(&self, data: CmdData) -> Value {
+        let CmdData::URL(url) = data else {
+            return json!({});
+        };
+
+        let ls_remote = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "ls-remote", &url]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["ls-remote", &url]);
+            git
+        }.output();
+
+        let ls_remote = String::from_utf8(ls_remote.unwrap().stdout).unwrap();
+
+        return json!({"exists": ls_remote.contains("fatal")})
     }
 
     fn unzip(&self, data: CmdData) -> Value {
@@ -477,7 +498,7 @@ impl CmdHandler {
 }
 
 pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
-    let json: Cmd = match from_str(msg.as_str()) {
+    let json: Cmd = match from_str::<Cmd>(msg.as_str()) {
         Ok(j) => j,
         Err(e) => return Err(e),
     };
@@ -486,9 +507,12 @@ pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
 
     Ok(Message::Text(
         match json.command {
+            // static
             "diff" => handler.diff(json.data),
-            "create-project" => handler.create_project(json.data),
+            "remote-exists" => handler.remote_exists(json.data),
             "exists" => handler.exists(json.data),
+            "create-project" => handler.create_project(json.data),
+            // project-specific
             "unzip" => handler.unzip(json.data),
             "commit" => handler.commit(json.data),
             "push" => handler.push(json.data),

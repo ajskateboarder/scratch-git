@@ -31,7 +31,7 @@ async function changedBlocklyScripts(
     );
   };
 
-  let spriteName: string = sprite[0] + (sprite[1] ? " (stage)" : "");
+  let spriteName: string = sprite.format();
   let workspace = window.Blockly.getMainWorkspace();
 
   let diffs = await parseScripts(
@@ -40,9 +40,17 @@ async function changedBlocklyScripts(
   );
 
   return diffs
-    .map((e) => workspace.topBlocks_[topLevels.indexOf(e.script)]?.id)
+    .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
     .filter((e) => e !== undefined) as string[];
 }
+
+const STAGE: Sprite = {
+  name: "Stage",
+  isStage: true,
+  format() {
+    return "Stage (stage)";
+  },
+};
 
 async function highlightChanged(
   project: Project,
@@ -50,9 +58,8 @@ async function highlightChanged(
   loadedJSON: any
 ) {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
-    document.querySelector(
-      ".blocklySvg defs"
-    )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    document.querySelector(".blocklySvg defs")!.innerHTML +=
+      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
       <feComponentTransfer result="outBlur">
         <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -119,7 +126,8 @@ export async function showIndicators(project: Project) {
     });
 
     // was the selected sprite changed?
-    if (!changedSprites.some((e) => e[0] === spriteName && !e[1])) return;
+    if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
+      return;
 
     let applyMargin = sprite.querySelector(`.${sprites.delete}`) !== null;
     let diffButton = SpriteDiff({
@@ -176,7 +184,7 @@ export async function showIndicators(project: Project) {
 
       await highlightChanged(
         project,
-        changedSprites.find((e) => e[0] === spriteName)!,
+        changedSprites.find((e) => e.name === spriteName)!,
         loadedJSON
       );
     });
@@ -216,7 +224,7 @@ export async function showIndicators(project: Project) {
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
-  stageWrapper.addEventListener(async () => {
+  stageWrapper.addEventListener("click", async () => {
     (<HTMLDivElement[]>[
       ...document.querySelectorAll(
         `.${sprites.delete}.${sprites.spriteSelDelete}`
@@ -225,7 +233,7 @@ export async function showIndicators(project: Project) {
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
 
-    await highlightChanged(project, ["Stage", true], loadedJSON);
+    await highlightChanged(project, STAGE, loadedJSON);
   });
 
   let selectedSprite: HTMLDivElement = document.querySelector(
@@ -234,9 +242,9 @@ export async function showIndicators(project: Project) {
 
   let sprite = (
     selectedSprite
-      ? changedSprites.find((e) => e[0] === nameOfSprite(selectedSprite))
-      : ["Stage", true]
-  )!;
+      ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
+      : STAGE
+  ) satisfies Sprite;
 
   await highlightChanged(project, sprite, loadedJSON);
 
@@ -245,11 +253,9 @@ export async function showIndicators(project: Project) {
       let selectedSprite: HTMLDivElement = document.querySelector(
         `.${sprites.selectedSprite}`
       )!;
-      let sprite_ = (
-        selectedSprite
-          ? changedSprites.find((e) => e[0] === nameOfSprite(selectedSprite))
-          : ["Stage", true]
-      )!;
+      let sprite_ = selectedSprite
+        ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
+        : STAGE;
       await highlightChanged(project, sprite_, loadedJSON);
     }
   }).observe(document.querySelector(`#react-tabs-0`)!, {

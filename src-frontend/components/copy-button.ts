@@ -45,12 +45,19 @@ export const Copy = (cb: () => string | SVGElement) => {
   const copyButton = button(
     {
       class: "copy-button",
-      onclick: () => {
-        copyToClipboard(cb());
-        copyButton.innerHTML = '<i class="fa-solid fa-check"></i>';
-        setTimeout(() => {
-          copyButton.innerHTML = '<i class="fa-solid fa-copy"></i>';
-        }, 1500);
+      onclick: async () => {
+        console.log(cb, cb());
+        copyToClipboard(cb())
+          .then(() => {
+            copyButton.innerHTML = '<i class="fa-solid fa-check"></i>';
+            setTimeout(() => {
+              copyButton.innerHTML = '<i class="fa-solid fa-copy"></i>';
+            }, 1500);
+            console.log("bruh");
+          })
+          .catch(() => {
+            console.warn("failed to copy to clipboard");
+          });
       },
     },
     i({ class: "fa-solid fa-copy" })

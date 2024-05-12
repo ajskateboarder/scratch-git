@@ -11,6 +11,7 @@ export interface Commit {
 export interface Sprite {
   name: string;
   isStage: boolean;
+  format: () => string;
 }
 
 const SOCKET_URL = "ws://localhost:8000";
@@ -98,7 +99,13 @@ export class Project extends Socket {
     ).sprites;
     return sprites
       .sort(([a, _b], [b, _c]) => a.localeCompare(b))
-      .map((e) => ({ name: e[0], isStage: e[1] }));
+      .map((e) => ({
+        name: e[0],
+        isStage: e[1],
+        format() {
+          return this.name + (this.isStage ? " (stage)" : "");
+        },
+      })) satisfies Sprite[];
   }
 
   /** Get the current scripts of a project's JSON
@@ -264,6 +271,33 @@ export function diff(
     };
     ws.onmessage = (message) => {
       return resolve(JSON.parse(message.data));
+    };
+    ws.onerror = (error) => {
+      return reject(error);
+    };
+  });
+}
+
+/** Check if a user-provided Git repository remote exists
+ *
+ * @param url - the URL of the repository to be checked
+ */
+export function remoteExists(url: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    let ws = new WebSocket(SOCKET_URL);
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          command: "remote-exists",
+          data: {
+            URL: url,
+          },
+        })
+      );
+    };
+    ws.onmessage = (message) => {
+      return resolve(JSON.parse(message.data).exists);
     };
     ws.onerror = (error) => {
       return reject(error);

@@ -5,6 +5,7 @@ import { parseScripts, type ScriptStatus } from "@/scripts";
 import { scrollBlockIntoView, flash } from "./block-utils";
 import van from "vanjs-core";
 import { Checkbox, Copy } from "@/components";
+import { scratchblocks } from "@/lib";
 
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
@@ -98,8 +99,8 @@ export class DiffModal extends HTMLDialogElement {
 
     van.add(
       this,
-      div(
-        { class: "sidebar" },
+      main(
+        { class: "diff-view" },
         aside(this.scripts),
         main(div({ class: "content" }, commits))
       )
@@ -118,8 +119,8 @@ export class DiffModal extends HTMLDialogElement {
         let fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-          ? "red"
-          : "grey";
+            ? "red"
+            : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
             "path,g,rect"
@@ -154,8 +155,8 @@ export class DiffModal extends HTMLDialogElement {
               e.startsWith("-")
                 ? "255,0,0,0.5"
                 : e.startsWith("+")
-                ? "0,255,0,0.5"
-                : "0,0,0,0"
+                  ? "0,255,0,0.5"
+                  : "0,0,0,0"
             })`,
           },
           i == 0 ? e.trimStart() : e
@@ -235,8 +236,8 @@ export class DiffModal extends HTMLDialogElement {
     };
 
     const diffBlocks = () => {
-      window._lib.scratchblocks.appendStyles();
-      window._lib.scratchblocks.renderMatching(".commit-wrap", config);
+      scratchblocks.appendStyles();
+      scratchblocks.renderMatching(".commit-wrap", config);
 
       let svg = this.querySelector(".scratchblocks svg > g")!;
 
@@ -412,20 +413,21 @@ export class DiffModal extends HTMLDialogElement {
       this.scripts.appendChild(diffButton);
     });
 
-    document
-      .querySelector(`button[script-no="${script}"]`)!
-      .classList.add("active-tab");
+    this.querySelector(`button[script-no="${script}"]`)!.classList.add(
+      "active-tab"
+    );
 
     // dark mode
     if (uiTheme === "dark")
-      document.querySelector(".sidebar")!.classList.add("dark");
-    else document.querySelector(".sidebar")!.classList.remove("dark");
+      this.querySelector(".diff-view")!.classList.add("dark");
+    else this.querySelector(".sidebar")!.classList.remove("dark");
 
     this.setDiffTheme(uiTheme);
 
     this.highlights.checked = JSON.parse(
       localStorage.getItem("scratch-git:highlights")!
     );
+
     this.plainText.checked = JSON.parse(
       localStorage.getItem("scratch-git:plaintext")!
     );
