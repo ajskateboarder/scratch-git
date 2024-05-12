@@ -1,9 +1,9 @@
 import { settings, misc } from "@/components";
-import van, { type State } from "vanjs-core";
+import van, { PropsWithKnownKeys, type State } from "vanjs-core";
 import tippy from "tippy.js";
 import { remoteExists } from "@/api";
 
-const { main, button, h1, div, span, input, label, br, p, i } = van.tags;
+const { main, button, h1, div, span, input, label, br, p } = van.tags;
 
 const PENCIL = document
   .querySelector(`.${misc.menuItems}`)!
@@ -20,7 +20,7 @@ function isValidUrl(url: string) {
 const InputField = (...children: any[]) =>
   p({ style: "display: flex; align-items: center; gap: 10px" }, children);
 
-const InputBox = (props: {}) =>
+const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
   input({
     ...props,
     type: "text",
@@ -60,6 +60,21 @@ export class RepoConfigModal extends HTMLDialogElement {
             this.gitProvider = localStorage.getItem(
               "scratch-git:repo-provider"
             )!;
+          } else {
+            provider.value = "";
+          }
+        }
+      },
+    });
+
+    const name = InputBox({
+      placeholder: "Enter a username you want to use for this repository",
+      onblur: async ({ target }: Event) => {
+        let url: string = (target as HTMLInputElement).value;
+        if (this.editing.val === true) {
+          if (isValidUrl(url) && (await remoteExists(url))) {
+            localStorage.setItem("scratch-git:name", url);
+            this.gitProvider = localStorage.getItem("scratch-git:username")!;
           } else {
             provider.value = "";
           }

@@ -4,6 +4,9 @@ import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
+import { createLog } from "./log";
+
+let logger = createLog("diff-indicators");
 
 /** Receive Blockly IDs to top-level blocks that were changed
  *
@@ -12,12 +15,13 @@ import { SpriteDiff, StageDiff } from "./components/diff-buttons";
  * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
  */
 async function changedBlocklyScripts(
-  project: Project,
   sprite: Sprite,
-  loadedJSON: any
+  loadedJSON: any,
+  previousScripts: any,
+  currentScripts: any
 ) {
   if (sprite === undefined) {
-    console.warn("provided sprite for diffing was undefined");
+    logger.warn("provided sprite for diffing was undefined");
     return;
   }
 
@@ -34,10 +38,7 @@ async function changedBlocklyScripts(
   let spriteName: string = sprite.format();
   let workspace = window.Blockly.getMainWorkspace();
 
-  let diffs = await parseScripts(
-    await project.getPreviousScripts(spriteName),
-    await project.getCurrentScripts(spriteName)
-  );
+  let diffs = await parseScripts(previousScripts, currentScripts);
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
@@ -58,8 +59,9 @@ async function highlightChanged(
   loadedJSON: any
 ) {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
-    document.querySelector(".blocklySvg defs")!.innerHTML +=
-      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    document.querySelector(
+      ".blocklySvg defs"
+    )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
       <feComponentTransfer result="outBlur">
         <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -74,7 +76,20 @@ async function highlightChanged(
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
     .forEach((e) => (e.style.filter = ""));
 
-  let changedScripts = await changedBlocklyScripts(project, sprite, loadedJSON);
+  let previousScripts = await project.getPreviousScripts(sprite.format());
+  let currentScripts = await project.getCurrentScripts(sprite.format());
+
+  let changedScripts = await changedBlocklyScripts(
+    sprite,
+    loadedJSON,
+    previousScripts,
+    currentScripts
+  );
+
+  logger.debug(
+    `received following for sprite ${sprite.format()}`,
+    changedScripts
+  );
 
   if (changedScripts === undefined) return;
 
@@ -195,7 +210,7 @@ export async function showIndicators(project: Project) {
     `.${sprites.stageWrapper}`
   )!;
 
-  if (changedSprites.some((e) => JSON.stringify(e) == '["Stage",true]')) {
+  if (changedSprites.some((e) => e.name === "Stage" && e.isStage)) {
     let stageDiffButton = StageDiff({
       style: `
       transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
@@ -248,6 +263,7 @@ export async function showIndicators(project: Project) {
 
   await highlightChanged(project, sprite, loadedJSON);
 
+  // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {
     if ((mutation.target as HTMLElement).classList.contains(misc.selectedTab)) {
       let selectedSprite: HTMLDivElement = document.querySelector(
@@ -258,8 +274,22 @@ export async function showIndicators(project: Project) {
         : STAGE;
       await highlightChanged(project, sprite_, loadedJSON);
     }
-  }).observe(document.querySelector(`#react-tabs-0`)!, {
+  }).observe(document.querySelector("#react-tabs-0")!, {
     attributes: true,
     attributeFilter: ["class"],
+  });
+
+  // retain diff highlights for editor changes (lang, theme, etc)
+  new MutationObserver(async () => {
+    let selectedSprite: HTMLDivElement = document.querySelector(
+      `.${sprites.selectedSprite}`
+    )!;
+    let sprite_ = selectedSprite
+      ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
+      : STAGE;
+    await highlightChanged(project, sprite_, loadedJSON);
+  }).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["style"],
   });
 }

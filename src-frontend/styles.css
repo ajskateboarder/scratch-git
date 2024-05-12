@@ -56,6 +56,10 @@ dialog[is="repo-config-modal"] {
     var(--dot-color);
 }
 
+.commit-view:has(.commit-wrap > pre) {
+  background: #f1f1f1;
+}
+
 .floppy-save-button {
   width: 20px;
   height: 20px;
@@ -170,6 +174,10 @@ dialog[is="welcome-modal"] {
     --dot-size: 1px;
     --dot-bg: #1e1e1e;
     --dot-color: #707070;
+  }
+
+  .commit-view:has(.commit-wrap > pre) {
+    background: #1e1e1e;
   }
 }
 

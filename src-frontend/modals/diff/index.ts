@@ -119,8 +119,8 @@ export class DiffModal extends HTMLDialogElement {
         let fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-            ? "red"
-            : "grey";
+          ? "red"
+          : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
             "path,g,rect"
@@ -155,8 +155,8 @@ export class DiffModal extends HTMLDialogElement {
               e.startsWith("-")
                 ? "255,0,0,0.5"
                 : e.startsWith("+")
-                  ? "0,255,0,0.5"
-                  : "0,0,0,0"
+                ? "0,255,0,0.5"
+                : "0,0,0,0"
             })`,
           },
           i == 0 ? e.trimStart() : e
@@ -420,7 +420,7 @@ export class DiffModal extends HTMLDialogElement {
     // dark mode
     if (uiTheme === "dark")
       this.querySelector(".diff-view")!.classList.add("dark");
-    else this.querySelector(".sidebar")!.classList.remove("dark");
+    else this.querySelector(".diff-view")!.classList.remove("dark");
 
     this.setDiffTheme(uiTheme);
 
