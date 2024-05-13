@@ -1,0 +1,31 @@
+{
+  "menu": {
+    "pushProject": "Push project",
+    "configureRepo": "Configure repository",
+    "commit": "Commit",
+    "viewCommits": "View commits"
+  },
+  "diff": {
+    "useHighlights": "Use highlights",
+    "plainText": "Plain text"
+  },
+  "commit": {
+    "searchCommits": "Search commits",
+    "commitsHeader": "Commits",
+    "newer": "Newer",
+    "older": "Older",
+    "committedWhen": "committed {time}"
+  },
+  "welcome": {
+    "projectOpened": "Project opened",
+    "openProject": "Open project",
+    "welcomeHeader": "Welcome to scratch.git",
+    "getStarted": "Please load a project for Git development to get started",
+    "configureHeader": "Configure project location",
+    "selectLocation": "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
+    "next": "Next",
+    "back": "Back"
+  },
+  "close": "Close",
+  "okay": "Okay"
+}

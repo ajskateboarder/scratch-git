@@ -2,6 +2,7 @@ import api, { ProjectExistsException } from "@/api";
 import { settings, fileMenu } from "@/components";
 import thumbnail from "./thumbnail.svg.ts";
 import van, { type State } from "vanjs-core";
+import { Locale, getLocale } from "@/l10n";
 
 const {
   tags: { div, h1, button, p, br, span, input, pre, i },
@@ -9,19 +10,10 @@ const {
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 
-const Screen = (
-  {
-    stepNumber,
-    title,
-  }: {
-    stepNumber: number;
-    title: string;
-  },
-  ...children: any
-) =>
+const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
-    { class: "screen", id: `step${stepNumber}` },
-    div({ class: "finishContent" }, h1(title), children)
+    { class: "screen", id: `step${step.number}` },
+    div({ class: "finishContent" }, h1(step.title), children)
   );
 
 /** Project initialization */
@@ -36,7 +28,8 @@ export class WelcomeModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
-    this.steps = [this.step1(), this.step2(), this.step3()];
+    const locale = getLocale();
+    this.steps = [this.step1(locale), this.step2(locale), this.step3(locale)];
 
     const thumb = span(
       { class: "thumbnail" },
@@ -55,15 +48,15 @@ export class WelcomeModal extends HTMLDialogElement {
     });
   }
 
-  async display() {
+  async display(locale: Locale) {
     if (!this.open) {
-      this.steps = [this.step1(), this.step2(), this.step3()];
+      this.steps = [this.step1(locale), this.step2(locale), this.step3(locale)];
       this.currentStep.val = 0;
       this.showModal();
     }
   }
 
-  step1() {
+  step1({ translations: { welcome, close } }: Locale) {
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -71,7 +64,7 @@ export class WelcomeModal extends HTMLDialogElement {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      "Next"
+      welcome.next
     );
 
     const openProject = button(
@@ -84,25 +77,21 @@ export class WelcomeModal extends HTMLDialogElement {
             this.loadedProject = true;
             (goToStep2 as HTMLButtonElement).disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
-            openProject.innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
+            openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${welcome.projectOpened}`;
             setTimeout(() => {
-              openProject.innerHTML = "Open project";
+              openProject.innerHTML = welcome.openProject;
             }, 2000);
           });
         },
       },
-      "Open project"
+      welcome.openProject
     );
 
     return Screen(
-      { title: "Welcome to scratch.git", stepNumber: 1 },
+      { title: welcome.welcomeHeader, number: 1 },
       div(
         { style: "font-weight: normal" },
-        p(
-          "Please load a project for Git development to get started",
-          br(),
-          br()
-        ),
+        p(welcome.getStarted, br(), br()),
         div({ class: "a-gap" }, openProject),
         br(),
         br()
@@ -114,14 +103,14 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => this.close(),
           },
-          "Close"
+          close
         ),
         goToStep2
       )
     );
   }
 
-  step2() {
+  step2({ translations: { welcome } }: Locale) {
     let path: string;
 
     const creationError = pre({ id: "creationError" });
@@ -150,7 +139,7 @@ export class WelcomeModal extends HTMLDialogElement {
           ++this.currentStep.val;
         },
       },
-      "Next"
+      welcome.next
     );
 
     const openProjectPath = input({
@@ -165,14 +154,10 @@ export class WelcomeModal extends HTMLDialogElement {
     });
 
     return Screen(
-      { title: "Configure project location", stepNumber: 2 },
+      { title: welcome.configureHeader, number: 2 },
       div(
         { class: "finishContent" },
-        p(
-          "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
-          br(),
-          br()
-        ),
+        p(welcome.selectLocation, br(), br()),
         openProjectPath,
         creationError
       ),
@@ -183,25 +168,28 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
-          "Back"
+          welcome.back
         ),
         goToStep3
       )
     );
   }
 
-  step3() {
+  step3({ translations: { welcome, close } }: Locale) {
     return Screen(
-      { title: "Welcome to scratch.git!", stepNumber: 3 },
+      { title: welcome.welcomeHeader, number: 3 },
       div(
         { class: "finishContent" },
         p("To be written", br(), br()),
         BottomBar(
-          button({
-            style: "align-items: right; margin-left: -10px",
-            class: settings.settingsButton,
-            onclick: () => this.close(),
-          })
+          button(
+            {
+              style: "align-items: right; margin-left: -10px",
+              class: settings.settingsButton,
+              onclick: () => this.close(),
+            },
+            close
+          )
         )
       )
     );

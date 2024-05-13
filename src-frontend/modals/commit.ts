@@ -49,14 +49,14 @@ export class CommitModal extends HTMLDialogElement {
         class: [settings.settingsButton, "round-right-button"].join(" "),
         disabled: true,
       },
-      "Newer"
+      "< Newer"
     );
 
     this.older = button(
       {
         class: [settings.settingsButton, "round-left-button"].join(" "),
       },
-      "Older"
+      "Older >"
     );
 
     this.search = input({
