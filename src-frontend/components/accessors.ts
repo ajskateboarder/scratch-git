@@ -52,6 +52,8 @@ export const settings = {
   settingsButton: s("settings-modal_button"),
   checkbox: s("checkbox_checkbox"),
   disabledButton: s("button_mod-disabled"),
+  inputField: s("input_input-form"),
+  disabledInput: s("input-group_disabled"),
 };
 
 export const misc = {
@@ -61,4 +63,6 @@ export const misc = {
   largeClose: s("close-button_large"),
   guiWrapper: s("gui_page-wrapper"),
   selectedTab: s("react-tabs_react-tabs__tab--selected"),
+  menuItems: s("menu-bar_file-group"),
 };
+(window as any).s = s;

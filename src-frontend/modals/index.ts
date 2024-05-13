@@ -1,3 +1,4 @@
-export { WelcomeModal } from "../modals/welcome";
-export { DiffModal } from "../modals/diff";
-export { CommitModal } from "../modals/commit";
+export { WelcomeModal } from "./welcome";
+export { DiffModal } from "./diff";
+export { CommitModal } from "./commit";
+export { RepoConfigModal } from "./repo-config";

@@ -1,7 +1,6 @@
 import api, { ProjectExistsException } from "@/api";
 import { settings, fileMenu } from "@/components";
-// @ts-ignore
-import thumbnail from "./thumbnail.svg";
+import thumbnail from "./thumbnail.svg.ts";
 import van, { type State } from "vanjs-core";
 import { Locale, getLocale } from "@/l10n";
 

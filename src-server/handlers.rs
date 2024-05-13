@@ -13,9 +13,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{self, from_str, json, Error, Value};
 
 use crate::diff::{Diff, ScriptChanges};
-use crate::utils::extract::extract;
-use crate::utils::git;
-use crate::utils::projects::ProjectConfig;
+use crate::extract::extract;
+use crate::git;
+use crate::projects::ProjectConfig;
 
 fn get_project_path(projects: &Value, project_name: &str) -> PathBuf {
     let base_loc = &projects[project_name]["base"].as_str().unwrap().to_string();
@@ -28,7 +28,7 @@ fn project_config() -> &'static Mutex<ProjectConfig> {
 }
 
 #[derive(Serialize, Deserialize, PartialEq)]
-enum CommandData<'a> {
+enum CmdData<'a> {
     Project {
         project_name: &'a str,
         sprite_name: Option<&'a str>,
@@ -40,39 +40,56 @@ enum CommandData<'a> {
         new_content: String,
     },
     FilePath(String),
+    URL(String)
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Cmd<'a> {
     command: &'a str,
-    data: CommandData<'a>,
+    data: CmdData<'a>,
 }
 
-impl Cmd<'_> {
-    fn diff(data: CommandData) -> Value {
-        let CommandData::GitDiff {
+pub struct CmdHandler {
+    debug: bool,
+}
+
+impl CmdHandler {
+    fn new(debug: bool) -> CmdHandler {
+        CmdHandler { debug }
+    }
+
+    fn diff(&self, data: CmdData) -> Value {
+        let CmdData::GitDiff {
             old_content,
             new_content,
         } = data
         else {
             return json!({});
         };
-        json!(git::diff(old_content.to_string(), new_content.to_string(), 2000))
+        json!(git::diff(
+            old_content.to_string(),
+            new_content.to_string(),
+            2000
+        ))
     }
 
-    fn create_project(data: CommandData) -> Value {
-        let CommandData::FilePath(file_name) = data else {
+    fn create_project(&self, data: CmdData) -> Value {
+        let CmdData::FilePath(file_name) = data else {
             return json!({});
         };
-        let binding = Path::new(&file_name)
+        let name = Path::new(&file_name)
             .file_name()
             .unwrap()
             .to_os_string()
             .to_str()
             .unwrap()
             .to_string();
-        let name = binding.split(".").next().unwrap();
+        let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
+
+        if self.debug {
+            println!("create_project: got project name: {name}")
+        }
 
         let project_path_result = canonicalize(Path::new("projects").join(&name));
         let project_path = match project_path_result {
@@ -84,6 +101,10 @@ impl Cmd<'_> {
         };
 
         let Ok(file_path) = canonicalize(&file_name) else {
+            if self.debug {
+                println!("create_project: failed to find project file")
+            }
+
             return json!({ "message": "fail" });
         };
 
@@ -115,6 +136,7 @@ impl Cmd<'_> {
         let target_dir = PathBuf::from(Path::new(
             &project_to_extract["base"].as_str().unwrap().to_string(),
         ));
+
         extract(
             fs::File::open(Path::new(
                 &project_to_extract["project_file"].as_str().unwrap(),
@@ -137,15 +159,21 @@ impl Cmd<'_> {
         .stderr(Stdio::piped())
         .current_dir(&project_path)
         .output()
-        .expect("failed to intialize git repo");
+        .expect("failed to initialize git repo");
 
         let response = String::from_utf8(init_repo.stdout).unwrap();
 
         if !response.contains("Git repository") {
+            if self.debug {
+                println!("create_project: git init did not state that new repo was made")
+            }
             return json!({ "project_name": "fail" });
         }
 
         if !git::add(&project_path) {
+            if self.debug {
+                println!("create_project: assets could not be added")
+            }
             return json!({ "project_name": "fail" });
         }
 
@@ -158,31 +186,53 @@ impl Cmd<'_> {
             git.args(["commit", "-m", "Initial commit"]);
             git
         };
+
         let commit = commit
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(project_path);
+        let commit = String::from_utf8(commit.output().unwrap().stdout).unwrap();
 
-        if !String::from_utf8(commit.output().unwrap().stdout)
-            .unwrap()
-            .contains("Initial commit")
-        {
+        if !commit.contains("Initial commit") {
+            if self.debug {
+                println!("create_project: initial commit could not be created. reason:\n\n{commit}")
+            }
             return json!({ "project_name": "fail" });
         }
 
         json!({ "project_name": name.replace("projects/", "") })
     }
 
-    fn exists(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn exists(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
         let projects = &project_config().lock().unwrap().projects;
         json!({ "exists": projects[project_name] != Value::Null })
     }
 
-    fn unzip(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn remote_exists(&self, data: CmdData) -> Value {
+        let CmdData::URL(url) = data else {
+            return json!({});
+        };
+
+        let ls_remote = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "ls-remote", &url]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["ls-remote", &url]);
+            git
+        }.output();
+
+        let ls_remote = String::from_utf8(ls_remote.unwrap().stdout).unwrap();
+
+        return json!({"exists": ls_remote.contains("fatal")})
+    }
+
+    fn unzip(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
 
@@ -209,8 +259,8 @@ impl Cmd<'_> {
         json!({ "status": "success" })
     }
 
-    fn get_project(data: CommandData, old: bool) -> Value {
-        let CommandData::Project {
+    fn get_project(&self, data: CmdData, old: bool) -> Value {
+        let CmdData::Project {
             project_name,
             sprite_name,
         } = data
@@ -250,8 +300,8 @@ impl Cmd<'_> {
         }
     }
 
-    fn push(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn push(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
@@ -274,28 +324,37 @@ impl Cmd<'_> {
                 .success() { "fail" } else { "success" } })
     }
 
-    fn commit(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn commit(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
 
         let project_path =
             get_project_path(&project_config().lock().unwrap().projects, &project_name);
-        let _current_project = serde_json::from_str::<serde_json::Value>(
+
+        if self.debug {
+            println!(
+                "commit: path to project is {}",
+                project_path.to_string_lossy()
+            );
+            println!("commit: path exists? {}", project_path.exists())
+        }
+
+        let current_diff = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(project_path.join("project.old.json"))
                 .unwrap()
                 .as_str(),
         )
         .unwrap();
-        let current_diff = Diff::new(&_current_project);
+        let current_diff = Diff::new(&current_diff);
 
-        let _new_project = serde_json::from_str::<serde_json::Value>(
+        let new_diff = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(project_path.join("project.json"))
                 .unwrap()
                 .as_str(),
         )
         .unwrap();
-        let new_diff = Diff::new(&_new_project);
+        let new_diff = Diff::new(&new_diff);
 
         for change in new_diff.costumes(&current_diff) {
             fs::remove_file(project_path.join(change.costume_path))
@@ -315,10 +374,22 @@ impl Cmd<'_> {
             git.args(["commit", "-m", "temporary"]);
             git
         };
-        let commit = commit.current_dir(&project_path);
+        let commit = commit.current_dir(&project_path).status().unwrap();
 
-        if !commit.status().unwrap().success() {
+        if !commit.success() {
+            if self.debug {
+                println!(
+                    "commit: failed to make commit: error code {:?}",
+                    commit.code().unwrap_or(-2000000000)
+                )
+            }
+            // TODO: make error message less generic
             return json!({ "message": "Nothing to commit" });
+        }
+
+        if self.debug {
+            let rev = git::show_revision(&project_path, "HEAD~1:project.json");
+            println!("commit: got revision for HEAD~1:project.json:\n\n{rev}")
         }
 
         let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");
@@ -342,8 +413,8 @@ impl Cmd<'_> {
         json!({ "message": commit_message })
     }
 
-    fn get_commits(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn get_commits(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
@@ -381,8 +452,8 @@ impl Cmd<'_> {
         serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output")
     }
 
-    fn get_changed_sprites(data: CommandData) -> Value {
-        let CommandData::Project { project_name, .. } = data else {
+    fn get_changed_sprites(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
 
@@ -392,6 +463,9 @@ impl Cmd<'_> {
         let project_old_json = match binding {
             Ok(fh) => fh.as_str(),
             Err(_) => {
+                if self.debug {
+                    println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
+                }
                 return json!({ "status": "unzip the project first that should do it" });
             }
         };
@@ -418,30 +492,36 @@ impl Cmd<'_> {
                 }
             })
             .collect();
+
         json!({ "sprites": sprites })
     }
+}
 
-    pub fn handle(msg: String) -> Result<Message, Error> {
-        let json: Cmd = match from_str(msg.as_str()) {
-            Ok(j) => j,
-            Err(e) => return Err(e),
-        };
+pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
+    let json: Cmd = match from_str::<Cmd>(msg.as_str()) {
+        Ok(j) => j,
+        Err(e) => return Err(e),
+    };
 
-        Ok(Message::Text(
-            match json.command {
-                "diff" => Cmd::diff(json.data),
-                "create-project" => Cmd::create_project(json.data),
-                "exists" => Cmd::exists(json.data),
-                "unzip" => Cmd::unzip(json.data),
-                "commit" => Cmd::commit(json.data),
-                "push" => Cmd::push(json.data),
-                "current-project" => Cmd::get_project(json.data, false),
-                "previous-project" => Cmd::get_project(json.data, true),
-                "get-commits" => Cmd::get_commits(json.data),
-                "get-changed-sprites" => Cmd::get_changed_sprites(json.data),
-                _ => unreachable!(),
-            }
-            .to_string(),
-        ))
-    }
+    let handler = CmdHandler::new(debug);
+
+    Ok(Message::Text(
+        match json.command {
+            // static
+            "diff" => handler.diff(json.data),
+            "remote-exists" => handler.remote_exists(json.data),
+            "exists" => handler.exists(json.data),
+            "create-project" => handler.create_project(json.data),
+            // project-specific
+            "unzip" => handler.unzip(json.data),
+            "commit" => handler.commit(json.data),
+            "push" => handler.push(json.data),
+            "current-project" => handler.get_project(json.data, false),
+            "previous-project" => handler.get_project(json.data, true),
+            "get-commits" => handler.get_commits(json.data),
+            "get-changed-sprites" => handler.get_changed_sprites(json.data),
+            _ => unreachable!(),
+        }
+        .to_string(),
+    ))
 }

@@ -11,14 +11,11 @@
   overflow: hidden;
   width: 1.75rem;
   height: 1.75rem;
-  box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+  box-shadow: 0 0 0 2px var(--looks-transparent);
   background-color: var(--looks-secondary);
   color: var(--ui-white);
   border-radius: 50%;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
   cursor: pointer;
   transition: all 0.15s ease-out;
@@ -26,9 +23,9 @@
 
 dialog[is="diff-modal"],
 dialog[is="commit-modal"],
-dialog[is="welcome-modal"] {
+dialog[is="welcome-modal"],
+dialog[is="repo-config-modal"] {
   height: 50%;
-  max-height: 50%;
   width: 50%;
   position: absolute;
   transform: translateX(-50%);
@@ -45,10 +42,30 @@ dialog[is="welcome-modal"] {
 }
 
 .commit-view {
-  background-color: #f1f1f1;
   padding: 10px;
   width: fit-content;
   border-radius: 10px;
+
+  --dot-space: 22px;
+  --dot-size: 1px;
+  --dot-bg: white;
+  --dot-color: #d2d2d2;
+
+  background: linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+    linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+    var(--dot-color);
+}
+
+.commit-view:has(.commit-wrap > pre) {
+  background: #f1f1f1;
+}
+
+.floppy-save-button {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .a-gap {
@@ -69,7 +86,7 @@ dialog[is="diff-modal"] {
   padding: 0;
 
   .close-button {
-    padding: 0rem 1rem;
+    padding: 0 1rem;
     margin-left: auto;
     margin-right: 10px;
   }
@@ -125,19 +142,19 @@ dialog[is="welcome-modal"] {
 
 .copy-button {
   margin-left: auto;
-  margin-right: 0px;
+  margin-right: 0;
   display: block;
 }
 
 .round-left-button {
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
   user-select: none;
 }
 
 .round-right-button {
-  border-top-right-radius: 0px;
-  border-bottom-right-radius: 0px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   user-select: none;
 }
 
@@ -148,17 +165,24 @@ dialog[is="welcome-modal"] {
   }
 
   & .tab-btn {
-    background-color: rgb(46, 46, 46);
+    background-color: rgb(46 46 46);
     color: #707070;
   }
 
   .commit-view {
-    background-color: #202020;
+    --dot-space: 22px;
+    --dot-size: 1px;
+    --dot-bg: #1e1e1e;
+    --dot-color: #707070;
+  }
+
+  .commit-view:has(.commit-wrap > pre) {
+    background: #1e1e1e;
   }
 }
 
 .dark .tab-btn.active-tab {
-  background-color: rgb(76, 76, 76) !important;
+  background-color: rgb(76 76 76) !important;
   color: #eee !important;
 }
 
@@ -180,8 +204,8 @@ dialog[is="welcome-modal"] {
 
   &:first-child {
     border-radius: 5px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   &:not(:first-child) {
@@ -190,8 +214,8 @@ dialog[is="welcome-modal"] {
 
   &:last-child {
     border-radius: 5px;
-    border-top-left-radius: 0px;
-    border-top-right-radius: 0px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   }
 
   &:only-child {
@@ -209,6 +233,15 @@ dialog[is="welcome-modal"] {
 #pathInput::file-selector-button {
   display: none;
 }
+
+.disabled-config-input {
+  pointer-events: none;
+  border: none;
+  font-size: 14px;
+
+}
+
+
 
 .finishContent {
   text-align: left;
@@ -237,19 +270,18 @@ dialog[is="welcome-modal"] {
 
 .stage-diff {
   margin-top: 40px;
-  scale: 0.8;
   z-index: 99999;
   transition:
     scale 0.15 ease-out,
     box-shadow 0.15 ease-out;
   scale: 0.8;
   border-radius: 20px;
-  box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+  box-shadow: 0 0 0 2px var(--looks-transparent);
 }
 
 /* sidebar */
 
-.sidebar {
+.diff-view {
   display: flex;
   height: 100%;
   padding-right: 5px;
@@ -280,7 +312,7 @@ dialog[is="welcome-modal"] {
       padding: 15px 30px;
       border: 0.5px solid grey;
       background-color: #d9e3f2;
-      color: hsla(225, 15%, 40%, 0.75);
+      color: hsl(225deg 15% 40% / 75%);
       transition: 0.2s background-color ease-in;
       margin-top: 10px;
       border-top-right-radius: 10px;
@@ -340,7 +372,6 @@ dialog[is="welcome-modal"] {
 .topbar {
   background-color: #e6f0ff;
   overflow: hidden;
-  position: sticky;
   top: 0;
   display: flex;
   position: absolute;
@@ -352,7 +383,16 @@ dialog[is="welcome-modal"] {
   & a {
     display: inline-block;
     padding: 0 10px;
-    color: hsla(225, 15%, 40%, 0.75);
+    color: hsl(225deg 15% 40% / 75%);
     text-decoration: none;
+  }
+}
+
+.tip {
+  border-bottom: 1px dashed black;
+  cursor: pointer;
+
+  &:hover {
+    cursor: help;
   }
 }

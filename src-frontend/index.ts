@@ -10,10 +10,18 @@ import {
   scratchAlert,
   misc,
 } from "./components";
-import { CommitModal, WelcomeModal, DiffModal } from "./modals";
+import {
+  CommitModal,
+  WelcomeModal,
+  DiffModal,
+  RepoConfigModal,
+} from "./modals";
 
 // @ts-ignore
 import styles from "./styles.css";
+// @ts-ignore
+import tippy from "./tippy.css";
+
 import van from "vanjs-core";
 import { getLocale } from "./l10n";
 
@@ -36,6 +44,7 @@ const Styles = () => {
     style(`
     ${menuContents}
     ${styles}
+    ${tippy}
     `),
   ];
 };
@@ -45,6 +54,9 @@ async function initialize() {
     customElements.define("commit-modal", CommitModal, { extends: "dialog" });
     customElements.define("diff-modal", DiffModal, { extends: "dialog" });
     customElements.define("welcome-modal", WelcomeModal, { extends: "dialog" });
+    customElements.define("repo-config-modal", RepoConfigModal, {
+      extends: "dialog",
+    });
 
     const saveArea = document.querySelector<HTMLElement>(
       `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
@@ -58,7 +70,11 @@ async function initialize() {
           <dialog
             is="welcome-modal"
             style="overflow-x: hidden; overflow-y: hidden"
-          ></dialog>`;
+          ></dialog>
+          <dialog
+          is="repo-config-modal"
+          style="overflow-x: hidden; overflow-y: hidden"
+        ></dialog>`;
   }
 
   const displayDiffs = async () => {
@@ -97,7 +113,7 @@ async function initialize() {
     if (await project!.exists()) {
       let wip = () => alert("Work in progress!");
       gitMenu.create({
-        commitView: async () =>
+        commitView: () =>
           document
             .querySelector<CommitModal>("dialog[is='commit-modal']")!
             .display(),
@@ -106,7 +122,11 @@ async function initialize() {
           scratchAlert({ message, duration: 5000 });
         },
         push: wip,
-        repoConfig: wip,
+        repoConfig: () => {
+          document
+            .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
+            .display();
+        },
       });
     }
   }
@@ -121,6 +141,10 @@ async function initialize() {
   localStorage.setItem(
     "scratch-git:plaintext",
     JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
+  );
+  localStorage.setItem(
+    "scratch-git:repo-provider",
+    localStorage.getItem("scratch-git:repo-provider") ?? ""
   );
 
   window.vm.runtime.on(

@@ -3,7 +3,7 @@ import { settings } from "@/components";
 import van, { type State } from "vanjs-core";
 import { CommitItem } from "@/components";
 
-const { h1, button, input, div, span, br } = van.tags;
+const { h1, button, input, div, span, br, main } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
@@ -27,7 +27,7 @@ export class CommitModal extends HTMLDialogElement {
   }
 
   connectedCallback() {
-    if (this.querySelector("#commitList")) return;
+    if (this.querySelector("main")) return;
 
     this.state = {
       paginatedCommits: van.state([]),
@@ -61,7 +61,8 @@ export class CommitModal extends HTMLDialogElement {
 
     this.search = input({
       type: "text",
-      class: `commit-search${
+      style: "border-radius: 5px",
+      class: `${settings.inputField}${
         window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
           ? " dark"
           : ""
@@ -85,7 +86,7 @@ export class CommitModal extends HTMLDialogElement {
 
     van.add(
       this,
-      div(
+      main(
         { id: "commitList" },
         h1("Commits"),
         div({ class: "pagination" }, span(this.newer, this.older), this.search),
@@ -164,6 +165,9 @@ export class CommitModal extends HTMLDialogElement {
         if (page !== 0 && page !== commits.length - 1) {
           this.older.disabled = false;
           this.newer.disabled = false;
+        }
+        if (commits.length === 1) {
+          this.older.disabled = true;
         }
         this.state.paginatedCommits.val = commits[page];
         return;

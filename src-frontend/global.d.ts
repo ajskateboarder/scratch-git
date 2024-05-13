@@ -20,19 +20,5 @@ interface Window {
   };
   vm: any;
   Blockly: any;
-  _lib: {
-    scratchblocks: {
-      appendStyles: () => void;
-      renderMatching: (loc: string, config: {}) => void;
-    };
-    parseSB3Blocks: {
-      toScratchblocks: (
-        script: string,
-        json: {},
-        language: string,
-        config: {}
-      ) => string;
-    };
-  };
   _changedScripts: string[];
 }

@@ -1,16 +1,22 @@
-/** @file A tiny wrapper over the local APIs to work with Git projects */
 import { menu } from "./components/index";
 
-export type Commit = {
+export interface Commit {
   author: { date: string; email: string; name: string };
   body: string;
   commit: string;
   subject: string;
   shortDate: string;
-};
+}
+
+export interface Sprite {
+  name: string;
+  isStage: boolean;
+  format: () => string;
+}
 
 const SOCKET_URL = "ws://localhost:8000";
 
+/** Represents a WebSocket interface */
 class Socket {
   protected ws: WebSocket;
 
@@ -18,24 +24,23 @@ class Socket {
     this.ws = ws;
   }
 
+  /** Receive the next message or error */
   receive(): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ws.onmessage = (message) => {
         try {
-          let json = JSON.parse(message.data);
-          return resolve(json);
+          resolve(JSON.parse(message.data));
         } catch (e: any) {
           console.error(e.stack);
           throw new Error(message.data);
         }
       };
 
-      this.ws.onerror = (error) => {
-        return reject(error);
-      };
+      this.ws.onerror = (e) => reject(e);
     });
   }
 
+  /** Make a request with a command and data */
   async request({ command, data }: any) {
     if (this.ws.readyState == this.ws.CONNECTING) {
       this.ws.onopen = () => this.ws.send(JSON.stringify({ command, data }));
@@ -47,10 +52,15 @@ class Socket {
   }
 }
 
+/** Represents a connection to interface with a specific project */
 export class Project extends Socket {
   projectName: string;
 
-  /** Constructs a project */
+  /** Constructs a project
+   *
+   * @param projectName - the name of an initialized project
+   * @param ws - a WebSocket connection
+   */
   constructor(projectName: string, ws: WebSocket) {
     super(ws);
     this.projectName = projectName;
@@ -64,6 +74,7 @@ export class Project extends Socket {
     });
   }
 
+  /** Receive all the commits made for a project */
   async getCommits(): Promise<Commit[]> {
     let commits = await this.request({
       command: "get-commits",
@@ -72,22 +83,35 @@ export class Project extends Socket {
     return [...commits][0].map((commit: Commit) => {
       return {
         ...commit,
+        // FIXME: slicing the date like below fails for langs other than english
         shortDate: commit.author.date.split(" ").slice(0, 4),
       };
     });
   }
 
-  /** Retreive sprites that have been changed since project changes, sorted alphabetically*/
-  async getSprites(): Promise<[string, boolean][]> {
+  /** Retreive sprites that have been changed since project changes, sorted alphabetically */
+  async getSprites() {
     let sprites: [string, boolean][] = (
       await this.request({
         command: "get-changed-sprites",
         data: { Project: { project_name: this.projectName } },
       })
     ).sprites;
-    return sprites.sort(([a, _b], [b, _c]) => a.localeCompare(b));
+    return sprites
+      .sort(([a, _b], [b, _c]) => a.localeCompare(b))
+      .map((e) => ({
+        name: e[0],
+        isStage: e[1],
+        format() {
+          return this.name + (this.isStage ? " (stage)" : "");
+        },
+      })) satisfies Sprite[];
   }
 
+  /** Get the current scripts of a project's JSON
+   *
+   * @param sprite - the name of the sprite you want to receive scripts from
+   */
   async getCurrentScripts(sprite: string) {
     return await this.request({
       command: "current-project",
@@ -97,6 +121,10 @@ export class Project extends Socket {
     });
   }
 
+  /** Get the scripts of a project's JSON before the project was saved
+   *
+   * @param sprite - the name of the sprite you want to receive scripts from
+   */
   async getPreviousScripts(sprite: string) {
     return await this.request({
       command: "previous-project",
@@ -116,6 +144,7 @@ export class Project extends Socket {
     ).message;
   }
 
+  /** Push the current project to the configured remote, unused right now */
   async push() {
     await this.request({
       command: "push",
@@ -123,6 +152,7 @@ export class Project extends Socket {
     });
   }
 
+  /** Unzip a project from its configured location to get the latest JSON */
   async unzip() {
     await this.request({
       command: "unzip",
@@ -131,6 +161,7 @@ export class Project extends Socket {
   }
 }
 
+/** A project with the same name already exists */
 export class ProjectExistsException extends Error {
   constructor(message: string) {
     super(message);
@@ -138,19 +169,26 @@ export class ProjectExistsException extends Error {
   }
 }
 
+/** Represents a connection to fetch and initialize projects */
 // class factory jumpscare
 class ProjectManager extends Socket {
   constructor(ws: WebSocket) {
     super(ws);
   }
 
+  /** Fetch a project resource using its name
+   *
+   * @param projectName - the name of a configured project
+   */
   async getProject(projectName: string): Promise<Project> {
     return new Project(projectName, this.ws);
   }
 
   /**
-   * Create and git-init a new project
-   * @throws {ProjectExistsException}
+   * Create and initialize a new project
+   *
+   * @param projectPath - the path to the project SB3
+   * @throws {ProjectExistsException | Error}
    */
   async createProject(projectPath: string): Promise<Project> {
     this.ws.send(
@@ -181,6 +219,7 @@ class ProjectManager extends Socket {
     /** @type {HTMLDivElement} */
     let projectName: string;
 
+    // TODO: this is overcomplicated - ReduxStore has a way to fetch this
     if (document.querySelector(`.${menu.menuItem}:nth-child(5)`)) {
       projectName = (
         document.querySelector(`.${menu.menuItem}:nth-child(5)`)?.parentElement
@@ -208,9 +247,14 @@ class ProjectManager extends Socket {
   }
 }
 
+/** Diff two scratchblocks scripts and return lines removed and added, and the diffed content
+ *
+ * @param oldScript - the script for a sprite before a save
+ * @param newScript - the script after a save
+ */
 export function diff(
-  oldContent: string,
-  newContent: string
+  oldScript: string,
+  newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> {
   return new Promise((resolve, reject) => {
     let ws = new WebSocket(SOCKET_URL);
@@ -220,13 +264,40 @@ export function diff(
         JSON.stringify({
           command: "diff",
           data: {
-            GitDiff: { old_content: oldContent, new_content: newContent },
+            GitDiff: { old_content: oldScript, new_content: newScript },
           },
         })
       );
     };
     ws.onmessage = (message) => {
       return resolve(JSON.parse(message.data));
+    };
+    ws.onerror = (error) => {
+      return reject(error);
+    };
+  });
+}
+
+/** Check if a user-provided Git repository remote exists
+ *
+ * @param url - the URL of the repository to be checked
+ */
+export function remoteExists(url: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    let ws = new WebSocket(SOCKET_URL);
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          command: "remote-exists",
+          data: {
+            URL: url,
+          },
+        })
+      );
+    };
+    ws.onmessage = (message) => {
+      return resolve(JSON.parse(message.data).exists);
     };
     ws.onerror = (error) => {
       return reject(error);
