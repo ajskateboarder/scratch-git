@@ -1,7 +1,7 @@
 import { settings, misc } from "@/components";
-import van, { PropsWithKnownKeys, type State } from "vanjs-core";
+import van, { PropsWithKnownKeys, State } from "vanjs-core";
 import tippy from "tippy.js";
-import { remoteExists } from "@/api";
+import api, { Project, remoteExists } from "@/api";
 
 const { main, button, h1, div, span, input, label, br, p } = van.tags;
 
@@ -18,19 +18,23 @@ function isValidUrl(url: string) {
 }
 
 const InputField = (...children: any[]) =>
-  p({ style: "display: flex; align-items: center; gap: 10px" }, children);
+  p({ class: "input-field" }, children);
 
 const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
   input({
     ...props,
     type: "text",
-    style: "border-radius: 5px; width: 275px",
-    class: settings.inputField,
+    class: [settings.inputField, "input-box"].join(" "),
   });
 
 export class RepoConfigModal extends HTMLDialogElement {
-  gitProvider!: string;
   editing!: State<boolean>;
+  project!: Project;
+  fields!: {
+    repository: HTMLInputElement;
+    name: HTMLInputElement;
+    email: HTMLInputElement;
+  };
 
   constructor() {
     super();
@@ -38,7 +42,7 @@ export class RepoConfigModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-    this.gitProvider = localStorage.getItem("scratch-git:repo-provider") ?? "";
+
     this.editing = van.state(false);
 
     const closeButton = button(
@@ -50,37 +54,19 @@ export class RepoConfigModal extends HTMLDialogElement {
       "Close"
     );
 
-    const provider = InputBox({
+    const repository = InputBox({
       placeholder: "Enter a link to a repository URL",
       onblur: async ({ target }: Event) => {
         let url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
-          if (isValidUrl(url) && (await remoteExists(url))) {
-            localStorage.setItem("scratch-git:repo-provider", url);
-            this.gitProvider = localStorage.getItem(
-              "scratch-git:repo-provider"
-            )!;
-          } else {
-            provider.value = "";
+          if (!isValidUrl(url) && !(await remoteExists(url))) {
+            repository.value = "";
           }
         }
       },
     });
-
-    const name = InputBox({
-      placeholder: "Enter a username you want to use for this repository",
-      onblur: async ({ target }: Event) => {
-        let url: string = (target as HTMLInputElement).value;
-        if (this.editing.val === true) {
-          if (isValidUrl(url) && (await remoteExists(url))) {
-            localStorage.setItem("scratch-git:name", url);
-            this.gitProvider = localStorage.getItem("scratch-git:username")!;
-          } else {
-            provider.value = "";
-          }
-        }
-      },
-    });
+    const name = InputBox({});
+    const email = InputBox({});
 
     const editButton = button(
       {
@@ -92,9 +78,18 @@ export class RepoConfigModal extends HTMLDialogElement {
             this.editing.val = true;
             editButton.innerHTML = `<i class="fa-solid fa-floppy-disk floppy-save-button"></i>`;
           } else {
+            if (name.value.trim() === "" || repository.value.trim() === "") {
+              alert("Don't leave starred fields blank!");
+              return;
+            }
             this.editing.val = false;
             editButton.innerHTML = "";
             editButton.appendChild(PENCIL);
+            this.project.setDetails({
+              username: name.value,
+              email: email.value,
+              repository: repository.value,
+            });
           }
         },
       },
@@ -103,11 +98,10 @@ export class RepoConfigModal extends HTMLDialogElement {
 
     van.derive(() => {
       if (this.editing.oldVal !== this.editing.val) {
-        if (!this.editing.val) {
-          provider.classList.add("disabled-config-input");
-        } else {
-          provider.classList.remove("disabled-config-input");
-        }
+        let e: "add" | "remove" = !this.editing.val ? "add" : "remove";
+        repository.classList[e]("disabled-config-input");
+        name.classList[e]("disabled-config-input");
+        email.classList[e]("disabled-config-input");
       }
     });
 
@@ -127,8 +121,14 @@ export class RepoConfigModal extends HTMLDialogElement {
           ),
           editButton
         ),
-        InputField(label("Repository URL:"), provider),
-        InputField(label("Name:"), provider),
+        InputField(
+          label({ class: "input-label" }, "Repository URL*"),
+          repository
+        ),
+        br(),
+        InputField(label({ class: "input-label" }, "Name*"), name),
+        br(),
+        InputField(label({ class: "input-label" }, "Email (optional)"), email),
         br(),
         br(),
         div(
@@ -141,15 +141,33 @@ export class RepoConfigModal extends HTMLDialogElement {
       )
     );
 
-    provider.classList.add("disabled-config-input");
+    repository.classList.add("disabled-config-input");
+    name.classList.add("disabled-config-input");
+    email.classList.add("disabled-config-input");
+
+    this.fields = {
+      repository,
+      name,
+      email,
+    };
   }
 
-  display() {
+  async display() {
     tippy("#repositoryTip", {
       content: "A repository (repo) is a place to store your project online",
       arrow: false,
       appendTo: this,
     });
+
+    this.project = (await api.getCurrentProject())!;
+
+    let details = await this.project?.getDetails();
+
+    // in the future, these will never be blank
+    this.fields.repository.value = details?.repository ?? "";
+    this.fields.name.value = details?.username ?? "";
+    this.fields.email.value = details?.email ?? "";
+
     if (!this.open) this.showModal();
   }
 }

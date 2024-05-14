@@ -1,5 +1,3 @@
-import { menu } from "./components/index";
-
 export interface Commit {
   author: { date: string; email: string; name: string };
   body: string;
@@ -12,6 +10,12 @@ export interface Sprite {
   name: string;
   isStage: boolean;
   format: () => string;
+}
+
+export interface GitDetails {
+  username: string;
+  email: string;
+  repository: string;
 }
 
 const SOCKET_URL = "ws://localhost:8000";
@@ -159,6 +163,25 @@ export class Project extends Socket {
       data: { Project: { project_name: this.projectName } },
     });
   }
+
+  /** Get the origin remote, username, and email for a project */
+  async getDetails(): Promise<GitDetails> {
+    return await this.request({
+      command: "get-project-details",
+      data: { Project: { project_name: this.projectName } },
+    });
+  }
+
+  /** Set the origin remote, username, and email for a project
+   *
+   * @returns whether it succeeded or not
+   */
+  async setDetails(details: GitDetails): Promise<boolean> {
+    return await this.request({
+      command: "set-project-details",
+      data: { GitDetails: { project_name: this.projectName, ...details } },
+    });
+  }
 }
 
 /** A project with the same name already exists */
@@ -216,34 +239,10 @@ class ProjectManager extends Socket {
 
   /** Get the current project based on the project name */
   async getCurrentProject(): Promise<Project | undefined> {
-    /** @type {HTMLDivElement} */
-    let projectName: string;
-
-    // TODO: this is overcomplicated - ReduxStore has a way to fetch this
-    if (document.querySelector(`.${menu.menuItem}:nth-child(5)`)) {
-      projectName = (
-        document.querySelector(`.${menu.menuItem}:nth-child(5)`)?.parentElement
-          ?.nextElementSibling?.nextElementSibling?.children[0] as any
-      ).value;
-    } else {
-      const projectNameElement: any = await new Promise((resolve) => {
-        const observer = new MutationObserver(() => {
-          if (document.querySelector(`.${menu.menuItem}:nth-child(5)`)) {
-            observer.disconnect();
-            resolve(document.querySelector(`.${menu.menuItem}:nth-child(5)`));
-          }
-        });
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-        });
-      });
-      projectName =
-        projectNameElement.parentElement.nextElementSibling.nextElementSibling
-          .children[0].value;
-    }
-
-    return new Project(projectName, this.ws);
+    return new Project(
+      window.ReduxStore.getState().scratchGui.projectTitle,
+      this.ws
+    );
   }
 }
 

@@ -65,15 +65,12 @@ async function initialize() {
     saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
           <dialog
             is="commit-modal"
-            style="overflow-x: hidden; overflow-y: auto"
           ></dialog>
           <dialog
             is="welcome-modal"
-            style="overflow-x: hidden; overflow-y: hidden"
           ></dialog>
           <dialog
           is="repo-config-modal"
-          style="overflow-x: hidden; overflow-y: hidden"
         ></dialog>`;
   }
 
@@ -111,7 +108,7 @@ async function initialize() {
   } else {
     let project = await api.getCurrentProject();
     if (await project!.exists()) {
-      let wip = () => alert("Work in progress!");
+      // let wip = () => alert("Work in progress!");
       gitMenu.create({
         commitView: () =>
           document
@@ -121,7 +118,9 @@ async function initialize() {
           let message = await project!.commit();
           scratchAlert({ message, duration: 5000 });
         },
-        push: wip,
+        push: async () => {
+          await project!.push();
+        },
         repoConfig: () => {
           document
             .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
@@ -141,10 +140,6 @@ async function initialize() {
   localStorage.setItem(
     "scratch-git:plaintext",
     JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
-  );
-  localStorage.setItem(
-    "scratch-git:repo-provider",
-    localStorage.getItem("scratch-git:repo-provider") ?? ""
   );
 
   window.vm.runtime.on(

@@ -106,5 +106,10 @@ pub fn turbowarp_path() -> Option<PathBuf> {
 // for use as CLI
 #[allow(dead_code)]
 fn main() {
-    println!("{}", turbowarp_path().unwrap_or("not found".into()).to_string_lossy());
+    println!(
+        "{}",
+        turbowarp_path()
+            .unwrap_or("not found".into())
+            .to_string_lossy()
+    );
 }

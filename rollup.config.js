@@ -6,13 +6,14 @@ import css from "rollup-plugin-import-css";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 import copy from "rollup-plugin-copy";
+import json from "@rollup/plugin-json";
 
 export default async (args) => {
   let build = {
     input: "src-frontend/index.ts",
     output: { file: "userscript.js", format: "iife" },
     logLevel: "silent",
-    plugins: [css(), nodeResolve(), typescript()],
+    plugins: [css(), nodeResolve(), typescript(), json()],
   };
 
   if (args.debug) {

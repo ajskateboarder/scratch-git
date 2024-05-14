@@ -1,9 +1,3 @@
-.blocks {
-  flex: 1;
-  padding: 20px;
-  margin-left: 125px;
-}
-
 .indicator-button {
   display: flex;
   align-items: center;
@@ -39,6 +33,16 @@ dialog[is="repo-config-modal"] {
   border-width: 2.5px;
   border-radius: 10px;
   font-weight: normal;
+}
+
+dialog[is="commit-modal"],
+dialog[is="repo-config-modal"] {
+  overflow-x: hidden;
+  overflow-y: auto
+}
+
+dialog[is="welcome-modal"] {
+  overflow: hidden;
 }
 
 .commit-view {
@@ -119,25 +123,10 @@ dialog[is="welcome-modal"] {
   }
 }
 
-#commitView {
-  margin-left: 10px;
-
-  & .scratchblocks {
-    user-select: none;
-  }
-}
-
-#commitList {
-  position: absolute;
-  left: 47%;
-  transform: translateX(-50%);
-  width: 65%;
-
-  & .commit-search {
-    border-radius: 5px;
-    border: 1px solid #111;
-    padding: 6px;
-  }
+.commit-search {
+  border-radius: 5px;
+  border: 1px solid #111;
+  padding: 6px;
 }
 
 .copy-button {
@@ -199,7 +188,6 @@ dialog[is="welcome-modal"] {
 
 .commit {
   border: 1px solid grey;
-  min-width: 100%;
   padding: 10px 20px;
 
   &:first-child {
@@ -238,12 +226,9 @@ dialog[is="welcome-modal"] {
   pointer-events: none;
   border: none;
   font-size: 14px;
-
 }
 
-
-
-.finishContent {
+.welcome-screen-content {
   text-align: left;
   font-weight: normal;
   width: fit-content;
@@ -389,10 +374,24 @@ dialog[is="welcome-modal"] {
 }
 
 .tip {
-  border-bottom: 1px dashed black;
+  border-bottom: 1px dashed grey;
   cursor: pointer;
 
   &:hover {
     cursor: help;
+  }
+}
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  & .input-label {
+    font-weight: bold;
+  }
+
+  & .input-box {
+    border-radius: 5px;
   }
 }

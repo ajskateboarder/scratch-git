@@ -61,7 +61,7 @@ export class CommitModal extends HTMLDialogElement {
 
     this.search = input({
       type: "text",
-      style: "border-radius: 5px",
+      style: "border-radius: 5px; width: 50%",
       class: `${settings.inputField}${
         window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
           ? " dark"

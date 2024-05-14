@@ -13,7 +13,7 @@ const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
     { class: "screen", id: `step${step.number}` },
-    div({ class: "finishContent" }, h1(step.title), children)
+    div({ class: "welcome-screen-content" }, h1(step.title), children)
   );
 
 /** Project initialization */
@@ -156,7 +156,7 @@ export class WelcomeModal extends HTMLDialogElement {
     return Screen(
       { title: welcome.configureHeader, number: 2 },
       div(
-        { class: "finishContent" },
+        { class: "welcome-screen-content" },
         p(welcome.selectLocation, br(), br()),
         openProjectPath,
         creationError
@@ -179,7 +179,7 @@ export class WelcomeModal extends HTMLDialogElement {
     return Screen(
       { title: welcome.welcomeHeader, number: 3 },
       div(
-        { class: "finishContent" },
+        { class: "welcome-screen-content" },
         p("To be written", br(), br()),
         BottomBar(
           button(

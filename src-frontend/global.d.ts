@@ -12,6 +12,7 @@ interface Window {
         editorTab: {
           activeTabIndex: 0 | 1 | 2;
         };
+        projectTitle: string;
       };
       locales: {
         locale: string;
