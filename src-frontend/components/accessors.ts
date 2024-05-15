@@ -27,12 +27,13 @@ export const menu = {
 };
 
 export const alert = {
-  alertContainer: s("alerts_alerts-inner-container"),
-  alertDialog: s("alert_alert"),
-  alertSuccess: s("alert_success"),
-  alertMessage: s("alert_alert-message"),
-  alertButtons: s("alert_alert-buttons"),
-  alertClose: s("alert_alert-close-button-container"),
+  container: s("alerts_alerts-inner-container"),
+  dialog: s("alert_alert"),
+  message: s("alert_alert-message"),
+  buttons: s("alert_alert-buttons"),
+  close: s("alert_alert-close-button-container"),
+  success: s("alert_success"),
+  warn: s("alert_warn"),
 };
 
 export const sprites = {

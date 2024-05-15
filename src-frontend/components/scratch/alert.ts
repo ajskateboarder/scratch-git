@@ -14,50 +14,54 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT\
 0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
 
-/** Displays a custom scratch-gui alert */
-export function scratchAlert({
-  message,
-  duration,
-}: {
-  message: string;
-  duration: number;
-}) {
-  const container = document.querySelector(`.${alert.alertContainer}`)!;
+/** Displays a custom scratch-gui alert
+ *
+ * @param message - the message to display
+ * @param type - kind of alert to display
+ * @param ms - the number of ms to show - no duration by default
+ */
+export function scratchAlert(
+  message: string,
+  type: "success" | "warn",
+  ms?: number
+) {
+  const container = document.querySelector(`.${alert.container}`)!;
 
-  const remove = () => (container.innerHTML = "");
-  setTimeout(remove, duration);
-
-  container.appendChild(
+  const newAlert = div(
+    {
+      class: [alert.dialog, alert[type], misc.box].join(" "),
+      style: "justify-content: space-between",
+    },
+    div({ class: alert.message }, message),
     div(
-      {
-        class: [alert.alertDialog, alert.alertSuccess, misc.box].join(" "),
-        style: "justify-content: space-between",
-      },
-      div({ class: alert.alertMessage }, message),
+      { class: alert.buttons },
       div(
-        { class: alert.alertButtons },
+        { class: [alert.close, misc.box].join(" ") },
         div(
-          { class: [alert.alertClose, misc.box].join(" ") },
-          div(
-            {
-              ariaLabel: "Close",
-              class: [misc.close, misc.largeClose].join(" "),
-              role: "button",
-              tabIndex: "0",
-              onclick: () => remove(),
-              ...(window.ReduxStore.getState().scratchGui.theme.theme.gui ===
-                "dark" && {
-                style: "background-color: rgba(0, 0, 0, 0.255)",
-              }),
-            },
-            img({
-              class: [misc.close, "undefined"].join(" "),
-              src: CLOSE_BUTTON_SVG,
-              style: "transform: rotate(45deg) scale(0.5)",
-            })
-          )
+          {
+            ariaLabel: "Close",
+            class: [misc.close, misc.largeClose].join(" "),
+            role: "button",
+            tabIndex: "0",
+            onclick: () => newAlert.remove(),
+            ...(window.ReduxStore.getState().scratchGui.theme.theme.gui ===
+              "dark" && {
+              style: "background-color: rgba(0, 0, 0, 0.255)",
+            }),
+          },
+          img({
+            src: CLOSE_BUTTON_SVG,
+            style: "transform: rotate(45deg) scale(0.5)",
+          })
         )
       )
     )
   );
+
+  if (ms !== undefined) {
+    setTimeout(() => newAlert.remove(), ms);
+  }
+
+  container.appendChild(newAlert);
 }
+(window as any).scratchAlert = scratchAlert;

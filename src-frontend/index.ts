@@ -9,6 +9,7 @@ import {
   gitMenu,
   scratchAlert,
   misc,
+  alert,
 } from "./components";
 import {
   CommitModal,
@@ -35,17 +36,31 @@ const Styles = () => {
       cursor: default;
     }`;
 
+  // override alert success colors as intended
+  // https://github.com/TurboWarp/scratch-gui/commit/c77d0c53d89f7fde2dd9be962399764ffbded111
+  const alertSuccess = `
+    .${alert.success} {
+      background: hsla(163, 57%, 85%, 1) !important;
+      border: 1px solid hsla(163, 85%, 30%, 1) !important;
+      box-shadow: 0px 0px 0px 2px hsla(163, 57%, 85%, 1) !important;
+    }
+  `;
+
   return [
     link({
       rel: "stylesheet",
       href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
       defer: true,
     }),
-    style(`
+    style(
+      { id: "scratch-git-styles" },
+      `
     ${menuContents}
+    ${alertSuccess}
     ${styles}
     ${tippy}
-    `),
+    `
+    ),
   ];
 };
 
@@ -62,6 +77,8 @@ async function initialize() {
       `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
+
+    // appending van elems will not work
     saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
           <dialog
             is="commit-modal"
@@ -116,10 +133,11 @@ async function initialize() {
             .display(),
         commitCreate: async () => {
           let message = await project!.commit();
-          scratchAlert({ message, duration: 5000 });
+          scratchAlert(message, "success");
         },
         push: async () => {
-          await project!.push();
+          let message = await project!.push();
+          scratchAlert(message, "success");
         },
         repoConfig: () => {
           document

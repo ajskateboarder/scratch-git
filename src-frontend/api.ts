@@ -149,11 +149,13 @@ export class Project extends Socket {
   }
 
   /** Push the current project to the configured remote, unused right now */
-  async push() {
-    await this.request({
-      command: "push",
-      data: { Project: { project_name: this.projectName } },
-    });
+  async push(): Promise<string> {
+    return (
+      await this.request({
+        command: "push",
+        data: { Project: { project_name: this.projectName } },
+      })
+    ).status;
   }
 
   /** Unzip a project from its configured location to get the latest JSON */
