@@ -9,7 +9,6 @@ import {
   gitMenu,
   scratchAlert,
   misc,
-  alert,
 } from "./components";
 import {
   CommitModal,
@@ -26,7 +25,7 @@ import tippy from "./tippy.css";
 import van from "vanjs-core";
 import { getLocale } from "./l10n";
 
-const { link, style } = van.tags;
+const { link, style, button, span } = van.tags;
 
 const Styles = () => {
   const menuContents = `
@@ -36,10 +35,10 @@ const Styles = () => {
       cursor: default;
     }`;
 
-  // override alert success colors as intended
+  // intended alert success
   // https://github.com/TurboWarp/scratch-gui/commit/c77d0c53d89f7fde2dd9be962399764ffbded111
   const alertSuccess = `
-    .${alert.success} {
+    .real-success-alert {
       background: hsla(163, 57%, 85%, 1) !important;
       border: 1px solid hsla(163, 85%, 30%, 1) !important;
       box-shadow: 0px 0px 0px 2px hsla(163, 57%, 85%, 1) !important;
@@ -125,7 +124,6 @@ async function initialize() {
   } else {
     let project = await api.getCurrentProject();
     if (await project!.exists()) {
-      // let wip = () => alert("Work in progress!");
       gitMenu.create({
         commitView: () =>
           document
@@ -137,7 +135,53 @@ async function initialize() {
         },
         push: async () => {
           let message = await project!.push();
+          if (message === "pull needed") {
+            let pullAlert = scratchAlert(
+              span(
+                { style: "display: flex" },
+                "The online repository contains work that you don't have. Try pulling changes from online first.",
+                button(
+                  {
+                    onclick: async () => {
+                      let message = await project!.pull();
+                      pullAlert.remove();
+                      if (message === "unrelated histories") {
+                        scratchAlert(
+                          "Couldn't pull new changes since they are unrelated with your changes",
+                          "error"
+                        );
+                      } else if (message === "success") {
+                        scratchAlert(
+                          "Successfully pulled new changes!",
+                          "success",
+                          5000
+                        );
+                      } else {
+                        scratchAlert(message, "error");
+                      }
+                    },
+                  },
+                  "Pull"
+                )
+              ),
+              "warn"
+            );
+            return;
+          }
           scratchAlert(message, "success");
+        },
+        pull: async () => {
+          let message = await project!.pull();
+          if (message === "unrelated histories") {
+            scratchAlert(
+              "Couldn't pull new changes since they are unrelated with your changes",
+              "error"
+            );
+          } else if (message === "success") {
+            scratchAlert("Successfully pulled new changes!", "success", 5000);
+          } else {
+            scratchAlert(message, "error");
+          }
         },
         repoConfig: () => {
           document

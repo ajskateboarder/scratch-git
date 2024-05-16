@@ -1,4 +1,4 @@
-import van from "vanjs-core";
+import van, { ChildDom } from "vanjs-core";
 import { misc, alert } from "..";
 
 const { div, img } = van.tags;
@@ -21,15 +21,21 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
  * @param ms - the number of ms to show - no duration by default
  */
 export function scratchAlert(
-  message: string,
-  type: "success" | "warn",
+  message: string | ChildDom,
+  type: "success" | "warn" | "error",
   ms?: number
 ) {
   const container = document.querySelector(`.${alert.container}`)!;
 
+  const typeToClass = {
+    success: "real-success-alert",
+    warn: alert.warn,
+    error: alert.success,
+  };
+
   const newAlert = div(
     {
-      class: [alert.dialog, alert[type], misc.box].join(" "),
+      class: [alert.dialog, typeToClass[type], misc.box].join(" "),
       style: "justify-content: space-between",
     },
     div({ class: alert.message }, message),
@@ -63,5 +69,6 @@ export function scratchAlert(
   }
 
   container.appendChild(newAlert);
+  return newAlert;
 }
 (window as any).scratchAlert = scratchAlert;

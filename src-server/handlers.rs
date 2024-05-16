@@ -1,5 +1,5 @@
 use dunce::canonicalize;
-use std::fs;
+use std::fs::{self, File};
 use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -7,14 +7,15 @@ use std::{
     time::Duration,
 };
 use tungstenite::Message;
+use walkdir::WalkDir;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{self, from_str, json, Error, Value};
 
 use crate::diff::{Diff, ScriptChanges};
-use crate::extract::extract;
 use crate::git;
 use crate::projects::{get_project_path, project_config};
+use crate::zipping::{self, extract};
 
 #[derive(Serialize, Deserialize, PartialEq)]
 enum CmdData<'a> {
@@ -155,6 +156,7 @@ impl CmdHandler {
         .expect("failed to initialize git repo");
 
         let response = String::from_utf8(init_repo.stdout).unwrap();
+        dbg!(&response);
 
         if !response.contains("Git repository") {
             if self.debug {
@@ -364,7 +366,7 @@ impl CmdHandler {
             .expect("failed to move project.json");
 
         sleep(Duration::from_millis(1000));
-        let target_dir = PathBuf::from(Path::new(&pth));
+        let target_dir = &PathBuf::from(Path::new(&pth));
         extract(
             fs::File::open(Path::new(
                 &projects[project_name]["project_file"]
@@ -373,9 +375,12 @@ impl CmdHandler {
                     .to_string(),
             ))
             .expect("failed to open file"),
-            target_dir,
+            target_dir.to_path_buf(),
         )
         .unwrap();
+
+        fs::write(target_dir.join(".gitignore"), "project.old.json")
+            .expect("failed to write gitignore");
 
         json!({ "status": "success" })
     }
@@ -425,27 +430,78 @@ impl CmdHandler {
         let CmdData::Project { project_name, .. } = data else {
             return json!({});
         };
+
         let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
         let mut push = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "push"]);
+            cmd.args(["/C", "git", "push", "--set-upstream", "origin", "master"]);
             cmd
         } else {
             let mut git = Command::new("git");
-            git.arg("push");
+            git.args(["push", "--set-upstream", "origin", "master"]);
             git
         };
         let push = push
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(&pth);
+
         let output = push.output().unwrap();
-        dbg!(String::from_utf8(output.stdout).unwrap());
-        dbg!(String::from_utf8(output.stderr).unwrap());
-        json!({ "status": if !push
-                .status()
-                .unwrap()
-                .success() { "fail" } else { "success" } })
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        dbg!(&stdout);
+        dbg!(&stderr);
+
+        // TODO: unsure if stderr would contain this stuff in other locales
+        if stderr.contains(" ! [") && stderr.contains("git pull ...") {
+            json!({"status": "pull needed"})
+        } else if stderr == "" && stdout != "" {
+            json!({"status": "success"})
+        } else {
+            json!({"status": "fail"})
+        }
+    }
+
+    fn pull(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+        let projects = &project_config().lock().unwrap().projects;
+        let pth = get_project_path(projects, &project_name);
+        let sb3 = projects[&project_name]["project_file"].as_str().unwrap();
+
+        let mut pull = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "pull", "origin", "master", "--rebase"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["pull", "origin", "master", "--rebase"]);
+            git
+        };
+        let pull = pull
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(&pth);
+
+        if pull.status().unwrap().success() {
+            let walkdir = WalkDir::new(&pth);
+            let it = walkdir.into_iter();
+            zipping::zip(
+                &mut it.filter_map(|e| e.ok()),
+                &pth,
+                File::create(Path::new(sb3)).unwrap(),
+            );
+
+            json!({"status": "success"})
+        } else {
+            let stderr = String::from_utf8(pull.output().unwrap().stderr).unwrap();
+            if stderr.contains("unrelated histories") {
+                json!({"status": "unrelated histories"})
+            } else {
+                json!({"status": "Error: ".to_owned() + &stderr})
+            }
+        }
     }
 
     fn commit(&self, data: CmdData) -> Value {
@@ -642,6 +698,7 @@ pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
             "unzip" => handler.unzip(json.data),
             "commit" => handler.commit(json.data),
             "push" => handler.push(json.data),
+            "pull" => handler.pull(json.data),
             "current-project" => handler.get_project(json.data, false),
             "previous-project" => handler.get_project(json.data, true),
             "get-commits" => handler.get_commits(json.data),

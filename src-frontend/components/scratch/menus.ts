@@ -1,9 +1,9 @@
 /** @file Manages creation of Git menu and alerts */
 
 import { menu } from "../accessors";
-import van from "vanjs-core";
+import van, { ChildDom } from "vanjs-core";
 
-const { i } = van.tags;
+const { i, span } = van.tags;
 
 /** Manages functions with the file menu */
 export const fileMenu = new (class FileMenu {
@@ -19,9 +19,10 @@ export const fileMenu = new (class FileMenu {
     )!;
   }
 
+  /** Toggle menu between open and closed */
   toggleMenu(open: boolean) {
-    // we pass a fake event object to control the menu
-    // https://github.com/TurboWarp/scratch-gui/blob/0ea490d0c1a744770fcca86fcb99eb23774d0219/src/components/menu-bar/tw-menu-label.jsx#L33-L44
+    // fake event object to control the menu
+    // TurboWarp/scratch-gui/src/components/menu-bar/tw-menu-label.jsx#L33-L44
     (this.menu as any)[this.eventHandlers].onClick({
       target: {
         closest: () => (open ? this.menu : document.body),
@@ -52,25 +53,16 @@ export const fileMenu = new (class FileMenu {
 })();
 
 export const gitMenu = new (class GitMenu {
-  protected savedItems: HTMLElement | undefined;
-  protected newMenu: HTMLElement | undefined;
-  protected open: boolean = false;
-  protected initialized: boolean = false;
+  private savedItems: HTMLElement | undefined;
+  private newMenu: HTMLElement | undefined;
+  private open: boolean = false;
+  private initialized: boolean = false;
 
   constructor() {}
 
-  // this way of modifying the menu sucks, but don't fix what ain't broke i guess
-  item(index: number) {
+  private item(index: number) {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
-    return {
-      label: (text: string) => {
-        try {
-          li.querySelector("span")!.innerText = text;
-        } catch (e) {
-          li.innerText = text;
-        }
-      },
-      remove: () => li.remove(),
+    return Object.assign(li, {
       onclick: (handler: () => any) => {
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -80,20 +72,31 @@ export const gitMenu = new (class GitMenu {
           await handler();
         });
       },
-      elem: li,
-    };
+      label: (e: ChildDom) => {
+        li.innerHTML = "";
+        li.append(e);
+      },
+    });
   }
 
   /**
-   * Copy the File nav menu and edit it to become a Git one
+   * Initialize the Git menu
+   *
+   * @param push - handler to push code to remote
+   * @param pull - handler to pull code from remote
+   * @param repoConfig - handler to configure repo
+   * @param commitView - handler to view commits
+   * @param commitCreate - handler to create commit
    */
   create({
     push,
+    pull,
     repoConfig,
     commitView,
     commitCreate,
   }: {
     push: () => any;
+    pull: () => any;
     repoConfig: () => any;
     commitView: () => any;
     commitCreate: () => any;
@@ -120,18 +123,22 @@ export const gitMenu = new (class GitMenu {
     this.savedItems.style.display = "none";
     this.newMenu.appendChild(this.savedItems);
 
-    this.item(1).label("Push project");
+    this.item(1).label(span(i({ class: "fa-solid fa-upload" }), " Push"));
     this.item(1).onclick(push);
-    this.item(2).label("Configure repository");
-    this.item(2).onclick(repoConfig);
-    this.item(4).remove();
-    this.item(4).remove();
-    this.item(4).remove();
-    this.item(4).elem.classList.remove(menu.menuSection);
-    this.item(4).label("Commit");
-    this.item(4).onclick(commitCreate);
-    this.item(3).label("View commits");
-    this.item(3).onclick(commitView);
+    this.item(2).label(span(i({ class: "fa-solid fa-download" }), " Pull"));
+    this.item(2).onclick(pull);
+    this.item(3).label(
+      span(i({ class: "fa-solid fa-bars" }), " Configure repository")
+    );
+    this.item(3).onclick(repoConfig);
+    this.item(4).label(
+      span(i({ class: "fa-solid fa-code-commit" }), " View commits")
+    );
+    this.item(4).onclick(commitView);
+    this.item(5).remove();
+    this.item(5).label("Commit");
+    this.item(5).onclick(commitCreate);
+    this.item(6).remove();
 
     // make new menu toggle-able
     this.newMenu.onclick = () => {

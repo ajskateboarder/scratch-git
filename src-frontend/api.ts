@@ -158,6 +158,16 @@ export class Project extends Socket {
     ).status;
   }
 
+  /** Pull upstream changes from the configured remote */
+  async pull(): Promise<string> {
+    return (
+      await this.request({
+        command: "pull",
+        data: { Project: { project_name: this.projectName } },
+      })
+    ).status;
+  }
+
   /** Unzip a project from its configured location to get the latest JSON */
   async unzip() {
     await this.request({

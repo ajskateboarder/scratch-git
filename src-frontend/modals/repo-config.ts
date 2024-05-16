@@ -155,12 +155,10 @@ export class RepoConfigModal extends HTMLDialogElement {
   async display() {
     tippy("#repositoryTip", {
       content: "A repository (repo) is a place to store your project online",
-      arrow: false,
       appendTo: this,
     });
 
     this.project = (await api.getCurrentProject())!;
-
     let details = await this.project?.getDetails();
 
     // in the future, these will never be blank

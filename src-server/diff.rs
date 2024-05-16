@@ -45,7 +45,7 @@ impl ItemGrouping for Vec<Vec<String>> {
     }
 }
 
-/// Set-intersection of costume changes, because HashSet::intersection sucks
+/// Set-intersection of costume changes because HashSet::intersection sucks
 fn intersection(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<CostumeChange> {
     if sets.is_empty() {
         return HashSet::new();
