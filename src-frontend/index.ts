@@ -35,7 +35,6 @@ const Styles = () => {
       cursor: default;
     }`;
 
-  // intended alert success
   // https://github.com/TurboWarp/scratch-gui/commit/c77d0c53d89f7fde2dd9be962399764ffbded111
   const alertSuccess = `
     .real-success-alert {
@@ -105,11 +104,11 @@ async function initialize() {
     try {
       document.querySelector<HTMLDivElement>(`.${misc.saveStatus}`)!.onclick =
         displayDiffs;
-      document.onkeydown = async (e) => {
+      document.addEventListener("keydown", async (e) => {
         if (e.ctrlKey && e.key === "s") {
           await displayDiffs();
         }
-      };
+      });
     } catch {}
   }, 500);
 
@@ -131,7 +130,7 @@ async function initialize() {
             .display(),
         commitCreate: async () => {
           let message = await project!.commit();
-          scratchAlert(message, "success");
+          scratchAlert(message, "success", 5000);
         },
         push: async () => {
           let message = await project!.push();
@@ -168,7 +167,21 @@ async function initialize() {
             );
             return;
           }
-          scratchAlert(message, "success");
+          if (message === "up to date") {
+            scratchAlert(
+              "Everything is up to date. There are no new commits to push.",
+              "success",
+              5000
+            );
+          } else {
+            scratchAlert(
+              `Pushed changes to ${
+                (await project!.getDetails()).repository
+              } successfully`,
+              "success",
+              5000
+            );
+          }
         },
         pull: async () => {
           let message = await project!.pull();
@@ -178,7 +191,9 @@ async function initialize() {
               "error"
             );
           } else if (message === "success") {
-            scratchAlert("Successfully pulled new changes!", "success", 5000);
+            scratchAlert("Successfully pulled new changes", "success", 5000);
+          } else if (message === "nothing new") {
+            scratchAlert("There's no new changes to pull", "success", 5000);
           } else {
             scratchAlert(message, "error");
           }

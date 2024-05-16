@@ -24,6 +24,7 @@ export const menu = {
   menuItem: s("menu-bar_menu-bar-item"),
   activeMenuItem: s("menu-bar_active"),
   menuSection: s("menu_menu-section"),
+  menuList: s("menu-bar_menu-bar-menu"),
 };
 
 export const alert = {

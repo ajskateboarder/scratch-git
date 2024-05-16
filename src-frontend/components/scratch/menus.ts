@@ -74,7 +74,7 @@ export const gitMenu = new (class GitMenu {
       },
       label: (e: ChildDom) => {
         li.innerHTML = "";
-        li.append(e);
+        li.append(e as Node);
       },
     });
   }
@@ -154,17 +154,19 @@ export const gitMenu = new (class GitMenu {
     };
 
     // close new menu upon clicking anywhere outside of the menu
-    document.querySelector<HTMLDivElement>("#app")!.onmouseup = (e) => {
-      if (
-        e.target !== this.newMenu &&
-        (e.target as HTMLElement)!.parentNode !== this.newMenu &&
-        this.open
-      ) {
-        this.newMenu!.classList.remove(menu.activeMenuItem);
-        this.savedItems!.style.display = "none";
-        this.open = false;
-      }
-    };
+    document
+      .querySelector<HTMLDivElement>("#app")!
+      .addEventListener("mouseup", (e) => {
+        if (
+          e.target !== this.newMenu &&
+          (e.target as HTMLElement)!.parentNode !== this.newMenu &&
+          this.open
+        ) {
+          this.newMenu!.classList.remove(menu.activeMenuItem);
+          this.savedItems!.style.display = "none";
+          this.open = false;
+        }
+      });
 
     fileMenu.toggleMenu(true);
     this.initialized = true;
