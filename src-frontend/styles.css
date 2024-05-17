@@ -45,6 +45,10 @@ dialog[is="welcome-modal"] {
   overflow: hidden;
 }
 
+html[style*="--ui-primary: #111111"] .alert-button {
+  color: white
+}
+
 .commit-view {
   padding: 10px;
   width: fit-content;

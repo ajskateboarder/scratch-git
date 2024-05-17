@@ -1,14 +1,14 @@
 import "./lib/index";
 
-import api from "./api";
+import api, { Project } from "./api";
 import { showIndicators } from "./diff-indicators";
 import {
   menu,
   settings,
   fileMenu,
   gitMenu,
-  scratchAlert,
   misc,
+  ScratchAlert,
 } from "./components";
 import {
   CommitModal,
@@ -25,7 +25,7 @@ import tippy from "./tippy.css";
 import van from "vanjs-core";
 import { getLocale } from "./l10n";
 
-const { link, style, button, span } = van.tags;
+const { link, style, button, i } = van.tags;
 
 const Styles = () => {
   const menuContents = `
@@ -60,6 +60,36 @@ const Styles = () => {
     `
     ),
   ];
+};
+
+let pullHandler = async (project: Project) => {
+  return async () => {
+    let message = await project!.pull();
+    if (message === "unrelated histories") {
+      new ScratchAlert(
+        "Couldn't pull new changes since they are unrelated with your changes"
+      )
+        .setType("error")
+        .display();
+    } else if (message === "success") {
+      new ScratchAlert("Successfully pulled new changes. Reload to see them.")
+        .setType("success")
+        .addButtons([
+          button(
+            { class: "alert-button", onclick: () => location.reload() },
+            i({ class: "fa-solid fa-rotate-right" })
+          ),
+        ])
+        .display();
+    } else if (message === "nothing new") {
+      new ScratchAlert("There's no new changes to pull")
+        .setType("success")
+        .setTimeout(5000)
+        .display();
+    } else {
+      new ScratchAlert(message).setType("error").display();
+    }
+  };
 };
 
 async function initialize() {
@@ -130,74 +160,49 @@ async function initialize() {
             .display(),
         commitCreate: async () => {
           let message = await project!.commit();
-          scratchAlert(message, "success", 5000);
+          new ScratchAlert(message)
+            .setType("success")
+            .setTimeout(5000)
+            .display();
         },
         push: async () => {
           let message = await project!.push();
           if (message === "pull needed") {
-            let pullAlert = scratchAlert(
-              span(
-                { style: "display: flex" },
-                "The online repository contains work that you don't have. Try pulling changes from online first.",
+            new ScratchAlert(
+              "The online repository contains work that you don't have. Try pulling changes from online first."
+            )
+              .setType("warn")
+              .addButtons([
                 button(
                   {
-                    onclick: async () => {
-                      let message = await project!.pull();
-                      pullAlert.remove();
-                      if (message === "unrelated histories") {
-                        scratchAlert(
-                          "Couldn't pull new changes since they are unrelated with your changes",
-                          "error"
-                        );
-                      } else if (message === "success") {
-                        scratchAlert(
-                          "Successfully pulled new changes!",
-                          "success",
-                          5000
-                        );
-                      } else {
-                        scratchAlert(message, "error");
-                      }
-                    },
+                    class: "alert-button",
+                    onclick: await pullHandler(project!),
                   },
                   "Pull"
-                )
-              ),
-              "warn"
-            );
+                ),
+              ])
+              .display();
             return;
           }
           if (message === "up to date") {
-            scratchAlert(
-              "Everything is up to date. There are no new commits to push.",
-              "success",
-              5000
-            );
+            new ScratchAlert(
+              "Everything is up to date. There are no new commits to push."
+            )
+              .setType("success")
+              .setTimeout(5000)
+              .display();
           } else {
-            scratchAlert(
+            new ScratchAlert(
               `Pushed changes to ${
                 (await project!.getDetails()).repository
-              } successfully`,
-              "success",
-              5000
-            );
+              } successfully`
+            )
+              .setType("success")
+              .setTimeout(5000)
+              .display();
           }
         },
-        pull: async () => {
-          let message = await project!.pull();
-          if (message === "unrelated histories") {
-            scratchAlert(
-              "Couldn't pull new changes since they are unrelated with your changes",
-              "error"
-            );
-          } else if (message === "success") {
-            scratchAlert("Successfully pulled new changes", "success", 5000);
-          } else if (message === "nothing new") {
-            scratchAlert("There's no new changes to pull", "success", 5000);
-          } else {
-            scratchAlert(message, "error");
-          }
-        },
+        pull: await pullHandler(project!),
         repoConfig: () => {
           document
             .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!

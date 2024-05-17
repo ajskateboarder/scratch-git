@@ -156,7 +156,6 @@ impl CmdHandler {
         .expect("failed to initialize git repo");
 
         let response = String::from_utf8(init_repo.stdout).unwrap();
-        dbg!(&response);
 
         if !response.contains("Git repository") {
             if self.debug {
@@ -452,7 +451,7 @@ impl CmdHandler {
         // TODO: these checks might be very brittle
         if stderr.contains(" ! [") && stderr.contains("git pull ...") {
             json!({"status": "pull needed"})
-        } else if output.status.success()  {
+        } else if output.status.success() {
             if stderr.contains("Everything up-to-date") {
                 json!({"status": "up to date"})
             } else {
@@ -483,12 +482,15 @@ impl CmdHandler {
         let pull = pull
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(&pth);
+            .current_dir(&pth)
+            .output()
+            .unwrap();
 
-        if pull.status().unwrap().success() {
-            let stdout = String::from_utf8(pull.output().unwrap().stdout).unwrap();
+        if pull.status.success() {
+            let stdout = String::from_utf8(pull.stdout).unwrap();
+
             if stdout.contains("Already up to date") {
-                return json!({"status": "nothing new"})
+                return json!({"status": "nothing new"});
             }
 
             let walkdir = WalkDir::new(&pth);
@@ -501,7 +503,8 @@ impl CmdHandler {
 
             json!({"status": "success"})
         } else {
-            let stderr = String::from_utf8(pull.output().unwrap().stderr).unwrap();
+            let stderr = String::from_utf8(pull.stderr).unwrap();
+
             if stderr.contains("unrelated histories") {
                 json!({"status": "unrelated histories"})
             } else {

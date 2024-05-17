@@ -1,4 +1,5 @@
 pub mod diff;
+pub mod gh_auth;
 pub mod git;
 pub mod handlers;
 pub mod projects;

@@ -222,6 +222,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "minreq"
+version = "2.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fdef521c74c2884a4f3570bcdb6d2a77b3c533feb6b27ac2ae72673cc221c64"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -331,6 +342,7 @@ version = "0.1.0"
 dependencies = [
  "dunce",
  "itertools",
+ "minreq",
  "regex",
  "serde",
  "serde_json",
