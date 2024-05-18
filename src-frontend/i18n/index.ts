@@ -1,5 +1,6 @@
 import i18next from "i18next";
 
+import * as de from "./de.json";
 import * as en from "./en.json";
 import * as es from "./es.json";
 
@@ -9,6 +10,9 @@ i18next.init({
   lng: getLocale(),
   fallbackLng: "en",
   resources: {
+    de: {
+      translation: de,
+    },
     en: {
       translation: en,
     },

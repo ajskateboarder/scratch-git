@@ -1,0 +1,50 @@
+{
+  "menu": {
+    "push": "Pushen",
+    "pull": "Pullen",
+    "commit": "Commiten",
+    "configure-repo": "Repository konfigurieren",
+    "view-commits": "Commits einsehen"
+  },
+  "diff": {
+    "use-highlights": "Farblich markieren",
+    "plain-text": "Nur Text",
+    "script": "Skript {{number}}"
+  },
+  "commit": {
+    "search-commits": "Commits durchsuchen",
+    "commits": "Commits",
+    "newer": "< Neuere",
+    "older": "Ältere >",
+    "committed-when": "{{time}} gecommitet"
+  },
+  "welcome": {
+    "project-opened": "Projekt geöffnet",
+    "open-project": "Projekt öffnen",
+    "welcome": "Willkommen zu scratch.git",
+    "get-started": "Lade bitte ein Projekt für Git-Entwicklung um zu starten",
+    "configure-project-loc": "Projektort einstellen",
+    "select-location": "Wähle bitte den Ort deines Projektes, damit scratch.git dein Projekt für deine Repository kann.",
+    "next": "Weiter",
+    "back": "Zurück"
+  },
+  "repoconfig": {
+    "repo-url-placeholder": "Gebe einen Link zu einer Repository ein",
+    "repo-url": "Repository-Link",
+    "name": "Name",
+    "email": "Email (optional)",
+    "repoconfig": "Dein [[repository]] einstellen",
+    "no-empty-fields": "Felder mit einem Sternchen müssen ausgefüllt werden!",
+    "repo-tip": "Eine Repository (repo) ist ein Ort, dein Projekt online zu speichern"
+  },
+  "alerts": {
+    "unrelated-changes": "Die neuen Veränderungen konnten nicht gepullt werden, weil sie mit deinen Änderungen nichts zu tun haben.",
+    "pull-success": "Die neuen Veränderungen wurden erfolgreich geupllt. Lade neu, um die Änderungen einzusehen.",
+    "no-changes": "Es gibt keine neuen Veränderungen.",
+    "inconsistent-work": "Die Repository hat Commits, die du nicht hast. Versuche, zuerst die Änderungen online zu pullen.",
+    "up-to-date": "Alles ist auf dem neuesten Stand. Es gibt keine neuen Commits zu pushen.",
+    "push-success": "Änderungen wurden erfolgreich zu {{url}} gepusht"
+  },
+  "close": "Schließen",
+  "okay": "Okay"
+}
