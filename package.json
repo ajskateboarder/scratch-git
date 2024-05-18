@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "i18next": "^23.11.4",
     "tippy.js": "^6.3.7",
     "vanjs-core": "^1.5.0"
   },

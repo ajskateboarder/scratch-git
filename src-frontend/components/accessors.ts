@@ -25,6 +25,7 @@ export const menu = {
   activeMenuItem: s("menu-bar_active"),
   menuSection: s("menu_menu-section"),
   menuList: s("menu-bar_menu-bar-menu"),
+  languageMenu: s("settings-menu_language-submenu"),
 };
 
 export const alert = {

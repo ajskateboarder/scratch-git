@@ -1,5 +1,6 @@
 /** @file Manages creation of Git menu and alerts */
 
+import i18next from "@/i18n";
 import { menu } from "../accessors";
 import van, { ChildDom } from "vanjs-core";
 
@@ -7,10 +8,14 @@ const { i, span } = van.tags;
 
 /** Manages functions with the file menu */
 export const fileMenu = new (class FileMenu {
-  menu: HTMLDivElement;
-  private eventHandlers: string;
+  menu!: HTMLDivElement;
+  private eventHandlers!: string;
 
   constructor() {
+    this.setMenu();
+  }
+
+  setMenu() {
     this.menu = document.querySelectorAll<HTMLDivElement>(
       `div.${menu.menuItem}`
     )[1];
@@ -42,10 +47,13 @@ export const fileMenu = new (class FileMenu {
   /** Returns if a project is currently open */
   isProjectOpen() {
     this.toggleMenu(true);
-    const savedMenu = new DOMParser().parseFromString(
-      this.menu.innerHTML,
-      "text/html"
-    );
+    let savedMenu = this.menu.cloneNode(true) as HTMLElement;
+    // tends to occur with translations
+    if (!savedMenu.querySelector("li")) {
+      this.setMenu();
+      this.toggleMenu(true);
+      savedMenu = this.menu.cloneNode(true) as HTMLElement;
+    }
     this.toggleMenu(false);
     this.toggleMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
@@ -88,20 +96,25 @@ export const gitMenu = new (class GitMenu {
    * @param commitView - handler to view commits
    * @param commitCreate - handler to create commit
    */
-  create({
-    push,
-    pull,
-    repoConfig,
-    commitView,
-    commitCreate,
-  }: {
-    push: () => any;
-    pull: () => any;
-    repoConfig: () => any;
-    commitView: () => any;
-    commitCreate: () => any;
-  }) {
-    if (this.initialized) return;
+  create(
+    {
+      push,
+      pull,
+      repoConfig,
+      commitView,
+      commitCreate,
+    }: {
+      push: () => any;
+      pull: () => any;
+      repoConfig: () => any;
+      commitView: () => any;
+      commitCreate: () => any;
+    },
+    locale: string | undefined
+  ) {
+    if (this.initialized && !locale) return;
+    if (locale) document.querySelector(".git-menu")?.remove();
+    i18next.changeLanguage(locale);
 
     // open, copy, and edit the file menu
     fileMenu.toggleMenu(false);
@@ -123,20 +136,32 @@ export const gitMenu = new (class GitMenu {
     this.savedItems.style.display = "none";
     this.newMenu.appendChild(this.savedItems);
 
-    this.item(1).label(span(i({ class: "fa-solid fa-upload" }), " Push"));
+    this.item(1).label(
+      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
+    );
     this.item(1).onclick(push);
-    this.item(2).label(span(i({ class: "fa-solid fa-download" }), " Pull"));
+    this.item(2).label(
+      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
+    );
     this.item(2).onclick(pull);
     this.item(3).label(
-      span(i({ class: "fa-solid fa-bars" }), " Configure repository")
+      span(
+        i({ class: "fa-solid fa-bars" }),
+        " ",
+        i18next.t("menu.configure-repo")
+      )
     );
     this.item(3).onclick(repoConfig);
     this.item(4).label(
-      span(i({ class: "fa-solid fa-code-commit" }), " View commits")
+      span(
+        i({ class: "fa-solid fa-code-commit" }),
+        " ",
+        i18next.t("menu.view-commits")
+      )
     );
     this.item(4).onclick(commitView);
     this.item(5).remove();
-    this.item(5).label("Commit");
+    this.item(5).label(i18next.t("menu.commit"));
     this.item(5).onclick(commitCreate);
     this.item(6).remove();
 

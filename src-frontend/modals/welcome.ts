@@ -2,7 +2,7 @@ import api, { ProjectExistsException } from "@/api";
 import { settings, fileMenu } from "@/components";
 import thumbnail from "./thumbnail.svg.ts";
 import van, { type State } from "vanjs-core";
-import { Locale, getLocale } from "@/l10n";
+import i18next from "@/i18n";
 
 const {
   tags: { div, h1, button, p, br, span, input, pre, i },
@@ -28,8 +28,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
-    const locale = getLocale();
-    this.steps = [this.step1(locale), this.step2(locale), this.step3(locale)];
+    this.steps = [this.step1(), this.step2(), this.step3()];
 
     const thumb = span(
       { class: "thumbnail" },
@@ -48,15 +47,15 @@ export class WelcomeModal extends HTMLDialogElement {
     });
   }
 
-  async display(locale: Locale) {
+  async display() {
     if (!this.open) {
-      this.steps = [this.step1(locale), this.step2(locale), this.step3(locale)];
+      this.steps = [this.step1(), this.step2(), this.step3()];
       this.currentStep.val = 0;
       this.showModal();
     }
   }
 
-  step1({ translations: { welcome, close } }: Locale) {
+  step1() {
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -64,7 +63,7 @@ export class WelcomeModal extends HTMLDialogElement {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      welcome.next
+      i18next.t("welcome.next")
     );
 
     const openProject = button(
@@ -77,21 +76,23 @@ export class WelcomeModal extends HTMLDialogElement {
             this.loadedProject = true;
             (goToStep2 as HTMLButtonElement).disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
-            openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${welcome.projectOpened}`;
+            openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
+              "welcome.project-opened"
+            )}`;
             setTimeout(() => {
-              openProject.innerHTML = welcome.openProject;
+              openProject.innerHTML = i18next.t("welcome.open-project");
             }, 2000);
           });
         },
       },
-      welcome.openProject
+      i18next.t("welcome.open-project")
     );
 
     return Screen(
-      { title: welcome.welcomeHeader, number: 1 },
+      { title: i18next.t("welcome.welcome"), number: 1 },
       div(
         { style: "font-weight: normal" },
-        p(welcome.getStarted, br(), br()),
+        p(i18next.t("welcome.get-started"), br(), br()),
         div({ class: "a-gap" }, openProject),
         br(),
         br()
@@ -103,14 +104,14 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => this.close(),
           },
-          close
+          i18next.t("close")
         ),
         goToStep2
       )
     );
   }
 
-  step2({ translations: { welcome } }: Locale) {
+  step2() {
     let path: string;
 
     const creationError = pre({ id: "creationError" });
@@ -139,7 +140,7 @@ export class WelcomeModal extends HTMLDialogElement {
           ++this.currentStep.val;
         },
       },
-      welcome.next
+      i18next.t("next")
     );
 
     const openProjectPath = input({
@@ -154,10 +155,10 @@ export class WelcomeModal extends HTMLDialogElement {
     });
 
     return Screen(
-      { title: welcome.configureHeader, number: 2 },
+      { title: i18next.t("welcome.configure-project-loc"), number: 2 },
       div(
         { class: "welcome-screen-content" },
-        p(welcome.selectLocation, br(), br()),
+        p(i18next.t("welcome.select-location"), br(), br()),
         openProjectPath,
         creationError
       ),
@@ -168,16 +169,16 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
-          welcome.back
+          i18next.t("welcome.back")
         ),
         goToStep3
       )
     );
   }
 
-  step3({ translations: { welcome, close } }: Locale) {
+  step3() {
     return Screen(
-      { title: welcome.welcomeHeader, number: 3 },
+      { title: i18next.t("welcome.welcome"), number: 3 },
       div(
         { class: "welcome-screen-content" },
         p("To be written", br(), br()),
@@ -188,7 +189,7 @@ export class WelcomeModal extends HTMLDialogElement {
               class: settings.settingsButton,
               onclick: () => this.close(),
             },
-            close
+            i18next.t("close")
           )
         )
       )

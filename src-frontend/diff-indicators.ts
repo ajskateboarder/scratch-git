@@ -4,9 +4,6 @@ import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
-import { createLog } from "./log";
-
-let logger = createLog("diff-indicators");
 
 /** Receive Blockly IDs to top-level blocks that were changed
  *
@@ -21,7 +18,7 @@ async function changedBlocklyScripts(
   currentScripts: any
 ) {
   if (sprite === undefined) {
-    logger.warn("provided sprite for diffing was undefined");
+    console.warn("provided sprite for diffing was undefined");
     return;
   }
 
@@ -86,7 +83,7 @@ async function highlightChanged(
     currentScripts
   );
 
-  logger.debug(
+  console.debug(
     `received following for sprite ${sprite.format()}`,
     changedScripts
   );
@@ -279,7 +276,7 @@ export async function showIndicators(project: Project) {
     attributeFilter: ["class"],
   });
 
-  // retain diff highlights for editor changes (lang, theme, etc)
+  // retain diff highlights for editor theme
   new MutationObserver(async () => {
     let selectedSprite: HTMLDivElement = document.querySelector(
       `.${sprites.selectedSprite}`

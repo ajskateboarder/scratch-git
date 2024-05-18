@@ -1,9 +1,10 @@
 {
   "menu": {
-    "pushProject": "Push project",
-    "configureRepo": "Configure repository",
-    "commit": "Commit",
-    "viewCommits": "View commits"
+    "push": "fg",
+    "pull": "gdf",
+    "configure-repo": "fgddfg",
+    "commit": "dfg",
+    "view-commits": "dfgfgdfdg"
   },
   "diff": {
     "useHighlights": "Use highlights",
@@ -19,7 +20,7 @@
   "welcome": {
     "projectOpened": "Project opened",
     "openProject": "Open project",
-    "welcomeHeader": "Welcome to scratch.git",
+    "welcomeHeader": "Bienvenidos a scratch.git",
     "getStarted": "Please load a project for Git development to get started",
     "configureHeader": "Configure project location",
     "selectLocation": "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",

@@ -24,10 +24,11 @@ import styles from "./styles.css";
 import tippy from "./tippy.css";
 
 import van from "vanjs-core";
-import { getLocale } from "./l10n";
+import { getLocale } from "./i18n";
 
 const { link, style, button, i } = van.tags;
 
+/** Packages our styles and external dependencies */
 const Styles = () => {
   const menuContents = `
     .${settings.settingsButton}[disabled] {
@@ -63,8 +64,14 @@ const Styles = () => {
   ];
 };
 
-const pullHandler = async (project: Project, authed: boolean = false) => {
-  return async () => {
+/** Handles pulling as a Git menu option
+ *
+ * @param project - the currently open project
+ * @param authed - true if you are authenticated
+ */
+const pullHandler =
+  async (project: Project, authed: boolean = false) =>
+  async () => {
     if (
       !authed &&
       (await project!.getDetails()).repository.includes("github.com")
@@ -79,6 +86,7 @@ const pullHandler = async (project: Project, authed: boolean = false) => {
         await pullHandler(project!, true);
       });
     }
+
     let message = await project!.pull();
     if (message === "unrelated histories") {
       new ScratchAlert(
@@ -105,54 +113,110 @@ const pullHandler = async (project: Project, authed: boolean = false) => {
       new ScratchAlert(message).setType("error").display();
     }
   };
-};
 
-const pushHandler = async (project: Project) => {
-  let message = await project!.push();
-  if (message === "pull needed") {
-    new ScratchAlert(
-      "The online repository contains work that you don't have. Try pulling changes from online first."
-    )
-      .setType("warn")
-      .addButtons([
-        button(
-          {
-            class: "alert-button",
-            onclick: await pullHandler(project!),
-          },
-          "Pull"
-        ),
-      ])
-      .display();
-    return;
-  }
-  if (message === "up to date") {
-    new ScratchAlert(
-      "Everything is up to date. There are no new commits to push."
-    )
-      .setType("success")
-      .setTimeout(5000)
-      .display();
-  } else {
-    new ScratchAlert(
-      `Pushed changes to ${
-        (await project!.getDetails()).repository
-      } successfully`
-    )
-      .setType("success")
-      .setTimeout(5000)
-      .display();
-  }
-};
+/** Handles pushing as a Git menu option
+ *
+ * @param project - the currently open project
+ */
+const pushHandler =
+  async (project: Project, authed: boolean = false) =>
+  async () => {
+    if (
+      !authed &&
+      (await project!.getDetails()).repository.includes("github.com")
+    ) {
+      let auth = new GhAuth();
+      let authAlert: HTMLDivElement | undefined = undefined;
+      auth.addEventListener("devicecode", (e) => {
+        authAlert = GhAuthAlert(e.detail).display();
+      });
+      auth.addEventListener("login", async () => {
+        authAlert?.remove();
+        await pushHandler(project!, true);
+      });
+    }
+
+    let message = await project!.push();
+    if (message === "pull needed") {
+      new ScratchAlert(
+        "The online repository contains work that you don't have. Try pulling changes from online first."
+      )
+        .setType("warn")
+        .addButtons([
+          button(
+            {
+              class: "alert-button",
+              onclick: await pullHandler(project!),
+            },
+            "Pull"
+          ),
+        ])
+        .display();
+      return;
+    }
+    if (message === "up to date") {
+      new ScratchAlert(
+        "Everything is up to date. There are no new commits to push."
+      )
+        .setType("success")
+        .setTimeout(5000)
+        .display();
+    } else {
+      new ScratchAlert(
+        `Pushed changes to ${
+          (await project!.getDetails()).repository
+        } successfully`
+      )
+        .setType("success")
+        .setTimeout(5000)
+        .display();
+    }
+  };
+
+/** Builds the final Git Menu
+ *
+ * @param project - the currently open project
+ * @param changeLocale - rebuild the entire menu only if the locale has changed
+ */
+const createGitMenu = async (project: Project, changeLocale?: string) =>
+  gitMenu.create(
+    {
+      commitView: () =>
+        document
+          .querySelector<CommitModal>("dialog[is='commit-modal']")!
+          .display(),
+      commitCreate: async () => {
+        let message = await project!.commit();
+        new ScratchAlert(message).setType("success").setTimeout(5000).display();
+      },
+      push: await pushHandler(project!),
+      pull: await pullHandler(project!),
+      repoConfig: () => {
+        document
+          .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
+          .display();
+      },
+    },
+    changeLocale
+  );
 
 async function initialize() {
+  document.querySelector("dialog[is='commit-modal']")?.remove();
+  document.querySelector("dialog[is='diff-modal']")?.remove();
+  document.querySelector("dialog[is='welcome-modal']")?.remove();
+  document.querySelector("dialog[is='repo-config-modal']")?.remove();
+
   if (!document.querySelector("dialog[is='diff-modal']")) {
-    customElements.define("commit-modal", CommitModal, { extends: "dialog" });
-    customElements.define("diff-modal", DiffModal, { extends: "dialog" });
-    customElements.define("welcome-modal", WelcomeModal, { extends: "dialog" });
-    customElements.define("repo-config-modal", RepoConfigModal, {
-      extends: "dialog",
-    });
+    try {
+      customElements.define("commit-modal", CommitModal, { extends: "dialog" });
+      customElements.define("diff-modal", DiffModal, { extends: "dialog" });
+      customElements.define("welcome-modal", WelcomeModal, {
+        extends: "dialog",
+      });
+      customElements.define("repo-config-modal", RepoConfigModal, {
+        extends: "dialog",
+      });
+    } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
       `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
@@ -182,13 +246,15 @@ async function initialize() {
     await showIndicators(project!);
   };
 
-  new MutationObserver(async () => {
+  // ensure a click event listener for the save button
+  new MutationObserver(() => {
     document
       .querySelector(`.${misc.saveArea}`)
       ?.firstChild!.addEventListener("click", displayDiffs);
   }).observe(document.querySelector(`.${misc.saveArea}`)?.firstChild!, {
     childList: true,
   });
+
   document.addEventListener("keydown", async (e) => {
     if (e.ctrlKey && e.key === "s") {
       await displayDiffs();
@@ -196,50 +262,47 @@ async function initialize() {
   });
 
   let locale = getLocale();
+  console.log(locale);
 
   document.head.append(...Styles());
 
   if (!fileMenu.isProjectOpen()) {
     document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
-      .display(locale);
+      .display();
   } else {
     let project = await api.getCurrentProject();
+
     if (await project!.exists()) {
-      gitMenu.create({
-        commitView: () =>
-          document
-            .querySelector<CommitModal>("dialog[is='commit-modal']")!
-            .display(),
-        commitCreate: async () => {
-          let message = await project!.commit();
-          new ScratchAlert(message)
-            .setType("success")
-            .setTimeout(5000)
-            .display();
-        },
-        push: async () => {
-          if ((await project!.getDetails()).repository.includes("github.com")) {
-            let auth = new GhAuth();
-            let authAlert: HTMLDivElement | undefined = undefined;
-            auth.addEventListener("devicecode", (e) => {
-              authAlert = GhAuthAlert(e.detail).display();
+      // add initialization handlers to each language option
+      // to make sure all our stuff gets updated to the new locale
+      new MutationObserver(([mut, _]) => {
+        const languageOptions = mut.target.firstChild?.firstChild?.lastChild
+          ?.firstChild as HTMLUListElement | undefined;
+        if (languageOptions) {
+          [...languageOptions.children].forEach((e) => {
+            e.addEventListener("click", () => {
+              setTimeout(async () => {
+                // project titles are removed after changing locale
+                // by default so we set it back
+                window.ReduxStore.dispatch({
+                  type: "projectTitle/SET_PROJECT_TITLE",
+                  title: project?.projectName,
+                });
+                await initialize();
+                createGitMenu(project!, getLocale());
+              }, 100);
             });
-            auth.addEventListener("login", async () => {
-              authAlert?.remove();
-              await pushHandler(project!);
-            });
-          } else {
-            await pushHandler(project!);
-          }
-        },
-        pull: await pullHandler(project!),
-        repoConfig: () => {
-          document
-            .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
-            .display();
-        },
-      });
+          });
+        }
+      }).observe(
+        document.querySelector(`.${misc.menuItems}`)?.firstChild?.lastChild!,
+        {
+          childList: true,
+        }
+      );
+
+      createGitMenu(project!);
     }
   }
 }
