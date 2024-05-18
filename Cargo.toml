@@ -18,4 +18,4 @@ regex = "1.10.4"
 itertools = "0.12.1"
 dunce = "1.0.4"
 walkdir = "2"
-minreq = { version = "2.11.2", features = ["json-using-serde"] }
+minreq = { version = "2.11.2", features = ["json-using-serde", "https"] }

@@ -1,6 +1,6 @@
 import "./lib/index";
 
-import api, { Project } from "./api";
+import api, { GhAuth, Project } from "./api";
 import { showIndicators } from "./diff-indicators";
 import {
   menu,
@@ -9,6 +9,7 @@ import {
   gitMenu,
   misc,
   ScratchAlert,
+  GhAuthAlert,
 } from "./components";
 import {
   CommitModal,
@@ -62,8 +63,22 @@ const Styles = () => {
   ];
 };
 
-let pullHandler = async (project: Project) => {
+const pullHandler = async (project: Project, authed: boolean = false) => {
   return async () => {
+    if (
+      !authed &&
+      (await project!.getDetails()).repository.includes("github.com")
+    ) {
+      let auth = new GhAuth();
+      let authAlert: HTMLDivElement | undefined = undefined;
+      auth.addEventListener("devicecode", (e) => {
+        authAlert = GhAuthAlert(e.detail).display();
+      });
+      auth.addEventListener("login", async () => {
+        authAlert?.remove();
+        await pullHandler(project!, true);
+      });
+    }
     let message = await project!.pull();
     if (message === "unrelated histories") {
       new ScratchAlert(
@@ -90,6 +105,44 @@ let pullHandler = async (project: Project) => {
       new ScratchAlert(message).setType("error").display();
     }
   };
+};
+
+const pushHandler = async (project: Project) => {
+  let message = await project!.push();
+  if (message === "pull needed") {
+    new ScratchAlert(
+      "The online repository contains work that you don't have. Try pulling changes from online first."
+    )
+      .setType("warn")
+      .addButtons([
+        button(
+          {
+            class: "alert-button",
+            onclick: await pullHandler(project!),
+          },
+          "Pull"
+        ),
+      ])
+      .display();
+    return;
+  }
+  if (message === "up to date") {
+    new ScratchAlert(
+      "Everything is up to date. There are no new commits to push."
+    )
+      .setType("success")
+      .setTimeout(5000)
+      .display();
+  } else {
+    new ScratchAlert(
+      `Pushed changes to ${
+        (await project!.getDetails()).repository
+      } successfully`
+    )
+      .setType("success")
+      .setTimeout(5000)
+      .display();
+  }
 };
 
 async function initialize() {
@@ -129,18 +182,18 @@ async function initialize() {
     await showIndicators(project!);
   };
 
-  // setting an interval ensures the listeners always exist
-  setInterval(() => {
-    try {
-      document.querySelector<HTMLDivElement>(`.${misc.saveStatus}`)!.onclick =
-        displayDiffs;
-      document.addEventListener("keydown", async (e) => {
-        if (e.ctrlKey && e.key === "s") {
-          await displayDiffs();
-        }
-      });
-    } catch {}
-  }, 500);
+  new MutationObserver(async () => {
+    document
+      .querySelector(`.${misc.saveArea}`)
+      ?.firstChild!.addEventListener("click", displayDiffs);
+  }).observe(document.querySelector(`.${misc.saveArea}`)?.firstChild!, {
+    childList: true,
+  });
+  document.addEventListener("keydown", async (e) => {
+    if (e.ctrlKey && e.key === "s") {
+      await displayDiffs();
+    }
+  });
 
   let locale = getLocale();
 
@@ -166,40 +219,18 @@ async function initialize() {
             .display();
         },
         push: async () => {
-          let message = await project!.push();
-          if (message === "pull needed") {
-            new ScratchAlert(
-              "The online repository contains work that you don't have. Try pulling changes from online first."
-            )
-              .setType("warn")
-              .addButtons([
-                button(
-                  {
-                    class: "alert-button",
-                    onclick: await pullHandler(project!),
-                  },
-                  "Pull"
-                ),
-              ])
-              .display();
-            return;
-          }
-          if (message === "up to date") {
-            new ScratchAlert(
-              "Everything is up to date. There are no new commits to push."
-            )
-              .setType("success")
-              .setTimeout(5000)
-              .display();
+          if ((await project!.getDetails()).repository.includes("github.com")) {
+            let auth = new GhAuth();
+            let authAlert: HTMLDivElement | undefined = undefined;
+            auth.addEventListener("devicecode", (e) => {
+              authAlert = GhAuthAlert(e.detail).display();
+            });
+            auth.addEventListener("login", async () => {
+              authAlert?.remove();
+              await pushHandler(project!);
+            });
           } else {
-            new ScratchAlert(
-              `Pushed changes to ${
-                (await project!.getDetails()).repository
-              } successfully`
-            )
-              .setType("success")
-              .setTimeout(5000)
-              .display();
+            await pushHandler(project!);
           }
         },
         pull: await pullHandler(project!),

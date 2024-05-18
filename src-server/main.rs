@@ -1,11 +1,12 @@
+pub mod config;
 pub mod diff;
 pub mod gh_auth;
 pub mod git;
 pub mod handlers;
-pub mod projects;
 pub mod tw_path;
 pub mod zipping;
 
+use serde_json::from_str;
 use std::{
     env, fs,
     io::{stdin, BufRead},
@@ -16,7 +17,7 @@ use std::{
 };
 use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
-use handlers::handle_command;
+use handlers::{handle_command, Cmd};
 use tw_path::turbowarp_path;
 
 fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
@@ -31,17 +32,12 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
     loop {
         match socket.read()? {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {
+                let msg = msg.to_string();
                 if debug {
                     println!("<- Received message: {}", msg.to_string());
                 }
-                let response = match handle_command(msg.to_string(), debug) {
-                    Ok(res) => res,
-                    Err(e) => Message::Text(e.to_string()),
-                };
-                if debug {
-                    println!("-> Sending response: {}", response.to_string());
-                }
-                socket.send(response)?;
+                let cmd = from_str::<Cmd>(&msg).unwrap();
+                handle_command(cmd, &mut socket, debug);
             }
             Message::Ping(_) | Message::Pong(_) | Message::Close(_) | Message::Frame(_) => {}
         }

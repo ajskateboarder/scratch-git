@@ -1,3 +1,5 @@
+/// <reference path="global.d.ts" />
+
 export interface Commit {
   author: { date: string; email: string; name: string };
   body: string;
@@ -84,7 +86,7 @@ export class Project extends Socket {
       command: "get-commits",
       data: { Project: { project_name: this.projectName } },
     });
-    return [...commits][0].map((commit: Commit) => {
+    return commits.map((commit: Commit) => {
       return {
         ...commit,
         // FIXME: slicing the date like below fails for langs other than english
@@ -258,6 +260,52 @@ class ProjectManager extends Socket {
   }
 }
 
+export interface DeviceCode {
+  user_code: string;
+  verification_uri: string;
+}
+
+export class GhAuth extends (EventTarget as TypedEventTarget<{
+  devicecode: CustomEvent<DeviceCode>;
+  login: CustomEvent;
+}>) {
+  private ws: WebSocket;
+
+  constructor() {
+    super();
+    this.ws = new WebSocket(SOCKET_URL);
+    this.login();
+  }
+
+  private login() {
+    this.ws.onopen = () => {
+      this.ws.send(
+        JSON.stringify({
+          command: "gh-auth",
+          data: {
+            Project: { project_name: "" },
+          },
+        })
+      );
+    };
+
+    this.ws.onmessage = (message) => {
+      let data: { success: true } & DeviceCode = JSON.parse(message.data);
+      if (data.success) {
+        this.dispatchEvent(new CustomEvent("login"));
+      } else {
+        this.dispatchEvent(
+          new CustomEvent("devicecode", { detail: data as DeviceCode })
+        );
+      }
+    };
+  }
+
+  close() {
+    this.ws.close();
+  }
+}
+
 /** Diff two scratchblocks scripts and return lines removed and added, and the diffed content
  *
  * @param oldScript - the script for a sprite before a save
@@ -267,25 +315,12 @@ export function diff(
   oldScript: string,
   newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> {
-  return new Promise((resolve, reject) => {
-    let ws = new WebSocket(SOCKET_URL);
-
-    ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          command: "diff",
-          data: {
-            GitDiff: { old_content: oldScript, new_content: newScript },
-          },
-        })
-      );
-    };
-    ws.onmessage = (message) => {
-      return resolve(JSON.parse(message.data));
-    };
-    ws.onerror = (error) => {
-      return reject(error);
-    };
+  let ws = new Socket(new WebSocket(SOCKET_URL));
+  return ws.request({
+    command: "diff",
+    data: {
+      GitDiff: { old_content: oldScript, new_content: newScript },
+    },
   });
 }
 

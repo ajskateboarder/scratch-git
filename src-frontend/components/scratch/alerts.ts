@@ -1,7 +1,8 @@
 import van, { ChildDom } from "vanjs-core";
-import { misc, alert } from "..";
+import { misc, alert, Copy } from "..";
+import { DeviceCode } from "@/api";
 
-const { div, img } = van.tags;
+const { div, img, span, a } = van.tags;
 
 // taken directly from Scratch
 const CLOSE_BUTTON_SVG =
@@ -89,5 +90,17 @@ export class ScratchAlert {
       setTimeout(() => newAlert.remove(), this.timeout);
     }
     container.appendChild(newAlert);
+    return newAlert;
   }
 }
+
+export const GhAuthAlert = (e: DeviceCode) =>
+  new ScratchAlert(
+    span(
+      "Authentication needed for GitHub. Please go to ",
+      a({ href: e.verification_uri }, "github.com/login/device"),
+      ` and enter the code: ${e.user_code}`
+    )
+  )
+    .setType("warn")
+    .addButtons([Copy(() => e.user_code)]);

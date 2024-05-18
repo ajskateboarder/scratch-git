@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // Change this when using a different GitHub App
-const CLIENT_ID: &str = "Iv23liJFLwawI1z9jc6S";
-const INTERVAL: i8 = 2;
+const CLIENT_ID: &'static str = "Iv23liJFLwawI1z9jc6S";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeviceCode {
@@ -15,25 +14,26 @@ pub struct DeviceCode {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccessToken {
-    access_token: String,
+    access_token: Option<String>,
     error: Option<String>,
 }
 
 /// Creates a code to authenticate with GitHub's device flow
-pub fn device_code() -> DeviceCode {
+pub fn device_code() -> minreq::Response {
     minreq::post(format!(
-        "https://github.com/login/device/code?client_id={CLIENT_ID}&interval={INTERVAL}"
+        "https://github.com/login/device/code?client_id={CLIENT_ID}&interval=5"
     ))
     .with_header("Accept", "application/json")
     .send()
     .unwrap()
-    .json()
-    .unwrap()
 }
 
-/// Polls for a user access token
+/// Try to get the user access token
 pub fn access_token(code: DeviceCode) -> Option<String> {
-    let token: AccessToken = minreq::post(format!("https://github.com/login/oauth/access_token?client_id={CLIENT_ID}&device_code={}&grant_type={}&interval={}&", code.device_code, "urn:ietf:params:oauth:grant-type:device_code", INTERVAL))
+    let token: AccessToken = minreq::post(format!(
+        "https://github.com/login/oauth/access_token?client_id={CLIENT_ID}&device_code={}&grant_type={}&interval=5",
+        code.device_code, "urn:ietf:params:oauth:grant-type:device_code"
+    ))
     .with_header("Accept", "application/json")
     .send()
     .unwrap().json().unwrap();
@@ -41,19 +41,28 @@ pub fn access_token(code: DeviceCode) -> Option<String> {
     if token.error.is_some() {
         None
     } else {
-        Some(token.access_token)
+        Some(token.access_token.unwrap())
     }
 }
 
-/// Gets the username for the logged-in user 
-pub fn current_user(token: String) -> String {
-    let response: serde_json::Value = minreq::get("https://api.github.com/user")
+/// Gets the username for the logged-in user given an access token
+pub fn current_user(token: String) -> Option<String> {
+    let response = minreq::get("https://api.github.com/user")
+        .with_header("User-Agent", "bot")
         .with_header("Accept", "application/vnd.github+json")
         .with_header("Authorization", format!("Bearer {token}"))
         .with_header("X-GitHub-Api-Version", "2022-11-28")
         .send()
-        .unwrap()
-        .json()
         .unwrap();
-    response["login"].as_str().unwrap().into()
+
+    if response.status_code == 401 {
+        None
+    } else {
+        Some(
+            response.json::<serde_json::Value>().unwrap()["login"]
+                .as_str()
+                .unwrap()
+                .to_string(),
+        )
+    }
 }

@@ -66,5 +66,6 @@ export const misc = {
   guiWrapper: s("gui_page-wrapper"),
   selectedTab: s("react-tabs_react-tabs__tab--selected"),
   menuItems: s("menu-bar_file-group"),
+  saveArea: s("menu-bar_account-info-group"),
 };
 (window as any).s = s;

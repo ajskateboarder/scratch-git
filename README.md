@@ -35,13 +35,17 @@ You should now see:
 
 - a welcome dialog to set up a project with scratch.git
 
-- a Git menu to view commits, configure an online repository on GitHub/GitLab/etc, and push the current commits
+- a Git menu to view commits, configure an online repository on GitHub/GitLab/etc, push current commits, etc
 
 - diff indicators that show up next to your sprites and stage when you save the project. These will show differences between the code before and after you save.
 
 These features closely mimic the kind of Git development seen in editors such as Visual Studio or VS Code, but in a more friendly manner.
 
-Currently, scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
+**Please note the following:**
+
+- scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
+
+- scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output
 
 ## Developing
 

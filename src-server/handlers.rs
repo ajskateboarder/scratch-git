@@ -1,20 +1,22 @@
 use dunce::canonicalize;
 use std::fs::{self, File};
+use std::net::TcpStream;
 use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
     thread::sleep,
     time::Duration,
 };
-use tungstenite::Message;
+use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use serde::{Deserialize, Serialize};
-use serde_json::{self, from_str, json, Error, Value};
+use serde_json::{json, Value};
 
+use crate::config::{gh_token, project_config};
 use crate::diff::{Diff, ScriptChanges};
+use crate::gh_auth;
 use crate::git;
-use crate::projects::{get_project_path, project_config};
 use crate::zipping::{self, extract};
 
 #[derive(Serialize, Deserialize, PartialEq)]
@@ -43,33 +45,38 @@ pub struct Cmd<'a> {
     data: CmdData<'a>,
 }
 
-pub struct CmdHandler {
+pub struct CmdHandler<'a> {
     debug: bool,
+    socket: &'a mut WebSocket<TcpStream>,
 }
 
-impl CmdHandler {
-    fn new(debug: bool) -> CmdHandler {
-        CmdHandler { debug }
+impl CmdHandler<'_> {
+    fn new<'a>(debug: bool, socket: &'a mut WebSocket<TcpStream>) -> CmdHandler<'a> {
+        CmdHandler { debug, socket }
     }
 
-    fn diff(&self, data: CmdData) -> Value {
+    fn send_json(&mut self, json: Value) {
+        self.socket.send(Message::Text(json.to_string())).unwrap();
+    }
+
+    fn diff(&mut self, data: CmdData) {
         let CmdData::GitDiff {
             old_content,
             new_content,
         } = data
         else {
-            return json!({});
+            return self.send_json(json!({}));
         };
-        json!(git::diff(
+        self.send_json(json!(git::diff(
             old_content.to_string(),
             new_content.to_string(),
             2000
-        ))
+        )));
     }
 
-    fn create_project(&self, data: CmdData) -> Value {
+    fn create_project(&mut self, data: CmdData) {
         let CmdData::FilePath(file_name) = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
         let name = Path::new(&file_name)
             .file_name()
@@ -99,7 +106,7 @@ impl CmdHandler {
                 println!("create_project: failed to find project file")
             }
 
-            return json!({ "message": "fail" });
+            return self.send_json(json!({ "message": "fail" }));
         };
 
         match config.projects[&name] {
@@ -110,7 +117,7 @@ impl CmdHandler {
                 });
             }
             Value::Object(_) => {
-                return json!({ "project_name": "exists" });
+                return self.send_json(json!({ "project_name": "exists" }));
             }
             _ => unreachable!(),
         };
@@ -161,14 +168,14 @@ impl CmdHandler {
             if self.debug {
                 println!("create_project: git init did not state that new repo was made")
             }
-            return json!({ "project_name": "fail" });
+            return self.send_json(json!({ "project_name": "fail" }));
         }
 
         if !git::add(&project_path) {
             if self.debug {
                 println!("create_project: assets could not be added")
             }
-            return json!({ "project_name": "fail" });
+            return self.send_json(json!({ "project_name": "fail" }));
         }
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -191,13 +198,13 @@ impl CmdHandler {
             if self.debug {
                 println!("create_project: initial commit could not be created. reason:\n\n{commit}")
             }
-            return json!({ "project_name": "fail" });
+            return self.send_json(json!({ "project_name": "fail" }));
         }
 
-        json!({ "project_name": name.replace("projects/", "") })
+        self.send_json(json!({ "project_name": name.replace("projects/", "") }))
     }
 
-    fn set_project_details(&self, data: CmdData) -> Value {
+    fn set_project_details(&mut self, data: CmdData) {
         let CmdData::GitDetails {
             username,
             email,
@@ -206,9 +213,9 @@ impl CmdHandler {
             ..
         } = data
         else {
-            return json!({});
+            return self.send_json(json!({}));
         };
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
         let mut success = true;
 
         let config_user = if cfg!(target_os = "windows") {
@@ -273,14 +280,14 @@ impl CmdHandler {
             }
         }
 
-        json!({"success": success})
+        self.send_json(json!({"success": success}))
     }
 
-    fn get_project_details(&self, data: CmdData) -> Value {
+    fn get_project_details(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         let config_user = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
@@ -321,20 +328,22 @@ impl CmdHandler {
         .output();
         let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
 
-        json!({"username": config_user, "email": config_email, "repository": config_remote})
+        self.send_json(
+            json!({"username": config_user, "email": config_email, "repository": config_remote}),
+        )
     }
 
-    fn exists(&self, data: CmdData) -> Value {
+    fn exists(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
         let projects = &project_config().lock().unwrap().projects;
-        json!({ "exists": projects[project_name] != Value::Null })
+        self.send_json(json!({ "exists": projects[project_name] != Value::Null }))
     }
 
-    fn remote_exists(&self, data: CmdData) -> Value {
+    fn remote_exists(&mut self, data: CmdData) {
         let CmdData::URL(url) = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
         let ls_remote = if cfg!(target_os = "windows") {
@@ -350,16 +359,17 @@ impl CmdHandler {
 
         let ls_remote = String::from_utf8(ls_remote.unwrap().stdout).unwrap();
 
-        return json!({"exists": ls_remote.contains("fatal")});
+        self.send_json(json!({"exists": ls_remote.contains("fatal")}))
     }
 
-    fn unzip(&self, data: CmdData) -> Value {
+    fn unzip(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
-        let projects = &project_config().lock().unwrap().projects;
-        let pth = get_project_path(projects, project_name);
+        let projects = &project_config().lock().unwrap();
+        let pth = &projects.project_path(&project_name);
+        let projects = &projects.projects;
 
         fs::copy(pth.join("project.json"), pth.join("project.old.json"))
             .expect("failed to move project.json");
@@ -381,19 +391,19 @@ impl CmdHandler {
         fs::write(target_dir.join(".gitignore"), "project.old.json")
             .expect("failed to write gitignore");
 
-        json!({ "status": "success" })
+        self.send_json(json!({ "status": "success" }))
     }
 
-    fn get_project(&self, data: CmdData, old: bool) -> Value {
+    fn get_project(&mut self, data: CmdData, old: bool) {
         let CmdData::Project {
             project_name,
             sprite_name,
         } = data
         else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         let old_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join(format!("project{}.json", if old { ".old" } else { "" })))
@@ -419,18 +429,32 @@ impl CmdHandler {
         };
 
         if let Some(bl) = blocks {
-            serde_json::Value::Object(bl.to_owned())
+            self.send_json(serde_json::Value::Object(bl.to_owned()))
         } else {
-            json!({})
+            self.send_json(json!({}))
         }
     }
 
-    fn push(&self, data: CmdData) -> Value {
+    fn push(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
+
+        let config_remote = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "remote", "get-url", "origin"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["remote", "get-url", "origin"]);
+            git
+        }
+        .current_dir(&pth)
+        .output();
+        let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
+
         let mut push = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
             cmd.args(["/C", "git", "push", "--set-upstream", "origin", "master"]);
@@ -440,6 +464,12 @@ impl CmdHandler {
             git.args(["push", "--set-upstream", "origin", "master"]);
             git
         };
+
+        if config_remote.contains("github.com") {
+            let mut token = gh_token().lock().unwrap();
+            push.env("GITHUB_TOKEN", token.get());
+        }
+
         let push = push
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -449,7 +479,7 @@ impl CmdHandler {
         let stderr = String::from_utf8(output.stderr).unwrap();
 
         // TODO: these checks might be very brittle
-        if stderr.contains(" ! [") && stderr.contains("git pull ...") {
+        self.send_json(if stderr.contains(" ! [") && stderr.contains("git pull ...") {
             json!({"status": "pull needed"})
         } else if output.status.success() {
             if stderr.contains("Everything up-to-date") {
@@ -459,16 +489,30 @@ impl CmdHandler {
             }
         } else {
             json!({"status": "fail"})
-        }
+        })
     }
 
-    fn pull(&self, data: CmdData) -> Value {
+    fn pull(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
-        let projects = &project_config().lock().unwrap().projects;
-        let pth = get_project_path(projects, &project_name);
+        let projects = &project_config().lock().unwrap();
+        let pth = &projects.project_path(&project_name);
+        let projects = &projects.projects;
         let sb3 = projects[&project_name]["project_file"].as_str().unwrap();
+
+        let config_remote = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "remote", "get-url", "origin"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["remote", "get-url", "origin"]);
+            git
+        }
+        .current_dir(&pth)
+        .output();
+        let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
 
         let mut pull = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
@@ -479,6 +523,12 @@ impl CmdHandler {
             git.args(["pull", "origin", "master", "--rebase"]);
             git
         };
+
+        if config_remote.contains("github.com") {
+            let mut token = gh_token().lock().unwrap();
+            pull.env("GITHUB_TOKEN", token.get());
+        }
+
         let pull = pull
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -490,7 +540,7 @@ impl CmdHandler {
             let stdout = String::from_utf8(pull.stdout).unwrap();
 
             if stdout.contains("Already up to date") {
-                return json!({"status": "nothing new"});
+                return self.send_json(json!({"status": "nothing new"}));
             }
 
             let walkdir = WalkDir::new(&pth);
@@ -501,36 +551,35 @@ impl CmdHandler {
                 File::create(Path::new(sb3)).unwrap(),
             );
 
-            json!({"status": "success"})
+            self.send_json(json!({"status": "success"}))
         } else {
             let stderr = String::from_utf8(pull.stderr).unwrap();
 
             if stderr.contains("unrelated histories") {
-                json!({"status": "unrelated histories"})
+                self.send_json(json!({"status": "unrelated histories"}))
             } else {
-                json!({"status": "Error: ".to_owned() + &stderr})
+                self.send_json(json!({"status": "Error: ".to_owned() + &stderr}))
             }
         }
     }
 
-    fn commit(&self, data: CmdData) -> Value {
+    fn commit(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
-        let project_path =
-            get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         if self.debug {
             println!(
                 "commit: path to project is {}",
-                project_path.to_string_lossy()
+                pth.to_string_lossy()
             );
-            println!("commit: path exists? {}", project_path.exists())
+            println!("commit: path exists? {}", pth.exists())
         }
 
         let current_diff = serde_json::from_str::<serde_json::Value>(
-            &fs::read_to_string(project_path.join("project.old.json"))
+            &fs::read_to_string(pth.join("project.old.json"))
                 .unwrap()
                 .as_str(),
         )
@@ -538,7 +587,7 @@ impl CmdHandler {
         let current_diff = Diff::new(&current_diff);
 
         let new_diff = serde_json::from_str::<serde_json::Value>(
-            &fs::read_to_string(project_path.join("project.json"))
+            &fs::read_to_string(pth.join("project.json"))
                 .unwrap()
                 .as_str(),
         )
@@ -546,12 +595,12 @@ impl CmdHandler {
         let new_diff = Diff::new(&new_diff);
 
         for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(project_path.join(change.costume_path))
+            fs::remove_file(pth.join(change.costume_path))
                 .expect("failed to remove asset");
         }
 
-        if !git::add(&project_path) {
-            return json!({ "message": "Nothing to add" });
+        if !git::add(&pth) {
+            return self.send_json(json!({ "message": "Nothing to add" }));
         }
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -563,7 +612,7 @@ impl CmdHandler {
             git.args(["commit", "-m", "temporary"]);
             git
         };
-        let commit = commit.current_dir(&project_path).status().unwrap();
+        let commit = commit.current_dir(&pth).status().unwrap();
 
         if !commit.success() {
             if self.debug {
@@ -573,15 +622,15 @@ impl CmdHandler {
                 )
             }
             // TODO: make error message less generic
-            return json!({ "message": "Nothing to commit" });
+            return self.send_json(json!({ "message": "Nothing to commit" }));
         }
 
         if self.debug {
-            let rev = git::show_revision(&project_path, "HEAD~1:project.json");
+            let rev = git::show_revision(&pth, "HEAD~1:project.json");
             println!("commit: got revision for HEAD~1:project.json:\n\n{rev}")
         }
 
-        let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");
+        let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json");
         let commit_message = previous_revision.commits(&new_diff).join(", ");
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -593,20 +642,20 @@ impl CmdHandler {
             git.args(["commit", "--amend", "-m", &commit_message]);
             git
         };
-        let commit = commit.current_dir(&project_path);
+        let commit = commit.current_dir(&pth);
 
         if !commit.status().unwrap().success() {
-            return json!({ "message": "fail" });
+            return self.send_json(json!({ "message": "fail" }));
         }
 
-        json!({ "message": commit_message })
+        self.send_json(json!({ "message": commit_message }))
     }
 
-    fn get_commits(&self, data: CmdData) -> Value {
+    fn get_commits(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
         let format = "--pretty=format:{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},";
 
         let git_log = if cfg!(target_os = "windows") {
@@ -638,15 +687,15 @@ impl CmdHandler {
             binding
         };
 
-        serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output")
+        self.send_json(serde_json::from_str(&log_output).expect("failed to parse log output"))
     }
 
-    fn get_changed_sprites(&self, data: CmdData) -> Value {
+    fn get_changed_sprites(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
-            return json!({});
+            return self.send_json(json!({}));
         };
 
-        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         let binding = &fs::read_to_string(pth.join("project.old.json"));
         let project_old_json = match binding {
@@ -655,7 +704,8 @@ impl CmdHandler {
                 if self.debug {
                     println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
                 }
-                return json!({ "status": "unzip the project first that should do it" });
+                return self
+                    .send_json(json!({ "status": "unzip the project first that should do it" }));
             }
         };
         let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();
@@ -682,38 +732,56 @@ impl CmdHandler {
             })
             .collect();
 
-        json!({ "sprites": sprites })
+        self.send_json(json!({ "sprites": sprites }))
+    }
+
+    fn gh_auth(&mut self) {
+        let mut gh_token = gh_token().lock().unwrap();
+        let current_token = gh_token.get().to_string();
+
+        if gh_auth::current_user(current_token.clone()).is_some() {
+            return self.send_json(json!({"success": true}));
+        }
+
+        let code = gh_auth::device_code();
+        self.send_json(code.json().unwrap());
+
+        let token = loop {
+            let token = gh_auth::access_token(code.json::<gh_auth::DeviceCode>().unwrap());
+            if let Some(token) = token {
+                break token;
+            }
+            sleep(Duration::from_millis(5000))
+        };
+
+        *gh_token.get() = token.clone();
+        gh_token.save();
+
+        self.send_json(json!({"success": true}))
     }
 }
 
-pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
-    let json: Cmd = match from_str::<Cmd>(msg.as_str()) {
-        Ok(j) => j,
-        Err(e) => return Err(e),
+pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) {
+    let mut handler = CmdHandler::new(debug, socket);
+
+    match msg.command {
+        // static
+        "diff" => handler.diff(msg.data),
+        "remote-exists" => handler.remote_exists(msg.data),
+        "exists" => handler.exists(msg.data),
+        "create-project" => handler.create_project(msg.data),
+        "gh-auth" => handler.gh_auth(),
+        // project-specific
+        "set-project-details" => handler.set_project_details(msg.data),
+        "get-project-details" => handler.get_project_details(msg.data),
+        "unzip" => handler.unzip(msg.data),
+        "commit" => handler.commit(msg.data),
+        "push" => handler.push(msg.data),
+        "pull" => handler.pull(msg.data),
+        "current-project" => handler.get_project(msg.data, false),
+        "previous-project" => handler.get_project(msg.data, true),
+        "get-commits" => handler.get_commits(msg.data),
+        "get-changed-sprites" => handler.get_changed_sprites(msg.data),
+        _ => unreachable!(),
     };
-
-    let handler = CmdHandler::new(debug);
-
-    Ok(Message::Text(
-        match json.command {
-            // static
-            "diff" => handler.diff(json.data),
-            "remote-exists" => handler.remote_exists(json.data),
-            "exists" => handler.exists(json.data),
-            "create-project" => handler.create_project(json.data),
-            // project-specific
-            "set-project-details" => handler.set_project_details(json.data),
-            "get-project-details" => handler.get_project_details(json.data),
-            "unzip" => handler.unzip(json.data),
-            "commit" => handler.commit(json.data),
-            "push" => handler.push(json.data),
-            "pull" => handler.pull(json.data),
-            "current-project" => handler.get_project(json.data, false),
-            "previous-project" => handler.get_project(json.data, true),
-            "get-commits" => handler.get_commits(json.data),
-            "get-changed-sprites" => handler.get_changed_sprites(json.data),
-            _ => unreachable!(),
-        }
-        .to_string(),
-    ))
 }

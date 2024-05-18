@@ -1,2 +1,2 @@
-export * from "./alert";
+export * from "./alerts";
 export * from "./menus";
