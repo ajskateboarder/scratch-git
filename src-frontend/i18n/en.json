@@ -37,7 +37,14 @@
     "no-empty-fields": "Don't leave starred fields blank!",
     "repo-tip": "A repository (repo) is a place to store your project online"
   },
-  "alerts": {},
+  "alerts": {
+    "unrelated-changes": "Couldn't pull new changes since they are unrelated with your changes.",
+    "pull-success": "Successfully pulled new changes. Reload to see them.",
+    "no-changes": "There's no new changes to pull.",
+    "inconsistent-work": "The online repository contains work that you don't have. Try pulling changes from online first.",
+    "up-to-date": "Everything is up to date. There are no new commits to push.",
+    "push-success": "Successfully pushed changes to {{url}}"
+  },
   "close": "Close",
   "okay": "Okay"
 }
