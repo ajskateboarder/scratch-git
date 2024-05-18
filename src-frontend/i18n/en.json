@@ -37,6 +37,7 @@
     "no-empty-fields": "Don't leave starred fields blank!",
     "repo-tip": "A repository (repo) is a place to store your project online"
   },
+  "alerts": {},
   "close": "Close",
   "okay": "Okay"
 }

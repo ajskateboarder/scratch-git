@@ -24,7 +24,7 @@ import styles from "./styles.css";
 import tippy from "./tippy.css";
 
 import van from "vanjs-core";
-import { getLocale } from "./i18n";
+import i18next, { getLocale } from "./i18n";
 
 const { link, style, button, i } = van.tags;
 
@@ -89,13 +89,11 @@ const pullHandler =
 
     let message = await project!.pull();
     if (message === "unrelated histories") {
-      new ScratchAlert(
-        "Couldn't pull new changes since they are unrelated with your changes"
-      )
+      new ScratchAlert(i18next.t("alerts.unrelated-changes"))
         .setType("error")
         .display();
     } else if (message === "success") {
-      new ScratchAlert("Successfully pulled new changes. Reload to see them.")
+      new ScratchAlert(i18next.t("alerts.pull-success"))
         .setType("success")
         .addButtons([
           button(
@@ -105,7 +103,7 @@ const pullHandler =
         ])
         .display();
     } else if (message === "nothing new") {
-      new ScratchAlert("There's no new changes to pull")
+      new ScratchAlert(i18next.t("no-changes"))
         .setType("success")
         .setTimeout(5000)
         .display();
@@ -138,9 +136,7 @@ const pushHandler =
 
     let message = await project!.push();
     if (message === "pull needed") {
-      new ScratchAlert(
-        "The online repository contains work that you don't have. Try pulling changes from online first."
-      )
+      new ScratchAlert(i18next.t("alerts.inconsistent-work"))
         .setType("warn")
         .addButtons([
           button(
@@ -155,17 +151,15 @@ const pushHandler =
       return;
     }
     if (message === "up to date") {
-      new ScratchAlert(
-        "Everything is up to date. There are no new commits to push."
-      )
+      new ScratchAlert(i18next.t("alerts.up-to-date"))
         .setType("success")
         .setTimeout(5000)
         .display();
     } else {
       new ScratchAlert(
-        `Pushed changes to ${
-          (await project!.getDetails()).repository
-        } successfully`
+        i18next.t("alerts.pull-success", {
+          url: (await project!.getDetails()).repository,
+        })
       )
         .setType("success")
         .setTimeout(5000)
@@ -260,9 +254,6 @@ async function initialize() {
       await displayDiffs();
     }
   });
-
-  let locale = getLocale();
-  console.log(locale);
 
   document.head.append(...Styles());
 
