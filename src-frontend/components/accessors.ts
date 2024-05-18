@@ -69,4 +69,3 @@ export const misc = {
   menuItems: s("menu-bar_file-group"),
   saveArea: s("menu-bar_account-info-group"),
 };
-(window as any).s = s;

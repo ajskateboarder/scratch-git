@@ -3,9 +3,7 @@ import i18next from "i18next";
 import * as en from "./en.json";
 import * as es from "./es.json";
 
-export const getLocale = () => {
-  return window.ReduxStore.getState().locales.locale;
-};
+export const getLocale = () => window.ReduxStore.getState().locales.locale;
 
 i18next.init({
   lng: getLocale(),
@@ -18,9 +16,7 @@ i18next.init({
       translation: es,
     },
   },
-  missingKeyHandler: () => {
-    i18next.changeLanguage("en");
-  },
+  missingKeyHandler: () => i18next.changeLanguage("en"),
 });
 
 export default i18next;

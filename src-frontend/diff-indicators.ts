@@ -1,4 +1,5 @@
 /** @file Displays indicators and info on sprites that were changed */
+
 import type { Project, Sprite } from "./api";
 import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
@@ -45,9 +46,7 @@ async function changedBlocklyScripts(
 const STAGE: Sprite = {
   name: "Stage",
   isStage: true,
-  format() {
-    return "Stage (stage)";
-  },
+  format: () => "Stage (stage)",
 };
 
 async function highlightChanged(

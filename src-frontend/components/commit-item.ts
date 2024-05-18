@@ -1,4 +1,5 @@
 import type { Commit } from "@/api";
+import i18next from "i18next";
 import van from "vanjs-core";
 
 const { div, br, span } = van.tags;
@@ -48,7 +49,7 @@ export const CommitItem = (commit: Commit, search: string) =>
       commit.author.name,
       span(
         { style: "font-weight: lighter", title: commit.author.date },
-        ` committed ${timeAgo(commit.author.date)}`
+        i18next.t("commit.committed-when", timeAgo(commit.author.date))
       )
     )
   );

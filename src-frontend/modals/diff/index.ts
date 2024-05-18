@@ -6,6 +6,7 @@ import { scrollBlockIntoView, flash } from "./block-utils";
 import van from "vanjs-core";
 import { Checkbox, Copy } from "@/components";
 import { scratchblocks } from "@/lib";
+import i18next from "i18next";
 
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
@@ -61,8 +62,11 @@ export class DiffModal extends HTMLDialogElement {
   connectedCallback() {
     if (this.querySelector("main")) return;
 
-    const useHighlights = Checkbox({}, "Use highlights");
-    const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
+    const useHighlights = Checkbox({}, i18next.t("diff.use-highlights"));
+    const plainText = Checkbox(
+      { style: "margin-left: 10px;" },
+      i18next.t("diff.plain-text")
+    );
     const closeButton = button(
       {
         id: "closeButton",
@@ -359,7 +363,7 @@ export class DiffModal extends HTMLDialogElement {
         button(
           { class: "tab-btn" },
           i({ class: `${DIFF_ICON[diff.status]} change-icon` }),
-          `Script ${diff.scriptNo}`,
+          i18next.t("diff.script", { number: scriptNo }),
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {

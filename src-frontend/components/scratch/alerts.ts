@@ -17,10 +17,10 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 
 /** Displays a custom scratch-gui alert */
 export class ScratchAlert {
-  message: string | ChildDom;
-  type: "success" | "warn" | "error" = "success";
-  buttons: ChildDom[] = [];
-  timeout?: number;
+  private message: string | ChildDom;
+  private type: "success" | "warn" | "error" = "success";
+  private buttons: ChildDom[] = [];
+  private timeout?: number;
 
   constructor(message: string | ChildDom) {
     this.message = message;

@@ -2,6 +2,7 @@ import { settings, misc } from "@/components";
 import van, { PropsWithKnownKeys, State } from "vanjs-core";
 import tippy from "tippy.js";
 import api, { Project, remoteExists } from "@/api";
+import i18next from "i18next";
 
 const { main, button, h1, div, span, input, label, br, p } = van.tags;
 
@@ -55,9 +56,9 @@ export class RepoConfigModal extends HTMLDialogElement {
     );
 
     const repository = InputBox({
-      placeholder: "Enter a link to a repository URL",
+      placeholder: i18next.t("repo-config.repo-url-placeholder"),
       onblur: async ({ target }: Event) => {
-        let url: string = (target as HTMLInputElement).value;
+        const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
           if (!isValidUrl(url) && !(await remoteExists(url))) {
             repository.value = "";
@@ -79,7 +80,7 @@ export class RepoConfigModal extends HTMLDialogElement {
             editButton.innerHTML = `<i class="fa-solid fa-floppy-disk floppy-save-button"></i>`;
           } else {
             if (name.value.trim() === "" || repository.value.trim() === "") {
-              alert("Don't leave starred fields blank!");
+              alert(i18next.t("repoconfig.no-empty-fields"));
               return;
             }
             this.editing.val = false;
@@ -98,12 +99,19 @@ export class RepoConfigModal extends HTMLDialogElement {
 
     van.derive(() => {
       if (this.editing.oldVal !== this.editing.val) {
-        let e: "add" | "remove" = !this.editing.val ? "add" : "remove";
+        const e: "add" | "remove" = !this.editing.val ? "add" : "remove";
         repository.classList[e]("disabled-config-input");
         name.classList[e]("disabled-config-input");
         email.classList[e]("disabled-config-input");
       }
     });
+
+    const config = i18next
+      .t("repoconfig.repoconfig")
+      .replace(
+        /\[\[(.*?)\]\]/g,
+        '<span class="tip" id="repositoryTip">$1</span>'
+      );
 
     van.add(
       this,
@@ -111,24 +119,27 @@ export class RepoConfigModal extends HTMLDialogElement {
         { id: "commitList" },
         h1(
           { style: "display: flex; gap: 10px" },
-          "Configure your ",
-          span(
-            {
-              class: "tip",
-              id: "repositoryTip",
-            },
-            "repository"
-          ),
+          span({ innerHTML: config }),
           editButton
         ),
         InputField(
-          label({ class: "input-label" }, "Repository URL*"),
+          label(
+            { class: "input-label" },
+            i18next.t("repoconfig.repo-url"),
+            "*"
+          ),
           repository
         ),
         br(),
-        InputField(label({ class: "input-label" }, "Name*"), name),
+        InputField(
+          label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
+          name
+        ),
         br(),
-        InputField(label({ class: "input-label" }, "Email (optional)"), email),
+        InputField(
+          label({ class: "input-label" }, i18next.t("repoconfig.email")),
+          email
+        ),
         br(),
         br(),
         div(
@@ -154,12 +165,12 @@ export class RepoConfigModal extends HTMLDialogElement {
 
   async display() {
     tippy("#repositoryTip", {
-      content: "A repository (repo) is a place to store your project online",
+      content: i18next.t("repoconfig.repo-tip"),
       appendTo: this,
     });
 
     this.project = (await api.getCurrentProject())!;
-    let details = await this.project?.getDetails();
+    const details = await this.project?.getDetails();
 
     // in the future, these will never be blank
     this.fields.repository.value = details?.repository ?? "";

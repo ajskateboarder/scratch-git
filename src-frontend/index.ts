@@ -308,7 +308,6 @@ async function initialize() {
 }
 
 (async () => {
-  // avoids scenarios where scratch.git initializes before the editor is finished
   localStorage.setItem(
     "scratch-git:highlights",
     JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
@@ -318,6 +317,7 @@ async function initialize() {
     JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
   );
 
+  // avoids scenarios where scratch.git initializes before the editor is finished
   window.vm.runtime.on(
     "ASSET_PROGRESS",
     async (finished: number, total: number) => {

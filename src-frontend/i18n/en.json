@@ -14,19 +14,28 @@
   "commit": {
     "search-commits": "Search commits",
     "commits": "Commits",
-    "newer": "Newer",
-    "older": "Older",
+    "newer": "< Newer",
+    "older": "Older >",
     "committed-when": "committed {{time}}"
   },
   "welcome": {
     "project-opened": "Project opened",
     "open-project": "Open project",
-    "welcome": "Bienvenidos a scratch.git",
+    "welcome": "Welcome to scratch.git",
     "get-started": "Please load a project for Git development to get started",
     "configure-project-loc": "Configure project location",
     "select-location": "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
     "next": "Next",
     "back": "Back"
+  },
+  "repoconfig": {
+    "repo-url-placeholder": "Enter a link to a repository URL",
+    "repo-url": "Repository URL",
+    "name": "Name",
+    "email": "Email (optional)",
+    "repoconfig": "Configure your [[repository]]",
+    "no-empty-fields": "Don't leave starred fields blank!",
+    "repo-tip": "A repository (repo) is a place to store your project online"
   },
   "close": "Close",
   "okay": "Okay"

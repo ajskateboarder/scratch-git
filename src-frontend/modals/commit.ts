@@ -2,6 +2,7 @@ import api, { type Commit } from "@/api";
 import { settings } from "@/components";
 import van, { type State } from "vanjs-core";
 import { CommitItem } from "@/components";
+import i18next from "i18next";
 
 const { h1, button, input, div, span, br, main } = van.tags;
 
@@ -41,7 +42,7 @@ export class CommitModal extends HTMLDialogElement {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      "Close"
+      i18next.t("close")
     );
 
     this.newer = button(
@@ -49,14 +50,14 @@ export class CommitModal extends HTMLDialogElement {
         class: [settings.settingsButton, "round-right-button"].join(" "),
         disabled: true,
       },
-      "< Newer"
+      i18next.t("commit.newer")
     );
 
     this.older = button(
       {
         class: [settings.settingsButton, "round-left-button"].join(" "),
       },
-      "Older >"
+      i18next.t("commit.older")
     );
 
     this.search = input({
@@ -67,7 +68,7 @@ export class CommitModal extends HTMLDialogElement {
           ? " dark"
           : ""
       }`,
-      placeholder: "Search commits",
+      placeholder: i18next.t("commit.search-commits"),
     });
 
     const commitGroup = div({ class: "commit-group" }, () =>
@@ -88,7 +89,7 @@ export class CommitModal extends HTMLDialogElement {
       this,
       main(
         { id: "commitList" },
-        h1("Commits"),
+        h1(i18next.t("commit.commits")),
         div({ class: "pagination" }, span(this.newer, this.older), this.search),
         br(),
         commitGroup,
