@@ -100,6 +100,7 @@ export class RepoConfigModal extends HTMLDialogElement {
     van.derive(() => {
       if (this.editing.oldVal !== this.editing.val) {
         const e: "add" | "remove" = !this.editing.val ? "add" : "remove";
+
         repository.classList[e]("disabled-config-input");
         name.classList[e]("disabled-config-input");
         email.classList[e]("disabled-config-input");
