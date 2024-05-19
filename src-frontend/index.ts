@@ -64,6 +64,9 @@ const Styles = () => {
   ];
 };
 
+const repoIsGitHub = async (project: Project) =>
+  new URL((await project!.getDetails()).repository).host === "github.com";
+
 /** Handles pulling as a Git menu option
  *
  * @param project - the currently open project
@@ -72,10 +75,7 @@ const Styles = () => {
 const pullHandler =
   async (project: Project, authed: boolean = false) =>
   async () => {
-    if (
-      !authed &&
-      (await project!.getDetails()).repository.includes("github.com")
-    ) {
+    if (!authed && (await repoIsGitHub(project))) {
       let auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
       auth.addEventListener("devicecode", (e) => {
@@ -119,10 +119,7 @@ const pullHandler =
 const pushHandler =
   async (project: Project, authed: boolean = false) =>
   async () => {
-    if (
-      !authed &&
-      (await project!.getDetails()).repository.includes("github.com")
-    ) {
+    if (!authed && (await repoIsGitHub(project))) {
       let auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
       auth.addEventListener("devicecode", (e) => {
