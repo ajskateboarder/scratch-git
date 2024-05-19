@@ -1,5 +1,5 @@
 import type { Commit } from "@/api";
-import i18next from "i18next";
+import i18next from "@/i18n";
 import van from "vanjs-core";
 
 const { div, br, span } = van.tags;

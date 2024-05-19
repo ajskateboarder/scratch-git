@@ -16,9 +16,7 @@ export const fileMenu = new (class FileMenu {
   }
 
   setMenu() {
-    this.menu = document.querySelectorAll<HTMLDivElement>(
-      `div.${menu.menuItem}`
-    )[1];
+    this.menu = menu.menuItem.selectAll("div")[1] as HTMLDivElement;
     this.eventHandlers = Object.keys(this.menu).find((e) =>
       e.startsWith("__reactEventHandlers")
     )!;

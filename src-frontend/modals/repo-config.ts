@@ -2,12 +2,12 @@ import { settings, misc } from "@/components";
 import van, { PropsWithKnownKeys, State } from "vanjs-core";
 import tippy from "tippy.js";
 import api, { Project, remoteExists } from "@/api";
-import i18next from "i18next";
+import i18next from "@/i18n";
 
 const { main, button, h1, div, span, input, label, br, p } = van.tags;
 
-const PENCIL = document
-  .querySelector(`.${misc.menuItems}`)!
+const PENCIL = misc.menuItems
+  .select()
   .children[2].children[0].cloneNode() as HTMLImageElement;
 
 function isValidUrl(url: string) {

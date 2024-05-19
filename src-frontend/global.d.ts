@@ -1,4 +1,4 @@
-interface Window {
+declare interface Window {
   ReduxStore: {
     dispatch: (_: { type: string; [key: string] }) => void;
     getState: () => {
@@ -29,7 +29,7 @@ type TypedEventTarget<EventMap extends object> = {
   new (): IntermediateEventTarget<EventMap>;
 };
 
-interface IntermediateEventTarget<EventMap> extends EventTarget {
+declare interface IntermediateEventTarget<EventMap> extends EventTarget {
   addEventListener<K extends keyof EventMap>(
     type: K,
     callback: (

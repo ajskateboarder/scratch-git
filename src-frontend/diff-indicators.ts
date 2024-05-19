@@ -105,9 +105,7 @@ const nameOfSprite = (element: HTMLElement) =>
 /** Shows buttons to display changes and highlight changed scripts */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites(),
-    _sprites = <HTMLElement[]>[
-      ...document.querySelector(`.${sprites.sprites}`)!.children,
-    ],
+    _sprites = [...sprites.sprites.select().children] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
 
   _sprites.forEach((sprite) => {
@@ -118,20 +116,16 @@ export async function showIndicators(project: Project) {
 
     sprite.addEventListener("click", () => {
       if (
-        document.querySelector(`.${sprites.selectedSprite}`) &&
+        sprites.selectedSprite.select() &&
         spriteName ===
-          nameOfSprite(document.querySelector(`.${sprites.selectedSprite}`)!) &&
+          nameOfSprite(sprites.selectedSprite.select() as HTMLDivElement) &&
         sprite.querySelector<HTMLDivElement>(".diff-button")?.style
           .marginTop === "30px"
       ) {
         return;
       }
 
-      (<HTMLDivElement[]>[
-        ...document.querySelectorAll(
-          `.${sprites.delete}.${sprites.spriteSelDelete}`
-        ),
-      ])
+      (<HTMLDivElement[]>[...sprites.spriteSelDelete.selectAll(sprites.delete)])
         .filter((button) => !button.classList.contains("stage-diff-button"))
         .forEach((button) => (button.style.marginTop = "0px"));
     });
@@ -140,7 +134,7 @@ export async function showIndicators(project: Project) {
     if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
       return;
 
-    let applyMargin = sprite.querySelector(`.${sprites.delete}`) !== null;
+    let applyMargin = sprites.delete.select() !== null;
     let diffButton = SpriteDiff({
       style: `
       margin-top: ${applyMargin ? "30px" : "0px"};
@@ -173,20 +167,12 @@ export async function showIndicators(project: Project) {
       let movedToSprite = nameOfSprite(
         await new Promise((resolve) => {
           const observer = new MutationObserver(() => {
-            resolve(
-              document.querySelector<HTMLDivElement>(
-                `.${sprites.selectedSprite}`
-              )!
-            );
+            resolve(sprites.selectedSprite.select() as HTMLDivElement);
           });
-          observer.observe(
-            document.querySelector(`.${sprites.selectedSprite}`) ??
-              document.body,
-            {
-              childList: true,
-              subtree: true,
-            }
-          );
+          observer.observe(sprites.selectedSprite.select() ?? document.body, {
+            childList: true,
+            subtree: true,
+          });
         })
       );
 
@@ -202,9 +188,7 @@ export async function showIndicators(project: Project) {
   });
 
   // creates a diff button for the stage
-  let stageWrapper: HTMLDivElement = document.querySelector(
-    `.${sprites.stageWrapper}`
-  )!;
+  let stageWrapper = sprites.stageWrapper.select() as HTMLDivElement;
 
   if (changedSprites.some((e) => e.name === "Stage" && e.isStage)) {
     let stageDiffButton = StageDiff({
@@ -236,20 +220,14 @@ export async function showIndicators(project: Project) {
   }
 
   stageWrapper.addEventListener("click", async () => {
-    (<HTMLDivElement[]>[
-      ...document.querySelectorAll(
-        `.${sprites.delete}.${sprites.spriteSelDelete}`
-      ),
-    ])
+    (<HTMLDivElement[]>[...sprites.spriteSelDelete.selectAll("sprites.delete")])
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
 
     await highlightChanged(project, STAGE, loadedJSON);
   });
 
-  let selectedSprite: HTMLDivElement = document.querySelector(
-    `.${sprites.selectedSprite}`
-  )!;
+  let selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
 
   let sprite = (
     selectedSprite
@@ -262,9 +240,7 @@ export async function showIndicators(project: Project) {
   // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {
     if ((mutation.target as HTMLElement).classList.contains(misc.selectedTab)) {
-      let selectedSprite: HTMLDivElement = document.querySelector(
-        `.${sprites.selectedSprite}`
-      )!;
+      let selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
       let sprite_ = selectedSprite
         ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
         : STAGE;
@@ -277,9 +253,7 @@ export async function showIndicators(project: Project) {
 
   // retain diff highlights for editor theme
   new MutationObserver(async () => {
-    let selectedSprite: HTMLDivElement = document.querySelector(
-      `.${sprites.selectedSprite}`
-    )!;
+    let selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
     let sprite_ = selectedSprite
       ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
       : STAGE;

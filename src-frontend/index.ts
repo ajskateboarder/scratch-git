@@ -242,10 +242,8 @@ async function initialize() {
 
   // ensure a click event listener for the save button
   new MutationObserver(() => {
-    document
-      .querySelector(`.${misc.saveArea}`)
-      ?.firstChild!.addEventListener("click", displayDiffs);
-  }).observe(document.querySelector(`.${misc.saveArea}`)?.firstChild!, {
+    misc.saveArea.select()?.firstChild!.addEventListener("click", displayDiffs);
+  }).observe(misc.saveArea.select()?.firstChild!, {
     childList: true,
   });
 
@@ -286,12 +284,9 @@ async function initialize() {
             });
           });
         }
-      }).observe(
-        document.querySelector(`.${misc.menuItems}`)?.firstChild?.lastChild!,
-        {
-          childList: true,
-        }
-      );
+      }).observe(misc.menuItems.select().firstChild?.lastChild!, {
+        childList: true,
+      });
 
       createGitMenu(project!);
     }

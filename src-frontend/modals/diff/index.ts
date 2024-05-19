@@ -6,7 +6,7 @@ import { scrollBlockIntoView, flash } from "./block-utils";
 import van from "vanjs-core";
 import { Checkbox, Copy } from "@/components";
 import { scratchblocks } from "@/lib";
-import i18next from "i18next";
+import i18next from "@/i18n";
 
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 

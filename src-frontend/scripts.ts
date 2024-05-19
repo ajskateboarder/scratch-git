@@ -65,7 +65,7 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
   let changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
-    // @ts-ignore - 'number | any[]' must have a '[Symbol.iterator]()' method that returns an iterator
+    // @ts-ignore
     .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
       if (newContent === undefined) {
         newContent = "";
@@ -75,8 +75,8 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
-            ? "added"
-            : "removed";
+          ? "added"
+          : "removed";
       return { oldContent, newContent, status, scriptNo, script };
     });
 
@@ -84,7 +84,7 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
 }
 
 /** Parses all scripts in a sprite and diffs them */
-export async function parseScripts(previousScripts: {}, currentScripts: {}) {
+export async function parseScripts(previousScripts: any, currentScripts: any) {
   let scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(

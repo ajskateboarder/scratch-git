@@ -2,7 +2,7 @@ import api, { type Commit } from "@/api";
 import { settings } from "@/components";
 import van, { type State } from "vanjs-core";
 import { CommitItem } from "@/components";
-import i18next from "i18next";
+import i18next from "@/i18n";
 
 const { h1, button, input, div, span, br, main } = van.tags;
 

@@ -1,6 +1,6 @@
 import van, { ChildDom } from "vanjs-core";
 import { misc, alert, Copy } from "..";
-import { DeviceCode } from "@/api";
+import type { DeviceCode } from "@/api";
 
 const { div, img, span, a } = van.tags;
 
@@ -42,7 +42,7 @@ export class ScratchAlert {
   }
 
   display() {
-    const container = document.querySelector(`.${alert.container}`)!;
+    const container = alert.container.select();
 
     const alertType = {
       success: "real-success-alert",

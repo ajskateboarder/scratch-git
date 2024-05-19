@@ -14,7 +14,15 @@ const s = (className: string) => {
   if (_className.includes(".")) {
     _className = _className.split(".")[1];
   }
-  return _className.split(":")[0];
+  className = _className.split(":")[0];
+  return Object.assign(className, {
+    select(elem: string = "") {
+      return document.querySelector(`${elem}.${className}`)!;
+    },
+    selectAll(elem: string = "") {
+      return document.querySelectorAll(`${elem}.${className}`)!;
+    },
+  });
 };
 
 export const menu = {

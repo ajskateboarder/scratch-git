@@ -1,7 +1,7 @@
 import i18next from "i18next";
 import en from "./en.json";
 
-type Language = "pl" | "en";
+type Language = "en" | "es" | "de";
 
 type _TranslationKeys<T, Cache extends string = ""> = T extends PropertyKey
   ? Cache
@@ -15,4 +15,7 @@ type _TranslationKeys<T, Cache extends string = ""> = T extends PropertyKey
         : never;
     }[keyof T];
 
-export type t = <K extends _TranslationKeys<typeof en>>(k: K) => string;
+export type Translation = <K extends _TranslationKeys<typeof en>>(
+  k: K,
+  ...any
+) => string;

@@ -1,4 +1,5 @@
 import i18next from "i18next";
+import type { Translation } from "./i18next";
 
 import * as de from "./de.json";
 import * as en from "./en.json";
@@ -26,4 +27,6 @@ i18next.init({
   },
 });
 
-export default i18next;
+export default Object.assign(i18next, {
+  t: i18next.t as unknown as Translation,
+});
