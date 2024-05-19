@@ -47,6 +47,8 @@ These features closely mimic the kind of Git development seen in editors such as
 
 - scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output
 
+## Contributing
+
 ## Developing
 
 Install the build dependencies:

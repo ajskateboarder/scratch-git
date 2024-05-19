@@ -1,4 +1,5 @@
 use dunce::canonicalize;
+<<<<<<< HEAD
 use std::fs::{self, File};
 use std::net::TcpStream;
 use std::{
@@ -18,6 +19,35 @@ use crate::diff::{Diff, ScriptChanges};
 use crate::gh_auth;
 use crate::git;
 use crate::zipping::{self, extract};
+=======
+use std::fs;
+use std::{
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+    sync::{Mutex, OnceLock},
+    thread::sleep,
+    time::Duration,
+};
+use tungstenite::Message;
+
+use serde::{Deserialize, Serialize};
+use serde_json::{self, from_str, json, Error, Value};
+
+use crate::diff::{Diff, ScriptChanges};
+use crate::extract::extract;
+use crate::git;
+use crate::projects::ProjectConfig;
+
+fn get_project_path(projects: &Value, project_name: &str) -> PathBuf {
+    let base_loc = &projects[project_name]["base"].as_str().unwrap().to_string();
+    Path::new(&base_loc).to_path_buf()
+}
+
+fn project_config() -> &'static Mutex<ProjectConfig> {
+    static CONFIG: OnceLock<Mutex<ProjectConfig>> = OnceLock::new();
+    CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new("projects/config.json")))
+}
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
 #[derive(Serialize, Deserialize, PartialEq)]
 enum CmdData<'a> {
@@ -25,10 +55,16 @@ enum CmdData<'a> {
         project_name: &'a str,
         sprite_name: Option<&'a str>,
     },
+<<<<<<< HEAD
+=======
+    // owned strings are needed to account for newlines
+    // or maybe i'm doing something wrong
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
     GitDiff {
         old_content: String,
         new_content: String,
     },
+<<<<<<< HEAD
     GitDetails {
         project_name: String,
         username: String,
@@ -37,6 +73,9 @@ enum CmdData<'a> {
     },
     FilePath(String),
     URL(String),
+=======
+    FilePath(String),
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 }
 
 #[derive(Serialize, Deserialize)]
@@ -45,6 +84,7 @@ pub struct Cmd<'a> {
     data: CmdData<'a>,
 }
 
+<<<<<<< HEAD
 pub struct CmdHandler<'a> {
     debug: bool,
     socket: &'a mut WebSocket<TcpStream>,
@@ -60,11 +100,24 @@ impl CmdHandler<'_> {
     }
 
     fn diff(&mut self, data: CmdData) {
+=======
+pub struct CmdHandler {
+    debug: bool,
+}
+
+impl CmdHandler {
+    fn new(debug: bool) -> CmdHandler {
+        CmdHandler { debug }
+    }
+
+    fn diff(&self, data: CmdData) -> Value {
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         let CmdData::GitDiff {
             old_content,
             new_content,
         } = data
         else {
+<<<<<<< HEAD
             return self.send_json(json!({}));
         };
         self.send_json(json!(git::diff(
@@ -77,6 +130,20 @@ impl CmdHandler<'_> {
     fn create_project(&mut self, data: CmdData) {
         let CmdData::FilePath(file_name) = data else {
             return self.send_json(json!({}));
+=======
+            return json!({});
+        };
+        json!(git::diff(
+            old_content.to_string(),
+            new_content.to_string(),
+            2000
+        ))
+    }
+
+    fn create_project(&self, data: CmdData) -> Value {
+        let CmdData::FilePath(file_name) = data else {
+            return json!({});
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         };
         let name = Path::new(&file_name)
             .file_name()
@@ -106,7 +173,11 @@ impl CmdHandler<'_> {
                 println!("create_project: failed to find project file")
             }
 
+<<<<<<< HEAD
             return self.send_json(json!({ "message": "fail" }));
+=======
+            return json!({ "message": "fail" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         };
 
         match config.projects[&name] {
@@ -117,7 +188,11 @@ impl CmdHandler<'_> {
                 });
             }
             Value::Object(_) => {
+<<<<<<< HEAD
                 return self.send_json(json!({ "project_name": "exists" }));
+=======
+                return json!({ "project_name": "exists" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
             }
             _ => unreachable!(),
         };
@@ -168,14 +243,22 @@ impl CmdHandler<'_> {
             if self.debug {
                 println!("create_project: git init did not state that new repo was made")
             }
+<<<<<<< HEAD
             return self.send_json(json!({ "project_name": "fail" }));
+=======
+            return json!({ "project_name": "fail" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         }
 
         if !git::add(&project_path) {
             if self.debug {
                 println!("create_project: assets could not be added")
             }
+<<<<<<< HEAD
             return self.send_json(json!({ "project_name": "fail" }));
+=======
+            return json!({ "project_name": "fail" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         }
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -198,6 +281,7 @@ impl CmdHandler<'_> {
             if self.debug {
                 println!("create_project: initial commit could not be created. reason:\n\n{commit}")
             }
+<<<<<<< HEAD
             return self.send_json(json!({ "project_name": "fail" }));
         }
 
@@ -370,12 +454,39 @@ impl CmdHandler<'_> {
         let projects = &project_config().lock().unwrap();
         let pth = &projects.project_path(&project_name);
         let projects = &projects.projects;
+=======
+            return json!({ "project_name": "fail" });
+        }
+
+        json!({ "project_name": name.replace("projects/", "") })
+    }
+
+    fn exists(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+        let projects = &project_config().lock().unwrap().projects;
+        json!({ "exists": projects[project_name] != Value::Null })
+    }
+
+    fn unzip(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+
+        let projects = &project_config().lock().unwrap().projects;
+        let pth = get_project_path(projects, project_name);
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
         fs::copy(pth.join("project.json"), pth.join("project.old.json"))
             .expect("failed to move project.json");
 
         sleep(Duration::from_millis(1000));
+<<<<<<< HEAD
         let target_dir = &PathBuf::from(Path::new(&pth));
+=======
+        let target_dir = PathBuf::from(Path::new(&pth));
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         extract(
             fs::File::open(Path::new(
                 &projects[project_name]["project_file"]
@@ -384,6 +495,7 @@ impl CmdHandler<'_> {
                     .to_string(),
             ))
             .expect("failed to open file"),
+<<<<<<< HEAD
             target_dir.to_path_buf(),
         )
         .unwrap();
@@ -395,15 +507,32 @@ impl CmdHandler<'_> {
     }
 
     fn get_project(&mut self, data: CmdData, old: bool) {
+=======
+            target_dir,
+        )
+        .unwrap();
+
+        json!({ "status": "success" })
+    }
+
+    fn get_project(&self, data: CmdData, old: bool) -> Value {
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         let CmdData::Project {
             project_name,
             sprite_name,
         } = data
         else {
+<<<<<<< HEAD
             return self.send_json(json!({}));
         };
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
+=======
+            return json!({});
+        };
+
+        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
         let old_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join(format!("project{}.json", if old { ".old" } else { "" })))
@@ -429,6 +558,7 @@ impl CmdHandler<'_> {
         };
 
         if let Some(bl) = blocks {
+<<<<<<< HEAD
             self.send_json(serde_json::Value::Object(bl.to_owned()))
         } else {
             self.send_json(json!({}))
@@ -470,10 +600,33 @@ impl CmdHandler<'_> {
             push.env("GITHUB_TOKEN", token.get());
         }
 
+=======
+            serde_json::Value::Object(bl.to_owned())
+        } else {
+            json!({})
+        }
+    }
+
+    fn push(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+        let mut push = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "push"]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.arg("push");
+            git
+        };
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         let push = push
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(&pth);
+<<<<<<< HEAD
 
         let output = push.output().unwrap();
         let stderr = String::from_utf8(output.stderr).unwrap();
@@ -569,10 +722,26 @@ impl CmdHandler<'_> {
         };
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
+=======
+        json!({ "status": if !push
+                .status()
+                .unwrap()
+                .success() { "fail" } else { "success" } })
+    }
+
+    fn commit(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+
+        let project_path =
+            get_project_path(&project_config().lock().unwrap().projects, &project_name);
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
         if self.debug {
             println!(
                 "commit: path to project is {}",
+<<<<<<< HEAD
                 pth.to_string_lossy()
             );
             println!("commit: path exists? {}", pth.exists())
@@ -580,6 +749,15 @@ impl CmdHandler<'_> {
 
         let current_diff = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.old.json"))
+=======
+                project_path.to_string_lossy()
+            );
+            println!("commit: path exists? {}", project_path.exists())
+        }
+
+        let current_diff = serde_json::from_str::<serde_json::Value>(
+            &fs::read_to_string(project_path.join("project.old.json"))
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
                 .unwrap()
                 .as_str(),
         )
@@ -587,7 +765,11 @@ impl CmdHandler<'_> {
         let current_diff = Diff::new(&current_diff);
 
         let new_diff = serde_json::from_str::<serde_json::Value>(
+<<<<<<< HEAD
             &fs::read_to_string(pth.join("project.json"))
+=======
+            &fs::read_to_string(project_path.join("project.json"))
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
                 .unwrap()
                 .as_str(),
         )
@@ -595,12 +777,21 @@ impl CmdHandler<'_> {
         let new_diff = Diff::new(&new_diff);
 
         for change in new_diff.costumes(&current_diff) {
+<<<<<<< HEAD
             fs::remove_file(pth.join(change.costume_path))
                 .expect("failed to remove asset");
         }
 
         if !git::add(&pth) {
             return self.send_json(json!({ "message": "Nothing to add" }));
+=======
+            fs::remove_file(project_path.join(change.costume_path))
+                .expect("failed to remove asset");
+        }
+
+        if !git::add(&project_path) {
+            return json!({ "message": "Nothing to add" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         }
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -612,7 +803,11 @@ impl CmdHandler<'_> {
             git.args(["commit", "-m", "temporary"]);
             git
         };
+<<<<<<< HEAD
         let commit = commit.current_dir(&pth).status().unwrap();
+=======
+        let commit = commit.current_dir(&project_path).status().unwrap();
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
         if !commit.success() {
             if self.debug {
@@ -622,6 +817,7 @@ impl CmdHandler<'_> {
                 )
             }
             // TODO: make error message less generic
+<<<<<<< HEAD
             return self.send_json(json!({ "message": "Nothing to commit" }));
         }
 
@@ -631,6 +827,17 @@ impl CmdHandler<'_> {
         }
 
         let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json");
+=======
+            return json!({ "message": "Nothing to commit" });
+        }
+
+        if self.debug {
+            let rev = git::show_revision(&project_path, "HEAD~1:project.json");
+            println!("commit: got revision for HEAD~1:project.json:\n\n{rev}")
+        }
+
+        let previous_revision = Diff::from_revision(&project_path, "HEAD~1:project.json");
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         let commit_message = previous_revision.commits(&new_diff).join(", ");
 
         let mut commit = if cfg!(target_os = "windows") {
@@ -642,6 +849,7 @@ impl CmdHandler<'_> {
             git.args(["commit", "--amend", "-m", &commit_message]);
             git
         };
+<<<<<<< HEAD
         let commit = commit.current_dir(&pth);
 
         if !commit.status().unwrap().success() {
@@ -656,6 +864,22 @@ impl CmdHandler<'_> {
             return self.send_json(json!({}));
         };
         let pth = &project_config().lock().unwrap().project_path(&project_name);
+=======
+        let commit = commit.current_dir(&project_path);
+
+        if !commit.status().unwrap().success() {
+            return json!({ "message": "fail" });
+        }
+
+        json!({ "message": commit_message })
+    }
+
+    fn get_commits(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         let format = "--pretty=format:{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},";
 
         let git_log = if cfg!(target_os = "windows") {
@@ -687,6 +911,7 @@ impl CmdHandler<'_> {
             binding
         };
 
+<<<<<<< HEAD
         self.send_json(serde_json::from_str(&log_output).expect("failed to parse log output"))
     }
 
@@ -696,6 +921,17 @@ impl CmdHandler<'_> {
         };
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
+=======
+        serde_json::from_str(&format!("[{log_output}]")).expect("failed to parse log output")
+    }
+
+    fn get_changed_sprites(&self, data: CmdData) -> Value {
+        let CmdData::Project { project_name, .. } = data else {
+            return json!({});
+        };
+
+        let pth = get_project_path(&project_config().lock().unwrap().projects, &project_name);
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
         let binding = &fs::read_to_string(pth.join("project.old.json"));
         let project_old_json = match binding {
@@ -704,8 +940,12 @@ impl CmdHandler<'_> {
                 if self.debug {
                     println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
                 }
+<<<<<<< HEAD
                 return self
                     .send_json(json!({ "status": "unzip the project first that should do it" }));
+=======
+                return json!({ "status": "unzip the project first that should do it" });
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
             }
         };
         let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json).unwrap();
@@ -732,6 +972,7 @@ impl CmdHandler<'_> {
             })
             .collect();
 
+<<<<<<< HEAD
         self.send_json(json!({ "sprites": sprites }))
     }
 
@@ -784,4 +1025,34 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
         _ => unreachable!(),
     };
+=======
+        json!({ "sprites": sprites })
+    }
+}
+
+pub fn handle_command(msg: String, debug: bool) -> Result<Message, Error> {
+    let json: Cmd = match from_str(msg.as_str()) {
+        Ok(j) => j,
+        Err(e) => return Err(e),
+    };
+
+    let handler = CmdHandler::new(debug);
+
+    Ok(Message::Text(
+        match json.command {
+            "diff" => handler.diff(json.data),
+            "create-project" => handler.create_project(json.data),
+            "exists" => handler.exists(json.data),
+            "unzip" => handler.unzip(json.data),
+            "commit" => handler.commit(json.data),
+            "push" => handler.push(json.data),
+            "current-project" => handler.get_project(json.data, false),
+            "previous-project" => handler.get_project(json.data, true),
+            "get-commits" => handler.get_commits(json.data),
+            "get-changed-sprites" => handler.get_changed_sprites(json.data),
+            _ => unreachable!(),
+        }
+        .to_string(),
+    ))
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 }

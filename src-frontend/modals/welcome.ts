@@ -1,8 +1,14 @@
 import api, { ProjectExistsException } from "@/api";
 import { settings, fileMenu } from "@/components";
+<<<<<<< HEAD
 import thumbnail from "./thumbnail.svg.ts";
 import van, { type State } from "vanjs-core";
 import i18next from "@/i18n";
+=======
+// @ts-ignore
+import thumbnail from "./thumbnail.svg";
+import van, { type State } from "vanjs-core";
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
 
 const {
   tags: { div, h1, button, p, br, span, input, pre, i },
@@ -10,10 +16,26 @@ const {
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 
+<<<<<<< HEAD
 const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
     { class: "screen", id: `step${step.number}` },
     div({ class: "welcome-screen-content" }, h1(step.title), children)
+=======
+const Screen = (
+  {
+    stepNumber,
+    title,
+  }: {
+    stepNumber: number;
+    title: string;
+  },
+  ...children: any
+) =>
+  div(
+    { class: "screen", id: `step${stepNumber}` },
+    div({ class: "finishContent" }, h1(title), children)
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
   );
 
 /** Project initialization */
@@ -63,7 +85,11 @@ export class WelcomeModal extends HTMLDialogElement {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
+<<<<<<< HEAD
       i18next.t("welcome.next")
+=======
+      "Next"
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
     );
 
     const openProject = button(
@@ -76,15 +102,22 @@ export class WelcomeModal extends HTMLDialogElement {
             this.loadedProject = true;
             (goToStep2 as HTMLButtonElement).disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
+<<<<<<< HEAD
             openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
               "welcome.project-opened"
             )}`;
             setTimeout(() => {
               openProject.innerHTML = i18next.t("welcome.open-project");
+=======
+            openProject.innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
+            setTimeout(() => {
+              openProject.innerHTML = "Open project";
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
             }, 2000);
           });
         },
       },
+<<<<<<< HEAD
       i18next.t("welcome.open-project")
     );
 
@@ -93,6 +126,20 @@ export class WelcomeModal extends HTMLDialogElement {
       div(
         { style: "font-weight: normal" },
         p(i18next.t("welcome.get-started"), br(), br()),
+=======
+      "Open project"
+    );
+
+    return Screen(
+      { title: "Welcome to scratch.git", stepNumber: 1 },
+      div(
+        { style: "font-weight: normal" },
+        p(
+          "Please load a project for Git development to get started",
+          br(),
+          br()
+        ),
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         div({ class: "a-gap" }, openProject),
         br(),
         br()
@@ -104,7 +151,11 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => this.close(),
           },
+<<<<<<< HEAD
           i18next.t("close")
+=======
+          "Close"
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         ),
         goToStep2
       )
@@ -140,7 +191,11 @@ export class WelcomeModal extends HTMLDialogElement {
           ++this.currentStep.val;
         },
       },
+<<<<<<< HEAD
       i18next.t("next")
+=======
+      "Next"
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
     );
 
     const openProjectPath = input({
@@ -155,10 +210,21 @@ export class WelcomeModal extends HTMLDialogElement {
     });
 
     return Screen(
+<<<<<<< HEAD
       { title: i18next.t("welcome.configure-project-loc"), number: 2 },
       div(
         { class: "welcome-screen-content" },
         p(i18next.t("welcome.select-location"), br(), br()),
+=======
+      { title: "Configure project location", stepNumber: 2 },
+      div(
+        { class: "finishContent" },
+        p(
+          "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
+          br(),
+          br()
+        ),
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         openProjectPath,
         creationError
       ),
@@ -169,7 +235,11 @@ export class WelcomeModal extends HTMLDialogElement {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
+<<<<<<< HEAD
           i18next.t("welcome.back")
+=======
+          "Back"
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         ),
         goToStep3
       )
@@ -178,6 +248,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
   step3() {
     return Screen(
+<<<<<<< HEAD
       { title: i18next.t("welcome.welcome"), number: 3 },
       div(
         { class: "welcome-screen-content" },
@@ -191,6 +262,18 @@ export class WelcomeModal extends HTMLDialogElement {
             },
             i18next.t("close")
           )
+=======
+      { title: "Welcome to scratch.git!", stepNumber: 3 },
+      div(
+        { class: "finishContent" },
+        p("To be written", br(), br()),
+        BottomBar(
+          button({
+            style: "align-items: right; margin-left: -10px",
+            class: settings.settingsButton,
+            onclick: () => this.close(),
+          })
+>>>>>>> 4a0b5769348613dbad11c86faaf334b85317c0cb
         )
       )
     );

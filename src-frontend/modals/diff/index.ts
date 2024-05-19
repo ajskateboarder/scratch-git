@@ -431,7 +431,6 @@ export class DiffModal extends HTMLDialogElement {
     this.highlights.checked = JSON.parse(
       localStorage.getItem("scratch-git:highlights")!
     );
-
     this.plainText.checked = JSON.parse(
       localStorage.getItem("scratch-git:plaintext")!
     );
