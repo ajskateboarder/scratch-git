@@ -1,4 +1,3 @@
-<h1>scratch.git</h1>
 <h1><img alt="" src="./logo.svg" align=right width=100 />scratch.git</h1>
 
 > Git version control integration for Scratch (TurboWarp) that just works and makes sense
