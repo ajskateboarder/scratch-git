@@ -1,20 +1,3 @@
-.indicator-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  width: 1.75rem;
-  height: 1.75rem;
-  box-shadow: 0 0 0 2px var(--looks-transparent);
-  background-color: var(--looks-secondary);
-  color: var(--ui-white);
-  border-radius: 50%;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  user-select: none;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
 dialog[is="diff-modal"],
 dialog[is="commit-modal"],
 dialog[is="welcome-modal"],
@@ -354,27 +337,6 @@ dialog[is="welcome-modal"] {
   justify-content: space-between;
   background-color: transparent;
   padding: 10px;
-}
-
-/* top bar */
-
-.topbar {
-  background-color: #e6f0ff;
-  overflow: hidden;
-  top: 0;
-  display: flex;
-  position: absolute;
-  margin-left: 135px;
-  padding: 10px;
-  border-bottom: 1px solid grey;
-  width: 100%;
-
-  & a {
-    display: inline-block;
-    padding: 0 10px;
-    color: hsl(225deg 15% 40% / 75%);
-    text-decoration: none;
-  }
 }
 
 .tip {

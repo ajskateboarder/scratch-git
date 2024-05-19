@@ -43,7 +43,11 @@
     "no-changes": "Es gibt keine neuen Veränderungen.",
     "inconsistent-work": "Die Repository hat Commits, die du nicht hast. Versuche, zuerst die Änderungen online zu pullen.",
     "up-to-date": "Alles ist auf dem neuesten Stand. Es gibt keine neuen Commits zu pushen.",
-    "push-success": "Änderungen wurden erfolgreich zu {{url}} gepusht"
+    "push-success": "Änderungen wurden erfolgreich zu {{url}} gepusht",
+    "gh-device-code-needed": {
+      "start": "Authentifizierung für GitHub wird benötigt. Bitte gehe zu",
+      "end": "und gebe diesen Code ein: {{code}}"
+    }
   },
   "close": "Schließen",
   "okay": "Okay"

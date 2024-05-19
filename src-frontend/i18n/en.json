@@ -43,7 +43,11 @@
     "no-changes": "There's no new changes to pull.",
     "inconsistent-work": "The online repository contains work that you don't have. Try pulling changes from online first.",
     "up-to-date": "Everything is up to date. There are no new commits to push.",
-    "push-success": "Successfully pushed changes to {{url}}"
+    "push-success": "Successfully pushed changes to {{url}}",
+    "gh-device-code-needed": {
+      "start": "Authentication needed for GitHub. Please go to",
+      "end": "and enter the code: {{code}}"
+    }
   },
   "close": "Close",
   "okay": "Okay"

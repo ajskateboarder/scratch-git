@@ -20,7 +20,10 @@ i18next.init({
       translation: es,
     },
   },
-  missingKeyHandler: () => i18next.changeLanguage("en"),
+  missingKeyHandler: (_lngs, _ns, key) => {
+    console.warn("missing language key for", _ns, key);
+    return key;
+  },
 });
 
 export default i18next;

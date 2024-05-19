@@ -43,7 +43,11 @@
     "no-changes": "No hay nuevos cambios para obtener.",
     "inconsistent-work": "El repositorio en línea contiene trabajo que tú no tienes. Intenta obtener los cambios en línea primero.",
     "up-to-date": "Todo está actualizado. No hay nuevos commits para recuperar.",
-    "push-success": "Cambios incorporados exitosamente a {{url}}"
+    "push-success": "Cambios incorporados exitosamente a {{url}}",
+    "gh-device-code-needed": {
+      "start": "Authentication needed for GitHub. Please go to",
+      "end": "and enter the code: {{code}}"
+    }
   },
   "close": "Cerrar",
   "okay": "Aceptar"
