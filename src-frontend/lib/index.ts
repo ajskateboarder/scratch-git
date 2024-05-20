@@ -17,3 +17,4 @@ type toScratchblocks = (
 
 export const scratchblocks: ScratchBlocks = scratchblocks_;
 export const toScratchblocks: toScratchblocks = parseSB3Blocks_.toScratchblocks;
+export * from "./globals";

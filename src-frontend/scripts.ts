@@ -9,7 +9,7 @@ const zip = (a: any[], b: any[]) =>
 
 export type ScriptStatus = "modified" | "added" | "removed";
 
-type ScriptParse = {
+interface ScriptParse {
   results: {
     oldContent: any;
     newContent: any;
@@ -18,7 +18,7 @@ type ScriptParse = {
     script: string;
   }[];
   changedIds: string[];
-};
+}
 
 /** Parse scripts in a project that have been modified */
 function _parseScripts(oldProject: any, newProject: any): ScriptParse {

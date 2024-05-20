@@ -1,11 +1,11 @@
 import i18next from "i18next";
 import en from "./en.json";
 
-type Language = "en" | "es" | "de";
+type SupportedLangs = "en" | "es" | "de";
 
 type _TranslationKeys<T, Cache extends string = ""> = T extends PropertyKey
   ? Cache
-  : keyof T extends Language
+  : keyof T extends SupportedLangs
   ? Cache
   : {
       [P in keyof T]: P extends string

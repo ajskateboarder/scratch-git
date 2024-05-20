@@ -3,6 +3,8 @@ import { settings, fileMenu } from "@/components";
 import thumbnail from "./thumbnail.svg.ts";
 import van, { type State } from "vanjs-core";
 import i18next from "@/i18n";
+import { VM } from "@/lib";
+import { Modal } from "./base.ts";
 
 const {
   tags: { div, h1, button, p, br, span, input, pre, i },
@@ -17,7 +19,7 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
   );
 
 /** Project initialization */
-export class WelcomeModal extends HTMLDialogElement {
+export class WelcomeModal extends Modal {
   steps: Element[] = [];
   loadedProject: boolean = false;
   currentStep: State<number> = van.state(0);
@@ -47,7 +49,7 @@ export class WelcomeModal extends HTMLDialogElement {
     });
   }
 
-  async display() {
+  public async display() {
     if (!this.open) {
       this.steps = [this.step1(), this.step2(), this.step3()];
       this.currentStep.val = 0;
@@ -72,7 +74,7 @@ export class WelcomeModal extends HTMLDialogElement {
         class: settings.settingsButton,
         onclick: () => {
           fileMenu.openProject();
-          window.vm.runtime.on("PROJECT_LOADED", () => {
+          VM.on("PROJECT_LOADED", () => {
             this.loadedProject = true;
             (goToStep2 as HTMLButtonElement).disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
@@ -194,5 +196,11 @@ export class WelcomeModal extends HTMLDialogElement {
         )
       )
     );
+  }
+
+  public refresh() {
+    this.currentStep.val = 0;
+    this.querySelectorAll(".screen").forEach((e) => e.remove());
+    this.connectedCallback();
   }
 }

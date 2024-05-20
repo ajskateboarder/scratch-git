@@ -5,6 +5,7 @@ import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
+import { getBlockly } from "./lib/globals";
 
 /** Receive Blockly IDs to top-level blocks that were changed
  *
@@ -34,13 +35,13 @@ async function changedBlocklyScripts(
   };
 
   let spriteName: string = sprite.format();
-  let workspace = window.Blockly.getMainWorkspace();
+  let workspace = getBlockly();
 
   let diffs = await parseScripts(previousScripts, currentScripts);
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
-    .filter((e) => e !== undefined) as string[];
+    .filter((e) => e !== undefined);
 }
 
 const STAGE: Sprite = {
@@ -92,8 +93,7 @@ async function highlightChanged(
   window._changedScripts = changedScripts;
 
   changedScripts.forEach((e) => {
-    let group: HTMLElement =
-      window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
+    let group = getBlockly().getBlockById(e).svgGroup_;
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });
@@ -153,10 +153,9 @@ export async function showIndicators(project: Project) {
       },
       onclick: async (e: Event) => {
         e.stopPropagation();
-        (document.querySelector("dialog[is='diff-modal']") as DiffModal).diff(
-          project,
-          spriteName
-        );
+        (
+          document.querySelector("dialog[is='diff-modal']") as DiffModal
+        ).display(project, spriteName);
       },
     });
 
@@ -212,7 +211,7 @@ export async function showIndicators(project: Project) {
         e.stopPropagation();
         document
           .querySelector<DiffModal>("dialog[is='diff-modal']")!
-          .diff(project, "Stage (stage)");
+          .display(project, "Stage (stage)");
       },
     });
 

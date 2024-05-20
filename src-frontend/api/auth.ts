@@ -5,10 +5,7 @@ export interface DeviceCode {
   verification_uri: string;
 }
 
-export class GhAuth extends (EventTarget as TypedEventTarget<{
-  devicecode: CustomEvent<DeviceCode>;
-  login: CustomEvent;
-}>) {
+export class GhAuth extends EventTarget {
   private ws: WebSocket;
 
   constructor() {

@@ -1,7 +1,9 @@
+import { getBlockly } from "@/lib";
+
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/Utils.js
 
 export function scrollBlockIntoView(blockOrId: string) {
-  let workspace = window.Blockly.getMainWorkspace();
+  let workspace = getBlockly();
   let offsetX = 32;
   let offsetY = 32;
   let block = workspace.getBlockById(blockOrId);

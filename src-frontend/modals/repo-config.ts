@@ -3,6 +3,7 @@ import van, { PropsWithKnownKeys, State } from "vanjs-core";
 import tippy from "tippy.js";
 import api, { Project, remoteExists } from "@/api";
 import i18next from "@/i18n";
+import { Modal } from "./base";
 
 const { main, button, h1, div, span, input, label, br, p } = van.tags;
 
@@ -28,13 +29,14 @@ const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
     class: [settings.inputField, "input-box"].join(" "),
   });
 
-export class RepoConfigModal extends HTMLDialogElement {
-  editing!: State<boolean>;
-  project!: Project;
-  fields!: {
-    repository: HTMLInputElement;
-    name: HTMLInputElement;
-    email: HTMLInputElement;
+export class RepoConfigModal extends Modal {
+  private editing!: State<boolean>;
+  private project!: Project;
+
+  private fields!: {
+    $repository: HTMLInputElement;
+    $name: HTMLInputElement;
+    $email: HTMLInputElement;
   };
 
   constructor() {
@@ -55,19 +57,19 @@ export class RepoConfigModal extends HTMLDialogElement {
       "Close"
     );
 
-    const repository = InputBox({
+    const $repository = InputBox({
       placeholder: i18next.t("repo-config.repo-url-placeholder"),
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
           if (!isValidUrl(url) && !(await remoteExists(url))) {
-            repository.value = "";
+            $repository.value = "";
           }
         }
       },
     });
-    const name = InputBox({});
-    const email = InputBox({});
+    const $name = InputBox({});
+    const $email = InputBox({});
 
     const editButton = button(
       {
@@ -79,7 +81,7 @@ export class RepoConfigModal extends HTMLDialogElement {
             this.editing.val = true;
             editButton.innerHTML = `<i class="fa-solid fa-floppy-disk floppy-save-button"></i>`;
           } else {
-            if (name.value.trim() === "" || repository.value.trim() === "") {
+            if ($name.value.trim() === "" || $repository.value.trim() === "") {
               alert(i18next.t("repoconfig.no-empty-fields"));
               return;
             }
@@ -87,9 +89,9 @@ export class RepoConfigModal extends HTMLDialogElement {
             editButton.innerHTML = "";
             editButton.appendChild(PENCIL);
             this.project.setDetails({
-              username: name.value,
-              email: email.value,
-              repository: repository.value,
+              username: $name.value,
+              email: $email.value,
+              repository: $repository.value,
             });
           }
         },
@@ -100,9 +102,9 @@ export class RepoConfigModal extends HTMLDialogElement {
     van.derive(() => {
       if (this.editing.oldVal !== this.editing.val) {
         const e: "add" | "remove" = !this.editing.val ? "add" : "remove";
-        repository.classList[e]("disabled-config-input");
-        name.classList[e]("disabled-config-input");
-        email.classList[e]("disabled-config-input");
+        $repository.classList[e]("disabled-config-input");
+        $name.classList[e]("disabled-config-input");
+        $email.classList[e]("disabled-config-input");
       }
     });
 
@@ -128,17 +130,17 @@ export class RepoConfigModal extends HTMLDialogElement {
             i18next.t("repoconfig.repo-url"),
             "*"
           ),
-          repository
+          $repository
         ),
         br(),
         InputField(
           label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
-          name
+          $name
         ),
         br(),
         InputField(
           label({ class: "input-label" }, i18next.t("repoconfig.email")),
-          email
+          $email
         ),
         br(),
         br(),
@@ -152,18 +154,18 @@ export class RepoConfigModal extends HTMLDialogElement {
       )
     );
 
-    repository.classList.add("disabled-config-input");
-    name.classList.add("disabled-config-input");
-    email.classList.add("disabled-config-input");
+    $repository.classList.add("disabled-config-input");
+    $name.classList.add("disabled-config-input");
+    $email.classList.add("disabled-config-input");
 
     this.fields = {
-      repository,
-      name,
-      email,
+      $repository,
+      $name,
+      $email,
     };
   }
 
-  async display() {
+  public async display() {
     tippy("#repositoryTip", {
       content: i18next.t("repoconfig.repo-tip"),
       appendTo: this,
@@ -172,11 +174,18 @@ export class RepoConfigModal extends HTMLDialogElement {
     this.project = (await api.getCurrentProject())!;
     const details = await this.project?.getDetails();
 
+    const { $repository, $name, $email } = this.fields;
+
     // in the future, these will never be blank
-    this.fields.repository.value = details?.repository ?? "";
-    this.fields.name.value = details?.username ?? "";
-    this.fields.email.value = details?.email ?? "";
+    $repository.value = details?.repository ?? "";
+    $name.value = details?.username ?? "";
+    $email.value = details?.email ?? "";
 
     if (!this.open) this.showModal();
+  }
+
+  public refresh() {
+    this.querySelector("main")?.remove();
+    this.connectedCallback();
   }
 }

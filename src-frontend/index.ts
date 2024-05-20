@@ -25,6 +25,7 @@ import tippy from "./tippy.css";
 
 import van from "vanjs-core";
 import i18next, { getLocale } from "./i18n";
+import { Redux, VM } from "./lib/globals";
 
 const { link, style, button, i } = van.tags;
 
@@ -78,8 +79,8 @@ const pullHandler =
     if (!authed && (await repoIsGitHub(project))) {
       let auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
-      auth.addEventListener("devicecode", (e) => {
-        authAlert = GhAuthAlert(e.detail).display();
+      auth.addEventListener("devicecode", ({ detail }: any) => {
+        authAlert = GhAuthAlert(detail).display();
       });
       auth.addEventListener("login", async () => {
         authAlert?.remove();
@@ -122,8 +123,8 @@ const pushHandler =
     if (!authed && (await repoIsGitHub(project))) {
       let auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
-      auth.addEventListener("devicecode", (e) => {
-        authAlert = GhAuthAlert(e.detail).display();
+      auth.addEventListener("devicecode", ({ detail }: any) => {
+        authAlert = GhAuthAlert(detail).display();
       });
       auth.addEventListener("login", async () => {
         authAlert?.remove();
@@ -271,7 +272,7 @@ async function initialize() {
               setTimeout(async () => {
                 // project titles are removed after changing locale
                 // by default so we set it back
-                window.ReduxStore.dispatch({
+                Redux.dispatch({
                   type: "projectTitle/SET_PROJECT_TITLE",
                   title: project?.projectName,
                 });
@@ -301,12 +302,9 @@ async function initialize() {
   );
 
   // avoids scenarios where scratch.git initializes before the editor is finished
-  window.vm.runtime.on(
-    "ASSET_PROGRESS",
-    async (finished: number, total: number) => {
-      if (finished === total && finished > 0 && total > 0) {
-        setTimeout(async () => await initialize(), 0.1);
-      }
+  VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
+    if (finished === total && finished > 0 && total > 0) {
+      setTimeout(async () => await initialize(), 0.1);
     }
-  );
+  });
 })();
