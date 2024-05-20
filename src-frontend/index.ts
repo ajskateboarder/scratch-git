@@ -10,17 +10,13 @@ import {
   RepoConfigModal,
 } from "./modals";
 
-import { getLocale } from "./i18n";
+import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
 
 import { Styles, createGitMenu } from "./bootstrap";
+import { Modal } from "./modals/base";
 
 async function initialize() {
-  document.querySelector("dialog[is='commit-modal']")?.remove();
-  document.querySelector("dialog[is='diff-modal']")?.remove();
-  document.querySelector("dialog[is='welcome-modal']")?.remove();
-  document.querySelector("dialog[is='repo-config-modal']")?.remove();
-
   if (!document.querySelector("dialog[is='diff-modal']")) {
     try {
       customElements.define("commit-modal", CommitModal, { extends: "dialog" });
@@ -63,7 +59,8 @@ async function initialize() {
 
   // ensure a click event listener for the save button
   new MutationObserver(() => {
-    misc.saveArea.select()?.firstChild!.addEventListener("click", displayDiffs);
+    (misc.saveArea.select()?.firstChild! as HTMLDivElement).onclick =
+      displayDiffs;
   }).observe(misc.saveArea.select()?.firstChild!, {
     childList: true,
   });
@@ -77,9 +74,7 @@ async function initialize() {
   document.head.append(...Styles());
 
   if (!fileMenu.isProjectOpen()) {
-    document
-      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
-      .display();
+    document.querySelector<Modal>("dialog[is='welcome-modal']")!.display();
   } else {
     let project = await api.getCurrentProject();
 
@@ -91,7 +86,7 @@ async function initialize() {
           ?.firstChild as HTMLUListElement | undefined;
         if (languageOptions) {
           [...languageOptions.children].forEach((e) => {
-            e.addEventListener("click", () => {
+            (e as HTMLDivElement).onclick = () => {
               setTimeout(async () => {
                 // project titles are removed after changing locale
                 // by default so we set it back
@@ -99,10 +94,25 @@ async function initialize() {
                   type: "projectTitle/SET_PROJECT_TITLE",
                   title: project?.projectName,
                 });
+
                 await initialize();
                 createGitMenu(project!, getLocale());
+                i18next.changeLanguage(getLocale());
+
+                document
+                  .querySelector<Modal>("dialog[is=repo-config-modal]")!
+                  .refresh();
+                document
+                  .querySelector<Modal>("dialog[is=welcome-modal]")!
+                  .refresh();
+                document
+                  .querySelector<Modal>("dialog[is=diff-modal]")!
+                  .refresh();
+                document
+                  .querySelector<Modal>("dialog[is=commit-modal]")!
+                  .refresh();
               }, 100);
-            });
+            };
           });
         }
       }).observe(misc.menuItems.select().firstChild?.lastChild!, {

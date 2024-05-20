@@ -3,8 +3,9 @@
     "push": "Pushen",
     "pull": "Pullen",
     "commit": "Commiten",
-    "configure-repo": "Repository konfigurieren",
-    "view-commits": "Commits einsehen"
+    "setup-repo": "Repository konfigurieren",
+    "view-commits": "Commits einsehen",
+    "repo-needed": "Please set up a repository to use this!"
   },
   "diff": {
     "use-highlights": "Farblich markieren",
@@ -30,8 +31,8 @@
   },
   "repoconfig": {
     "repo-url-placeholder": "Gebe einen Link zu einer Repository ein",
-    "repo-url": "Repository-Link",
     "name": "Name",
+    "repo-url": "Repository-Link (optional)",
     "email": "Email (optional)",
     "repoconfig": "Dein [[repository]] einstellen",
     "no-empty-fields": "Felder mit einem Sternchen müssen ausgefüllt werden!",

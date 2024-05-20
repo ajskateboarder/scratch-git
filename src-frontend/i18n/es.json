@@ -3,8 +3,9 @@
     "push": "Recuperar cambios",
     "pull": "Incorporar cambios",
     "commit": "Commit",
-    "configure-repo": "Configurar repositorio",
-    "view-commits": "Ver commits"
+    "setup-repo": "Configurar repositorio",
+    "view-commits": "Ver commits",
+    "repo-needed": "Please set up a repository to use this!"
   },
   "diff": {
     "use-highlights": "Usar resaltados",
@@ -30,8 +31,8 @@
   },
   "repoconfig": {
     "repo-url-placeholder": "Introduce un enlace a la URL del repositorio",
-    "repo-url": "URL del repositorio",
     "name": "Nombre",
+    "repo-url": "URL del repositorio (opcional)",
     "email": "Correo electrónico (opcional)",
     "repoconfig": "Configura tu [[repositorio]]",
     "no-empty-fields": "¡No dejes campos con asterisco en blanco!",

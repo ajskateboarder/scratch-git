@@ -3,6 +3,12 @@ export abstract class Modal extends HTMLDialogElement {
     super();
   }
 
-  abstract display(...args: any[]): void;
-  abstract refresh(): void;
+  abstract connectedCallback(): void;
+
+  public abstract display(...args: any[]): void;
+
+  public refresh() {
+    this.querySelector("main")?.remove();
+    this.connectedCallback();
+  }
 }

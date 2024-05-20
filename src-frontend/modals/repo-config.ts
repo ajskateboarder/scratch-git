@@ -1,6 +1,5 @@
 import { settings, misc } from "@/components";
 import van, { PropsWithKnownKeys, State } from "vanjs-core";
-import tippy from "tippy.js";
 import api, { Project, remoteExists } from "@/api";
 import i18next from "@/i18n";
 import { Modal } from "./base";
@@ -58,7 +57,7 @@ export class RepoConfigModal extends Modal {
     );
 
     const $repository = InputBox({
-      placeholder: i18next.t("repo-config.repo-url-placeholder"),
+      placeholder: i18next.t("repoconfig.repo-url-placeholder"),
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
@@ -81,7 +80,7 @@ export class RepoConfigModal extends Modal {
             this.editing.val = true;
             editButton.innerHTML = `<i class="fa-solid fa-floppy-disk floppy-save-button"></i>`;
           } else {
-            if ($name.value.trim() === "" || $repository.value.trim() === "") {
+            if ($name.value.trim() === "") {
               alert(i18next.t("repoconfig.no-empty-fields"));
               return;
             }
@@ -112,7 +111,9 @@ export class RepoConfigModal extends Modal {
       .t("repoconfig.repoconfig")
       .replace(
         /\[\[(.*?)\]\]/g,
-        '<span class="tip" id="repositoryTip">$1</span>'
+        `<span class="tip" title="${i18next.t(
+          "repoconfig.repo-tip"
+        )}">$1</span>`
       );
 
     van.add(
@@ -125,17 +126,13 @@ export class RepoConfigModal extends Modal {
           editButton
         ),
         InputField(
-          label(
-            { class: "input-label" },
-            i18next.t("repoconfig.repo-url"),
-            "*"
-          ),
-          $repository
+          label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
+          $name
         ),
         br(),
         InputField(
-          label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
-          $name
+          label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
+          $repository
         ),
         br(),
         InputField(
@@ -166,11 +163,6 @@ export class RepoConfigModal extends Modal {
   }
 
   public async display() {
-    tippy("#repositoryTip", {
-      content: i18next.t("repoconfig.repo-tip"),
-      appendTo: this,
-    });
-
     this.project = (await api.getCurrentProject())!;
     const details = await this.project?.getDetails();
 
@@ -182,10 +174,5 @@ export class RepoConfigModal extends Modal {
     $email.value = details?.email ?? "";
 
     if (!this.open) this.showModal();
-  }
-
-  public refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
   }
 }

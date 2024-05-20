@@ -446,9 +446,4 @@ export class DiffModal extends Modal {
 
     if (!this.open) this.showModal();
   }
-
-  public refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
-  }
 }

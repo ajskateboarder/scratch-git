@@ -195,9 +195,4 @@ export class CommitModal extends Modal {
       this.showModal();
     }
   }
-
-  public refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
-  }
 }

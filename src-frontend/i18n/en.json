@@ -3,8 +3,9 @@
     "push": "Push",
     "pull": "Pull",
     "commit": "Commit",
-    "configure-repo": "Configure repository",
-    "view-commits": "View commits"
+    "setup-repo": "Setup repository",
+    "view-commits": "View commits",
+    "repo-needed": "Please set up a repository to use this!"
   },
   "diff": {
     "use-highlights": "Use highlights",

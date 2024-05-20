@@ -215,6 +215,7 @@ impl CmdHandler<'_> {
         else {
             return self.send_json(json!({}));
         };
+
         let pth = &project_config().lock().unwrap().project_path(&project_name);
         let mut success = true;
 
@@ -250,11 +251,19 @@ impl CmdHandler<'_> {
 
         let config_remote = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "remote", "add", "origin", &repository]);
+            if &repository != "" {
+                cmd.args(["/C", "git", "remote", "add", "origin", &repository]);
+            } else {
+                cmd.args(["/C", "git", "remote", "remove", "origin"]);
+            }
             cmd
         } else {
             let mut git = Command::new("git");
-            git.args(["remote", "add", "origin", &repository]);
+            if &repository != "" {
+                git.args(["remote", "add", "origin", &repository]);
+            } else {
+                git.args(["remote", "remove", "origin"]);
+            }
             git
         }
         .current_dir(&pth)

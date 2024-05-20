@@ -1,7 +1,13 @@
 /** @file Initializes the Git menu handlers and styles */
 
 import van from "vanjs-core";
-import { GhAuthAlert, ScratchAlert, gitMenu, settings } from "./components";
+import {
+  GhAuthAlert,
+  ScratchAlert,
+  gitMenu,
+  menu,
+  settings,
+} from "./components";
 
 import styles from "./styles.css";
 import tippy from "./tippy.css";
@@ -13,11 +19,16 @@ const { link, style, button, i } = van.tags;
 
 /** Packages our styles and external dependencies */
 export const Styles = () => {
-  const menuContents = `
+  const disabledVersions = `
       .${settings.settingsButton}[disabled] {
         background-color: var(--menu-bar-background-default);
         color: rgba(255, 255, 255, 0.4);
         cursor: default;
+      }
+      
+      .${menu.menuHoverable}[disabled] {
+        pointer-events: none;
+        opacity: 0.5;
       }`;
 
   // https://github.com/TurboWarp/scratch-gui/commit/c77d0c53d89f7fde2dd9be962399764ffbded111
@@ -38,7 +49,7 @@ export const Styles = () => {
     style(
       { id: "scratch-git-styles" },
       `
-      ${menuContents}
+      ${disabledVersions}
       ${alertSuccess}
       ${styles}
       ${tippy}
@@ -158,7 +169,10 @@ const pushHandler =
  * @param project - the currently open project
  * @param changeLocale - rebuild the entire menu only if the locale has changed
  */
-export const createGitMenu = async (project: Project, changeLocale?: string) =>
+export const createGitMenu = async (
+  project: Project,
+  changeLocale?: string
+) => {
   gitMenu.create(
     {
       commitView: () =>
@@ -179,3 +193,5 @@ export const createGitMenu = async (project: Project, changeLocale?: string) =>
     },
     changeLocale
   );
+  gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
+};
