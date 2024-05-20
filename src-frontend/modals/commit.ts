@@ -14,9 +14,11 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Modal {
-  private $older!: HTMLButtonElement;
-  private $newer!: HTMLButtonElement;
-  private $search!: HTMLInputElement;
+  private $!: {
+    $older: HTMLButtonElement;
+    $newer: HTMLButtonElement;
+    $search: HTMLInputElement;
+  };
 
   private state!: {
     paginatedCommits: State<Commit[]>;
@@ -46,31 +48,31 @@ export class CommitModal extends Modal {
       i18next.t("close")
     );
 
-    this.$newer = button(
-      {
-        class: [settings.settingsButton, "round-right-button"].join(" "),
-        disabled: true,
-      },
-      i18next.t("commit.newer")
-    );
-
-    this.$older = button(
-      {
-        class: [settings.settingsButton, "round-left-button"].join(" "),
-      },
-      i18next.t("commit.older")
-    );
-
-    this.$search = input({
-      type: "text",
-      style: "border-radius: 5px; width: 50%",
-      class: `${settings.inputField}${
-        window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
-          ? " dark"
-          : ""
-      }`,
-      placeholder: i18next.t("commit.search-commits"),
-    });
+    this.$ = {
+      $newer: button(
+        {
+          class: [settings.settingsButton, "round-right-button"].join(" "),
+          disabled: true,
+        },
+        i18next.t("commit.newer")
+      ),
+      $older: button(
+        {
+          class: [settings.settingsButton, "round-left-button"].join(" "),
+        },
+        i18next.t("commit.older")
+      ),
+      $search: input({
+        type: "text",
+        style: "border-radius: 5px; width: 50%",
+        class: `${settings.inputField}${
+          window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
+            ? " dark"
+            : ""
+        }`,
+        placeholder: i18next.t("commit.search-commits"),
+      }),
+    };
 
     const commitGroup = div({ class: "commit-group" }, () =>
       span(
@@ -93,8 +95,8 @@ export class CommitModal extends Modal {
         h1(i18next.t("commit.commits")),
         div(
           { class: "pagination" },
-          span(this.$newer, this.$older),
-          this.$search
+          span(this.$.$newer, this.$.$older),
+          this.$.$search
         ),
         br(),
         commitGroup,
@@ -114,7 +116,7 @@ export class CommitModal extends Modal {
     let commits_ = await (await api.getCurrentProject())!.getCommits();
     let commits = paginate(commits_, 40);
 
-    const { $newer, $older, $search } = this;
+    const { $newer, $older, $search } = this.$;
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 

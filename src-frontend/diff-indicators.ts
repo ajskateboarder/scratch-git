@@ -7,9 +7,15 @@ import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
 import { getBlockly } from "./lib/globals";
 
+const STAGE: Sprite = {
+  name: "Stage",
+  isStage: true,
+  format: () => "Stage (stage)",
+};
+
 /** Receive Blockly IDs to top-level blocks that were changed
  *
- * @param project - a {@link Project}
+ * @param project - the project to retreieve changed scripts
  * @param sprite - the {@link Sprite} in which blocks were changed
  * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
  */
@@ -44,18 +50,13 @@ async function changedBlocklyScripts(
     .filter((e) => e !== undefined);
 }
 
-const STAGE: Sprite = {
-  name: "Stage",
-  isStage: true,
-  format: () => "Stage (stage)",
-};
-
 async function highlightChanged(
   project: Project,
   sprite: Sprite,
   loadedJSON: any
 ) {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
+    // diff highlight filter for scripts
     document.querySelector(
       ".blocklySvg defs"
     )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
@@ -90,6 +91,7 @@ async function highlightChanged(
 
   if (changedScripts === undefined) return;
 
+  // persist this until the next save
   window._changedScripts = changedScripts;
 
   changedScripts.forEach((e) => {
@@ -102,13 +104,16 @@ async function highlightChanged(
 const nameOfSprite = (element: HTMLElement) =>
   element.querySelectorAll("div")[2].innerText;
 
-/** Shows buttons to display changes and highlight changed scripts */
+/** Shows buttons to display changes and highlight changed scripts
+ *
+ * @param project - the currently open project
+ */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites(),
-    _sprites = [...sprites.sprites.select().children] as HTMLElement[],
+    editorSprites = [...sprites.sprites.select().children] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
 
-  _sprites.forEach((sprite) => {
+  editorSprites.forEach((sprite) => {
     let divs = sprite
       .querySelector("div")!
       .querySelectorAll("div") as NodeListOf<HTMLDivElement>;
@@ -130,7 +135,7 @@ export async function showIndicators(project: Project) {
         .forEach((button) => (button.style.marginTop = "0px"));
     });
 
-    // was the selected sprite changed?
+    // builds a sprite diff button
     if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
       return;
 
@@ -161,7 +166,7 @@ export async function showIndicators(project: Project) {
 
     divs[3].after(diffButton);
 
-    // on sprite click, adjust diff buttons and highlight changed scripts
+    // on sprite click, adjust diff buttons location and highlight changed scripts
     sprite.addEventListener("click", async () => {
       let movedToSprite = nameOfSprite(
         await new Promise((resolve) => {
@@ -218,6 +223,7 @@ export async function showIndicators(project: Project) {
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
+  // when opening the stage, move all the diff buttons up
   stageWrapper.addEventListener("click", async () => {
     (<HTMLDivElement[]>[...sprites.spriteSelDelete.selectAll("sprites.delete")])
       .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -250,7 +256,7 @@ export async function showIndicators(project: Project) {
     attributeFilter: ["class"],
   });
 
-  // retain diff highlights for editor theme
+  // retain diff highlights for when editor theme
   new MutationObserver(async () => {
     let selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
     let sprite_ = selectedSprite

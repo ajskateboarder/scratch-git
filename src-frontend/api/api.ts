@@ -20,6 +20,9 @@ export interface GitDetails {
   repository: string;
 }
 
+type PullMessage = "success" | "nothing new" | "unrelated histories";
+type PushMessage = "success" | "up to date" | "pull needed";
+
 /** Represents a WebSocket interface */
 class Socket {
   protected ws: WebSocket;
@@ -46,7 +49,7 @@ class Socket {
 
   /** Make a request with a command and data */
   async request({ command, data }: any) {
-    if (this.ws.readyState == this.ws.CONNECTING) {
+    if (this.ws.readyState == WebSocket.CONNECTING) {
       this.ws.onopen = () => this.ws.send(JSON.stringify({ command, data }));
     } else {
       this.ws.send(JSON.stringify({ command, data }));
@@ -149,7 +152,7 @@ export class Project extends Socket {
   }
 
   /** Push the current project to the configured remote, unused right now */
-  async push(): Promise<string> {
+  async push(): Promise<PushMessage> {
     return (
       await this.request({
         command: "push",
@@ -159,7 +162,7 @@ export class Project extends Socket {
   }
 
   /** Pull upstream changes from the configured remote */
-  async pull(): Promise<string> {
+  async pull(): Promise<PullMessage> {
     return (
       await this.request({
         command: "pull",

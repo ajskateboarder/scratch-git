@@ -30,14 +30,14 @@ const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
   });
 
 export class RepoConfigModal extends Modal {
-  private editing!: State<boolean>;
-  private project!: Project;
-
-  private fields!: {
+  private $!: {
     $repository: HTMLInputElement;
     $name: HTMLInputElement;
     $email: HTMLInputElement;
   };
+
+  private editing!: State<boolean>;
+  private project!: Project;
 
   constructor() {
     super();
@@ -158,7 +158,7 @@ export class RepoConfigModal extends Modal {
     $name.classList.add("disabled-config-input");
     $email.classList.add("disabled-config-input");
 
-    this.fields = {
+    this.$ = {
       $repository,
       $name,
       $email,
@@ -174,7 +174,7 @@ export class RepoConfigModal extends Modal {
     this.project = (await api.getCurrentProject())!;
     const details = await this.project?.getDetails();
 
-    const { $repository, $name, $email } = this.fields;
+    const { $repository, $name, $email } = this.$;
 
     // in the future, these will never be blank
     $repository.value = details?.repository ?? "";

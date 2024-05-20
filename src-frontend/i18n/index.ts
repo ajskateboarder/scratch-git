@@ -21,7 +21,7 @@ i18next.init({
       translation: es,
     },
   },
-  missingKeyHandler: (_lngs, _ns, key) => {
+  missingKeyHandler: (_lngs: any, _ns: any, key: any) => {
     console.warn("missing language key for", _ns, key);
     return key;
   },

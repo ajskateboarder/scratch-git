@@ -45,10 +45,12 @@ interface Diff {
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
-  private $scripts!: HTMLUListElement;
-  private $commits!: HTMLParagraphElement;
-  private $highlights!: HTMLInputElement;
-  private $plainText!: HTMLInputElement;
+  private $!: {
+    $scripts: HTMLUListElement;
+    $commits: HTMLParagraphElement;
+    $highlights: HTMLInputElement;
+    $plainText: HTMLInputElement;
+  };
 
   private previousScripts: any;
   private currentScripts: any;
@@ -93,16 +95,18 @@ export class DiffModal extends Modal {
       )
     );
 
-    this.$scripts = ul({ id: "scripts" });
-    this.$highlights = useHighlights.querySelector("input")!;
-    this.$plainText = plainText.querySelector("input")!;
-    this.$commits = commits.querySelector(".commit-wrap")!;
+    this.$ = {
+      $scripts: ul({ id: "scripts" }),
+      $highlights: useHighlights.querySelector("input")!,
+      $plainText: plainText.querySelector("input")!,
+      $commits: commits.querySelector(".commit-wrap")!,
+    };
 
     van.add(
       this,
       main(
         { class: "diff-view" },
-        aside(this.$scripts),
+        aside(this.$.$scripts),
         main(div({ class: "content" }, commits))
       )
     );
@@ -144,11 +148,14 @@ export class DiffModal extends Modal {
    * @param script -
    */
   private highlightAsText(diffs: Diff[], script: number) {
+    const { $commits, $highlights } = this.$;
+
     // TODO: passing in diffs and script idx is probably unneeded
     let content = diffs[script].diffed.trimStart() ?? "";
-    this.$commits.innerHTML = `<pre>${content}</pre><br>`;
 
-    if (this.$highlights.checked) {
+    $commits.innerHTML = `<pre>${content}</pre><br>`;
+
+    if ($highlights.checked) {
       let highlights = content.split("\n").map((e, i) =>
         span(
           {
@@ -166,8 +173,8 @@ export class DiffModal extends Modal {
       if (highlights[0].innerText === "") {
         highlights = highlights.slice(1);
       }
-      this.$commits.innerHTML = "";
-      this.$commits.append(
+      $commits.innerHTML = "";
+      $commits.append(
         pre(
           // @ts-ignore
           highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
@@ -205,6 +212,8 @@ export class DiffModal extends Modal {
     script = 0,
     cached = false
   ) {
+    const { $commits, $highlights, $plainText, $scripts } = this.$;
+
     // try again in case of undefined
     if (!project) project = await api.getCurrentProject();
     project = project!;
@@ -305,50 +314,50 @@ export class DiffModal extends Modal {
       }
     };
 
-    this.$scripts.innerHTML = "";
-    this.$commits.innerText = diffs[script]?.diffed ?? "";
+    $scripts.innerHTML = "";
+    $commits.innerText = diffs[script]?.diffed ?? "";
     diffBlocks();
 
-    this.$highlights.onchange = () => {
+    $highlights.onchange = () => {
       localStorage.setItem(
         "scratch-git:highlights",
-        this.$highlights.checked.toString()
+        $highlights.checked.toString()
       );
-      if (this.$highlights.checked) {
+      if ($highlights.checked) {
         this.highlightAsBlocks();
-        if (this.$plainText.checked) {
+        if ($plainText.checked) {
           this.highlightAsText(diffs, script);
         }
       } else {
-        if (this.$plainText.checked) {
+        if ($plainText.checked) {
           let content = diffs[script].diffed ?? "";
-          this.$commits.innerHTML = "";
-          this.$commits.append(pre(content.trimStart()));
+          $commits.innerHTML = "";
+          $commits.append(pre(content.trimStart()));
         } else {
-          this.$commits.innerText = diffs[script].diffed ?? "";
+          $commits.innerText = diffs[script].diffed ?? "";
           diffBlocks();
         }
       }
       this.setDiffTheme(uiTheme);
     };
 
-    this.$plainText.onchange = (e) => {
+    $plainText.onchange = (e) => {
       localStorage.setItem(
         "scratch-git:plaintext",
-        this.$plainText.checked.toString()
+        $plainText.checked.toString()
       );
-      if (this.$plainText.checked) {
-        if (this.$highlights.checked) {
+      if ($plainText.checked) {
+        if ($highlights.checked) {
           this.highlightAsText(diffs, script);
         } else {
           let content = diffs[script].diffed ?? "";
-          this.$commits.innerHTML = "";
-          this.$commits.append(pre(content.trimStart()));
+          $commits.innerHTML = "";
+          $commits.append(pre(content.trimStart()));
         }
       } else {
         if (e.type !== "init") {
           diffBlocks();
-          if (this.$highlights.checked) this.highlightAsBlocks();
+          if ($highlights.checked) this.highlightAsBlocks();
         }
       }
       this.setDiffTheme(uiTheme);
@@ -411,7 +420,7 @@ export class DiffModal extends Modal {
         };
       }
 
-      this.$scripts.appendChild(diffButton);
+      $scripts.appendChild(diffButton);
     });
 
     this.querySelector(`button[script-no="${script}"]`)!.classList.add(
@@ -425,15 +434,15 @@ export class DiffModal extends Modal {
 
     this.setDiffTheme(uiTheme);
 
-    this.$highlights.checked = JSON.parse(
+    $highlights.checked = JSON.parse(
       localStorage.getItem("scratch-git:highlights")!
     );
 
-    this.$plainText.checked = JSON.parse(
+    $plainText.checked = JSON.parse(
       localStorage.getItem("scratch-git:plaintext")!
     );
-    this.$plainText.onchange(new Event("init"));
-    this.$highlights.onchange(new Event("init"));
+    $plainText.onchange(new Event("init"));
+    $highlights.onchange(new Event("init"));
 
     if (!this.open) this.showModal();
   }

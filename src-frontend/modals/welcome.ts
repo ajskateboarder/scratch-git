@@ -20,7 +20,8 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
 
 /** Project initialization */
 export class WelcomeModal extends Modal {
-  steps: Element[] = [];
+  $steps: Element[] = [];
+
   loadedProject: boolean = false;
   currentStep: State<number> = van.state(0);
 
@@ -30,7 +31,7 @@ export class WelcomeModal extends Modal {
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
-    this.steps = [this.step1(), this.step2(), this.step3()];
+    this.$steps = [this.$step1(), this.$step2(), this.$step3()];
 
     const thumb = span(
       { class: "thumbnail" },
@@ -39,25 +40,25 @@ export class WelcomeModal extends Modal {
     );
 
     if (!this.querySelector(".screen")) {
-      van.add(this, this.steps[this.currentStep.val], thumb);
+      van.add(this, this.$steps[this.currentStep.val], thumb);
     }
 
     van.derive(() => {
       this.querySelector(".screen")?.remove();
-      van.add(this, this.steps[this.currentStep.val], thumb);
+      van.add(this, this.$steps[this.currentStep.val], thumb);
       this.querySelector<HTMLDivElement>(".screen")!.style.display = "flex";
     });
   }
 
   public async display() {
     if (!this.open) {
-      this.steps = [this.step1(), this.step2(), this.step3()];
+      this.$steps = [this.$step1(), this.$step2(), this.$step3()];
       this.currentStep.val = 0;
       this.showModal();
     }
   }
 
-  step1() {
+  private $step1() {
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -113,7 +114,7 @@ export class WelcomeModal extends Modal {
     );
   }
 
-  step2() {
+  private $step2() {
     let path: string;
 
     const creationError = pre({ id: "creationError" });
@@ -178,7 +179,7 @@ export class WelcomeModal extends Modal {
     );
   }
 
-  step3() {
+  private $step3() {
     return Screen(
       { title: i18next.t("welcome.welcome"), number: 3 },
       div(
