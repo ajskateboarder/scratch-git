@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 // Change this when using a different GitHub App
 const CLIENT_ID: &'static str = "Iv23liJFLwawI1z9jc6S";
 
+/// Represents a temporary code to use with github.com/login/device
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeviceCode {
     device_code: String,
@@ -12,6 +13,7 @@ pub struct DeviceCode {
     interval: i32,
 }
 
+/// Represents a GitHub user authentication token and possible errors
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccessToken {
     access_token: Option<String>,

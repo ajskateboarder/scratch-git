@@ -137,21 +137,25 @@ pub fn show_revision(cwd: &PathBuf, commit: &str) -> String {
     String::from_utf8_lossy(&proc.stdout).to_string()
 }
 
-/// Stages all files in a Git project - returns true if the command was successful
-pub fn add(cwd: &PathBuf) -> bool {
-    let mut add = if cfg!(target_os = "windows") {
+/// Run a Git command
+pub fn run(args: Vec<&str>, cwd: Option<&PathBuf>) -> Command {
+    let mut cmd = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
-        cmd.args(["/C", "git", "add", "."]);
+        let mut git_args = vec!["/C", "git"];
+        git_args.extend(&args);
+        cmd.args(git_args);
         cmd
     } else {
         let mut git = Command::new("git");
-        git.args(["add", "."]);
+        git.args(&args);
         git
     };
-    let add = add
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .current_dir(&cwd);
 
-    return add.status().unwrap().success();
+    cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    if let Some(cwd) = cwd {
+        cmd.current_dir(&cwd);
+    }
+
+    cmd
 }

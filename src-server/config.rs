@@ -8,6 +8,7 @@ use std::{
 const PROJECT_CONFIG_PATH: &'static str = "projects/config.json";
 const TOKEN_PATH: &'static str = "projects/.ghtoken";
 
+/// Represents a loaded project path and the path to it
 #[derive(Debug)]
 pub struct ProjectConfig {
     file_path: &'static str,
@@ -36,16 +37,21 @@ impl ProjectConfig {
 
     /// Returns the path to a project by its name
     pub fn project_path(&self, project_name: &str) -> PathBuf {
-        let base_loc = &self.projects[project_name]["base"].as_str().unwrap().to_string();
+        let base_loc = &self.projects[project_name]["base"]
+            .as_str()
+            .unwrap()
+            .to_string();
         Path::new(&base_loc).to_path_buf()
     }
 }
 
+/// Singleton project configuration
 pub fn project_config() -> &'static Mutex<ProjectConfig> {
     static CONFIG: OnceLock<Mutex<ProjectConfig>> = OnceLock::new();
     CONFIG.get_or_init(|| Mutex::new(ProjectConfig::new(PROJECT_CONFIG_PATH)))
 }
 
+/// Represents a loaded GitHub access token and the path to it
 #[derive(Debug)]
 pub struct GhToken {
     file_path: &'static str,
@@ -73,7 +79,7 @@ impl GhToken {
         fs::write(self.file_path, &self.token).expect("unable to save new token");
     }
 }
-
+/// Singleton GitHub token
 pub fn gh_token() -> &'static Mutex<GhToken> {
     static CONFIG: OnceLock<Mutex<GhToken>> = OnceLock::new();
     CONFIG.get_or_init(|| Mutex::new(GhToken::new(TOKEN_PATH)))

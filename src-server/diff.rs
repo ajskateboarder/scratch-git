@@ -64,6 +64,7 @@ fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
     ItemGrouping::method(&items)
 }
 
+/// Represents a changed costume for a sprite or the stage
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct CostumeChange {
     pub sprite: String,
@@ -72,6 +73,7 @@ pub struct CostumeChange {
     pub on_stage: bool,
 }
 
+/// Represents costumes that were added, removed, or changed
 #[derive(Debug)]
 pub struct CostumeChanges {
     pub added: Vec<CostumeChange>,
@@ -79,6 +81,7 @@ pub struct CostumeChanges {
     pub merged: Vec<CostumeChange>,
 }
 
+/// Represents a changed script for a sprite or stage, and how many blocks were added or removed
 #[derive(Debug)]
 pub struct ScriptChanges {
     pub sprite: String,
@@ -106,12 +109,12 @@ impl ScriptChanges {
     }
 }
 
+/// Commit generation methods for Scratch project assets and code
 #[derive(Debug)]
 pub struct Diff {
     data: Value,
 }
 
-/// Commit generation methods for Scratch project assets and code
 impl Diff {
     /// Construct a new diff from a project.json
     ///
@@ -307,10 +310,13 @@ impl Diff {
                 }
             })
             .collect::<Vec<_>>();
+
         let mut statements: Vec<String> = vec![];
+
         for id in top_ids {
             let mut _blocks: Vec<String> = vec![];
             let mut current_block = &blocks[id];
+
             loop {
                 _blocks.push(format!(
                     "{} {} {}",
@@ -318,9 +324,14 @@ impl Diff {
                     serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap(),
                     serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap()
                 ));
+
                 let next = &current_block["next"];
+
+                // attempt to find the next block
                 match next {
+                    // block is directly below
                     Value::String(id) => current_block = &blocks[id],
+                    // block is located in c-block or e-block
                     Value::Null => {
                         let substack = &current_block["inputs"]["SUBSTACK"][1];
                         match substack {
@@ -343,6 +354,7 @@ impl Diff {
         blocks
     }
 
+    /// Return all script changes given a newer project
     pub fn blocks<'a>(&'a self, new: &'a Diff) -> Vec<ScriptChanges> {
         fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
             blocks

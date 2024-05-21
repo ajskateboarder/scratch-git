@@ -15,20 +15,17 @@ use std::{
     process::exit,
     thread::spawn,
 };
-use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
+use tungstenite::{accept, Error, HandshakeError, Message, Result};
 
 use handlers::{handle_command, Cmd};
 use tw_path::turbowarp_path;
 
-fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
-    match err {
+fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
+    let mut socket = accept(stream).map_err(|err| match err {
         HandshakeError::Interrupted(_) => panic!("Bug: blocking socket would block"),
         HandshakeError::Failure(f) => f,
-    }
-}
+    })?;
 
-fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
-    let mut socket = accept(stream).map_err(must_not_block)?;
     loop {
         match socket.read()? {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {

@@ -1,10 +1,11 @@
 use std::fs::{self, File};
-use std::io::{self, Read, Seek, Write};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
 use walkdir::DirEntry;
 use zip::{result::ZipError, write::FileOptions};
 
+/// Extract a ZIP file to a target directory
 pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
     let mut archive = zip::ZipArchive::new(file).unwrap();
     for i in 0..archive.len() {
@@ -32,9 +33,8 @@ pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
     Ok(())
 }
 
-pub fn zip<T>(it: &mut dyn Iterator<Item = DirEntry>, prefix: &Path, writer: T)
-where
-    T: Write + Seek,
+/// Zip a directory's contents into a ZIP file
+pub fn zip(it: &mut dyn Iterator<Item = DirEntry>, prefix: &Path, writer: File)
 {
     let mut zip = zip::ZipWriter::new(writer);
     let options = FileOptions::default()

@@ -3,7 +3,6 @@ use std::fs::{self, File};
 use std::net::TcpStream;
 use std::{
     path::{Path, PathBuf},
-    process::{Command, Stdio},
     thread::sleep,
     time::Duration,
 };
@@ -19,6 +18,7 @@ use crate::gh_auth;
 use crate::git;
 use crate::zipping::{self, extract};
 
+/// Represents all available command types to use with the server
 #[derive(Serialize, Deserialize, PartialEq)]
 enum CmdData<'a> {
     Project {
@@ -43,12 +43,14 @@ enum CmdData<'a> {
     URL(String),
 }
 
+/// Represents a single command message
 #[derive(Serialize, Deserialize)]
 pub struct Cmd<'a> {
     command: &'a str,
     data: CmdData<'a>,
 }
 
+/// Command handler for use with WebSocket server
 pub struct CmdHandler<'a> {
     debug: bool,
     socket: &'a mut WebSocket<TcpStream>,
@@ -63,7 +65,8 @@ impl CmdHandler<'_> {
         self.socket.send(Message::Text(json.to_string())).unwrap();
     }
 
-    fn diff(&mut self, data: CmdData) {
+    /// Diff two strings
+    fn get_diff(&mut self, data: CmdData) {
         let CmdData::GitDiff {
             old_content,
             new_content,
@@ -78,8 +81,14 @@ impl CmdHandler<'_> {
         )));
     }
 
+    /// Initialize a new project using a project's location and a user's name and email
     fn create_project(&mut self, data: CmdData) {
-        let CmdData::ProjectToCreate {file_path, username, email} = data else {
+        let CmdData::ProjectToCreate {
+            file_path,
+            username,
+            email,
+        } = data
+        else {
             return self.send_json(json!({}));
         };
         let name = Path::new(&file_path)
@@ -151,21 +160,9 @@ impl CmdHandler<'_> {
         )
         .unwrap();
 
-        let init_repo = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "init"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.arg("init");
-            git
-        }
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .current_dir(&project_path)
-        .output()
-        .expect("failed to initialize git repo");
-
+        let init_repo = git::run(vec!["init"], Some(&project_path))
+            .output()
+            .unwrap();
         let response = String::from_utf8(init_repo.stdout).unwrap();
 
         if !response.contains("Git repository") {
@@ -178,7 +175,11 @@ impl CmdHandler<'_> {
         fs::write(target_dir.join(".gitignore"), "project.old.json")
             .expect("failed to write gitignore");
 
-        if !git::add(&project_path) {
+        if !git::run(vec!["add"], Some(&project_path))
+            .status()
+            .unwrap()
+            .success()
+        {
             if self.debug {
                 println!("create_project: assets could not be added")
             }
@@ -187,44 +188,12 @@ impl CmdHandler<'_> {
 
         let project_name = name.replace("projects/", "");
 
-        let _ = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.email", &email]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.email", &email]);
-            git
-        }
-        .current_dir(&project_path)
-        .status();
+        git::run(vec!["config", "user.email", &email], Some(&project_path));
+        git::run(vec!["config", "user.name", &username], Some(&project_path));
 
-        let _ = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.name", &username]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.name", &username]);
-            git
-        }
-        .current_dir(&project_path)
-        .status();
-
-        let mut commit = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "commit", "-m", "Initial commit"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["commit", "-m", "Initial commit"]);
-            git
-        };
-
-        let commit = commit
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(project_path).output().unwrap();
+        let commit = git::run(vec!["commit", "-m", "Initial commit"], Some(&project_path))
+            .output()
+            .unwrap();
         let response = String::from_utf8(commit.stdout).unwrap();
 
         if !response.contains("Initial commit") {
@@ -242,6 +211,7 @@ impl CmdHandler<'_> {
         self.send_json(json!({ "project_name": project_name }))
     }
 
+    /// Update a project with new username, email, and repository remote URL
     fn set_project_details(&mut self, data: CmdData, no_send: bool) {
         let CmdData::GitDetails {
             username,
@@ -257,72 +227,34 @@ impl CmdHandler<'_> {
         let pth = &project_config().lock().unwrap().project_path(&project_name);
         let mut success = true;
 
-        let config_user = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.name", &username]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.name", &username]);
-            git
-        }
-        .current_dir(&pth)
-        .status();
-        if !config_user.unwrap().success() {
+        let mut config_user = git::run(vec!["config", "user.name", &username], Some(&pth));
+        if !config_user.status().unwrap().success() {
             success = false;
         }
 
-        let config_email = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.email", &email]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.email", &email]);
-            git
-        }
-        .current_dir(&pth)
-        .status();
-        if !config_email.unwrap().success() {
+        let mut config_email = git::run(vec!["config", "user.email", &email], Some(&pth));
+        if !config_email.status().unwrap().success() {
             success = false;
         }
 
-        let config_remote = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
+        let config_remote = git::run(
             if &repository != "" {
-                cmd.args(["/C", "git", "remote", "add", "origin", &repository]);
+                vec!["remote", "add", "origin"]
             } else {
-                cmd.args(["/C", "git", "remote", "remove", "origin"]);
-            }
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            if &repository != "" {
-                git.args(["remote", "add", "origin", &repository]);
-            } else {
-                git.args(["remote", "remove", "origin"]);
-            }
-            git
-        }
-        .current_dir(&pth)
-        .output();
+                vec!["remote", "remove", "origin"]
+            },
+            Some(&pth),
+        )
+        .output()
+        .unwrap();
 
-        if !String::from_utf8(config_remote.unwrap().stdout)
+        if !String::from_utf8(config_remote.stdout)
             .unwrap()
             .ends_with("already exists")
         {
-            let config_remote = if cfg!(target_os = "windows") {
-                let mut cmd = Command::new("cmd");
-                cmd.args(["/C", "git", "remote", "set-url", "origin", &repository]);
-                cmd
-            } else {
-                let mut git = Command::new("git");
-                git.args(["remote", "set-url", "origin", &repository]);
-                git
-            }
-            .current_dir(&pth)
-            .status();
-            if !config_remote.unwrap().success() {
+            let mut config_remote =
+                git::run(vec!["remote", "set-url", "origin", &repository], Some(&pth));
+            if !config_remote.status().unwrap().success() {
                 success = false;
             }
         }
@@ -332,85 +264,69 @@ impl CmdHandler<'_> {
         }
     }
 
+    /// Get a project's username, email, and repository remote URL
     fn get_project_details(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
+
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
-        let config_user = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.name"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.name"]);
-            git
-        }
-        .current_dir(&pth)
-        .output();
-        let config_user = String::from_utf8(config_user.unwrap().stdout).unwrap();
-
-        let config_email = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "config", "user.email"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["config", "user.email"]);
-            git
-        }
-        .current_dir(&pth)
-        .output();
-        let config_email = String::from_utf8(config_email.unwrap().stdout).unwrap();
-
-        let config_remote = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "remote", "get-url", "origin"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["remote", "get-url", "origin"]);
-            git
-        }
-        .current_dir(&pth)
-        .output();
-        let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
+        let config_user = String::from_utf8(
+            git::run(vec!["config", "user.name"], Some(&pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
+        let config_email = String::from_utf8(
+            git::run(vec!["config", "user.email"], Some(&pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
+        let config_remote = String::from_utf8(
+            git::run(vec!["remote", "get-url", "origin"], Some(&pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
 
         self.send_json(
             json!({"username": config_user, "email": config_email, "repository": config_remote}),
         )
     }
 
+    /// Check if a project exists
     fn exists(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
+
         let projects = &project_config().lock().unwrap().projects;
         self.send_json(json!({ "exists": projects[project_name] != Value::Null }))
     }
 
+    /// Check if a Git remote URL exists
     fn remote_exists(&mut self, data: CmdData) {
         let CmdData::URL(url) = data else {
             return self.send_json(json!({}));
         };
 
-        let ls_remote = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "ls-remote", &url]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["ls-remote", &url]);
-            git
-        }
-        .output();
-
-        let ls_remote = String::from_utf8(ls_remote.unwrap().stdout).unwrap();
+        let ls_remote = String::from_utf8(
+            git::run(vec!["ls-remote", &url], None)
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
 
         self.send_json(json!({"exists": ls_remote.contains("fatal")}))
     }
 
+    /// Unzip the project's configured SB3 into the Git repo directory
     fn unzip(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -423,6 +339,7 @@ impl CmdHandler<'_> {
         fs::copy(pth.join("project.json"), pth.join("project.old.json"))
             .expect("failed to move project.json");
 
+        // TODO: remove sleep?
         sleep(Duration::from_millis(1000));
         let target_dir = &PathBuf::from(Path::new(&pth));
         extract(
@@ -440,7 +357,8 @@ impl CmdHandler<'_> {
         self.send_json(json!({ "status": "success" }))
     }
 
-    fn get_project(&mut self, data: CmdData, old: bool) {
+    /// Get a sprite's scripts, either old or new
+    fn get_sprite_scripts(&mut self, data: CmdData, old: bool) {
         let CmdData::Project {
             project_name,
             sprite_name,
@@ -481,6 +399,7 @@ impl CmdHandler<'_> {
         }
     }
 
+    /// Push a project to its configured remote URL
     fn push(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -488,99 +407,70 @@ impl CmdHandler<'_> {
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
-        let config_remote = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "remote", "get-url", "origin"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["remote", "get-url", "origin"]);
-            git
-        }
-        .current_dir(&pth)
-        .output();
-        let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
+        let config_remote = String::from_utf8(
+            git::run(vec!["remote", "get-url", "origin"], Some(&pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
 
-        let mut push = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "push", "--set-upstream", "origin", "master"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["push", "--set-upstream", "origin", "master"]);
-            git
-        };
+        let mut push = git::run(
+            vec!["push", "--set-upstream", "origin", "master"],
+            Some(pth),
+        );
 
         if config_remote.contains("github.com") {
             let mut token = gh_token().lock().unwrap();
             push.env("GITHUB_TOKEN", token.get());
         }
 
-        let push = push
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(&pth);
-
         let output = push.output().unwrap();
         let stderr = String::from_utf8(output.stderr).unwrap();
 
         // TODO: these checks might be very brittle
-        self.send_json(if stderr.contains(" ! [") && stderr.contains("git pull ...") {
-            json!({"status": "pull needed"})
-        } else if output.status.success() {
-            if stderr.contains("Everything up-to-date") {
-                json!({"status": "up to date"})
+        self.send_json(
+            if stderr.contains(" ! [") && stderr.contains("git pull ...") {
+                json!({"status": "pull needed"})
+            } else if output.status.success() {
+                if stderr.contains("Everything up-to-date") {
+                    json!({"status": "up to date"})
+                } else {
+                    json!({"status": "success"})
+                }
             } else {
-                json!({"status": "success"})
-            }
-        } else {
-            json!({"status": "fail"})
-        })
+                json!({"status": "fail"})
+            },
+        )
     }
 
+    /// Pull new changes from a project's remote URL
     fn pull(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
+
         let projects = &project_config().lock().unwrap();
         let pth = &projects.project_path(&project_name);
         let projects = &projects.projects;
         let sb3 = projects[&project_name]["project_file"].as_str().unwrap();
 
-        let config_remote = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "remote", "get-url", "origin"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["remote", "get-url", "origin"]);
-            git
-        }
-        .current_dir(&pth)
-        .output();
-        let config_remote = String::from_utf8(config_remote.unwrap().stdout).unwrap();
+        let config_remote = String::from_utf8(
+            git::run(vec!["remote", "get-url", "origin"], Some(&pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
 
-        let mut pull = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "pull", "origin", "master", "--rebase"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["pull", "origin", "master", "--rebase"]);
-            git
-        };
+        let mut pull = git::run(vec!["pull", "origin", "master", "--rebase"], Some(pth));
 
         if config_remote.contains("github.com") {
             let mut token = gh_token().lock().unwrap();
             pull.env("GITHUB_TOKEN", token.get());
         }
 
-        let pull = pull
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(&pth)
-            .output()
-            .unwrap();
+        let pull = pull.output().unwrap();
 
         if pull.status.success() {
             let stdout = String::from_utf8(pull.stdout).unwrap();
@@ -609,6 +499,7 @@ impl CmdHandler<'_> {
         }
     }
 
+    /// Commit new changes to a project
     fn commit(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -617,10 +508,7 @@ impl CmdHandler<'_> {
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         if self.debug {
-            println!(
-                "commit: path to project is {}",
-                pth.to_string_lossy()
-            );
+            println!("commit: path to project is {}", pth.to_string_lossy());
             println!("commit: path exists? {}", pth.exists())
         }
 
@@ -641,24 +529,20 @@ impl CmdHandler<'_> {
         let new_diff = Diff::new(&new_diff);
 
         for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(pth.join(change.costume_path))
-                .expect("failed to remove asset");
+            fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
         }
 
-        if !git::add(&pth) {
+        if !git::run(vec!["add"], Some(&pth))
+            .status()
+            .unwrap()
+            .success()
+        {
             return self.send_json(json!({ "message": "Nothing to add" }));
         }
 
-        let mut commit = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "commit", "-m", "temporary"]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["commit", "-m", "temporary"]);
-            git
-        };
-        let commit = commit.current_dir(&pth).status().unwrap();
+        let commit = git::run(vec!["commit", "-m", "temporary"], Some(pth))
+            .status()
+            .unwrap();
 
         if !commit.success() {
             if self.debug {
@@ -679,24 +563,18 @@ impl CmdHandler<'_> {
         let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json");
         let commit_message = previous_revision.commits(&new_diff).join(", ");
 
-        let mut commit = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "commit", "--amend", "-m", &commit_message]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["commit", "--amend", "-m", &commit_message]);
-            git
-        };
-        let commit = commit.current_dir(&pth);
+        let commit = git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth))
+            .status()
+            .unwrap();
 
-        if !commit.status().unwrap().success() {
+        if !commit.success() {
             return self.send_json(json!({ "message": "fail" }));
         }
 
         self.send_json(json!({ "message": commit_message }))
     }
 
+    /// Get a project's commits
     fn get_commits(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -704,28 +582,21 @@ impl CmdHandler<'_> {
         let pth = &project_config().lock().unwrap().project_path(&project_name);
         let format = "--pretty=format:{\"commit\": \"%H\", \"subject\": \"%s\", \"body\": \"%b\", \"author\": {\"name\": \"%aN\", \"email\": \"%aE\", \"date\": \"%aD\"}},";
 
-        let git_log = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "log", format]);
-            cmd
-        } else {
-            let mut git = Command::new("git");
-            git.args(["log", format]);
-            git
-        }
-        .current_dir(pth)
-        .output()
-        .unwrap()
-        .stdout;
+        let git_log = String::from_utf8(
+            git::run(vec!["log", format], Some(pth))
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
 
-        let binding = String::from_utf8(git_log).unwrap();
-        let binding = if binding.as_str().matches("\"commit\"").count() > 1 {
+        let binding = if git_log.as_str().matches("\"commit\"").count() > 1 {
             format!(
                 "[{}]",
-                binding.replace(" }\n}", " }\n},").as_str()[..binding.len() - 1].to_string()
+                git_log.replace(" }\n}", " }\n},").as_str()[..git_log.len() - 1].to_string()
             )
         } else {
-            format!("[{binding}]")
+            format!("[{git_log}]")
         };
         let log_output = if binding.ends_with(",]") {
             binding[..binding.len() - 2].to_owned() + "]"
@@ -781,6 +652,7 @@ impl CmdHandler<'_> {
         self.send_json(json!({ "sprites": sprites }))
     }
 
+    /// Set up GitHub authentication for use with any configured project
     fn gh_auth(&mut self) {
         let mut gh_token = gh_token().lock().unwrap();
         let current_token = gh_token.get().to_string();
@@ -812,7 +684,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
 
     match msg.command {
         // static
-        "diff" => handler.diff(msg.data),
+        "diff" => handler.get_diff(msg.data),
         "remote-exists" => handler.remote_exists(msg.data),
         "exists" => handler.exists(msg.data),
         "create-project" => handler.create_project(msg.data),
@@ -824,8 +696,8 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "commit" => handler.commit(msg.data),
         "push" => handler.push(msg.data),
         "pull" => handler.pull(msg.data),
-        "current-project" => handler.get_project(msg.data, false),
-        "previous-project" => handler.get_project(msg.data, true),
+        "current-project" => handler.get_sprite_scripts(msg.data, false),
+        "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
         _ => unreachable!(),
