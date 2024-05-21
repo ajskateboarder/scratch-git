@@ -4,3 +4,4 @@ export * from "./commit-item";
 export * from "./scratch";
 export * from "./checkbox";
 export * from "./copy-button";
+export * from "./input-field";

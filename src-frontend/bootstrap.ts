@@ -166,7 +166,7 @@ const pushHandler =
 
 /** Builds the final Git Menu
  *
- * @param project - the currently open project
+ * @param project - the currently open project, which should exist
  * @param changeLocale - rebuild the entire menu only if the locale has changed
  */
 export const createGitMenu = async (

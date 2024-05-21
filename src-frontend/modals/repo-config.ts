@@ -1,32 +1,23 @@
-import { settings, misc } from "@/components";
-import van, { PropsWithKnownKeys, State } from "vanjs-core";
+import { settings, misc, gitMenu } from "@/components";
+import van, { State } from "vanjs-core";
 import api, { Project, remoteExists } from "@/api";
 import i18next from "@/i18n";
 import { Modal } from "./base";
+import { InputBox, InputField } from "@/components/input-field";
 
-const { main, button, h1, div, span, input, label, br, p } = van.tags;
+const { main, button, h1, div, span, label, br } = van.tags;
 
 const PENCIL = misc.menuItems
   .select()
   .children[2].children[0].cloneNode() as HTMLImageElement;
 
-function isValidUrl(url: string) {
+const isValidUrl = (url: string) => {
   try {
     return Boolean(new URL(url));
   } catch (_) {
     return false;
   }
-}
-
-const InputField = (...children: any[]) =>
-  p({ class: "input-field" }, children);
-
-const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
-  input({
-    ...props,
-    type: "text",
-    class: [settings.inputField, "input-box"].join(" "),
-  });
+};
 
 export class RepoConfigModal extends Modal {
   private $!: {
@@ -83,6 +74,9 @@ export class RepoConfigModal extends Modal {
             if ($name.value.trim() === "") {
               alert(i18next.t("repoconfig.no-empty-fields"));
               return;
+            }
+            if ($repository.value.trim() !== "") {
+              gitMenu.setPushPullStatus(true);
             }
             this.editing.val = false;
             editButton.innerHTML = "";
@@ -164,15 +158,15 @@ export class RepoConfigModal extends Modal {
 
   public async display() {
     this.project = (await api.getCurrentProject())!;
-    const details = await this.project?.getDetails();
+    if (await this.project?.exists()) {
+      const details = await this.project?.getDetails();
+      const { $repository, $name, $email } = this.$;
 
-    const { $repository, $name, $email } = this.$;
-
-    // in the future, these will never be blank
-    $repository.value = details?.repository ?? "";
-    $name.value = details?.username ?? "";
-    $email.value = details?.email ?? "";
-
+      // in the future, these will never be blank
+      $repository.value = details?.repository ?? "";
+      $name.value = details?.username ?? "";
+      $email.value = details?.email ?? "";
+    }
     if (!this.open) this.showModal();
   }
 }

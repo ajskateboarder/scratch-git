@@ -1,3 +1,4 @@
+import { Redux } from "@/lib";
 import { SOCKET_URL } from "./config";
 
 export interface Commit {
@@ -18,6 +19,12 @@ export interface GitDetails {
   username: string;
   email: string;
   repository: string;
+}
+
+interface ProjectCreationDetails {
+  username: string;
+  email: string;
+  projectPath: string;
 }
 
 type PullMessage = "success" | "nothing new" | "unrelated histories";
@@ -75,10 +82,18 @@ export class Project extends Socket {
 
   /** Returns if the project has been linked to scratch.git */
   async exists(): Promise<boolean> {
-    return await this.request({
-      command: "exists",
-      data: { Project: { project_name: this.projectName } },
-    });
+    console.log(
+      await this.request({
+        command: "exists",
+        data: { Project: { project_name: this.projectName } },
+      })
+    );
+    return (
+      await this.request({
+        command: "exists",
+        data: { Project: { project_name: this.projectName } },
+      })
+    ).exists;
   }
 
   /** Receive all the commits made for a project */
@@ -199,6 +214,8 @@ export class Project extends Socket {
   }
 }
 
+// TODO: use something better instead of stupid errors
+
 /** A project with the same name already exists */
 export class ProjectExistsException extends Error {
   constructor(message: string) {
@@ -225,28 +242,40 @@ export class ProjectManager extends Socket {
   /**
    * Create and initialize a new project
    *
-   * @param projectPath - the path to the project SB3
+   * @param info - the path to the project SB3 and the user's chosen name and email
    * @throws {ProjectExistsException | Error}
    */
-  async createProject(projectPath: string): Promise<Project> {
+  async createProject({
+    projectPath,
+    username,
+    email,
+  }: ProjectCreationDetails): Promise<Project> {
     this.ws.send(
       JSON.stringify({
         command: "create-project",
-        data: { FilePath: projectPath },
+        data: {
+          ProjectToCreate: {
+            file_path: projectPath,
+            username,
+            email,
+          },
+        },
       })
     );
 
     let response = await this.receive();
-    if (response.project_name === "exists") {
-      throw new ProjectExistsException(
-        `${projectPath
-          .split("/")
-          .pop()} is already a project. Either load the existing project or make a copy of the project file.`
-      );
-    } else if (response.project_name === "fail") {
-      throw new Error(
-        `An uncaught error has occured. Please check the server logs and <a href="https://github.com/ajskateboarder/scratch-git/issues">make a bug report on GitHub</a>.`
-      );
+    if (response.status) {
+      if (response.status === "exists") {
+        throw new ProjectExistsException(
+          `${projectPath
+            .split("/")
+            .pop()} is already a project. Either load the existing project or make a copy of the project file.`
+        );
+      } else if (response.status === "fail") {
+        throw new Error(
+          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
+        );
+      }
     }
 
     return new Project(response.project_name, this.ws);
@@ -254,10 +283,7 @@ export class ProjectManager extends Socket {
 
   /** Get the current project based on the project name */
   async getCurrentProject(): Promise<Project | undefined> {
-    return new Project(
-      window.ReduxStore.getState().scratchGui.projectTitle,
-      this.ws
-    );
+    return new Project(Redux.getState().scratchGui.projectTitle, this.ws);
   }
 }
 

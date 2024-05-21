@@ -218,27 +218,30 @@ dialog[is="welcome-modal"] {
 .welcome-screen-content {
   text-align: left;
   font-weight: normal;
-  width: fit-content;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-#creationError {
+#stepError {
   text-wrap: balance;
   font-family: system-ui;
 }
 
 #step1,
-#step3 {
+#step3,
+#step2 {
   display: none;
   flex-direction: column;
   padding: 20px;
   width: 100%;
 }
 
-#step2 {
+/* #step2 {
   display: none;
   flex-direction: column;
   padding: 20px;
-}
+} */
 
 .stage-diff {
   margin-top: 40px;
@@ -332,7 +335,6 @@ dialog[is="welcome-modal"] {
 }
 
 .bottom-bar {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   background-color: transparent;

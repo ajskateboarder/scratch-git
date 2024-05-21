@@ -200,10 +200,14 @@ export const gitMenu = new (class GitMenu {
   setPushPullStatus(enabled: boolean) {
     if (!enabled) {
       this.item(1).setAttribute("disabled", "");
+      this.item(1).setAttribute("title", i18next.t("menu.repo-needed"));
       this.item(2).setAttribute("disabled", "");
+      this.item(2).setAttribute("title", i18next.t("menu.repo-needed"));
     } else {
       this.item(1).removeAttribute("disabled");
+      this.item(1).removeAttribute("title");
       this.item(2).removeAttribute("disabled");
+      this.item(2).removeAttribute("title");
     }
   }
 })();

@@ -71,8 +71,6 @@ async function initialize() {
     }
   });
 
-  document.head.append(...Styles());
-
   if (!fileMenu.isProjectOpen()) {
     document.querySelector<Modal>("dialog[is='welcome-modal']")!.display();
   } else {
@@ -133,6 +131,8 @@ async function initialize() {
     "scratch-git:plaintext",
     JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
   );
+
+  document.head.append(...Styles());
 
   // avoids scenarios where scratch.git initializes before the editor is finished
   VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {

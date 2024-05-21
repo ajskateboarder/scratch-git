@@ -17,15 +17,17 @@
     "commits": "Commits",
     "newer": "< Neuere",
     "older": "Ältere >",
-    "committed-when": "{{time}} gecommitet"
+    "commit-time": "wurde von {{name}} {{time}} gecommitet"
   },
   "welcome": {
     "project-opened": "Projekt geöffnet",
     "open-project": "Projekt öffnen",
     "welcome": "Willkommen zu scratch.git",
     "get-started": "Lade bitte ein Projekt für Git-Entwicklung um zu starten",
-    "configure-project-loc": "Projektort einstellen",
+    "select-project-loc": "Projektort einstellen",
     "select-location": "Wähle bitte den Ort deines Projektes, damit scratch.git dein Projekt für deine Repository kann.",
+    "set-info": "Enter a username and email",
+    "set-git-username": "Please pick a username and email to use when making commits. Remember to keep this info appropriate if you want to share your repository on Scratch. Your email is only used for Git and doesn't have to be a real email.",
     "next": "Weiter",
     "back": "Zurück"
   },
@@ -33,7 +35,7 @@
     "repo-url-placeholder": "Gebe einen Link zu einer Repository ein",
     "name": "Name",
     "repo-url": "Repository-Link (optional)",
-    "email": "Email (optional)",
+    "email": "Email",
     "repoconfig": "Dein [[repository]] einstellen",
     "no-empty-fields": "Felder mit einem Sternchen müssen ausgefüllt werden!",
     "repo-tip": "Eine Repository (repo) ist ein Ort, dein Projekt online zu speichern"
