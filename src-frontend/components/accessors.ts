@@ -30,6 +30,7 @@ export const menu = {
   menuBar: s("menu-bar_menu-bar"),
   menuPos: s("gui_menu-bar-position"),
   menuItem: s("menu-bar_menu-bar-item"),
+  menuHoverable: s("menu_hoverable"),
   activeMenuItem: s("menu-bar_active"),
   menuSection: s("menu_menu-section"),
   menuList: s("menu-bar_menu-bar-menu"),

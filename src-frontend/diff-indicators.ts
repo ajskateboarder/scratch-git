@@ -4,10 +4,17 @@ import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
+import { getBlockly } from "./lib/globals";
+
+const STAGE: Sprite = {
+  name: "Stage",
+  isStage: true,
+  format: () => "Stage (stage)",
+};
 
 /** Receive Blockly IDs to top-level blocks that were changed
  *
- * @param project - a {@link Project}
+ * @param project - the project to retreieve changed scripts
  * @param sprite - the {@link Sprite} in which blocks were changed
  * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
  */
@@ -33,20 +40,14 @@ async function changedBlocklyScripts(
   };
 
   let spriteName: string = sprite.format();
-  let workspace = window.Blockly.getMainWorkspace();
+  let workspace = getBlockly();
 
   let diffs = await parseScripts(previousScripts, currentScripts);
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
-    .filter((e) => e !== undefined) as string[];
+    .filter((e) => e !== undefined);
 }
-
-const STAGE: Sprite = {
-  name: "Stage",
-  isStage: true,
-  format: () => "Stage (stage)",
-};
 
 async function highlightChanged(
   project: Project,
@@ -54,6 +55,7 @@ async function highlightChanged(
   loadedJSON: any
 ) {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
+    // diff highlight filter for scripts
     document.querySelector(
       ".blocklySvg defs"
     )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
@@ -88,11 +90,11 @@ async function highlightChanged(
 
   if (changedScripts === undefined) return;
 
+  // persist this until the next save
   window._changedScripts = changedScripts;
 
   changedScripts.forEach((e) => {
-    let group: HTMLElement =
-      window.Blockly.getMainWorkspace().getBlockById(e).svgGroup_;
+    let group = getBlockly().getBlockById(e).svgGroup_;
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });
@@ -101,13 +103,16 @@ async function highlightChanged(
 const nameOfSprite = (element: HTMLElement) =>
   element.querySelectorAll("div")[2].innerText;
 
-/** Shows buttons to display changes and highlight changed scripts */
+/** Shows buttons to display changes and highlight changed scripts
+ *
+ * @param project - the currently open project
+ */
 export async function showIndicators(project: Project) {
   let changedSprites = await project.getSprites(),
-    _sprites = [...sprites.sprites.select().children] as HTMLElement[],
+    editorSprites = [...sprites.sprites.select().children] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
 
-  _sprites.forEach((sprite) => {
+  editorSprites.forEach((sprite) => {
     let divs = sprite
       .querySelector("div")!
       .querySelectorAll("div") as NodeListOf<HTMLDivElement>;
@@ -129,7 +134,7 @@ export async function showIndicators(project: Project) {
         .forEach((button) => (button.style.marginTop = "0px"));
     });
 
-    // was the selected sprite changed?
+    // builds a sprite diff button
     if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
       return;
 
@@ -151,16 +156,15 @@ export async function showIndicators(project: Project) {
       },
       onclick: async (e: Event) => {
         e.stopPropagation();
-        (document.querySelector("dialog[is='diff-modal']") as DiffModal).diff(
-          project,
-          spriteName
-        );
+        (
+          document.querySelector("dialog[is='diff-modal']") as DiffModal
+        ).display(project, spriteName);
       },
     });
 
     divs[3].after(diffButton);
 
-    // on sprite click, adjust diff buttons and highlight changed scripts
+    // on sprite click, adjust diff buttons location and highlight changed scripts
     sprite.addEventListener("click", async () => {
       let movedToSprite = nameOfSprite(
         await new Promise((resolve) => {
@@ -210,13 +214,14 @@ export async function showIndicators(project: Project) {
         e.stopPropagation();
         document
           .querySelector<DiffModal>("dialog[is='diff-modal']")!
-          .diff(project, "Stage (stage)");
+          .display(project, "Stage (stage)");
       },
     });
 
     stageWrapper.querySelector("img")!.after(stageDiffButton);
   }
 
+  // when opening the stage, move all the diff buttons up
   stageWrapper.addEventListener("click", async () => {
     (<HTMLDivElement[]>[...sprites.spriteSelDelete.selectAll("sprites.delete")])
       .filter((button) => !button.classList.contains("stage-diff-button"))
@@ -249,7 +254,7 @@ export async function showIndicators(project: Project) {
     attributeFilter: ["class"],
   });
 
-  // retain diff highlights for editor theme
+  // retain diff highlights for when editor theme
   new MutationObserver(async () => {
     let selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
     let sprite_ = selectedSprite

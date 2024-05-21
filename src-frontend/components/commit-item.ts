@@ -45,11 +45,10 @@ export const CommitItem = (commit: Commit, search: string) =>
     span({ style: "font-size: 1rem" }, highlight(commit.subject, search)),
     br(),
     span(
-      { style: "font-size: 0.75rem" },
-      commit.author.name,
-      span(
-        { style: "font-weight: lighter", title: commit.author.date },
-        i18next.t("commit.committed-when", timeAgo(commit.author.date))
-      )
+      { style: "font-size: 0.75rem", title: commit.author.date },
+      i18next.t("commit.committed-when", {
+        time: timeAgo(commit.author.date),
+        name: commit.author.name,
+      })
     )
   );

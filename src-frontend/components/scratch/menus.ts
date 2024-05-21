@@ -137,17 +137,15 @@ export const gitMenu = new (class GitMenu {
     this.item(1).label(
       span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
     );
+    this.item(1).classList.add("push-button");
     this.item(1).onclick(push);
     this.item(2).label(
       span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
     );
+    this.item(2).classList.add("pull-button");
     this.item(2).onclick(pull);
     this.item(3).label(
-      span(
-        i({ class: "fa-solid fa-bars" }),
-        " ",
-        i18next.t("menu.configure-repo")
-      )
+      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo"))
     );
     this.item(3).onclick(repoConfig);
     this.item(4).label(
@@ -193,5 +191,23 @@ export const gitMenu = new (class GitMenu {
 
     fileMenu.toggleMenu(true);
     this.initialized = true;
+  }
+
+  /** Enable/disable the pushing and pulling menu options
+   *
+   * @param enabled - whether to enable them
+   */
+  setPushPullStatus(enabled: boolean) {
+    if (!enabled) {
+      this.item(1).setAttribute("disabled", "");
+      this.item(1).setAttribute("title", i18next.t("menu.repo-needed"));
+      this.item(2).setAttribute("disabled", "");
+      this.item(2).setAttribute("title", i18next.t("menu.repo-needed"));
+    } else {
+      this.item(1).removeAttribute("disabled");
+      this.item(1).removeAttribute("title");
+      this.item(2).removeAttribute("disabled");
+      this.item(2).removeAttribute("title");
+    }
   }
 })();

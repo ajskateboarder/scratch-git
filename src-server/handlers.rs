@@ -35,7 +35,11 @@ enum CmdData<'a> {
         email: String,
         repository: String,
     },
-    FilePath(String),
+    ProjectToCreate {
+        file_path: String,
+        username: String,
+        email: String,
+    },
     URL(String),
 }
 
@@ -75,10 +79,10 @@ impl CmdHandler<'_> {
     }
 
     fn create_project(&mut self, data: CmdData) {
-        let CmdData::FilePath(file_name) = data else {
+        let CmdData::ProjectToCreate {file_path, username, email} = data else {
             return self.send_json(json!({}));
         };
-        let name = Path::new(&file_name)
+        let name = Path::new(&file_path)
             .file_name()
             .unwrap()
             .to_os_string()
@@ -101,12 +105,12 @@ impl CmdHandler<'_> {
             }
         };
 
-        let Ok(file_path) = canonicalize(&file_name) else {
+        let Ok(file_path) = canonicalize(&file_path) else {
             if self.debug {
                 println!("create_project: failed to find project file")
             }
 
-            return self.send_json(json!({ "message": "fail" }));
+            return self.send_json(json!({ "status": "fail" }));
         };
 
         match config.projects[&name] {
@@ -117,7 +121,7 @@ impl CmdHandler<'_> {
                 });
             }
             Value::Object(_) => {
-                return self.send_json(json!({ "project_name": "exists" }));
+                return self.send_json(json!({ "status": "exists" }));
             }
             _ => unreachable!(),
         };
@@ -143,7 +147,7 @@ impl CmdHandler<'_> {
                 &project_to_extract["project_file"].as_str().unwrap(),
             ))
             .expect("failed to open file"),
-            target_dir,
+            target_dir.clone(),
         )
         .unwrap();
 
@@ -168,15 +172,44 @@ impl CmdHandler<'_> {
             if self.debug {
                 println!("create_project: git init did not state that new repo was made")
             }
-            return self.send_json(json!({ "project_name": "fail" }));
+            return self.send_json(json!({ "status": "fail" }));
         }
+
+        fs::write(target_dir.join(".gitignore"), "project.old.json")
+            .expect("failed to write gitignore");
 
         if !git::add(&project_path) {
             if self.debug {
                 println!("create_project: assets could not be added")
             }
-            return self.send_json(json!({ "project_name": "fail" }));
+            return self.send_json(json!({ "status": "fail" }));
         }
+
+        let project_name = name.replace("projects/", "");
+
+        let _ = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "config", "user.email", &email]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["config", "user.email", &email]);
+            git
+        }
+        .current_dir(&project_path)
+        .status();
+
+        let _ = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "git", "config", "user.name", &username]);
+            cmd
+        } else {
+            let mut git = Command::new("git");
+            git.args(["config", "user.name", &username]);
+            git
+        }
+        .current_dir(&project_path)
+        .status();
 
         let mut commit = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
@@ -191,20 +224,25 @@ impl CmdHandler<'_> {
         let commit = commit
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(project_path);
-        let commit = String::from_utf8(commit.output().unwrap().stdout).unwrap();
+            .current_dir(project_path).output().unwrap();
+        let response = String::from_utf8(commit.stdout).unwrap();
 
-        if !commit.contains("Initial commit") {
+        if !response.contains("Initial commit") {
             if self.debug {
-                println!("create_project: initial commit could not be created. reason:\n\n{commit}")
+                println!("create_project: initial commit might not have been created")
             }
-            return self.send_json(json!({ "project_name": "fail" }));
+            let stderr = String::from_utf8(commit.stderr).unwrap();
+            if stderr.contains("*** Please tell me who you are.") {
+                return self.send_json(json!({ "status": "needs_info" }));
+            }
+
+            return self.send_json(json!({ "status": "fail" }));
         }
 
-        self.send_json(json!({ "project_name": name.replace("projects/", "") }))
+        self.send_json(json!({ "project_name": project_name }))
     }
 
-    fn set_project_details(&mut self, data: CmdData) {
+    fn set_project_details(&mut self, data: CmdData, no_send: bool) {
         let CmdData::GitDetails {
             username,
             email,
@@ -215,6 +253,7 @@ impl CmdHandler<'_> {
         else {
             return self.send_json(json!({}));
         };
+
         let pth = &project_config().lock().unwrap().project_path(&project_name);
         let mut success = true;
 
@@ -250,11 +289,19 @@ impl CmdHandler<'_> {
 
         let config_remote = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "git", "remote", "add", "origin", &repository]);
+            if &repository != "" {
+                cmd.args(["/C", "git", "remote", "add", "origin", &repository]);
+            } else {
+                cmd.args(["/C", "git", "remote", "remove", "origin"]);
+            }
             cmd
         } else {
             let mut git = Command::new("git");
-            git.args(["remote", "add", "origin", &repository]);
+            if &repository != "" {
+                git.args(["remote", "add", "origin", &repository]);
+            } else {
+                git.args(["remote", "remove", "origin"]);
+            }
             git
         }
         .current_dir(&pth)
@@ -280,7 +327,9 @@ impl CmdHandler<'_> {
             }
         }
 
-        self.send_json(json!({"success": success}))
+        if !no_send {
+            self.send_json(json!({"success": success}))
+        }
     }
 
     fn get_project_details(&mut self, data: CmdData) {
@@ -387,9 +436,6 @@ impl CmdHandler<'_> {
             target_dir.to_path_buf(),
         )
         .unwrap();
-
-        fs::write(target_dir.join(".gitignore"), "project.old.json")
-            .expect("failed to write gitignore");
 
         self.send_json(json!({ "status": "success" }))
     }
@@ -772,7 +818,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "create-project" => handler.create_project(msg.data),
         "gh-auth" => handler.gh_auth(),
         // project-specific
-        "set-project-details" => handler.set_project_details(msg.data),
+        "set-project-details" => handler.set_project_details(msg.data, false),
         "get-project-details" => handler.get_project_details(msg.data),
         "unzip" => handler.unzip(msg.data),
         "commit" => handler.commit(msg.data),

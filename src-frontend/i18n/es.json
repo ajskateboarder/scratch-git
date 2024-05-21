@@ -3,8 +3,9 @@
     "push": "Recuperar cambios",
     "pull": "Incorporar cambios",
     "commit": "Commit",
-    "configure-repo": "Configurar repositorio",
-    "view-commits": "Ver commits"
+    "setup-repo": "Configurar repositorio",
+    "view-commits": "Ver commits",
+    "repo-needed": "Please set up a repository to use this!"
   },
   "diff": {
     "use-highlights": "Usar resaltados",
@@ -23,16 +24,18 @@
     "open-project": "Abrir proyecto",
     "welcome": "Bienvenid@ a scratch.git",
     "get-started": "Por favor carga un proyecto para el desarrollo Git para comenzar",
-    "configure-project-loc": "Configurar la ubicación del proyecto",
+    "select-project-loc": "Configurar la ubicación del proyecto",
     "select-location": "Por favor selecciona la ubicación de tu archivo de proyecto. Esto es para que scratch.git pueda encontrar tu proyecto localmente para usar con tu repositorio.",
+    "set-info": "Enter a username and email",
+    "set-git-username": "Please pick a username and email to use when making commits. Remember to keep this info appropriate if you want to share your repository on Scratch. Your email is only used for Git and doesn't have to be a real email.",
     "next": "Siguiente",
     "back": "Atrás"
   },
   "repoconfig": {
     "repo-url-placeholder": "Introduce un enlace a la URL del repositorio",
-    "repo-url": "URL del repositorio",
     "name": "Nombre",
-    "email": "Correo electrónico (opcional)",
+    "repo-url": "URL del repositorio (opcional)",
+    "email": "Correo electrónico",
     "repoconfig": "Configura tu [[repositorio]]",
     "no-empty-fields": "¡No dejes campos con asterisco en blanco!",
     "repo-tip": "Un repositorio (repo) es un lugar para almacenar tu proyecto en línea"
