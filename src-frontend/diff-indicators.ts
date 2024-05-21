@@ -1,5 +1,4 @@
 /** @file Displays indicators and info on sprites that were changed */
-
 import type { Project, Sprite } from "./api";
 import { misc, sprites } from "./components/index";
 import type { DiffModal } from "./modals";
@@ -139,10 +138,9 @@ export async function showIndicators(project: Project) {
     if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
       return;
 
-    let applyMargin = sprites.delete.select() !== null;
     let diffButton = SpriteDiff({
       style: `
-      margin-top: ${applyMargin ? "30px" : "0px"};
+      margin-top: ${sprites.delete.select() !== null ? "30px" : "0px"};
       border-radius: 20px;
       transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
       scale: 0.8;

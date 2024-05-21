@@ -15,7 +15,6 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
     { class: "screen", id: `step${step.number}` },
     div({ class: "welcome-screen-content" }, h1(step.title), children)
-  );
 
 /** Test if an email is valid or not.
  *

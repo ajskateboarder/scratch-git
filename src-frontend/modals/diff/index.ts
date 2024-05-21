@@ -437,7 +437,6 @@ export class DiffModal extends Modal {
     $highlights.checked = JSON.parse(
       localStorage.getItem("scratch-git:highlights")!
     );
-
     $plainText.checked = JSON.parse(
       localStorage.getItem("scratch-git:plaintext")!
     );

@@ -1,8 +1,4 @@
-<picture>
-<img alt="" src="./logo.svg" align=right width=100 />
-</picture>
-
-<h1>scratch.git</h1>
+<h1><img alt="" src="./logo.svg" align=right width=100 />scratch.git</h1>
 
 > Git version control integration for Scratch (TurboWarp) that just works and makes sense
 
@@ -46,6 +42,8 @@ These features closely mimic the kind of Git development seen in editors such as
 - scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
 - scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output
+
+## Contributing
 
 ## Developing
 
