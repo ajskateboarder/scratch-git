@@ -1,24 +1,24 @@
-import { Redux } from "@/lib";
 import { SOCKET_URL } from "./config";
+import { Redux } from "@/lib";
 
 export interface Commit {
-  author: { date: string; email: string; name: string };
-  body: string;
-  commit: string;
-  subject: string;
-  shortDate: string;
+  readonly author: { date: string; email: string; name: string };
+  readonly body: string;
+  readonly commit: string;
+  readonly subject: string;
+  readonly shortDate: string;
 }
 
 export interface Sprite {
-  name: string;
-  isStage: boolean;
-  format: () => string;
+  readonly name: string;
+  readonly isStage: boolean;
+  readonly format: () => string;
 }
 
 export interface GitDetails {
-  username: string;
-  email: string;
-  repository: string;
+  readonly username: string;
+  readonly email: string;
+  readonly repository: string;
 }
 
 interface ProjectCreationDetails {
@@ -32,11 +32,7 @@ type PushMessage = "success" | "up to date" | "pull needed";
 
 /** Represents a WebSocket interface */
 class Socket {
-  protected ws: WebSocket;
-
-  constructor(ws: WebSocket) {
-    this.ws = ws;
-  }
+  constructor(protected ws: WebSocket) {}
 
   /** Receive the next message or error */
   receive(): Promise<any> {
@@ -68,16 +64,13 @@ class Socket {
 
 /** Represents a connection to interface with a specific project */
 export class Project extends Socket {
-  projectName: string;
-
   /** Constructs a project
    *
    * @param projectName - the name of an initialized project
    * @param ws - a WebSocket connection
    */
-  constructor(projectName: string, ws: WebSocket) {
+  constructor(public projectName: string, protected ws: WebSocket) {
     super(ws);
-    this.projectName = projectName;
   }
 
   /** Returns if the project has been linked to scratch.git */
@@ -86,7 +79,7 @@ export class Project extends Socket {
       await this.request({
         command: "exists",
         data: { Project: { project_name: this.projectName } },
-      })
+      }),
     );
     return (
       await this.request({
@@ -98,7 +91,7 @@ export class Project extends Socket {
 
   /** Receive all the commits made for a project */
   async getCommits(): Promise<Commit[]> {
-    let commits = await this.request({
+    const commits = await this.request({
       command: "get-commits",
       data: { Project: { project_name: this.projectName } },
     });
@@ -113,7 +106,7 @@ export class Project extends Socket {
 
   /** Retreive sprites that have been changed since project changes, sorted alphabetically */
   async getSprites() {
-    let sprites: [string, boolean][] = (
+    const sprites: [string, boolean][] = (
       await this.request({
         command: "get-changed-sprites",
         data: { Project: { project_name: this.projectName } },
@@ -260,20 +253,20 @@ export class ProjectManager extends Socket {
             email,
           },
         },
-      })
+      }),
     );
 
-    let response = await this.receive();
+    const response = await this.receive();
     if (response.status) {
       if (response.status === "exists") {
         throw new ProjectExistsException(
           `${projectPath
             .split("/")
-            .pop()} is already a project. Either load the existing project or make a copy of the project file.`
+            .pop()} is already a project. Either load the existing project or make a copy of the project file.`,
         );
       } else if (response.status === "fail") {
         throw new Error(
-          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
+          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues.",
         );
       }
     }
@@ -294,9 +287,9 @@ export class ProjectManager extends Socket {
  */
 export function diff(
   oldScript: string,
-  newScript: string
+  newScript: string,
 ): Promise<{ added: number; removed: number; diffed: string }> {
-  let ws = new Socket(new WebSocket(SOCKET_URL));
+  const ws = new Socket(new WebSocket(SOCKET_URL));
   return ws.request({
     command: "diff",
     data: {
@@ -311,7 +304,7 @@ export function diff(
  */
 export function remoteExists(url: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    let ws = new WebSocket(SOCKET_URL);
+    const ws = new WebSocket(SOCKET_URL);
 
     ws.onopen = () => {
       ws.send(
@@ -320,7 +313,7 @@ export function remoteExists(url: string): Promise<boolean> {
           data: {
             URL: url,
           },
-        })
+        }),
       );
     };
     ws.onmessage = (message) => {

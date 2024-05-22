@@ -1,18 +1,16 @@
-// @ts-ignore
-import { scratchblocks as scratchblocks_ } from "./scratchblocks.js";
-// @ts-ignore
 import { parseSB3Blocks as parseSB3Blocks_ } from "./parse-sb3-blocks.js";
+import { scratchblocks as scratchblocks_ } from "./scratchblocks.js";
 
 type ScratchBlocks = {
   appendStyles: () => void;
-  renderMatching: (loc: string, config: {}) => void;
+  renderMatching: (loc: string, config: Record<string, any>) => void;
 };
 
 type toScratchblocks = (
   script: string,
-  json: {},
+  json: Record<string, any>,
   language: string,
-  config: {}
+  config: Record<string, any>,
 ) => string;
 
 export const scratchblocks: ScratchBlocks = scratchblocks_;

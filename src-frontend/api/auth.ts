@@ -22,17 +22,17 @@ export class GhAuth extends EventTarget {
           data: {
             Project: { project_name: "" },
           },
-        })
+        }),
       );
     };
 
     this.ws.onmessage = (message) => {
-      let data: { success: true } & DeviceCode = JSON.parse(message.data);
+      const data: { success: true } & DeviceCode = JSON.parse(message.data);
       if (data.success) {
         this.dispatchEvent(new CustomEvent("login"));
       } else {
         this.dispatchEvent(
-          new CustomEvent("devicecode", { detail: data as DeviceCode })
+          new CustomEvent("devicecode", { detail: data as DeviceCode }),
         );
       }
     };

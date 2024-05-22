@@ -1,13 +1,12 @@
+import { Modal } from "../base";
+import { scrollBlockIntoView, flash } from "./block-utils";
 import api, { Project } from "@/api";
 import { settings } from "@/components";
-
-import { parseScripts, type ScriptStatus } from "@/scripts";
-import { scrollBlockIntoView, flash } from "./block-utils";
-import van from "vanjs-core";
 import { Checkbox, Copy } from "@/components";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
-import { Modal } from "../base";
+import { parseScripts, type ScriptStatus } from "@/scripts";
+import van from "vanjs-core";
 
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
@@ -76,7 +75,7 @@ export class DiffModal extends Modal {
           this.close();
         },
       },
-      i({ class: "fa-solid fa-xmark" })
+      i({ class: "fa-solid fa-xmark" }),
     );
 
     this.copyCallback = () =>
@@ -91,8 +90,8 @@ export class DiffModal extends Modal {
       pre(
         { class: "commit-view" },
         Copy(this.copyCallback),
-        pre({ class: "commit-wrap" })
-      )
+        pre({ class: "commit-wrap" }),
+      ),
     );
 
     this.$ = {
@@ -107,28 +106,28 @@ export class DiffModal extends Modal {
       main(
         { class: "diff-view" },
         aside(this.$.$scripts),
-        main(div({ class: "content" }, commits))
-      )
+        main(div({ class: "content" }, commits)),
+      ),
     );
   }
 
   /** Highlights diffs as blocks */
   private highlightAsBlocks() {
-    let svg = this.querySelectorAll(".scratchblocks svg > g");
+    const svg = this.querySelectorAll(".scratchblocks svg > g");
 
     svg.forEach((blocks) => {
       blocks.querySelectorAll("path.sb3-diff").forEach((diff) => {
-        let moddedBlock = diff.previousElementSibling!.cloneNode(
-          true
+        const moddedBlock = diff.previousElementSibling!.cloneNode(
+          true,
         ) as SVGElement;
-        let fillColor = diff.classList.contains("sb3-diff-ins")
+        const fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-          ? "red"
-          : "grey";
+            ? "red"
+            : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
-            "path,g,rect"
+            "path,g,rect",
           ) // g selector isn't needed maybe but just in case..
           .forEach((element) => {
             element.style.cssText = `fill: ${fillColor}; opacity: 0.5`;
@@ -151,7 +150,7 @@ export class DiffModal extends Modal {
     const { $commits, $highlights } = this.$;
 
     // TODO: passing in diffs and script idx is probably unneeded
-    let content = diffs[script].diffed.trimStart() ?? "";
+    const content = diffs[script].diffed.trimStart() ?? "";
 
     $commits.innerHTML = `<pre>${content}</pre><br>`;
 
@@ -163,12 +162,12 @@ export class DiffModal extends Modal {
               e.startsWith("-")
                 ? "255,0,0,0.5"
                 : e.startsWith("+")
-                ? "0,255,0,0.5"
-                : "0,0,0,0"
+                  ? "0,255,0,0.5"
+                  : "0,0,0,0"
             })`,
           },
-          i == 0 ? e.trimStart() : e
-        )
+          i == 0 ? e.trimStart() : e,
+        ),
       );
       if (highlights[0].innerText === "") {
         highlights = highlights.slice(1);
@@ -176,9 +175,9 @@ export class DiffModal extends Modal {
       $commits.innerHTML = "";
       $commits.append(
         pre(
-          // @ts-ignore
-          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
-        )
+          // @ts-expect-error - not sure
+          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null),
+        ),
       );
     }
 
@@ -187,14 +186,14 @@ export class DiffModal extends Modal {
 
   /** Sets theme of diff viewer */
   private setDiffTheme(theme: "dark" | "light") {
-    let svg = this.querySelectorAll(".scratchblocks svg > g");
+    const svg = this.querySelectorAll(".scratchblocks svg > g");
     if (theme === "dark") {
       svg.forEach((blocks) => {
         blocks
           .querySelectorAll<SVGPathElement>("path.sb3-diff")
           .forEach(
             (diff) =>
-              (diff.style.cssText = "stroke: white; stroke-width: 3.5px")
+              (diff.style.cssText = "stroke: white; stroke-width: 3.5px"),
           );
       });
     } else {
@@ -210,7 +209,7 @@ export class DiffModal extends Modal {
     project: Project | undefined,
     spriteName: string,
     script = 0,
-    cached = false
+    cached = false,
   ) {
     const { $commits, $highlights, $plainText, $scripts } = this.$;
 
@@ -236,10 +235,10 @@ export class DiffModal extends Modal {
 
     const diffs = await parseScripts(oldScripts, newScripts);
 
-    let { blocks: blockTheme, gui: uiTheme } =
+    const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
 
-    let config = {
+    const config = {
       style:
         blockTheme === "high-contrast" ? "scratch3-high-contrast" : "scratch3",
       scale: 0.675,
@@ -249,7 +248,7 @@ export class DiffModal extends Modal {
       scratchblocks.appendStyles();
       scratchblocks.renderMatching(".commit-wrap", config);
 
-      let svg = this.querySelector(".scratchblocks svg > g")!;
+      const svg = this.querySelector(".scratchblocks svg > g")!;
 
       svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
         input.setAttribute("rx", "4");
@@ -267,7 +266,7 @@ export class DiffModal extends Modal {
           blocks
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
-              let darkFill =
+              const darkFill =
                 DarkBlocks[
                   element.classList.item(0) as keyof typeof DarkBlocks
                 ];
@@ -278,7 +277,7 @@ export class DiffModal extends Modal {
           blocks
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
-              let darkFill =
+              const darkFill =
                 DarkBlocks[
                   element.classList.item(0) as keyof typeof DarkBlocks
                 ];
@@ -301,7 +300,7 @@ export class DiffModal extends Modal {
       }
 
       // adjust dropdown inputs to match tw
-      let dropdownChange = {
+      const dropdownChange = {
         three: "brightness(0.83)",
         "high-contrast": "brightness(1.12) saturate(0.7)",
       }[blockTheme];
@@ -321,7 +320,7 @@ export class DiffModal extends Modal {
     $highlights.onchange = () => {
       localStorage.setItem(
         "scratch-git:highlights",
-        $highlights.checked.toString()
+        $highlights.checked.toString(),
       );
       if ($highlights.checked) {
         this.highlightAsBlocks();
@@ -330,7 +329,7 @@ export class DiffModal extends Modal {
         }
       } else {
         if ($plainText.checked) {
-          let content = diffs[script].diffed ?? "";
+          const content = diffs[script].diffed ?? "";
           $commits.innerHTML = "";
           $commits.append(pre(content.trimStart()));
         } else {
@@ -344,13 +343,13 @@ export class DiffModal extends Modal {
     $plainText.onchange = (e) => {
       localStorage.setItem(
         "scratch-git:plaintext",
-        $plainText.checked.toString()
+        $plainText.checked.toString(),
       );
       if ($plainText.checked) {
         if ($highlights.checked) {
           this.highlightAsText(diffs, script);
         } else {
-          let content = diffs[script].diffed ?? "";
+          const content = diffs[script].diffed ?? "";
           $commits.innerHTML = "";
           $commits.append(pre(content.trimStart()));
         }
@@ -365,7 +364,7 @@ export class DiffModal extends Modal {
 
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
-      let diffButton = li(
+      const diffButton = li(
         button(
           { class: "tab-btn" },
           i({ class: `${DiffIcon[diff.status]} change-icon` }),
@@ -386,15 +385,15 @@ export class DiffModal extends Modal {
                         activeTabIndex: 0,
                       });
                     }
-                    let id = window._changedScripts[scriptNo];
+                    const id = window._changedScripts[scriptNo];
                     scrollBlockIntoView(id);
                     flash(getBlockly().getBlockById(id));
                   },
                 },
-                i({ class: "fa-solid fa-up-right-from-square" })
+                i({ class: "fa-solid fa-up-right-from-square" }),
               )
-            : undefined
-        )
+            : undefined,
+        ),
       );
 
       diffButton
@@ -412,10 +411,10 @@ export class DiffModal extends Modal {
             spriteName,
             parseInt(
               this.querySelector("button.active-tab")!.getAttribute(
-                "script-no"
-              )!
+                "script-no",
+              )!,
             ),
-            true
+            true,
           );
         };
       }
@@ -424,7 +423,7 @@ export class DiffModal extends Modal {
     });
 
     this.querySelector(`button[script-no="${script}"]`)!.classList.add(
-      "active-tab"
+      "active-tab",
     );
 
     // dark mode
@@ -435,10 +434,10 @@ export class DiffModal extends Modal {
     this.setDiffTheme(uiTheme);
 
     $highlights.checked = JSON.parse(
-      localStorage.getItem("scratch-git:highlights")!
+      localStorage.getItem("scratch-git:highlights")!,
     );
     $plainText.checked = JSON.parse(
-      localStorage.getItem("scratch-git:plaintext")!
+      localStorage.getItem("scratch-git:plaintext")!,
     );
     $plainText.onchange(new Event("init"));
     $highlights.onchange(new Event("init"));

@@ -1,5 +1,5 @@
-import van from "vanjs-core";
 import { settings } from "./accessors";
+import van from "vanjs-core";
 
 const { div, label, input, span } = van.tags;
 
@@ -13,6 +13,6 @@ export const Checkbox = (props: {}, name: string) =>
         type: "checkbox",
         checked: false,
       }),
-      span(name)
-    )
+      span(name),
+    ),
   );

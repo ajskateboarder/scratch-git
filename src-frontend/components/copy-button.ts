@@ -2,12 +2,13 @@ import van from "vanjs-core";
 
 const { button, canvas, i } = van.tags;
 
-async function copySVG(svgElement: SVGElement) {
+/** Convert an SVG element to a PNG and copy it to the user's clipboard */
+const copySVG = async (svgElement: SVGElement) => {
   if (!svgElement.hasAttribute("xmlns")) {
     svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   }
   if (!svgElement.querySelector("style")) {
-    let head = document.head.children;
+    const head = document.head.children;
     svgElement.appendChild(head[head.length - 1]);
   }
 
@@ -36,6 +37,7 @@ async function copySVG(svgElement: SVGElement) {
   ]);
 }
 
+/** Copy a string or an SVG element to the clipboard */
 const copyToClipboard = async (node: string | SVGElement) =>
   node instanceof SVGElement
     ? copySVG(node)
@@ -58,7 +60,7 @@ export const Copy = (cb: () => string | SVGElement) => {
           });
       },
     },
-    i({ class: "fa-solid fa-copy" })
+    i({ class: "fa-solid fa-copy" }),
   );
   return copyButton;
 };

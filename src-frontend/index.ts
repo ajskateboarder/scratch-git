@@ -1,19 +1,16 @@
-import "./lib/index";
-
 import api from "./api";
-import { showIndicators } from "./diff-indicators";
+import { Styles, createGitMenu } from "./bootstrap";
 import { menu, fileMenu, misc } from "./components";
+import { showIndicators } from "./diff-indicators";
+import i18next, { getLocale } from "./i18n";
+import { Redux, VM } from "./lib";
+import "./lib/index";
 import {
   CommitModal,
   WelcomeModal,
   DiffModal,
   RepoConfigModal,
 } from "./modals";
-
-import i18next, { getLocale } from "./i18n";
-import { Redux, VM } from "./lib";
-
-import { Styles, createGitMenu } from "./bootstrap";
 import { Modal } from "./modals/base";
 
 async function initialize() {
@@ -30,7 +27,7 @@ async function initialize() {
     } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
+      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
     )!;
     saveArea.style.opacity = "0";
 
@@ -52,7 +49,7 @@ async function initialize() {
       ...document.querySelectorAll(`.diff-button`),
       ...document.querySelectorAll(`.stage-diff`),
     ].forEach((e) => e.remove());
-    let project = await api.getCurrentProject()!;
+    const project = await api.getCurrentProject()!;
     await project!.unzip();
     await showIndicators(project!);
   };
@@ -74,7 +71,7 @@ async function initialize() {
   if (!fileMenu.isProjectOpen()) {
     document.querySelector<Modal>("dialog[is='welcome-modal']")!.display();
   } else {
-    let project = await api.getCurrentProject();
+    const project = await api.getCurrentProject();
 
     if (await project!.exists()) {
       // add initialization handlers to each language option
@@ -125,11 +122,11 @@ async function initialize() {
 (() => {
   localStorage.setItem(
     "scratch-git:highlights",
-    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
+    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false"),
   );
   localStorage.setItem(
     "scratch-git:plaintext",
-    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
+    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false"),
   );
 
   document.head.append(...Styles());

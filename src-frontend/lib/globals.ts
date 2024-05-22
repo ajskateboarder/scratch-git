@@ -1,12 +1,3 @@
-declare global {
-  interface Window {
-    Blockly: any;
-    ReduxStore: any;
-    vm: any;
-    _changedScripts: string[];
-  }
-}
-
 export interface Block {
   getRootBlock(): any;
   getRelativeToSurfaceXY(): {

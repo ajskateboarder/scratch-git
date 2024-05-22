@@ -1,11 +1,11 @@
+import { Modal } from "./base";
+import thumbnail from "./thumbnail.svg";
 import api, { ProjectExistsException } from "@/api";
 import { settings, fileMenu } from "@/components";
-import thumbnail from "./thumbnail.svg.ts";
-import van, { type State } from "vanjs-core";
+import { InputBox, InputField } from "@/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
-import { Modal } from "./base.ts";
-import { InputBox, InputField } from "@/components";
+import van, { type State } from "vanjs-core";
 
 const { div, h1, button, p, br, span, input, pre, i, label } = van.tags;
 
@@ -14,16 +14,17 @@ const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
     { class: "screen", id: `step${step.number}` },
-    div({ class: "welcome-screen-content" }, h1(step.title), children)
+    div({ class: "welcome-screen-content" }, h1(step.title), children),
+  );
 
 /** Test if an email is valid or not.
  *
  * Obviously, this won't cover all edge cases, but this will stop blatantly wrong ones */
 const isValidEmail = (email: string) => {
-  return String(email)
+  return email
     .toLowerCase()
     .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     );
 };
 
@@ -48,7 +49,7 @@ export class WelcomeModal extends Modal {
     const thumb = span(
       { class: "thumbnail" },
       new DOMParser().parseFromString(thumbnail, "image/svg+xml")
-        .documentElement
+        .documentElement,
     );
 
     if (!this.querySelector(".screen")) {
@@ -84,7 +85,7 @@ export class WelcomeModal extends Modal {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const openProject = button(
@@ -98,7 +99,7 @@ export class WelcomeModal extends Modal {
             (goToStep2 as HTMLButtonElement).disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
             openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-              "welcome.project-opened"
+              "welcome.project-opened",
             )}`;
             setTimeout(() => {
               openProject.innerHTML = i18next.t("welcome.open-project");
@@ -106,7 +107,7 @@ export class WelcomeModal extends Modal {
           });
         },
       },
-      i18next.t("welcome.open-project")
+      i18next.t("welcome.open-project"),
     );
 
     return Screen(
@@ -116,7 +117,7 @@ export class WelcomeModal extends Modal {
         p(i18next.t("welcome.get-started"), br(), br()),
         div({ class: "a-gap" }, openProject),
         br(),
-        br()
+        br(),
       ),
       BottomBar(
         button(
@@ -125,10 +126,10 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => this.close(),
           },
-          i18next.t("close")
+          i18next.t("close"),
         ),
-        goToStep2
-      )
+        goToStep2,
+      ),
     );
   }
 
@@ -144,7 +145,7 @@ export class WelcomeModal extends Modal {
           ++this.currentStep.val;
         },
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const openProjectPath = input({
@@ -163,7 +164,7 @@ export class WelcomeModal extends Modal {
       div(
         { class: "welcome-screen-content" },
         p(i18next.t("welcome.select-location"), br(), br()),
-        openProjectPath
+        openProjectPath,
       ),
       BottomBar(
         button(
@@ -172,10 +173,10 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
-          i18next.t("welcome.back")
+          i18next.t("welcome.back"),
         ),
-        goToStep3
-      )
+        goToStep3,
+      ),
     );
   }
 
@@ -199,21 +200,21 @@ export class WelcomeModal extends Modal {
             });
             ++this.currentStep.val;
           } catch (e: unknown) {
-            let err = e as ProjectExistsException;
+            const err = e as ProjectExistsException;
             $creationError.innerHTML = "";
             $creationError.append(
               span(
                 i({ class: "fa fa-solid fa-circle-exclamation" }),
                 " ",
-                err.message
-              )
+                err.message,
+              ),
             );
             if (err.name === "Error") throw err;
             return;
           }
         },
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const disableIfEmptyFields = () => {
@@ -238,7 +239,7 @@ export class WelcomeModal extends Modal {
           username = (e.target! as HTMLInputElement).value;
           disableIfEmptyFields();
         },
-      })
+      }),
     );
 
     const $email = InputField(
@@ -252,7 +253,7 @@ export class WelcomeModal extends Modal {
           }
           disableIfEmptyFields();
         },
-      })
+      }),
     );
 
     return Screen(
@@ -271,11 +272,11 @@ export class WelcomeModal extends Modal {
               class: settings.settingsButton,
               onclick: () => --this.currentStep.val,
             },
-            i18next.t("welcome.back")
+            i18next.t("welcome.back"),
           ),
-          goToStep4
-        )
-      )
+          goToStep4,
+        ),
+      ),
     );
   }
 
@@ -292,10 +293,10 @@ export class WelcomeModal extends Modal {
               class: settings.settingsButton,
               onclick: () => this.close(),
             },
-            i18next.t("close")
-          )
-        )
-      )
+            i18next.t("close"),
+          ),
+        ),
+      ),
     );
   }
 

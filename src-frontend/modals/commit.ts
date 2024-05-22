@@ -1,15 +1,15 @@
+import { Modal } from "./base";
 import api, { type Commit } from "@/api";
 import { settings } from "@/components";
-import van, { type State } from "vanjs-core";
 import { CommitItem } from "@/components";
 import i18next from "@/i18n";
-import { Modal } from "./base";
+import van, { type State } from "vanjs-core";
 
 const { h1, button, input, div, span, br, main } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
-    list.splice(0, length)
+    list.splice(0, length),
   );
 
 /** Displays a log of all commits to a Git project */
@@ -45,7 +45,7 @@ export class CommitModal extends Modal {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      i18next.t("close")
+      i18next.t("close"),
     );
 
     this.$ = {
@@ -54,13 +54,13 @@ export class CommitModal extends Modal {
           class: [settings.settingsButton, "round-right-button"].join(" "),
           disabled: true,
         },
-        i18next.t("commit.newer")
+        i18next.t("commit.newer"),
       ),
       $older: button(
         {
           class: [settings.settingsButton, "round-left-button"].join(" "),
         },
-        i18next.t("commit.older")
+        i18next.t("commit.older"),
       ),
       $search: input({
         type: "text",
@@ -84,8 +84,8 @@ export class CommitModal extends Modal {
           } else {
             return CommitItem(e, "");
           }
-        })
-      )
+        }),
+      ),
     );
 
     van.add(
@@ -96,7 +96,7 @@ export class CommitModal extends Modal {
         div(
           { class: "pagination" },
           span(this.$.$newer, this.$.$older),
-          this.$.$search
+          this.$.$search,
         ),
         br(),
         commitGroup,
@@ -106,15 +106,15 @@ export class CommitModal extends Modal {
             class: "bottom-bar",
             style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
           },
-          closeButton
-        )
-      )
+          closeButton,
+        ),
+      ),
     );
   }
 
   public async display() {
     let commits_ = await (await api.getCurrentProject())!.getCommits();
-    let commits = paginate(commits_, 40);
+    const commits = paginate(commits_, 40);
 
     const { $newer, $older, $search } = this.$;
 
@@ -126,16 +126,16 @@ export class CommitModal extends Modal {
     }
 
     $older.onclick = () => {
-      let page = ++this.state.currentPage.val;
+      const page = ++this.state.currentPage.val;
       this.state.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val)
+              e.subject.includes(this.state.searchQuery.val),
           ),
-        40
+        40,
       )[page];
       $older.disabled = page === commits.length - 1;
       $newer.disabled = page !== commits.length - 1;
@@ -146,16 +146,16 @@ export class CommitModal extends Modal {
     };
 
     $newer.onclick = () => {
-      let page = --this.state.currentPage.val;
+      const page = --this.state.currentPage.val;
       this.state.paginatedCommits.val = paginate(
         commits
           .flat()
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val)
+              e.subject.includes(this.state.searchQuery.val),
           ),
-        40
+        40,
       )[page];
       $newer.disabled = page === 0;
       $older.disabled = page !== 0;
@@ -166,10 +166,10 @@ export class CommitModal extends Modal {
     };
 
     $search.oninput = async (s) => {
-      let search = (s.target! as any).value;
+      const search = (s.target! as any).value;
       this.state.searchQuery.val = search;
       if (search === "") {
-        let page = this.state.currentPage.val;
+        const page = this.state.currentPage.val;
         $newer.disabled = page === 0;
         $older.disabled = page !== 0;
         if (page !== 0 && page !== commits.length - 1) {

@@ -1,5 +1,5 @@
-import van, { PropsWithKnownKeys } from "vanjs-core";
 import { settings } from ".";
+import van, { PropsWithKnownKeys } from "vanjs-core";
 
 const { p, input } = van.tags;
 

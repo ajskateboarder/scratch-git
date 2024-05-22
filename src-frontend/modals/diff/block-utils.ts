@@ -3,17 +3,17 @@ import { getBlockly } from "@/lib";
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/Utils.js
 
 export function scrollBlockIntoView(blockOrId: string) {
-  let workspace = getBlockly();
-  let offsetX = 32;
-  let offsetY = 32;
-  let block = workspace.getBlockById(blockOrId);
+  const workspace = getBlockly();
+  const offsetX = 32;
+  const offsetY = 32;
+  const block = workspace.getBlockById(blockOrId);
 
-  let root = block.getRootBlock();
+  const root = block.getRootBlock();
   let base = block;
   while (base.getOutputShape() && base.getSurroundParent()) {
     base = base.getSurroundParent();
   }
-  let ePos = base.getRelativeToSurfaceXY(),
+  const ePos = base.getRelativeToSurfaceXY(),
     rPos = root.getRelativeToSurfaceXY(),
     scale = workspace.scale,
     x = rPos.x * scale,
@@ -28,7 +28,7 @@ export function scrollBlockIntoView(blockOrId: string) {
     y < s.viewTop + offsetY - 4 ||
     yy > s.viewTop + s.viewHeight
   ) {
-    let sx = x - s.contentLeft - offsetX,
+    const sx = x - s.contentLeft - offsetX,
       sy = y - s.contentTop - offsetY;
 
     workspace.scrollbar.set(sx, sy);

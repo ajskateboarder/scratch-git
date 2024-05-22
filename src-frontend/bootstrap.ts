@@ -1,6 +1,5 @@
 /** @file Initializes the Git menu handlers and styles */
-
-import van from "vanjs-core";
+import { GhAuth, type Project } from "./api";
 import {
   GhAuthAlert,
   ScratchAlert,
@@ -8,12 +7,11 @@ import {
   menu,
   settings,
 } from "./components";
-
-import styles from "./styles.css";
-import tippy from "./tippy.css";
-import { GhAuth, type Project } from "./api";
 import i18next from "./i18n";
 import { CommitModal, RepoConfigModal } from "./modals";
+import styles from "./styles.css";
+import tippy from "./tippy.css";
+import van from "vanjs-core";
 
 const { link, style, button, i } = van.tags;
 
@@ -53,7 +51,7 @@ export const Styles = () => {
       ${alertSuccess}
       ${styles}
       ${tippy}
-      `
+      `,
     ),
   ];
 };
@@ -74,7 +72,7 @@ const pullHandler =
   async (project: Project, authed: boolean = false) =>
   async () => {
     if (!authed && (await repoIsGitHub(project))) {
-      let auth = new GhAuth();
+      const auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
       auth.addEventListener("devicecode", ({ detail }: any) => {
         authAlert = GhAuthAlert(detail).display();
@@ -86,7 +84,7 @@ const pullHandler =
       });
     }
 
-    let message = await project!.pull();
+    const message = await project!.pull();
     if (message === "unrelated histories") {
       new ScratchAlert(i18next.t("alerts.unrelated-changes"))
         .setType("error")
@@ -97,7 +95,7 @@ const pullHandler =
         .addButtons([
           button(
             { class: "alert-button", onclick: () => location.reload() },
-            i({ class: "fa-solid fa-rotate-right" })
+            i({ class: "fa-solid fa-rotate-right" }),
           ),
         ])
         .display();
@@ -119,7 +117,7 @@ const pushHandler =
   async (project: Project, authed: boolean = false) =>
   async () => {
     if (!authed && (await repoIsGitHub(project))) {
-      let auth = new GhAuth();
+      const auth = new GhAuth();
       let authAlert: HTMLDivElement | undefined = undefined;
       auth.addEventListener("devicecode", ({ detail }: any) => {
         authAlert = GhAuthAlert(detail).display();
@@ -131,7 +129,7 @@ const pushHandler =
       });
     }
 
-    let message = await project!.push();
+    const message = await project!.push();
     if (message === "pull needed") {
       new ScratchAlert(i18next.t("alerts.inconsistent-work"))
         .setType("warn")
@@ -141,7 +139,7 @@ const pushHandler =
               class: "alert-button",
               onclick: await pullHandler(project!),
             },
-            "Pull"
+            "Pull",
           ),
         ])
         .display();
@@ -156,7 +154,7 @@ const pushHandler =
       new ScratchAlert(
         i18next.t("alerts.pull-success", {
           url: (await project!.getDetails()).repository,
-        })
+        }),
       )
         .setType("success")
         .setTimeout(5000)
@@ -171,7 +169,7 @@ const pushHandler =
  */
 export const createGitMenu = async (
   project: Project,
-  changeLocale?: string
+  changeLocale?: string,
 ) => {
   gitMenu.create(
     {
@@ -180,7 +178,7 @@ export const createGitMenu = async (
           .querySelector<CommitModal>("dialog[is='commit-modal']")!
           .display(),
       commitCreate: async () => {
-        let message = await project!.commit();
+        const message = await project!.commit();
         new ScratchAlert(message).setType("success").setTimeout(5000).display();
       },
       push: await pushHandler(project!),
@@ -191,7 +189,7 @@ export const createGitMenu = async (
           .display();
       },
     },
-    changeLocale
+    changeLocale,
   );
   gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

@@ -1,6 +1,6 @@
-import van, { ChildDom } from "vanjs-core";
 import { misc, alert, Copy } from "..";
 import type { DeviceCode } from "@/api";
+import van, { ChildDom } from "vanjs-core";
 
 const { div, img, span, a } = van.tags;
 
@@ -17,14 +17,11 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 
 /** Displays a custom scratch-gui alert */
 export class ScratchAlert {
-  private message: string | ChildDom;
   private type: "success" | "warn" | "error" = "success";
   private buttons: ChildDom[] = [];
   private timeout?: number;
 
-  constructor(message: string | ChildDom) {
-    this.message = message;
-  }
+  constructor(private message: string | ChildDom) {}
 
   setTimeout(ms: number) {
     this.timeout = ms;
@@ -80,11 +77,11 @@ export class ScratchAlert {
             img({
               src: CLOSE_BUTTON_SVG,
               style: "transform: rotate(45deg) scale(0.5)",
-            })
+            }),
           ),
-          ...this.buttons
-        )
-      )
+          ...this.buttons,
+        ),
+      ),
     );
     if (this.timeout !== undefined) {
       setTimeout(() => newAlert.remove(), this.timeout);
@@ -99,8 +96,8 @@ export const GhAuthAlert = (e: DeviceCode) =>
     span(
       "Authentication needed for GitHub. Please go to ",
       a({ href: e.verification_uri }, "github.com/login/device"),
-      ` and enter the code: ${e.user_code}`
-    )
+      ` and enter the code: ${e.user_code}`,
+    ),
   )
     .setType("warn")
     .addButtons([Copy(() => e.user_code)]);

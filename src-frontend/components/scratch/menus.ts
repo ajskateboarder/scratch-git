@@ -1,7 +1,6 @@
 /** @file Manages creation of Git menu and alerts */
-
-import i18next from "@/i18n";
 import { menu } from "../accessors";
+import i18next from "@/i18n";
 import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
@@ -18,7 +17,7 @@ export const fileMenu = new (class FileMenu {
   setMenu() {
     this.menu = menu.menuItem.selectAll("div")[1] as HTMLDivElement;
     this.eventHandlers = Object.keys(this.menu).find((e) =>
-      e.startsWith("__reactEventHandlers")
+      e.startsWith("__reactEventHandlers"),
     )!;
   }
 
@@ -108,7 +107,7 @@ export const gitMenu = new (class GitMenu {
       commitView: () => any;
       commitCreate: () => any;
     },
-    locale: string | undefined
+    locale: string | undefined,
   ) {
     if (this.initialized && !locale) return;
     if (locale) document.querySelector(".git-menu")?.remove();
@@ -127,7 +126,7 @@ export const gitMenu = new (class GitMenu {
     this.newMenu.querySelector("img")!.replaceWith(
       i({
         class: "fa fa-code-fork fa-lg",
-      })
+      }),
     );
     this.savedItems.classList.add("git-menu");
     this.newMenu.querySelector("ul")!.parentElement!.remove();
@@ -135,25 +134,25 @@ export const gitMenu = new (class GitMenu {
     this.newMenu.appendChild(this.savedItems);
 
     this.item(1).label(
-      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
+      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push")),
     );
     this.item(1).classList.add("push-button");
     this.item(1).onclick(push);
     this.item(2).label(
-      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
+      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull")),
     );
     this.item(2).classList.add("pull-button");
     this.item(2).onclick(pull);
     this.item(3).label(
-      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo"))
+      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo")),
     );
     this.item(3).onclick(repoConfig);
     this.item(4).label(
       span(
         i({ class: "fa-solid fa-code-commit" }),
         " ",
-        i18next.t("menu.view-commits")
-      )
+        i18next.t("menu.view-commits"),
+      ),
     );
     this.item(4).onclick(commitView);
     this.item(5).remove();

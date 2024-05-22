@@ -11,18 +11,21 @@ export type ScriptStatus = "modified" | "added" | "removed";
 
 interface ScriptParse {
   results: {
-    oldContent: any;
-    newContent: any;
+    oldContent: string;
+    newContent: string;
     status: ScriptStatus;
-    scriptNo: number | any[];
+    scriptNo: number;
     script: string;
   }[];
   changedIds: string[];
 }
 
 /** Parse scripts in a project that have been modified */
-function _parseScripts(oldProject: any, newProject: any): ScriptParse {
-  let oldBlocks = Object.keys(oldProject)
+function _parseScripts(
+  oldProject: Record<string, any>,
+  newProject: Record<string, any>,
+): ScriptParse {
+  const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
       return toScratchblocks(
@@ -31,17 +34,17 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', "")
+            .replaceAll(',"SUBSTACK":[1,null]', ""),
         ),
         "en",
         {
           tabs: "",
-        }
+        },
       );
     })
     .sort((a, b) => a.localeCompare(b));
 
-  let newBlocks = Object.keys(newProject)
+  const newBlocks = Object.keys(newProject)
     .filter((key) => newProject[key].parent === null)
     .map((script) => {
       return {
@@ -50,33 +53,33 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', "")
+              .replaceAll(',"SUBSTACK":[1,null]', ""),
           ),
           "en",
           {
             tabs: "",
-          }
+          },
         ),
         script,
       };
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
-  let changed = zip(oldBlocks, newBlocks)
+  const changed = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
-    // @ts-ignore
+    // @ts-expect-error - this doesn't have to be a Symbol.iterator
     .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
       if (newContent === undefined) {
         newContent = "";
       }
 
-      let status: ScriptStatus =
+      const status: ScriptStatus =
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
-          ? "added"
-          : "removed";
+            ? "added"
+            : "removed";
       return { oldContent, newContent, status, scriptNo, script };
     });
 
@@ -84,13 +87,16 @@ function _parseScripts(oldProject: any, newProject: any): ScriptParse {
 }
 
 /** Parses all scripts in a sprite and diffs them */
-export async function parseScripts(previousScripts: any, currentScripts: any) {
-  let scripts = _parseScripts(previousScripts, currentScripts);
+export async function parseScripts(
+  previousScripts: Record<string, any>,
+  currentScripts: Record<string, any>,
+) {
+  const scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(
       scripts.results.map((script) =>
-        diff(script.oldContent, script.newContent)
-      )
+        diff(script.oldContent, script.newContent),
+      ),
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
