@@ -1,8 +1,9 @@
 import { getBlockly } from "@/lib";
 
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/Utils.js
+// https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/BlockFlasher.js
 
-export function scrollBlockIntoView(blockOrId: string) {
+export const scrollBlockIntoView = (blockOrId: string) => {
   const workspace = getBlockly();
   const offsetX = 32;
   const offsetY = 32;
@@ -33,14 +34,12 @@ export function scrollBlockIntoView(blockOrId: string) {
 
     workspace.scrollbar.set(sx, sy);
   }
-}
-
-// https://github.com/TurboWarp/scratch-gui/blob/develop/src/addons/addons/find-bar/blockly/BlockFlasher.js
+};
 
 const currentFlash = { block: null, timerID: null } as any;
 
 /** Flash a script for identification purposes */
-export function flash(block: any) {
+export const flash = (block: any) => {
   if (currentFlash.timerID > 0) {
     clearTimeout(currentFlash.timerID);
     if (currentFlash.block.svgGroup_) {
@@ -71,4 +70,4 @@ export function flash(block: any) {
   };
 
   _flash();
-}
+};

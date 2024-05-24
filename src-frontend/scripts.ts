@@ -1,11 +1,6 @@
 import { diff } from "./api";
 import { toScratchblocks } from "./lib";
-
-const zip = (a: any[], b: any[]) =>
-  Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
-    a[i] ?? "",
-    b[i] ?? "",
-  ]);
+import { zip } from "./utils";
 
 export type ScriptStatus = "modified" | "added" | "removed";
 
@@ -21,10 +16,10 @@ interface ScriptParse {
 }
 
 /** Parse scripts in a project that have been modified */
-function _parseScripts(
+const _parseScripts = (
   oldProject: Record<string, any>,
-  newProject: Record<string, any>,
-): ScriptParse {
+  newProject: Record<string, any>
+): ScriptParse => {
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
@@ -34,12 +29,12 @@ function _parseScripts(
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', ""),
+            .replaceAll(',"SUBSTACK":[1,null]', "")
         ),
         "en",
         {
           tabs: "",
-        },
+        }
       );
     })
     .sort((a, b) => a.localeCompare(b));
@@ -53,12 +48,12 @@ function _parseScripts(
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', ""),
+              .replaceAll(',"SUBSTACK":[1,null]', "")
           ),
           "en",
           {
             tabs: "",
-          },
+          }
         ),
         script,
       };
@@ -78,27 +73,27 @@ function _parseScripts(
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
-            ? "added"
-            : "removed";
+          ? "added"
+          : "removed";
       return { oldContent, newContent, status, scriptNo, script };
     });
 
   return { results: changed } as ScriptParse;
-}
+};
 
 /** Parses all scripts in a sprite and diffs them */
-export async function parseScripts(
+export const parseScripts = async (
   previousScripts: Record<string, any>,
-  currentScripts: Record<string, any>,
-) {
+  currentScripts: Record<string, any>
+) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(
       scripts.results.map((script) =>
-        diff(script.oldContent, script.newContent),
-      ),
+        diff(script.oldContent, script.newContent)
+      )
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
     .filter((result) => result.diffed !== "");
-}
+};

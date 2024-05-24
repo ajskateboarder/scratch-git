@@ -1,5 +1,5 @@
 import api from "./api";
-import { Styles, createGitMenu } from "./bootstrap";
+import { Styles, createGitMenu } from "./init";
 import { menu, fileMenu, misc } from "./components";
 import { showIndicators } from "./diff-indicators";
 import i18next, { getLocale } from "./i18n";
@@ -12,8 +12,9 @@ import {
   RepoConfigModal,
 } from "./modals";
 import { Modal } from "./modals/base";
+import { getReactHandlers } from "./utils";
 
-async function initialize() {
+const initialize = async () => {
   if (!document.querySelector("dialog[is='diff-modal']")) {
     try {
       customElements.define("commit-modal", CommitModal, { extends: "dialog" });
@@ -27,7 +28,7 @@ async function initialize() {
     } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
+      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
 
@@ -56,8 +57,28 @@ async function initialize() {
 
   // ensure a click event listener for the save button
   new MutationObserver(() => {
-    (misc.saveArea.select()?.firstChild! as HTMLDivElement).onclick =
-      displayDiffs;
+    const saveButton = misc.saveArea.select()
+      ?.firstElementChild! as HTMLDivElement;
+    saveButton.onclick = () => {
+      const observer = new MutationObserver(async () => {
+        const saveStatus = saveButton.firstElementChild;
+        if (saveStatus === null) {
+          observer.disconnect();
+          return;
+        }
+        // i think this is language-insensitive, i tested
+        if (
+          (saveStatus as any)[getReactHandlers(saveStatus)].children[1].props
+            .defaultMessage === "Saving project…"
+        ) {
+          await displayDiffs();
+          return;
+        }
+      });
+      observer.observe(saveButton, {
+        childList: true,
+      });
+    };
   }).observe(misc.saveArea.select()?.firstChild!, {
     childList: true,
   });
@@ -117,16 +138,16 @@ async function initialize() {
       createGitMenu(project!);
     }
   }
-}
+};
 
 (() => {
   localStorage.setItem(
     "scratch-git:highlights",
-    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false"),
+    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
   );
   localStorage.setItem(
     "scratch-git:plaintext",
-    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false"),
+    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
   );
 
   document.head.append(...Styles());

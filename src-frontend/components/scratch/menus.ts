@@ -1,6 +1,7 @@
 /** @file Manages creation of Git menu and alerts */
 import { menu } from "../accessors";
 import i18next from "@/i18n";
+import { getReactHandlers } from "@/utils";
 import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
@@ -8,37 +9,46 @@ const { i, span } = van.tags;
 /** Manages functions with the file menu */
 export const fileMenu = new (class FileMenu {
   menu!: HTMLDivElement;
-  private eventHandlers!: string;
+  private events!: string;
 
   constructor() {
-    this.setMenu();
+    this.updateMenu();
   }
 
-  setMenu() {
+  private updateMenu() {
     this.menu = menu.menuItem.selectAll("div")[1] as HTMLDivElement;
-    this.eventHandlers = Object.keys(this.menu).find((e) =>
-      e.startsWith("__reactEventHandlers"),
-    )!;
+    this.events = getReactHandlers(this.menu);
   }
 
   /** Toggle menu between open and closed */
   toggleMenu(open: boolean) {
     // fake event object to control the menu
     // TurboWarp/scratch-gui/src/components/menu-bar/tw-menu-label.jsx#L33-L44
-    (this.menu as any)[this.eventHandlers].onClick({
+    (this.menu as any)[this.events].onClick({
       target: {
         closest: () => (open ? this.menu : document.body),
       },
     });
   }
 
-  /** Opens a file picker dialog to load projects into TurboWarp */
-  openProject() {
-    this.toggleMenu(true);
-    const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
-    loadFromComputer[this.eventHandlers].onClick();
-    this.toggleMenu(false);
-    this.toggleMenu(true);
+  /** Opens a project picker and returns the path to the inputted project when selected */
+  openProject(): Promise<string> {
+    return new Promise((resolve) => {
+      // to access the project's true path, pretend that the fs api doesn't exist
+      // to turbowarp so it uses a plain file input instead
+      const tmp = window.showSaveFilePicker;
+      window.showSaveFilePicker = undefined;
+      this.toggleMenu(true);
+      const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
+      loadFromComputer[this.events].onClick();
+      const sb3Picker = document.querySelectorAll("input[type=file]")[2];
+      sb3Picker.addEventListener("change", (e: Event) => {
+        resolve(((<HTMLInputElement>e.target!).files![0] as any).path);
+      });
+      this.toggleMenu(false);
+      this.toggleMenu(true);
+      window.showSaveFilePicker = tmp;
+    });
   }
 
   /** Returns if a project is currently open */
@@ -47,7 +57,7 @@ export const fileMenu = new (class FileMenu {
     let savedMenu = this.menu.cloneNode(true) as HTMLElement;
     // tends to occur with translations
     if (!savedMenu.querySelector("li")) {
-      this.setMenu();
+      this.updateMenu();
       this.toggleMenu(true);
       savedMenu = this.menu.cloneNode(true) as HTMLElement;
     }
@@ -107,7 +117,7 @@ export const gitMenu = new (class GitMenu {
       commitView: () => any;
       commitCreate: () => any;
     },
-    locale: string | undefined,
+    locale: string | undefined
   ) {
     if (this.initialized && !locale) return;
     if (locale) document.querySelector(".git-menu")?.remove();
@@ -126,7 +136,7 @@ export const gitMenu = new (class GitMenu {
     this.newMenu.querySelector("img")!.replaceWith(
       i({
         class: "fa fa-code-fork fa-lg",
-      }),
+      })
     );
     this.savedItems.classList.add("git-menu");
     this.newMenu.querySelector("ul")!.parentElement!.remove();
@@ -134,25 +144,25 @@ export const gitMenu = new (class GitMenu {
     this.newMenu.appendChild(this.savedItems);
 
     this.item(1).label(
-      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push")),
+      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
     );
     this.item(1).classList.add("push-button");
     this.item(1).onclick(push);
     this.item(2).label(
-      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull")),
+      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
     );
     this.item(2).classList.add("pull-button");
     this.item(2).onclick(pull);
     this.item(3).label(
-      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo")),
+      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo"))
     );
     this.item(3).onclick(repoConfig);
     this.item(4).label(
       span(
         i({ class: "fa-solid fa-code-commit" }),
         " ",
-        i18next.t("menu.view-commits"),
-      ),
+        i18next.t("menu.view-commits")
+      )
     );
     this.item(4).onclick(commitView);
     this.item(5).remove();

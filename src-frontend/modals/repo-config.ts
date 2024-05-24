@@ -3,6 +3,7 @@ import api, { Project, remoteExists } from "@/api";
 import { settings, misc, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
 import i18next from "@/i18n";
+import { isValidURL } from "@/utils";
 import van, { State } from "vanjs-core";
 
 const { main, button, h1, div, span, label, br } = van.tags;
@@ -10,14 +11,6 @@ const { main, button, h1, div, span, label, br } = van.tags;
 const PENCIL = misc.menuItems
   .select()
   .children[2].children[0].cloneNode() as HTMLImageElement;
-
-const isValidUrl = (url: string) => {
-  try {
-    return Boolean(new URL(url));
-  } catch (_) {
-    return false;
-  }
-};
 
 export class RepoConfigModal extends Modal {
   private $!: {
@@ -44,7 +37,7 @@ export class RepoConfigModal extends Modal {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      "Close",
+      "Close"
     );
 
     const $repository = InputBox({
@@ -52,7 +45,7 @@ export class RepoConfigModal extends Modal {
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
-          if (!isValidUrl(url) && !(await remoteExists(url))) {
+          if (!isValidURL(url) && !(await remoteExists(url))) {
             $repository.value = "";
           }
         }
@@ -89,7 +82,7 @@ export class RepoConfigModal extends Modal {
           }
         },
       },
-      PENCIL,
+      PENCIL
     );
 
     van.derive(() => {
@@ -106,8 +99,8 @@ export class RepoConfigModal extends Modal {
       .replace(
         /\[\[(.*?)\]\]/g,
         `<span class="tip" title="${i18next.t(
-          "repoconfig.repo-tip",
-        )}">$1</span>`,
+          "repoconfig.repo-tip"
+        )}">$1</span>`
       );
 
     van.add(
@@ -117,21 +110,21 @@ export class RepoConfigModal extends Modal {
         h1(
           { style: "display: flex; gap: 10px" },
           span({ innerHTML: config }),
-          editButton,
+          editButton
         ),
         InputField(
           label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
-          $name,
+          $name
         ),
         br(),
         InputField(
           label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
-          $repository,
+          $repository
         ),
         br(),
         InputField(
           label({ class: "input-label" }, i18next.t("repoconfig.email")),
-          $email,
+          $email
         ),
         br(),
         br(),
@@ -140,9 +133,9 @@ export class RepoConfigModal extends Modal {
             class: "bottom-bar",
             style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
           },
-          closeButton,
-        ),
-      ),
+          closeButton
+        )
+      )
     );
 
     $repository.classList.add("disabled-config-input");

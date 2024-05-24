@@ -77,4 +77,5 @@ export const misc = {
   selectedTab: s("react-tabs_react-tabs__tab--selected"),
   menuItems: s("menu-bar_file-group"),
   saveArea: s("menu-bar_account-info-group"),
+  tabList: s("react-tabs_react-tabs__tab-list"),
 };

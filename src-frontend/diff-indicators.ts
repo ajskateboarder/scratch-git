@@ -18,12 +18,12 @@ const STAGE: Sprite = {
  * @param sprite - the {@link Sprite} in which blocks were changed
  * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
  */
-async function changedBlocklyScripts(
+const changedBlocklyScripts = async (
   sprite: Sprite,
   loadedJSON: any,
   previousScripts: any,
   currentScripts: any
-) {
+) => {
   if (sprite === undefined) {
     console.warn("provided sprite for diffing was undefined");
     return;
@@ -47,13 +47,13 @@ async function changedBlocklyScripts(
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
     .filter((e) => e !== undefined);
-}
+};
 
-async function highlightChanged(
+const highlightChanged = async (
   project: Project,
   sprite: Sprite,
   loadedJSON: any
-) {
+) => {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
     // diff highlight filter for scripts
     document.querySelector(
@@ -98,7 +98,7 @@ async function highlightChanged(
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });
-}
+};
 
 const nameOfSprite = (element: HTMLElement) =>
   element.querySelectorAll("div")[2].innerText;
@@ -107,7 +107,7 @@ const nameOfSprite = (element: HTMLElement) =>
  *
  * @param project - the currently open project
  */
-export async function showIndicators(project: Project) {
+export const showIndicators = async (project: Project) => {
   const changedSprites = await project.getSprites(),
     editorSprites = [...sprites.sprites.select().children] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
@@ -232,11 +232,9 @@ export async function showIndicators(project: Project) {
 
   const selectedSprite = sprites.selectedSprite.select() as HTMLDivElement;
 
-  const sprite = (
-    selectedSprite
-      ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
-      : STAGE
-  ) satisfies Sprite;
+  const sprite = selectedSprite
+    ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
+    : STAGE;
 
   await highlightChanged(project, sprite, loadedJSON);
 
@@ -249,7 +247,7 @@ export async function showIndicators(project: Project) {
         : STAGE;
       await highlightChanged(project, sprite_, loadedJSON);
     }
-  }).observe(document.querySelector("#react-tabs-0")!, {
+  }).observe(misc.tabList.select().firstChild!, {
     attributes: true,
     attributeFilter: ["class"],
   });
@@ -265,4 +263,4 @@ export async function showIndicators(project: Project) {
     attributes: true,
     attributeFilter: ["style"],
   });
-}
+};

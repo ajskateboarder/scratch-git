@@ -18,8 +18,8 @@ To get started:
 
 1. Install these things:
 
-- [TurboWarp Desktop](https://desktop.turbowarp.org/)
-- [Git](https://git-scm.com) (in case you didn't read the title)
+   - [TurboWarp Desktop](https://desktop.turbowarp.org/)
+   - [Git](https://git-scm.com) (in case you didn't read the title)
 
 2. Download the scratch.git release for your system from the [Releases section](https://github.com/ajskateboarder/scratch-git/releases)
 
@@ -41,9 +41,11 @@ These features closely mimic the kind of Git development seen in editors such as
 
 - scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
 
-- scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output
+- scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output.
 
 ## Contributing
+
+Translations are currently accepted, but not recommended for submission as of now due to scratch.git being in an unfinished state. Please report bugs to our [issue tracker](https://github.com/ajskateboarder/scratch-git/issues).
 
 ## Developing
 
@@ -59,7 +61,7 @@ And run the debug script (Linux only for now):
 .vscode/debug.sh
 ```
 
-Alternatively, if you are using VSCode, there is a build task you can configure to run with <kbd>Ctrl+Shift+B</kbd>.
+Alternatively, if you are using VSCode, there is a build task you can configure to run with `Ctrl+Shift+B`.
 
 ## Commit specification
 
@@ -71,12 +73,14 @@ Commits start with the name of the sprite you are making changes to (e.g. Sprite
 
 Commits then specify the change they are making using one of the following statements:
 
-| Statement                  | Description                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------ |
-| `add [costumes]`           | The following costumes: `[costumes]` have been added                                 |
-| `remove [costumes]`        | The following costumes: `[costumes]` have been removed                               |
-| `modify [costumes]`        | The following costumes: `[costumes]` have been edited                                |
-| `{+\|-\|/}{blocks} blocks` | `{blocks}` number of blocks have been added (`+`), removed (`-`), or rewritten (`/`) |
+| Statement               | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `add [costumes]`        | The following costumes: `[costumes]` have been added               |
+| `remove [costumes]`     | The following costumes: `[costumes]` have been removed             |
+| `modify [costumes]`     | The following costumes: `[costumes]` have been edited              |
+| `{+\|-}{blocks} blocks` | `{blocks}` number of blocks have been added (`+`) or removed (`-`) |
+
+This is implemented in [src-server/diff.rs](./src-server/diff.rs).
 
 ### Commit examples
 
@@ -96,9 +100,9 @@ Player: +36 blocks, remove old-player, Cloud: +15 blocks
 
 Thanks to:
 
-- @apple502j for the [parse-sb3-blocks](https://github.com/apple502j/parse-sb3-blocks) library
+- @apple502j for [parse-sb3-blocks](https://github.com/apple502j/parse-sb3-blocks)
 
-- @tjvr for the [scratchblocks](https://github.com/scratchblocks/scratchblocks) library
+- @tjvr for [scratchblocks](https://github.com/scratchblocks/scratchblocks)
 
 - @rokcoder-scratch for inspiration, [sb3-commit](https://github.com/rokcoder-scratch/sb3-commit)
 

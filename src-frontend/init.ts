@@ -12,6 +12,7 @@ import { CommitModal, RepoConfigModal } from "./modals";
 import styles from "./styles.css";
 import tippy from "./tippy.css";
 import van from "vanjs-core";
+import { repoIsGitHub } from "./utils";
 
 const { link, style, button, i } = van.tags;
 
@@ -23,7 +24,7 @@ export const Styles = () => {
         color: rgba(255, 255, 255, 0.4);
         cursor: default;
       }
-      
+
       .${menu.menuHoverable}[disabled] {
         pointer-events: none;
         opacity: 0.5;
@@ -51,17 +52,10 @@ export const Styles = () => {
       ${alertSuccess}
       ${styles}
       ${tippy}
-      `,
+      `
     ),
   ];
 };
-
-/** Check if a project's configured remote URL is a GitHub URL
- *
- * @param project - the project to be checked
- */
-const repoIsGitHub = async (project: Project) =>
-  new URL((await project!.getDetails()).repository).host === "github.com";
 
 /** Handles pulling as a Git menu option
  *
@@ -95,7 +89,7 @@ const pullHandler =
         .addButtons([
           button(
             { class: "alert-button", onclick: () => location.reload() },
-            i({ class: "fa-solid fa-rotate-right" }),
+            i({ class: "fa-solid fa-rotate-right" })
           ),
         ])
         .display();
@@ -139,7 +133,7 @@ const pushHandler =
               class: "alert-button",
               onclick: await pullHandler(project!),
             },
-            "Pull",
+            "Pull"
           ),
         ])
         .display();
@@ -154,7 +148,7 @@ const pushHandler =
       new ScratchAlert(
         i18next.t("alerts.pull-success", {
           url: (await project!.getDetails()).repository,
-        }),
+        })
       )
         .setType("success")
         .setTimeout(5000)
@@ -169,7 +163,7 @@ const pushHandler =
  */
 export const createGitMenu = async (
   project: Project,
-  changeLocale?: string,
+  changeLocale?: string
 ) => {
   gitMenu.create(
     {
@@ -189,7 +183,7 @@ export const createGitMenu = async (
           .display();
       },
     },
-    changeLocale,
+    changeLocale
   );
   gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

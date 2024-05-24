@@ -79,7 +79,7 @@ export class Project extends Socket {
       await this.request({
         command: "exists",
         data: { Project: { project_name: this.projectName } },
-      }),
+      })
     );
     return (
       await this.request({
@@ -253,7 +253,7 @@ export class ProjectManager extends Socket {
             email,
           },
         },
-      }),
+      })
     );
 
     const response = await this.receive();
@@ -262,11 +262,11 @@ export class ProjectManager extends Socket {
         throw new ProjectExistsException(
           `${projectPath
             .split("/")
-            .pop()} is already a project. Either load the existing project or make a copy of the project file.`,
+            .pop()} is already a project. Either load the existing project or make a copy of the project file.`
         );
       } else if (response.status === "fail") {
         throw new Error(
-          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues.",
+          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
         );
       }
     }
@@ -285,10 +285,10 @@ export class ProjectManager extends Socket {
  * @param oldScript - the script for a sprite before a save
  * @param newScript - the script after a save
  */
-export function diff(
+export const diff = (
   oldScript: string,
-  newScript: string,
-): Promise<{ added: number; removed: number; diffed: string }> {
+  newScript: string
+): Promise<{ added: number; removed: number; diffed: string }> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
   return ws.request({
     command: "diff",
@@ -296,13 +296,13 @@ export function diff(
       GitDiff: { old_content: oldScript, new_content: newScript },
     },
   });
-}
+};
 
 /** Check if a user-provided Git repository remote exists
  *
  * @param url - the URL of the repository to be checked
  */
-export function remoteExists(url: string): Promise<boolean> {
+export const remoteExists = (url: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(SOCKET_URL);
 
@@ -313,7 +313,7 @@ export function remoteExists(url: string): Promise<boolean> {
           data: {
             URL: url,
           },
-        }),
+        })
       );
     };
     ws.onmessage = (message) => {
@@ -323,4 +323,4 @@ export function remoteExists(url: string): Promise<boolean> {
       return reject(error);
     };
   });
-}
+};
