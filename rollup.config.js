@@ -12,7 +12,18 @@ export default async (args) => {
     input: "src-frontend/index.ts",
     output: { file: "userscript.js", format: "iife" },
     logLevel: "silent",
-    plugins: [css(), nodeResolve(), typescript(), json()],
+    plugins: [
+      css(),
+      nodeResolve(),
+      typescript({
+        include: [
+          "node_modules/@oxi/result/mod.ts",
+          "src-frontend/*.ts",
+          "src-frontend/**/*.ts",
+        ],
+      }),
+      json(),
+    ],
   };
 
   if (args.debug) {

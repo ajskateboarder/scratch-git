@@ -12,8 +12,9 @@ const copySVG = async (svgElement: SVGElement) => {
     svgElement.appendChild(head[head.length - 1]);
   }
 
-  const image = new Image();
-  image.src = "data:image/svg+xml," + encodeURIComponent(svgElement.outerHTML);
+  const image = Object.assign(new Image(), {
+    src: "data:image/svg+xml," + encodeURIComponent(svgElement.outerHTML),
+  });
 
   await navigator.clipboard.write([
     new ClipboardItem({
@@ -27,15 +28,13 @@ const copySVG = async (svgElement: SVGElement) => {
         context?.drawImage(image, 0, 0);
 
         canv.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          }
+          blob && resolve(blob);
           canv.remove();
         }, "image/png");
       }),
     }),
   ]);
-}
+};
 
 /** Copy a string or an SVG element to the clipboard */
 const copyToClipboard = async (node: string | SVGElement) =>
@@ -60,7 +59,7 @@ export const Copy = (cb: () => string | SVGElement) => {
           });
       },
     },
-    i({ class: "fa-solid fa-copy" }),
+    i({ class: "fa-solid fa-copy" })
   );
   return copyButton;
 };

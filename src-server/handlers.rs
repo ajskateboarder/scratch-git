@@ -4,7 +4,7 @@ use std::net::TcpStream;
 use std::{
     path::{Path, PathBuf},
     thread::sleep,
-    time::Duration,
+    time::Duration
 };
 use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
@@ -175,7 +175,7 @@ impl CmdHandler<'_> {
         fs::write(target_dir.join(".gitignore"), "project.old.json")
             .expect("failed to write gitignore");
 
-        if !git::run(vec!["add"], Some(&project_path))
+        if !git::run(vec!["add" , "."], Some(&project_path))
             .status()
             .unwrap()
             .success()
@@ -195,6 +195,7 @@ impl CmdHandler<'_> {
             .output()
             .unwrap();
         let response = String::from_utf8(commit.stdout).unwrap();
+
 
         if !response.contains("Initial commit") {
             if self.debug {
@@ -532,7 +533,7 @@ impl CmdHandler<'_> {
             fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
         }
 
-        if !git::run(vec!["add"], Some(&pth))
+        if !git::run(vec!["add", "."], Some(&pth))
             .status()
             .unwrap()
             .success()
@@ -541,14 +542,15 @@ impl CmdHandler<'_> {
         }
 
         let commit = git::run(vec!["commit", "-m", "temporary"], Some(pth))
-            .status()
+            .output()
             .unwrap();
 
-        if !commit.success() {
+        if !commit.status.success() {
             if self.debug {
+                dbg!(&commit);
                 println!(
                     "commit: failed to make commit: error code {:?}",
-                    commit.code().unwrap_or(-2000000000)
+                    commit.status.code().unwrap_or(-2000000000)
                 )
             }
             // TODO: make error message less generic

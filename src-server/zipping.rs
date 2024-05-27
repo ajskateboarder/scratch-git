@@ -8,6 +8,7 @@ use zip::{result::ZipError, write::FileOptions};
 /// Extract a ZIP file to a target directory
 pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
     let mut archive = zip::ZipArchive::new(file).unwrap();
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         let outpath = match file.enclosed_name() {

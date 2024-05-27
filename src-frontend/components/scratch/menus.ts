@@ -34,10 +34,6 @@ export const fileMenu = new (class FileMenu {
   /** Opens a project picker and returns the path to the inputted project when selected */
   openProject(): Promise<string> {
     return new Promise((resolve) => {
-      // to access the project's true path, pretend that the fs api doesn't exist
-      // to turbowarp so it uses a plain file input instead
-      const tmp = window.showSaveFilePicker;
-      window.showSaveFilePicker = undefined;
       this.toggleMenu(true);
       const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
       loadFromComputer[this.events].onClick();
@@ -47,7 +43,6 @@ export const fileMenu = new (class FileMenu {
       });
       this.toggleMenu(false);
       this.toggleMenu(true);
-      window.showSaveFilePicker = tmp;
     });
   }
 

@@ -1,14 +1,13 @@
 import { Modal } from "./base";
 import thumbnail from "./thumbnail.svg";
-import api, { ProjectExistsException } from "@/api";
+import api from "@/api";
 import { settings, fileMenu } from "@/components";
 import { InputBox, InputField } from "@/components";
 import i18next from "@/i18n";
-import { VM } from "@/lib";
-import { isValidEmail } from "@/utils";
+import { Redux, VM } from "@/lib";
 import van, { type State } from "vanjs-core";
 
-const { div, h1, button, p, br, span, pre, i, label } = van.tags;
+const { div, h1, button, p, br, span, input, pre, i, label } = van.tags;
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 
@@ -17,6 +16,17 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
     { class: "screen", id: `step${step.number}` },
     div({ class: "welcome-screen-content" }, h1(step.title), children)
   );
+
+/** Test if an email is valid or not.
+ *
+ * Obviously, this won't cover all edge cases, but this will stop blatantly wrong ones */
+const isValidEmail = (email: string) => {
+  return email
+    .toLowerCase()
+    .match(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    );
+};
 
 /** Project initialization */
 export class WelcomeModal extends Modal {
@@ -34,7 +44,7 @@ export class WelcomeModal extends Modal {
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
-    this.$steps = [this.$step1(), this.$step2(), this.$step3()];
+    this.$steps = [this.$step1(), this.$step2(), this.$step3(), this.$step4()];
 
     const thumb = span(
       { class: "thumbnail" },
@@ -55,7 +65,12 @@ export class WelcomeModal extends Modal {
 
   public async display() {
     if (!this.open) {
-      this.$steps = [this.$step1(), this.$step2(), this.$step3()];
+      this.$steps = [
+        this.$step1(),
+        this.$step2(),
+        this.$step3(),
+        this.$step4(),
+      ];
       this.currentStep.val = 0;
       this.showModal();
     }
@@ -77,8 +92,8 @@ export class WelcomeModal extends Modal {
       {
         style: "width: 50%",
         class: settings.settingsButton,
-        onclick: async () => {
-          this.projectPath = await fileMenu.openProject();
+        onclick: () => {
+          fileMenu.openProject();
           VM.on("PROJECT_LOADED", () => {
             this.loadedProject = true;
             (goToStep2 as HTMLButtonElement).disabled = false;
@@ -118,7 +133,54 @@ export class WelcomeModal extends Modal {
     );
   }
 
+  /** Input the project's location for our purposes */
   private $step2() {
+    const goToStep3 = button(
+      {
+        style: "align-items: right; margin-left: -10px",
+        class: [settings.settingsButton, settings.disabledButton].join(" "),
+        disabled: true,
+        onclick: async () => {
+          this.projectName = Redux.getState().scratchGui.projectTitle;
+          ++this.currentStep.val;
+        },
+      },
+      i18next.t("welcome.next")
+    );
+
+    const openProjectPath = input({
+      type: "file",
+      class: settings.settingsButton,
+      accept: ".sb,.sb2,.sb3",
+      onchange: () => {
+        goToStep3.disabled = false;
+        goToStep3.classList.remove(settings.disabledButton);
+        this.projectPath = (openProjectPath.files![0] as any).path; // .path is an electron-specific attr
+      },
+    });
+
+    return Screen(
+      { title: i18next.t("welcome.select-project-loc"), number: 2 },
+      div(
+        { class: "welcome-screen-content" },
+        p(i18next.t("welcome.select-location"), br(), br()),
+        openProjectPath
+      ),
+      BottomBar(
+        button(
+          {
+            style: "align-items: right; margin-left: -10px",
+            class: settings.settingsButton,
+            onclick: () => --this.currentStep.val,
+          },
+          i18next.t("welcome.back")
+        ),
+        goToStep3
+      )
+    );
+  }
+
+  private $step3() {
     let username: string;
     let email: string;
 
@@ -130,24 +192,19 @@ export class WelcomeModal extends Modal {
         class: [settings.settingsButton, settings.disabledButton].join(" "),
         disabled: true,
         onclick: async () => {
-          try {
-            await api.createProject({
-              projectPath: this.projectPath!,
-              username,
-              email,
-            });
+          const res = await api.createProject({
+            projectPath: this.projectPath!,
+            username,
+            email,
+          });
+          if (res.ok) {
             ++this.currentStep.val;
-          } catch (e: unknown) {
-            const err = e as ProjectExistsException;
+          } else {
             $creationError.innerHTML = "";
             $creationError.append(
-              span(
-                i({ class: "fa fa-solid fa-circle-exclamation" }),
-                " ",
-                err.message
-              )
+              span(i({ class: "fa fa-solid fa-circle-exclamation" }), " ")
             );
-            if (err.name === "Error") throw err;
+            res.expect("failed to create project");
             return;
           }
         },
@@ -218,7 +275,7 @@ export class WelcomeModal extends Modal {
     );
   }
 
-  private $step3() {
+  private $step4() {
     return Screen(
       { title: i18next.t("welcome.welcome"), number: 3 },
       div(

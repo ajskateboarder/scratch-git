@@ -1,5 +1,6 @@
 import { SOCKET_URL } from "./config";
 import { Redux } from "@/lib";
+import { Ok, Err, Result } from "ts-results";
 
 export interface Commit {
   readonly author: { date: string; email: string; name: string };
@@ -140,7 +141,7 @@ export class Project extends Socket {
    *
    * @param sprite - the name of the sprite you want to receive scripts from
    */
-  async getPreviousScripts(sprite: string) {
+  async getPreviousScripts(sprite: string): Promise<Record<string, string>> {
     return await this.request({
       command: "previous-project",
       data: {
@@ -207,16 +208,6 @@ export class Project extends Socket {
   }
 }
 
-// TODO: use something better instead of stupid errors
-
-/** A project with the same name already exists */
-export class ProjectExistsException extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
-
 /** Represents a connection to fetch and initialize projects */
 // class factory jumpscare
 export class ProjectManager extends Socket {
@@ -242,7 +233,7 @@ export class ProjectManager extends Socket {
     projectPath,
     username,
     email,
-  }: ProjectCreationDetails): Promise<Project> {
+  }: ProjectCreationDetails): Promise<Result<Project, string>> {
     this.ws.send(
       JSON.stringify({
         command: "create-project",
@@ -259,19 +250,19 @@ export class ProjectManager extends Socket {
     const response = await this.receive();
     if (response.status) {
       if (response.status === "exists") {
-        throw new ProjectExistsException(
+        return Err(
           `${projectPath
             .split("/")
             .pop()} is already a project. Either load the existing project or make a copy of the project file.`
         );
       } else if (response.status === "fail") {
-        throw new Error(
+        return Err(
           "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
         );
       }
     }
 
-    return new Project(response.project_name, this.ws);
+    return Ok(new Project(response.project_name, this.ws));
   }
 
   /** Get the current project based on the project name */

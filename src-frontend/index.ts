@@ -66,7 +66,7 @@ const initialize = async () => {
           observer.disconnect();
           return;
         }
-        // i think this is language-insensitive, i tested
+        // i think this is language-insensitive.. i tested
         if (
           (saveStatus as any)[getReactHandlers(saveStatus)].children[1].props
             .defaultMessage === "Saving project…"
@@ -75,6 +75,7 @@ const initialize = async () => {
           return;
         }
       });
+
       observer.observe(saveButton, {
         childList: true,
       });
@@ -90,7 +91,9 @@ const initialize = async () => {
   });
 
   if (!fileMenu.isProjectOpen()) {
-    document.querySelector<Modal>("dialog[is='welcome-modal']")!.display();
+    await document
+      .querySelector<Modal>("dialog[is='welcome-modal']")!
+      .display();
   } else {
     const project = await api.getCurrentProject();
 

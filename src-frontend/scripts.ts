@@ -5,21 +5,18 @@ import { zip } from "./utils";
 export type ScriptStatus = "modified" | "added" | "removed";
 
 interface ScriptParse {
-  results: {
-    oldContent: string;
-    newContent: string;
-    status: ScriptStatus;
-    scriptNo: number;
-    script: string;
-  }[];
-  changedIds: string[];
+  oldContent: string;
+  newContent: string;
+  status: ScriptStatus;
+  scriptNo: number;
+  script: string;
 }
 
 /** Parse scripts in a project that have been modified */
 const _parseScripts = (
   oldProject: Record<string, any>,
   newProject: Record<string, any>
-): ScriptParse => {
+): ScriptParse[] => {
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {
@@ -60,7 +57,7 @@ const _parseScripts = (
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
-  const changed = zip(oldBlocks, newBlocks)
+  const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
     // @ts-expect-error - this doesn't have to be a Symbol.iterator
@@ -75,10 +72,11 @@ const _parseScripts = (
           : oldContent === "" && newContent !== ""
           ? "added"
           : "removed";
+
       return { oldContent, newContent, status, scriptNo, script };
     });
 
-  return { results: changed } as ScriptParse;
+  return results as ScriptParse[];
 };
 
 /** Parses all scripts in a sprite and diffs them */
@@ -89,11 +87,9 @@ export const parseScripts = async (
   const scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(
-      scripts.results.map((script) =>
-        diff(script.oldContent, script.newContent)
-      )
+      scripts.map((script) => diff(script.oldContent, script.newContent))
     )
   )
-    .map((diffed, i) => ({ ...diffed, ...scripts.results[i] }))
+    .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
     .filter((result) => result.diffed !== "");
 };

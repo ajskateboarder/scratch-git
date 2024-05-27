@@ -43,6 +43,14 @@ impl ProjectConfig {
             .to_string();
         Path::new(&base_loc).to_path_buf()
     }
+
+    /// Returns the path to a project's SB3 by its name
+    pub fn project_sb3(&self, project_name: &str) -> String {
+        self.projects[project_name]["project_file"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
 }
 
 /// Singleton project configuration

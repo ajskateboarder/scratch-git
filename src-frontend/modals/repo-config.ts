@@ -151,15 +151,17 @@ export class RepoConfigModal extends Modal {
 
   public async display() {
     this.project = (await api.getCurrentProject())!;
+
     if (await this.project?.exists()) {
       const details = await this.project?.getDetails();
       const { $repository, $name, $email } = this.$;
 
       // in the future, these will never be blank
-      $repository.value = details?.repository ?? "";
-      $name.value = details?.username ?? "";
-      $email.value = details?.email ?? "";
+      $repository.value = details.repository ?? "";
+      $name.value = details.username ?? "";
+      $email.value = details.email ?? "";
     }
+
     if (!this.open) this.showModal();
   }
 }

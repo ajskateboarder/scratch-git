@@ -63,6 +63,10 @@ export class DiffModal extends Modal {
   connectedCallback() {
     if (this.querySelector("main")) return;
 
+    this.copyCallback = () =>
+      (this.querySelector(".scratchblocks svg") as SVGElement) ??
+      (this.querySelector(".commit-wrap") as HTMLElement).innerText;
+
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
     const closeButton = button(
@@ -75,12 +79,8 @@ export class DiffModal extends Modal {
           this.close();
         },
       },
-      i({ class: "fa-solid fa-xmark" }),
+      i({ class: "fa-solid fa-xmark" })
     );
-
-    this.copyCallback = () =>
-      (this.querySelector(".scratchblocks svg") as SVGElement) ??
-      (this.querySelector(".commit-wrap") as HTMLElement).innerText;
 
     const commits = p(
       { id: "commits" },
@@ -90,8 +90,8 @@ export class DiffModal extends Modal {
       pre(
         { class: "commit-view" },
         Copy(this.copyCallback),
-        pre({ class: "commit-wrap" }),
-      ),
+        pre({ class: "commit-wrap" })
+      )
     );
 
     this.$ = {
@@ -106,8 +106,8 @@ export class DiffModal extends Modal {
       main(
         { class: "diff-view" },
         aside(this.$.$scripts),
-        main(div({ class: "content" }, commits)),
-      ),
+        main(div({ class: "content" }, commits))
+      )
     );
   }
 
@@ -118,16 +118,16 @@ export class DiffModal extends Modal {
     svg.forEach((blocks) => {
       blocks.querySelectorAll("path.sb3-diff").forEach((diff) => {
         const moddedBlock = diff.previousElementSibling!.cloneNode(
-          true,
+          true
         ) as SVGElement;
         const fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-            ? "red"
-            : "grey";
+          ? "red"
+          : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
-            "path,g,rect",
+            "path,g,rect"
           ) // g selector isn't needed maybe but just in case..
           .forEach((element) => {
             element.style.cssText = `fill: ${fillColor}; opacity: 0.5`;
@@ -162,12 +162,12 @@ export class DiffModal extends Modal {
               e.startsWith("-")
                 ? "255,0,0,0.5"
                 : e.startsWith("+")
-                  ? "0,255,0,0.5"
-                  : "0,0,0,0"
+                ? "0,255,0,0.5"
+                : "0,0,0,0"
             })`,
           },
-          i == 0 ? e.trimStart() : e,
-        ),
+          i == 0 ? e.trimStart() : e
+        )
       );
       if (highlights[0].innerText === "") {
         highlights = highlights.slice(1);
@@ -176,8 +176,8 @@ export class DiffModal extends Modal {
       $commits.append(
         pre(
           // @ts-expect-error - not sure
-          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null),
-        ),
+          highlights.reduce((x, y) => (x === null ? [y] : [x, br(), y]), null)
+        )
       );
     }
 
@@ -193,7 +193,7 @@ export class DiffModal extends Modal {
           .querySelectorAll<SVGPathElement>("path.sb3-diff")
           .forEach(
             (diff) =>
-              (diff.style.cssText = "stroke: white; stroke-width: 3.5px"),
+              (diff.style.cssText = "stroke: white; stroke-width: 3.5px")
           );
       });
     } else {
@@ -209,7 +209,7 @@ export class DiffModal extends Modal {
     project: Project | undefined,
     spriteName: string,
     script = 0,
-    cached = false,
+    cached = false
   ) {
     const { $commits, $highlights, $plainText, $scripts } = this.$;
 
@@ -320,7 +320,7 @@ export class DiffModal extends Modal {
     $highlights.onchange = () => {
       localStorage.setItem(
         "scratch-git:highlights",
-        $highlights.checked.toString(),
+        $highlights.checked.toString()
       );
       if ($highlights.checked) {
         this.highlightAsBlocks();
@@ -343,7 +343,7 @@ export class DiffModal extends Modal {
     $plainText.onchange = (e) => {
       localStorage.setItem(
         "scratch-git:plaintext",
-        $plainText.checked.toString(),
+        $plainText.checked.toString()
       );
       if ($plainText.checked) {
         if ($highlights.checked) {
@@ -390,10 +390,10 @@ export class DiffModal extends Modal {
                     flash(getBlockly().getBlockById(id));
                   },
                 },
-                i({ class: "fa-solid fa-up-right-from-square" }),
+                i({ class: "fa-solid fa-up-right-from-square" })
               )
-            : undefined,
-        ),
+            : undefined
+        )
       );
 
       diffButton
@@ -411,10 +411,10 @@ export class DiffModal extends Modal {
             spriteName,
             parseInt(
               this.querySelector("button.active-tab")!.getAttribute(
-                "script-no",
-              )!,
+                "script-no"
+              )!
             ),
-            true,
+            true
           );
         };
       }
@@ -423,7 +423,7 @@ export class DiffModal extends Modal {
     });
 
     this.querySelector(`button[script-no="${script}"]`)!.classList.add(
-      "active-tab",
+      "active-tab"
     );
 
     // dark mode
@@ -434,10 +434,10 @@ export class DiffModal extends Modal {
     this.setDiffTheme(uiTheme);
 
     $highlights.checked = JSON.parse(
-      localStorage.getItem("scratch-git:highlights")!,
+      localStorage.getItem("scratch-git:highlights")!
     );
     $plainText.checked = JSON.parse(
-      localStorage.getItem("scratch-git:plaintext")!,
+      localStorage.getItem("scratch-git:plaintext")!
     );
     $plainText.onchange(new Event("init"));
     $highlights.onchange(new Event("init"));

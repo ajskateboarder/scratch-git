@@ -194,12 +194,7 @@ export const showIndicators = async (project: Project) => {
 
   if (changedSprites.some((e) => e.name === "Stage" && e.isStage)) {
     const stageDiffButton = StageDiff({
-      style: `
-      transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
-      scale: 0.8;
-      border-radius: 20px;
-      box-shadow: 0px 0px 0px 2px var(--looks-transparent);
-    `,
+      class: "stage-diff",
       onmouseover: () => {
         stageDiffButton.style.scale = "0.9";
         stageDiffButton.style.boxShadow =
