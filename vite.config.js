@@ -1,7 +1,15 @@
-import { defineConfig } from 'vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
-// https://vitejs.dev/config/
+const replaceAssetsPaths = () => ({
+  name: "replace-assets-paths",
+  transformIndexHtml: {
+    handler(html) {
+      return html.replace(/\/assets/gi, "assets");
+    },
+  },
+});
+
 export default defineConfig({
-  plugins: [svelte()],
-})
+  plugins: [svelte(), replaceAssetsPaths()],
+});
