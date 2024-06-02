@@ -55,49 +55,48 @@ const initialize = async () => {
     await showIndicators(project!);
   };
 
-  // ensure a click event listener for the save button
-  new MutationObserver(() => {
-    const saveButton = misc.saveArea.select()
-      ?.firstElementChild! as HTMLDivElement;
-    saveButton.onclick = () => {
-      const observer = new MutationObserver(async () => {
-        const saveStatus = saveButton.firstElementChild;
-        if (saveStatus === null) {
-          observer.disconnect();
-          return;
-        }
-        // i think this is language-insensitive.. i tested
-        if (
-          (saveStatus as any)[getReactHandlers(saveStatus)].children[1].props
-            .defaultMessage === "Saving project…"
-        ) {
-          await displayDiffs();
-          return;
-        }
-      });
-
-      observer.observe(saveButton, {
-        childList: true,
-      });
-    };
-  }).observe(misc.saveArea.select()?.firstChild!, {
-    childList: true,
-  });
-
-  document.addEventListener("keydown", async (e) => {
-    if (e.ctrlKey && e.key === "s") {
-      await displayDiffs();
-    }
-  });
-
   if (!fileMenu.isProjectOpen()) {
     await document
-      .querySelector<Modal>("dialog[is='welcome-modal']")!
+      .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
     const project = await api.getCurrentProject();
 
     if (await project!.exists()) {
+      // ensure a click event listener for the save button
+      new MutationObserver(() => {
+        const saveButton = misc.saveArea.select() as HTMLDivElement;
+        saveButton.onclick = () => {
+          const observer = new MutationObserver(async () => {
+            const saveStatus = saveButton.firstElementChild;
+            if (saveStatus === null) {
+              observer.disconnect();
+              return;
+            }
+            // i think this is language-insensitive.. i tested
+            if (
+              (saveStatus as any)[getReactHandlers(saveStatus)].children[1]
+                .props.defaultMessage === "Saving project…"
+            ) {
+              await displayDiffs();
+              return;
+            }
+          });
+
+          observer.observe(saveButton, {
+            childList: true,
+          });
+        };
+      }).observe(misc.saveArea.select(), {
+        childList: true,
+      });
+
+      document.addEventListener("keydown", async (e) => {
+        if (e.ctrlKey && e.key === "s") {
+          await displayDiffs();
+        }
+      });
+
       // add initialization handlers to each language option
       // to make sure all our stuff gets updated to the new locale
       new MutationObserver(([mut, _]) => {
@@ -143,22 +142,20 @@ const initialize = async () => {
   }
 };
 
-(() => {
-  localStorage.setItem(
-    "scratch-git:highlights",
-    JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
-  );
-  localStorage.setItem(
-    "scratch-git:plaintext",
-    JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
-  );
+localStorage.setItem(
+  "scratch-git:highlights",
+  JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
+);
+localStorage.setItem(
+  "scratch-git:plaintext",
+  JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
+);
 
-  document.head.append(...Styles());
+document.head.append(...Styles());
 
-  // avoids scenarios where scratch.git initializes before the editor is finished
-  VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
-    if (finished === total && finished > 0 && total > 0) {
-      setTimeout(async () => await initialize(), 0.1);
-    }
-  });
-})();
+// avoids scenarios where scratch.git initializes before the editor is finished
+VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
+  if (finished === total && finished > 0 && total > 0) {
+    setTimeout(async () => await initialize(), 0.1);
+  }
+});
