@@ -1,0 +1,56 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    background-color: white;
+    color: #111;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    margin: 20px
+}
+
+a {
+    color: #25d;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        background: #171717;
+        color: #eee;
+        color-scheme: dark;
+    }
+
+    a {
+        color: rgb(68, 196, 255);
+    }
+
+    :focus-visible {
+        outline: 2px solid white;
+    }
+}
+
+h1 {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+h2 {
+    font-weight: lighter;
+}
+
+footer {
+    color: grey;
+    text-align: center;
+}
