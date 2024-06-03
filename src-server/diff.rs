@@ -330,7 +330,16 @@ impl Diff {
                 // attempt to find the next block
                 match next {
                     // block is directly below
-                    Value::String(id) => current_block = &blocks[id],
+                    Value::String(id) => {
+                        let substack = &current_block["inputs"]["SUBSTACK"][1];
+                        match substack {
+                            Value::String(id) => current_block = &blocks[id],
+                            Value::Null => {
+                                current_block = &blocks[id]
+                            }
+                            _ => unreachable!(),
+                        }
+                    },
                     // block is located in c-block or e-block
                     Value::Null => {
                         let substack = &current_block["inputs"]["SUBSTACK"][1];
@@ -351,6 +360,7 @@ impl Diff {
         let blocks = re
             .replace_all(&statements.join("\n"), "\":[1,\"\"")
             .to_string();
+        println!("{}", &blocks);
         blocks
     }
 
