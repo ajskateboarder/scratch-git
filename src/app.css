@@ -15,6 +15,11 @@ body {
     margin: 20px
 }
 
+main {
+    display: flex;
+    justify-content: center;
+}
+
 a {
     color: #25d;
     text-decoration: none;
@@ -46,11 +51,32 @@ h1 {
     gap: 20px;
 }
 
-h2 {
-    font-weight: lighter;
-}
-
 footer {
     color: grey;
     text-align: center;
+}
+
+video {
+    filter: grayscale(100%);
+    transition: filter ease-in-out 0.2s;
+}
+
+video:hover {
+    filter: none;
+}
+
+.kinda-big {
+    font-size: 20px;
+}
+
+.project-input {
+    border: none;
+    width: 75%;
+    font-size: 23px;
+    line-height: 32px;
+    background-color: transparent;
+}
+
+.project-input :focus {
+    color: white !important;
 }
