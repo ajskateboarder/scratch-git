@@ -1,6 +1,13 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { fetchGitHubCommits, parseUrl, type Commit } from "./parse";
+  import {
+    parseUrl,
+    type Commit,
+    setupScaffolding,
+    type RepoProvider,
+  } from "./lib";
+
+  import Flag from "./icons/Flag.svelte";
+  import Stop from "./icons/Stop.svelte";
 
   export let initialUrl: string;
 
@@ -12,19 +19,23 @@
   }
 
   let projectInput: HTMLInputElement;
-  let commits: Commit[] = [];
+  let commits: Record<string, Commit[]> = {};
+  let parsed: RepoProvider;
+  let scaffold;
 
   const updateHash = async () => {
     let url = projectInput.value;
     try {
       window.location.hash = url;
-      const parsed = parseUrl(url);
+      if (url === "") {
+        commits = {};
+      }
+      parsed = parseUrl(url);
       try {
-        if (parsed.type === "GitHub") {
-          commits = await fetchGitHubCommits(parsed.user, parsed.repo);
-        }
+        commits = await parsed.commitFetcher();
       } catch (e) {
         alert(e);
+        return;
       }
     } catch {
       console.warn("bad url");
@@ -38,63 +49,81 @@
     }
   };
 
-  onMount(async () => {
-    const scaffolding = new (window as any).Scaffolding.Scaffolding();
-    scaffolding.width = 480; // Custom stage width
-    scaffolding.height = 360; // Custom stage height
-    scaffolding.resizeMode = "preserve-ratio"; // or 'dynamic-resize' or 'stretch'
-    scaffolding.editableLists = false; // Affects list monitors
-    scaffolding.setup();
-    const storage = scaffolding.storage;
-    storage.addWebStore(
-      [
-        storage.AssetType.ImageVector,
-        storage.AssetType.ImageBitmap,
-        storage.AssetType.Sound,
-      ],
-      (asset) =>
-        `https://raw.githubusercontent.com/themysticsavages/scratch-git-test/main/${asset.assetId}.${asset.dataFormat}`
+  const loadProject = async (sha) => {
+    const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
+      response.text(),
     );
-    console.log(storage, storage.addWebStore);
 
-    scaffolding.appendTo(document.getElementById("project"));
-    const projectData = await fetch(
-      `https://raw.githubusercontent.com/themysticsavages/scratch-git-test/main/project.json`
-    ).then((response) => response.text());
-    scaffolding
-      .loadProject(projectData)
-      .then(() => {
-        console.log("e");
-        scaffolding.start();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  });
+    scaffold = await setupScaffolding(parsed.assetFetcher(sha));
+    await scaffold.loadProject(projectData);
+    document.querySelector("canvas").style.filter = "brightness(50%)";
+  };
 </script>
 
 <main style="flex-direction: column; align-items: center">
   <div class="project-commit-viewer">
-    {#if commits.length !== 0}
+    {#if Object.keys(commits).length !== 0}
       <ul class="project-viewer">
-        <input type="text" class="commit-input" />
-        {#each commits as commit}
-          <button title={commit.sha}>{commit.message}</button>
+        {#each Object.keys(commits) as commitDate}
           <br />
-        {/each}hello
+          <h3>{commitDate}</h3>
+          <div class="commit-group">
+            {#each commits[commitDate] as commit}
+              <button
+                class="commit"
+                title={commit.sha}
+                on:click={async () => {
+                  document.querySelector("#project").innerHTML = "";
+                  await loadProject(commit.sha);
+                }}
+                ><b>{commit.message}</b><br />{commit.author} - {new Date(
+                  Date.parse(commit.date),
+                )
+                  .toISOString()
+                  .slice(11, -1)
+                  .slice(0, -4)}</button
+              >
+            {/each}
+          </div>
+        {/each}
       </ul>
+      <div class="project-viewer" id="project"></div>
+      <div class="controls">
+        <button
+          on:click={async () => {
+            document.querySelector("canvas").style.filter = "";
+            await scaffold.start();
+          }}
+        >
+          <Flag />start
+        </button>
+        <button on:click={async () => await scaffold.stopAll()}>
+          <Stop />stop
+        </button>
+      </div>
+      {void loadProject("main") ?? ""}
     {/if}
-    <div class="project-viewer" id="project"></div>
   </div>
 
   <br />
-  <input
-    type="text"
-    class="project-input"
-    placeholder="https://linkto.repo/user/repository"
-    on:blur={updateHash}
-    on:keydown={updateHashFromEnter}
-    bind:this={projectInput}
-    value={initialUrl}
-  />
+  <div class="project-input-wrapper">
+    <input
+      type="text"
+      class="project-input"
+      placeholder="https://linkto.repo/user/repository"
+      on:blur={updateHash}
+      on:keydown={updateHashFromEnter}
+      bind:this={projectInput}
+      value={initialUrl}
+    />
+    {#if Object.keys(commits).length !== 0}
+      <button
+        class="close-button"
+        on:click={() => {
+          window.location.hash = "";
+          commits = {};
+        }}>x</button
+      >
+    {/if}
+  </div>
 </main>

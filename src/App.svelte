@@ -47,26 +47,46 @@
   <p>
     scratch.git provides a way to view/track your project's changes, revert to
     previous versions, and collaborate more efficiently from TurboWarp Desktop.
-    Enter a URL below to view project versions.
+    Enter a URL below to view project versions. Please note that you must
+    install scratch.git in order to contribute to projects.
   </p>
 </header>
 <Project initialUrl={hash}></Project>
-<details>
-  <summary class="kinda-big"> <span>Diffing</span> </summary>
-  <div style="display: flex; flex-wrap: wrap">
-    <video loop muted height="230" bind:this={lightDiffVideo}>
-      <source src={lightDiff} />
-    </video>
-    <video loop muted height="230" bind:this={darkDiffVideo}>
-      <source src={darkDiff} />
-    </video>
-  </div>
-</details>
+<h2 id="features">Features</h2>
+<p>
+  <details>
+    <summary class="kinda-big"> <span>Diffing</span> </summary>
+    <div style="display: flex; flex-wrap: wrap">
+      <video loop muted height="230" bind:this={lightDiffVideo}>
+        <source src={lightDiff} />
+      </video>
+      <video loop muted height="230" bind:this={darkDiffVideo}>
+        <source src={darkDiff} />
+      </video>
+    </div>
+  </details>
+  <i>(todo: more clips)</i>
+</p>
+<h2 id="installing">Installing</h2>
+<p>
+  First install <a href="https://desktop.turbowarp.org">TurboWarp Desktop</a>
+  and <a href="https://git-scm.com/download">Git</a>, then download
+  <a href="https://github.com/ajskateboarder/scratch-git/releases"
+    >scratch.git</a
+  > (scratch-git_win.zip for Windows, scratch-git_darwin_amd64.zip for MacOS).
+</p>
+<p>
+  Then extract the zip/tar file and run the scratch-git file. If you get a
+  SmartScreen alert on Windows, you can safely ignore it.
+</p>
 <footer>
   <br />
   scratch.git is not affiliated with Scratch, the Scratch Team, or the Scratch Foundation.
   <br />
-  <a href="https://github.com/ajskateboarder/scratch-git" target="_blank"
-    >source code</a
+  Start/stop icons are used under the derived
+  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en"
+    >CC By-SA license.</a
   >
+  <br />
+  <a href="https://github.com/ajskateboarder/scratch-git">source code</a>
 </footer>

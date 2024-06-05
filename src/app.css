@@ -1,35 +1,126 @@
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 :root {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    background-color: white;
-    color: #111;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  background-color: white;
+  color: #111;
 }
 
 body {
-    display: flex;
-    justify-content: center;
-    margin: 20px
+  display: flex;
+  justify-content: center;
+  margin: 20px;
 }
 
 main {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 a {
-    color: #25d;
-    text-decoration: none;
+  color: #25d;
+  text-decoration: none;
 }
 
 a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
-@media (prefers-color-scheme: dark) {
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+footer {
+  color: grey;
+  text-align: center;
+}
+
+video {
+  filter: grayscale(100%);
+  transition: filter ease-in-out 0.2s;
+}
+
+video:hover {
+  filter: none;
+}
+
+.kinda-big {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.project-input-wrapper {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.close-button {
+  padding: 5px;
+}
+
+.project-input {
+  border: none;
+  width: 75%;
+  font-size: 23px;
+  line-height: 32px;
+  background-color: transparent;
+}
+
+.project-input :focus {
+  color: white !important;
+}
+
+.project-commit-viewer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.project-commit-viewer .commit {
+  width: 100%;
+  text-align: left;
+}
+
+.project-commit-viewer .project-viewer {
+  overflow: auto;
+  width: 75%;
+  height: 412px;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 10px;
+}
+
+.controls button {
+  color: transparent;
+  border-radius: 60%;
+  height: 50px;
+  width: 50px;
+}
+
+.controls button:hover {
+  filter: brightness(110%);
+}
+
+.controls button svg {
+  transform: scale(0.8);
+  margin-top: 3px;
+}
+
+/* @media (prefers-color-scheme: dark) {
     :root {
         background: #171717;
         color: #eee;
@@ -43,58 +134,8 @@ a:hover {
     :focus-visible {
         outline: 2px solid white;
     }
-}
 
-h1 {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-footer {
-    color: grey;
-    text-align: center;
-}
-
-video {
-    filter: grayscale(100%);
-    transition: filter ease-in-out 0.2s;
-}
-
-video:hover {
-    filter: none;
-}
-
-.kinda-big {
-    font-size: 20px;
-}
-
-.project-input {
-    border: none;
-    width: 75%;
-    font-size: 23px;
-    line-height: 32px;
-    background-color: transparent;
-}
-
-.project-input :focus {
-    color: white !important;
-}
-
-.project-commit-viewer {
-    display: flex;
-    width: 100%;
-    align-items: center;
-}
-
-.project-commit-viewer button,
-.commit-input {
-    width: 100%;
-}
-
-.project-commit-viewer .project-viewer {
-    height: 100px;
-    overflow: auto;
-    width: 75%;
-    height: 402px;
-}
+    .project-commit-viewer {
+        border: 1px solid white;
+    }
+} */
