@@ -54,7 +54,7 @@
 
   const loadProject = async (sha) => {
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
-      response.text(),
+      response.text()
     );
     if (sha === "main") {
       currentCommit = "main";
@@ -83,7 +83,7 @@
                   currentCommit = commit.message.replaceAll(" ", "-");
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
-                  Date.parse(commit.date),
+                  Date.parse(commit.date)
                 )
                   .toISOString()
                   .slice(11, -1)
@@ -126,7 +126,6 @@
       {void loadProject("main") ?? ""}
     {/if}
   </div>
-
   <br />
   <div class="project-input-wrapper">
     <input
@@ -144,7 +143,7 @@
         on:click={() => {
           window.location.hash = "";
           commits = {};
-        }}>x</button
+        }}>×</button
       >
     {/if}
   </div>
