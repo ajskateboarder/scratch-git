@@ -3,6 +3,7 @@
   id="Layer_1"
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 14 14"
+  style="scale: 0.9; margin-top: 6px;"
 >
   <style type="text/css">
     .st0 {

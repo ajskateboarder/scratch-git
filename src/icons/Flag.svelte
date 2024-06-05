@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16.63 17.5"
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 16.63 17.5"
+  style="scale: 0.7"
   ><defs
     ><style>
       .cls-1,

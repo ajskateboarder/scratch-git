@@ -8,6 +8,8 @@
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
+  import Fullscreen from "./icons/Fullscreen.svelte";
+  import Download from "./icons/Download.svelte";
 
   export let initialUrl: string;
 
@@ -21,7 +23,8 @@
   let projectInput: HTMLInputElement;
   let commits: Record<string, Commit[]> = {};
   let parsed: RepoProvider;
-  let scaffold;
+  let currentCommit: string;
+  let scaffold: any;
 
   const updateHash = async () => {
     let url = projectInput.value;
@@ -53,7 +56,9 @@
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
       response.text(),
     );
-
+    if (sha === "main") {
+      currentCommit = "main";
+    }
     scaffold = await setupScaffolding(parsed.assetFetcher(sha));
     await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
@@ -75,6 +80,7 @@
                 on:click={async () => {
                   document.querySelector("#project").innerHTML = "";
                   await loadProject(commit.sha);
+                  currentCommit = commit.message.replaceAll(" ", "-");
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
                   Date.parse(commit.date),
@@ -99,6 +105,22 @@
         </button>
         <button on:click={async () => await scaffold.stopAll()}>
           <Stop />stop
+        </button>
+        <button
+          on:click={async () =>
+            document.querySelector("#project").requestFullscreen()}
+        >
+          <Fullscreen />
+        </button>
+        <button
+          on:click={async () => {
+            Object.assign(document.createElement("a"), {
+              href: URL.createObjectURL(await scaffold.vm.saveProjectSb3()),
+              download: `${currentCommit}.sb3`,
+            }).click();
+          }}
+        >
+          <Download />
         </button>
       </div>
       {void loadProject("main") ?? ""}

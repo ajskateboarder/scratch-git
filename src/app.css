@@ -138,4 +138,9 @@ video:hover {
   .project-commit-viewer {
     border: 1px solid white;
   }
+
+  .fullscreen,
+  .download {
+    fill: #fff;
+  }
 }
