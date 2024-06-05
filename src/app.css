@@ -80,3 +80,21 @@ video:hover {
 .project-input :focus {
     color: white !important;
 }
+
+.project-commit-viewer {
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.project-commit-viewer button,
+.commit-input {
+    width: 100%;
+}
+
+.project-commit-viewer .project-viewer {
+    height: 100px;
+    overflow: auto;
+    width: 75%;
+    height: 402px;
+}

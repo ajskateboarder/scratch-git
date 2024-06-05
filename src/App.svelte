@@ -33,7 +33,6 @@
   onMount(() => {
     playOnHover(lightDiffVideo);
     playOnHover(darkDiffVideo);
-
     routeChange();
   });
 </script>
@@ -48,9 +47,10 @@
   <p>
     scratch.git provides a way to view/track your project's changes, revert to
     previous versions, and collaborate more efficiently from TurboWarp Desktop.
+    Enter a URL below to view project versions.
   </p>
 </header>
-<Project url={hash}></Project>
+<Project initialUrl={hash}></Project>
 <details>
   <summary class="kinda-big"> <span>Diffing</span> </summary>
   <div style="display: flex; flex-wrap: wrap">
