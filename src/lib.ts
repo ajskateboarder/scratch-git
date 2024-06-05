@@ -64,7 +64,6 @@ export const gitHubFetcher = async (
       localStorage.removeItem(commitHash);
     }
   }
-  alert("skibidi");
 
   const response = await (
     await proxy(`https://api.github.com/repos/${user}/${repo}/commits`)
