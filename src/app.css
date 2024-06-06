@@ -85,15 +85,19 @@ video:hover {
     padding: 10px;
 }
 
-.project-commit-viewer .commit {
+.commit {
     width: 100%;
     text-align: left;
+}
+
+.commit.selected {
+    filter: invert(100%);
 }
 
 .project-commit-viewer .project-viewer {
     overflow: auto;
     width: 75%;
-    height: 412px;
+    height: 422px;
 }
 
 .controls {
@@ -105,7 +109,6 @@ video:hover {
 }
 
 .controls button {
-    color: transparent;
     border-radius: 60%;
     height: 50px;
     border: none;

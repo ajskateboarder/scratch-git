@@ -8,8 +8,6 @@
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
-  import Fullscreen from "./icons/Fullscreen.svelte";
-  import Download from "./icons/Download.svelte";
 
   export let initialUrl: string;
 
@@ -23,7 +21,7 @@
   let projectInput: HTMLInputElement;
   let commits: Record<string, Commit[]> = {};
   let parsed: RepoProvider;
-  let currentCommit: string;
+  let currentCommit: Commit;
   let scaffold: any;
 
   const updateHash = async () => {
@@ -52,13 +50,14 @@
     }
   };
 
-  const loadProject = async (sha) => {
+  const loadProject = async (sha: string) => {
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
       response.text()
     );
     if (sha === "main") {
-      currentCommit = "main";
+      currentCommit = { message: "Latest commit" } as any;
     }
+    console.log(projectData, parsed.assetFetcher(sha));
     scaffold = await setupScaffolding(parsed.assetFetcher(sha));
     await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
@@ -77,22 +76,33 @@
               <button
                 class="commit"
                 title={commit.sha}
-                on:click={async () => {
+                on:click={async (e) => {
+                  document
+                    .querySelector(".selected")
+                    ?.classList.remove("selected");
+                  // @ts-ignore
+                  e.target.classList.add("selected");
                   document.querySelector("#project").innerHTML = "";
                   await loadProject(commit.sha);
-                  currentCommit = commit.message.replaceAll(" ", "-");
+                  currentCommit = commit;
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
                   Date.parse(commit.date)
                 )
                   .toISOString()
                   .slice(11, -1)
-                  .slice(0, -4)}</button
+                  .slice(0, -4)} -
+                <button
+                  on:click|stopPropagation={() => window.open(commit.htmlUrl)}
+                  ><i class="fa-solid fa-arrow-up-right-from-square"
+                  ></i></button
+                ></button
               >
             {/each}
           </div>
         {/each}
       </ul>
+
       <div class="project-viewer" id="project"></div>
       <div class="controls">
         <button
@@ -101,26 +111,26 @@
             await scaffold.start();
           }}
         >
-          <Flag />start
+          <Flag />
         </button>
         <button on:click={async () => await scaffold.stopAll()}>
-          <Stop />stop
+          <Stop />
         </button>
         <button
           on:click={async () =>
             document.querySelector("#project").requestFullscreen()}
         >
-          <Fullscreen />
+          <i class="fa-solid fa-expand" style="font-size: 30px"></i>
         </button>
         <button
           on:click={async () => {
             Object.assign(document.createElement("a"), {
               href: URL.createObjectURL(await scaffold.vm.saveProjectSb3()),
-              download: `${currentCommit}.sb3`,
+              download: `${currentCommit.message.replaceAll(" ", "-")}.sb3`,
             }).click();
           }}
         >
-          <Download />
+          <i class="fa-solid fa-download" style="font-size: 30px"></i>
         </button>
       </div>
       {void loadProject("main") ?? ""}
