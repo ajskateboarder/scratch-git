@@ -5,4 +5,7 @@ export default defineConfig({
   plugins: [svelte()],
   base: "",
   publicDir: "public",
+  build: {
+    target: "esnext"
+  }
 });
