@@ -15,23 +15,33 @@ export const proxy = async (url: string) => {
     });
 };
 
-const workingProxy = await fetch("https://api.codetabs.com")
+let workingProxy: (url: string) => string;
+
+fetch("https://api.codetabs.com")
   .then(() => {
-    return (url: string) =>
+    alert("ski")
+    workingProxy = (url: string) =>
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
   })
   .catch(async () => {
+    alert("bidi dop dop")
     return fetch("https://universal-cors-proxy.glitch.me")
       .then(() => {
-        return (url: string) =>
+        alert("yes yes")
+        workingProxy = (url: string) =>
           `https://universal-cors-proxy.glitch.me/${encodeURIComponent(url)}`;
       })
-      .catch(() => {
-        throw Error("No proxy works");
+      .catch((e) => {
+        alert(e)
+        workingProxy = (url: string) =>
+          `https://universal-cors-proxy.glitch.me/${encodeURIComponent(url)}`;
       });
   });
 
-export const wrapProxy = (url: string) => workingProxy(url);
+export const wrapProxy = (url: string) => {
+  alert(workingProxy(url))
+  return workingProxy(url)
+};
 
 export const assert = (condition: boolean, message: string) => {
   if (!condition) throw Error(message);

@@ -56,19 +56,19 @@ export const parseUrl = (url: string): RepoProvider => {
       assetFetcher: (sha) => (asset) =>
         sha === "main"
           ? wrapProxy(
-              `https://scratchgit.glitch.me/${user}/${repo}/raw/branch/master/${asset.assetId}.${asset.dataFormat}`
-            )
+            `https://scratchgit.glitch.me/${user}/${repo}/raw/branch/master/${asset.assetId}.${asset.dataFormat}`
+          )
           : wrapProxy(
-              `https://scratchgit.glitch.me/${user}/${repo}/raw/commit/${sha}/${asset.assetId}.${asset.dataFormat}`
-            ),
+            `https://scratchgit.glitch.me/${user}/${repo}/raw/commit/${sha}/${asset.assetId}.${asset.dataFormat}`
+          ),
       jsonSource: (sha) =>
         sha === "main"
           ? wrapProxy(
-              `https://scratchgit.glitch.me/${user}/${repo}/raw/branch/master/project.json`
-            )
+            `https://scratchgit.glitch.me/${user}/${repo}/raw/branch/master/project.json`
+          )
           : wrapProxy(
-              `https://scratchgit.glitch.me/${user}/${repo}/raw/commit/${sha}/project.json`
-            ),
+            `https://scratchgit.glitch.me/${user}/${repo}/raw/commit/${sha}/project.json`
+          ),
     };
   } else {
     throw new Error();
