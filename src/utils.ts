@@ -19,15 +19,12 @@ let workingProxy: (url: string) => string;
 
 fetch("https://api.codetabs.com")
   .then(() => {
-    alert("ski")
     workingProxy = (url: string) =>
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
   })
   .catch(async () => {
-    alert("bidi dop dop")
     return fetch("https://universal-cors-proxy.glitch.me")
       .then(() => {
-        alert("yes yes")
         workingProxy = (url: string) =>
           `https://universal-cors-proxy.glitch.me/${encodeURIComponent(url)}`;
       })
