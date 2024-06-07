@@ -29,14 +29,12 @@ fetch("https://api.codetabs.com")
           `https://universal-cors-proxy.glitch.me/${encodeURIComponent(url)}`;
       })
       .catch((e) => {
-        alert(e)
         workingProxy = (url: string) =>
           `https://universal-cors-proxy.glitch.me/${encodeURIComponent(url)}`;
       });
   });
 
 export const wrapProxy = (url: string) => {
-  alert(workingProxy(url))
   return workingProxy(url)
 };
 
