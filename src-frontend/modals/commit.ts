@@ -3,6 +3,7 @@ import api, { type Commit } from "@/api";
 import { settings } from "@/components";
 import { CommitItem } from "@/components";
 import i18next from "@/i18n";
+import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 
 const { h1, button, input, div, span, br, main } = van.tags;
@@ -66,9 +67,7 @@ export class CommitModal extends Modal {
         type: "text",
         style: "border-radius: 5px; width: 50%",
         class: `${settings.inputField}${
-          window.ReduxStore.getState().scratchGui.theme.theme.gui === "dark"
-            ? " dark"
-            : ""
+          Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
         }`,
         placeholder: i18next.t("commit.search-commits"),
       }),

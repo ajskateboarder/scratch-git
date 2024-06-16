@@ -6,8 +6,37 @@ import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
 
+// forces fallback to using plain file inputs
+const withFSAPIOff = (cb: () => any) => {
+  const tmp = window.showSaveFilePicker;
+  window.showSaveFilePicker = undefined;
+  try {
+    return cb();
+  } finally {
+    window.showSaveFilePicker = tmp;
+  }
+};
+
+const withSBUploadClickOff = (cb: () => any) => {
+  const createElement = document.createElement;
+  document.createElement = (...args: any[]) => {
+    // @ts-expect-error
+    let ce = createElement.call(document, ...args);
+    if (new Error().stack!.includes("t.createFileObjects")) {
+      console.debug("Disabling SB file input");
+      ce.click = () => {};
+    }
+    return ce;
+  };
+  try {
+    return cb();
+  } finally {
+    document.createElement = createElement;
+  }
+};
+
 /** Manages functions with the file menu */
-export const fileMenu = new (class FileMenu {
+export const fileMenu = new (class {
   menu!: HTMLDivElement;
   private events!: string;
 
@@ -31,23 +60,36 @@ export const fileMenu = new (class FileMenu {
     });
   }
 
-  /** Opens a project picker and returns the path to the inputted project when selected */
-  openProject(): Promise<string> {
-    return new Promise((resolve) => {
-      this.toggleMenu(true);
-      const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
-      loadFromComputer[this.events].onClick();
-      const sb3Picker = document.querySelectorAll("input[type=file]")[2];
-      sb3Picker.addEventListener("change", (e: Event) => {
-        resolve(((<HTMLInputElement>e.target!).files![0] as any).path);
+  /** Open a project SB3 file from a file dialog */
+  openProjectFromPrompt() {
+    this.toggleMenu(true);
+    (this.menu.querySelectorAll("li")[2] as any)[this.events].onClick();
+    this.toggleMenu(false);
+    this.toggleMenu(true);
+  }
+
+  /** Open a project SB3 file using the project byte contents
+   *
+   * This requires the user to save to a different file locally
+   */
+  openProjectFromFile(file: File) {
+    withFSAPIOff(() => {
+      withSBUploadClickOff(() => {
+        this.toggleMenu(true);
+        (this.menu.querySelectorAll("li")[2] as any)[this.events].onClick();
+        const sb3Picker = document.querySelectorAll(
+          "input[type=file]"
+        )[2] as HTMLInputElement;
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        sb3Picker.files = dt.files;
+        sb3Picker.onchange?.({ target: sb3Picker } as unknown as Event);
       });
-      this.toggleMenu(false);
-      this.toggleMenu(true);
     });
   }
 
   /** Returns if a project is currently open */
-  isProjectOpen() {
+  projectOpen() {
     this.toggleMenu(true);
     let savedMenu = this.menu.cloneNode(true) as HTMLElement;
     // tends to occur with translations
@@ -62,11 +104,13 @@ export const fileMenu = new (class FileMenu {
   }
 })();
 
-export const gitMenu = new (class GitMenu {
+export const gitMenu = new (class {
   private savedItems: HTMLElement | undefined;
   private newMenu: HTMLElement | undefined;
-  private open: boolean = false;
-  private initialized: boolean = false;
+
+  private open = false;
+  private menuInit = false;
+  private handlerInit = false;
 
   constructor() {}
 
@@ -74,6 +118,8 @@ export const gitMenu = new (class GitMenu {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
     return Object.assign(li, {
       onclick: (handler: () => any) => {
+        if (this.handlerInit) return;
+
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
           this.newMenu!.classList.remove(menu.activeMenuItem);
@@ -82,7 +128,7 @@ export const gitMenu = new (class GitMenu {
           await handler();
         });
       },
-      label: (e: ChildDom) => {
+      label(e: ChildDom) {
         li.innerHTML = "";
         li.append(e as Node);
       },
@@ -114,8 +160,9 @@ export const gitMenu = new (class GitMenu {
     },
     locale: string | undefined
   ) {
-    if (this.initialized && !locale) return;
+    if (this.menuInit && !locale) return;
     if (locale) document.querySelector(".git-menu")?.remove();
+
     i18next.changeLanguage(locale);
 
     // open, copy, and edit the file menu
@@ -165,6 +212,8 @@ export const gitMenu = new (class GitMenu {
     this.item(5).onclick(commitCreate);
     this.item(6).remove();
 
+    this.handlerInit = true;
+
     // make new menu toggle-able
     this.newMenu.onclick = () => {
       if (this.savedItems!.style.display === "none") {
@@ -194,14 +243,14 @@ export const gitMenu = new (class GitMenu {
       });
 
     fileMenu.toggleMenu(true);
-    this.initialized = true;
+    this.menuInit = true;
   }
 
   /** Enable/disable the pushing and pulling menu options
    *
    * @param enabled - whether to enable them
    */
-  setPushPullStatus(enabled: boolean) {
+  set allowPushPull(enabled: boolean) {
     if (!enabled) {
       this.item(1).setAttribute("disabled", "");
       this.item(1).setAttribute("title", i18next.t("menu.repo-needed"));
@@ -215,3 +264,5 @@ export const gitMenu = new (class GitMenu {
     }
   }
 })();
+
+(window as any).fileMenu = fileMenu;

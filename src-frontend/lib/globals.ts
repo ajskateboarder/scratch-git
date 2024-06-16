@@ -42,15 +42,15 @@ interface State {
     editorTab: {
       activeTabIndex: number;
     };
-    locales: {
-      locale: string;
-    };
+  };
+  locales: {
+    locale: string;
   };
 }
 
 interface ReduxStore {
   getState(): State;
-  dispatch(_: { type: string; [key: string]: string | undefined }): void;
+  dispatch(_: { type: string; [key: string]: any | undefined }): void;
 }
 
 interface VMRuntime {

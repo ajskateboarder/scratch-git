@@ -185,5 +185,5 @@ export const createGitMenu = async (
     },
     changeLocale
   );
-  gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
+  gitMenu.allowPushPull = (await project!.getDetails()).repository !== "";
 };

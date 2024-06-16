@@ -5,7 +5,6 @@ import typescript from "@rollup/plugin-typescript";
 import css from "rollup-plugin-import-css";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import copy from "rollup-plugin-copy";
-import json from "@rollup/plugin-json";
 
 export default async (args) => {
   let build = {
@@ -22,7 +21,6 @@ export default async (args) => {
           "src-frontend/**/*.ts",
         ],
       }),
-      json(),
     ],
   };
 

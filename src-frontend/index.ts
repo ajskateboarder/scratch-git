@@ -1,10 +1,10 @@
-import api from "./api";
+import api, { Project } from "./api";
 import { Styles, createGitMenu } from "./init";
-import { menu, fileMenu, misc } from "./components";
+import { menu, fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
-import "./lib/index";
+
 import {
   CommitModal,
   WelcomeModal,
@@ -45,17 +45,22 @@ const initialize = async () => {
         ></dialog>`;
   }
 
-  const displayDiffs = async () => {
+  const displayDiffs = async (project: Project) => {
     [
       ...document.querySelectorAll(`.diff-button`),
       ...document.querySelectorAll(`.stage-diff`),
     ].forEach((e) => e.remove());
-    const project = await api.getCurrentProject()!;
     await project!.unzip();
-    await showIndicators(project!);
+    try {
+      await showIndicators(project!);
+    } catch {
+      new ScratchAlert(i18next.t("alerts.wrong-project"))
+        .setType("error")
+        .display();
+    }
   };
 
-  if (!fileMenu.isProjectOpen()) {
+  if (!fileMenu.projectOpen()) {
     await document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
@@ -78,7 +83,7 @@ const initialize = async () => {
               (saveStatus as any)[getReactHandlers(saveStatus)].children[1]
                 .props.defaultMessage === "Saving project…"
             ) {
-              await displayDiffs();
+              await displayDiffs(project!);
               return;
             }
           });
@@ -93,12 +98,13 @@ const initialize = async () => {
 
       document.addEventListener("keydown", async (e) => {
         if (e.ctrlKey && e.key === "s") {
-          await displayDiffs();
+          await displayDiffs(project!);
         }
       });
 
       // add initialization handlers to each language option
       // to make sure all our stuff gets updated to the new locale
+      // can there please be a Redux thing i can listen for
       new MutationObserver(([mut, _]) => {
         const languageOptions = mut.target.firstChild?.firstChild?.lastChild
           ?.firstChild as HTMLUListElement | undefined;
@@ -106,15 +112,14 @@ const initialize = async () => {
           [...languageOptions.children].forEach((e) => {
             (e as HTMLDivElement).onclick = () => {
               setTimeout(async () => {
-                // project titles are removed after changing locale
-                // by default so we set it back
+                // project titles are removed after changing lang by default
                 Redux.dispatch({
                   type: "projectTitle/SET_PROJECT_TITLE",
                   title: project?.projectName,
                 });
 
                 await initialize();
-                createGitMenu(project!, getLocale());
+                await createGitMenu(project!, getLocale());
                 i18next.changeLanguage(getLocale());
 
                 document

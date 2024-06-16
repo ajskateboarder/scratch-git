@@ -5,6 +5,7 @@ pub mod git;
 pub mod handlers;
 pub mod tw_path;
 pub mod zipping;
+pub mod sb_download;
 
 use serde_json::from_str;
 use std::{

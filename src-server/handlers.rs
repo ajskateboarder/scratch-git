@@ -62,10 +62,14 @@ impl CmdHandler<'_> {
     }
 
     fn send_json(&mut self, json: Value) {
+        if self.debug {
+            println!("Sending message: {}", json.to_string())
+        }
         self.socket.send(Message::Text(json.to_string())).unwrap();
     }
 
     /// Diff two strings
+    // ANCHOR[id=diff] 
     fn get_diff(&mut self, data: CmdData) {
         let CmdData::GitDiff {
             old_content,
@@ -82,6 +86,7 @@ impl CmdHandler<'_> {
     }
 
     /// Initialize a new project using a project's location and a user's name and email
+    // ANCHOR[id=create-project] 
     fn create_project(&mut self, data: CmdData) {
         let CmdData::ProjectToCreate {
             file_path,
@@ -266,6 +271,7 @@ impl CmdHandler<'_> {
     }
 
     /// Get a project's username, email, and repository remote URL
+    // ANCHOR[id=get-project-details] 
     fn get_project_details(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -301,6 +307,7 @@ impl CmdHandler<'_> {
     }
 
     /// Check if a project exists
+    // ANCHOR[id=exists] 
     fn exists(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -311,6 +318,7 @@ impl CmdHandler<'_> {
     }
 
     /// Check if a Git remote URL exists
+    // ANCHOR[id=remote-exists] 
     fn remote_exists(&mut self, data: CmdData) {
         let CmdData::URL(url) = data else {
             return self.send_json(json!({}));
@@ -328,6 +336,7 @@ impl CmdHandler<'_> {
     }
 
     /// Unzip the project's configured SB3 into the Git repo directory
+    // ANCHOR[id=unzip] 
     fn unzip(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -359,6 +368,7 @@ impl CmdHandler<'_> {
     }
 
     /// Get a sprite's scripts, either old or new
+    // ANCHOR[id=get-sprite-scripts] 
     fn get_sprite_scripts(&mut self, data: CmdData, old: bool) {
         let CmdData::Project {
             project_name,
@@ -401,6 +411,7 @@ impl CmdHandler<'_> {
     }
 
     /// Push a project to its configured remote URL
+    // ANCHOR[id=push] 
     fn push(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -446,6 +457,7 @@ impl CmdHandler<'_> {
     }
 
     /// Pull new changes from a project's remote URL
+    // ANCHOR[id=pull] 
     fn pull(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -501,6 +513,7 @@ impl CmdHandler<'_> {
     }
 
     /// Commit new changes to a project
+    // ANCHOR[id=commit] 
     fn commit(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -577,6 +590,7 @@ impl CmdHandler<'_> {
     }
 
     /// Get a project's commits
+    // ANCHOR[id=get-commits] 
     fn get_commits(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
@@ -609,6 +623,7 @@ impl CmdHandler<'_> {
         self.send_json(serde_json::from_str(&log_output).expect("failed to parse log output"))
     }
 
+    // ANCHOR[id=get-changed-sprites] 
     fn get_changed_sprites(&mut self, data: CmdData) {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));

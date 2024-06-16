@@ -1,5 +1,6 @@
 import { misc, alert, Copy } from "..";
 import type { DeviceCode } from "@/api";
+import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
 
 const { div, img, span, a } = van.tags;
@@ -69,19 +70,18 @@ export class ScratchAlert {
               role: "button",
               tabIndex: "0",
               onclick: () => newAlert.remove(),
-              ...(window.ReduxStore.getState().scratchGui.theme.theme.gui ===
-                "dark" && {
+              ...(Redux.getState().scratchGui.theme.theme.gui === "dark" && {
                 style: "background-color: rgba(0, 0, 0, 0.255)",
               }),
             },
             img({
               src: CLOSE_BUTTON_SVG,
               style: "transform: rotate(45deg) scale(0.5)",
-            }),
+            })
           ),
-          ...this.buttons,
-        ),
-      ),
+          ...this.buttons
+        )
+      )
     );
     if (this.timeout !== undefined) {
       setTimeout(() => newAlert.remove(), this.timeout);
@@ -96,8 +96,8 @@ export const GhAuthAlert = (e: DeviceCode) =>
     span(
       "Authentication needed for GitHub. Please go to ",
       a({ href: e.verification_uri }, "github.com/login/device"),
-      ` and enter the code: ${e.user_code}`,
-    ),
+      ` and enter the code: ${e.user_code}`
+    )
   )
     .setType("warn")
     .addButtons([Copy(() => e.user_code)]);

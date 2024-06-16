@@ -104,7 +104,6 @@ impl ScriptChanges {
             commit += &format!("-{}", self.removed)
         }
         commit += " blocks";
-        println!("{}", commit);
         commit
     }
 }
@@ -360,7 +359,6 @@ impl Diff {
         let blocks = re
             .replace_all(&statements.join("\n"), "\":[1,\"\"")
             .to_string();
-        println!("{}", &blocks);
         blocks
     }
 

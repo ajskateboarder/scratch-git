@@ -1,25 +1,24 @@
 import { SOCKET_URL } from "./config";
 import { Redux } from "@/lib";
-import { Ok, Err, Result } from "ts-results";
 
 export interface Commit {
-  readonly author: { date: string; email: string; name: string };
-  readonly body: string;
-  readonly commit: string;
-  readonly subject: string;
-  readonly shortDate: string;
+  author: { date: string; email: string; name: string };
+  body: string;
+  commit: string;
+  subject: string;
+  shortDate: string;
 }
 
 export interface Sprite {
-  readonly name: string;
-  readonly isStage: boolean;
-  readonly format: () => string;
+  name: string;
+  isStage: boolean;
+  format: () => string;
 }
 
 export interface GitDetails {
-  readonly username: string;
-  readonly email: string;
-  readonly repository: string;
+  username: string;
+  email: string;
+  repository: string;
 }
 
 interface ProjectCreationDetails {
@@ -28,8 +27,8 @@ interface ProjectCreationDetails {
   projectPath: string;
 }
 
-type PullMessage = "success" | "nothing new" | "unrelated histories";
-type PushMessage = "success" | "up to date" | "pull needed";
+type PullMsg = "success" | "nothing new" | "unrelated histories";
+type PushMsg = "success" | "up to date" | "pull needed";
 
 /** Represents a WebSocket interface */
 class Socket {
@@ -75,13 +74,8 @@ export class Project extends Socket {
   }
 
   /** Returns if the project has been linked to scratch.git */
+  // LINK src-server/handlers.rs#exists
   async exists(): Promise<boolean> {
-    console.log(
-      await this.request({
-        command: "exists",
-        data: { Project: { project_name: this.projectName } },
-      })
-    );
     return (
       await this.request({
         command: "exists",
@@ -91,6 +85,7 @@ export class Project extends Socket {
   }
 
   /** Receive all the commits made for a project */
+  // LINK src-server/handlers.rs#get-commits
   async getCommits(): Promise<Commit[]> {
     const commits = await this.request({
       command: "get-commits",
@@ -99,13 +94,14 @@ export class Project extends Socket {
     return commits.map((commit: Commit) => {
       return {
         ...commit,
-        // FIXME: slicing the date like below fails for langs other than english
+        // FIXME: slicing the date like below only works for english
         shortDate: commit.author.date.split(" ").slice(0, 4),
       };
     });
   }
 
   /** Retreive sprites that have been changed since project changes, sorted alphabetically */
+  // LINK src-server/handlers.rs#get-changed-sprites
   async getSprites() {
     const sprites: [string, boolean][] = (
       await this.request({
@@ -128,6 +124,7 @@ export class Project extends Socket {
    *
    * @param sprite - the name of the sprite you want to receive scripts from
    */
+  // LINK src-server/handlers.rs#get-sprite-scripts
   async getCurrentScripts(sprite: string) {
     return await this.request({
       command: "current-project",
@@ -141,6 +138,7 @@ export class Project extends Socket {
    *
    * @param sprite - the name of the sprite you want to receive scripts from
    */
+  // LINK src-server/handlers.rs#get-sprite-scripts
   async getPreviousScripts(sprite: string): Promise<Record<string, string>> {
     return await this.request({
       command: "previous-project",
@@ -151,6 +149,7 @@ export class Project extends Socket {
   }
 
   /** Commit the current project to Git */
+  // LINK src-server/handlers.rs#commit
   async commit(): Promise<string> {
     return (
       await this.request({
@@ -161,7 +160,8 @@ export class Project extends Socket {
   }
 
   /** Push the current project to the configured remote, unused right now */
-  async push(): Promise<PushMessage> {
+  // LINK src-server/handlers.rs#push
+  async push(): Promise<PushMsg> {
     return (
       await this.request({
         command: "push",
@@ -171,7 +171,8 @@ export class Project extends Socket {
   }
 
   /** Pull upstream changes from the configured remote */
-  async pull(): Promise<PullMessage> {
+  // LINK src-server/handlers.rs#pull
+  async pull(): Promise<PullMsg> {
     return (
       await this.request({
         command: "pull",
@@ -181,6 +182,7 @@ export class Project extends Socket {
   }
 
   /** Unzip a project from its configured location to get the latest JSON */
+  // LINK src-server/handlers.rs#unzip
   async unzip() {
     await this.request({
       command: "unzip",
@@ -189,6 +191,7 @@ export class Project extends Socket {
   }
 
   /** Get the origin remote, username, and email for a project */
+  // LINK src-server/handlers.rs#get-project-details
   async getDetails(): Promise<GitDetails> {
     return await this.request({
       command: "get-project-details",
@@ -200,6 +203,7 @@ export class Project extends Socket {
    *
    * @returns whether it succeeded or not
    */
+  // LINK src-server/handlers.rs#set-project-details
   async setDetails(details: GitDetails): Promise<boolean> {
     return await this.request({
       command: "set-project-details",
@@ -227,13 +231,14 @@ export class ProjectManager extends Socket {
    * Create and initialize a new project
    *
    * @param info - the path to the project SB3 and the user's chosen name and email
-   * @throws {ProjectExistsException | Error}
+   * @throws {Error}
    */
+  // LINK src-server/handlers.rs#create-project
   async createProject({
     projectPath,
     username,
     email,
-  }: ProjectCreationDetails): Promise<Result<Project, string>> {
+  }: ProjectCreationDetails): Promise<Project> {
     this.ws.send(
       JSON.stringify({
         command: "create-project",
@@ -250,19 +255,19 @@ export class ProjectManager extends Socket {
     const response = await this.receive();
     if (response.status) {
       if (response.status === "exists") {
-        return Err(
+        throw new Error(
           `${projectPath
             .split("/")
             .pop()} is already a project. Either load the existing project or make a copy of the project file.`
         );
       } else if (response.status === "fail") {
-        return Err(
+        throw new Error(
           "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
         );
       }
     }
 
-    return Ok(new Project(response.project_name, this.ws));
+    return new Project(response.project_name, this.ws);
   }
 
   /** Get the current project based on the project name */
@@ -276,6 +281,7 @@ export class ProjectManager extends Socket {
  * @param oldScript - the script for a sprite before a save
  * @param newScript - the script after a save
  */
+// LINK src-server/handlers.rs#diff
 export const diff = (
   oldScript: string,
   newScript: string
@@ -293,6 +299,7 @@ export const diff = (
  *
  * @param url - the URL of the repository to be checked
  */
+// LINK src-server/handlers.rs#remote-exists
 export const remoteExists = (url: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(SOCKET_URL);

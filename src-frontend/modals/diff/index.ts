@@ -377,10 +377,9 @@ export class DiffModal extends Modal {
                     e.stopPropagation();
                     this.close();
                     if (
-                      window.ReduxStore.getState().scratchGui.editorTab
-                        .activeTabIndex !== 0
+                      Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
                     ) {
-                      window.ReduxStore.dispatch({
+                      Redux.dispatch({
                         type: "scratch-gui/navigation/ACTIVATE_TAB",
                         activeTabIndex: 0,
                       });

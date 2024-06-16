@@ -93,10 +93,10 @@ export class WelcomeModal extends Modal {
         style: "width: 50%",
         class: settings.settingsButton,
         onclick: () => {
-          fileMenu.openProject();
+          fileMenu.openProjectFromPrompt();
           VM.on("PROJECT_LOADED", () => {
             this.loadedProject = true;
-            (goToStep2 as HTMLButtonElement).disabled = false;
+            goToStep2.disabled = false;
             goToStep2.classList.remove(settings.disabledButton);
             openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
               "welcome.project-opened"

@@ -1,6 +1,6 @@
 /** @file Displays indicators and info on sprites that were changed */
 import type { Project, Sprite } from "./api";
-import { misc, sprites } from "./components/index";
+import { misc, sprites } from "./components";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components/diff-buttons";
@@ -51,7 +51,7 @@ const changedBlocklyScripts = async (
 
 const highlightChanged = async (
   project: Project,
-  sprite: Sprite,
+  sprite: Sprite | undefined,
   loadedJSON: any
 ) => {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
@@ -72,6 +72,10 @@ const highlightChanged = async (
   document
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
     .forEach((e) => (e.style.filter = ""));
+
+  if (sprite === undefined) {
+    throw new Error("No sprite was changed");
+  }
 
   const previousScripts = await project.getPreviousScripts(sprite.format());
   const currentScripts = await project.getCurrentScripts(sprite.format());
