@@ -1,13 +1,15 @@
 import { Modal } from "./base";
 import thumbnail from "./thumbnail.svg";
-import api from "@/api";
+import api, { cloneRepo, remoteExists } from "@/api";
 import { settings, fileMenu } from "@/components";
 import { InputBox, InputField } from "@/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
+import { validEmail, validURL } from "@/utils";
 import van, { type State } from "vanjs-core";
 
-const { div, h1, button, p, br, span, input, pre, i, label } = van.tags;
+const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
+  van.tags;
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 
@@ -16,17 +18,6 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
     { class: "screen", id: `step${step.number}` },
     div({ class: "welcome-screen-content" }, h1(step.title), children)
   );
-
-/** Test if an email is valid or not.
- *
- * Obviously, this won't cover all edge cases, but this will stop blatantly wrong ones */
-const isValidEmail = (email: string) => {
-  return email
-    .toLowerCase()
-    .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    );
-};
 
 /** Project initialization */
 export class WelcomeModal extends Modal {
@@ -78,6 +69,8 @@ export class WelcomeModal extends Modal {
 
   /** Open a project */
   private $step1() {
+    const loadState = van.state(true);
+
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -88,35 +81,93 @@ export class WelcomeModal extends Modal {
       i18next.t("welcome.next")
     );
 
-    const openProject = button(
-      {
-        style: "width: 50%",
-        class: settings.settingsButton,
-        onclick: () => {
-          fileMenu.openProjectFromPrompt();
-          VM.on("PROJECT_LOADED", () => {
-            this.loadedProject = true;
-            goToStep2.disabled = false;
-            goToStep2.classList.remove(settings.disabledButton);
-            openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-              "welcome.project-opened"
-            )}`;
-            setTimeout(() => {
-              openProject.innerHTML = i18next.t("welcome.open-project");
-            }, 2000);
-          });
-        },
-      },
-      i18next.t("welcome.open-project")
-    );
+    const openProject = van.derive(() => {
+      if (loadState.val) {
+        return button(
+          {
+            style: "width: 50%",
+            class: settings.settingsButton,
+            onclick: () => {
+              fileMenu.openProject();
+              VM.on("PROJECT_LOADED", () => {
+                this.loadedProject = true;
+                goToStep2.disabled = false;
+                goToStep2.classList.remove(settings.disabledButton);
+                openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
+                  "welcome.project-opened"
+                )}`;
+                setTimeout(() => {
+                  openProject.val.innerHTML = i18next.t("welcome.open-project");
+                }, 2000);
+              });
+            },
+          },
+          i18next.t("welcome.open-project")
+        );
+      } else {
+        const $url = InputBox({
+          placeholder: "https://link.to.repo/username/repo",
+          onblur: () => {
+            $submit.disabled = !validURL($url.value);
+          },
+        });
+
+        // TODO: localize!!!
+        const $submit = button(
+          {
+            class: settings.settingsButton,
+            disabled: true,
+            onclick: async () => {
+              if ($submit.disabled) return;
+              $url.setCustomValidity("");
+
+              if (!(await remoteExists($url.value))) {
+                $url.setCustomValidity("Repository doesn't exist");
+                $url.reportValidity();
+                return;
+              }
+
+              $submit.innerHTML = "";
+              $submit.appendChild(
+                span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning")
+              );
+              await cloneRepo($url.value);
+              $submit.innerText = i18next.t("welcome.open-project");
+            },
+          },
+          i18next.t("welcome.open-project")
+        );
+
+        const $form = form(
+          { style: "display: flex; width: 100%; gap: 10px" },
+          InputField({ style: "flex-grow: 1" }, $url),
+          $submit
+        );
+
+        return $form;
+      }
+    });
 
     return Screen(
       { title: i18next.t("welcome.welcome"), number: 1 },
       div(
         { style: "font-weight: normal" },
         p(i18next.t("welcome.get-started"), br(), br()),
-        div({ class: "a-gap" }, openProject),
+        div({ class: "a-gap" }, () => openProject.val),
         br(),
+        a(
+          {
+            style: "color: var(--menu-bar-background-default)",
+            onclick: () => (loadState.val = !loadState.val),
+          },
+          // TODO: localize
+          () =>
+            loadState.val
+              ? "or load an existing project from online"
+              : "or load an existing project from your computer"
+        ),
+        br(),
+
         br()
       ),
       BottomBar(
@@ -155,7 +206,8 @@ export class WelcomeModal extends Modal {
       onchange: () => {
         goToStep3.disabled = false;
         goToStep3.classList.remove(settings.disabledButton);
-        this.projectPath = (openProjectPath.files![0] as any).path; // .path is an electron-specific attr
+        // .path is an electron-specific attr
+        this.projectPath = (openProjectPath.files![0] as any).path;
       },
     });
 
@@ -192,19 +244,18 @@ export class WelcomeModal extends Modal {
         class: [settings.settingsButton, settings.disabledButton].join(" "),
         disabled: true,
         onclick: async () => {
-          const res = await api.createProject({
-            projectPath: this.projectPath!,
-            username,
-            email,
-          });
-          if (res.ok) {
+          try {
+            await api.createProject({
+              projectPath: this.projectPath!,
+              username,
+              email,
+            });
             ++this.currentStep.val;
-          } else {
+          } catch {
             $creationError.innerHTML = "";
             $creationError.append(
               span(i({ class: "fa fa-solid fa-circle-exclamation" }), " ")
             );
-            res.expect("failed to create project");
             return;
           }
         },
@@ -228,6 +279,7 @@ export class WelcomeModal extends Modal {
     };
 
     const $username = InputField(
+      {},
       label({ class: "input-label" }, i18next.t("repoconfig.name")),
       InputBox({
         onblur: (e: Event) => {
@@ -238,11 +290,12 @@ export class WelcomeModal extends Modal {
     );
 
     const $email = InputField(
+      {},
       label({ class: "input-label" }, i18next.t("repoconfig.email")),
       InputBox({
         onblur: (e: Event) => {
           email = (e.target! as HTMLInputElement).value;
-          if (!isValidEmail(email)) {
+          if (!validEmail(email)) {
             $email.querySelector("input")!.value = "";
             email = "";
           }

@@ -6,35 +6,6 @@ import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
 
-// forces fallback to using plain file inputs
-const withFSAPIOff = (cb: () => any) => {
-  const tmp = window.showSaveFilePicker;
-  window.showSaveFilePicker = undefined;
-  try {
-    return cb();
-  } finally {
-    window.showSaveFilePicker = tmp;
-  }
-};
-
-const withSBUploadClickOff = (cb: () => any) => {
-  const createElement = document.createElement;
-  document.createElement = (...args: any[]) => {
-    // @ts-expect-error
-    let ce = createElement.call(document, ...args);
-    if (new Error().stack!.includes("t.createFileObjects")) {
-      console.debug("Disabling SB file input");
-      ce.click = () => {};
-    }
-    return ce;
-  };
-  try {
-    return cb();
-  } finally {
-    document.createElement = createElement;
-  }
-};
-
 /** Manages functions with the file menu */
 export const fileMenu = new (class {
   menu!: HTMLDivElement;
@@ -61,31 +32,11 @@ export const fileMenu = new (class {
   }
 
   /** Open a project SB3 file from a file dialog */
-  openProjectFromPrompt() {
+  openProject() {
     this.toggleMenu(true);
     (this.menu.querySelectorAll("li")[2] as any)[this.events].onClick();
     this.toggleMenu(false);
     this.toggleMenu(true);
-  }
-
-  /** Open a project SB3 file using the project byte contents
-   *
-   * This requires the user to save to a different file locally
-   */
-  openProjectFromFile(file: File) {
-    withFSAPIOff(() => {
-      withSBUploadClickOff(() => {
-        this.toggleMenu(true);
-        (this.menu.querySelectorAll("li")[2] as any)[this.events].onClick();
-        const sb3Picker = document.querySelectorAll(
-          "input[type=file]"
-        )[2] as HTMLInputElement;
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        sb3Picker.files = dt.files;
-        sb3Picker.onchange?.({ target: sb3Picker } as unknown as Event);
-      });
-    });
   }
 
   /** Returns if a project is currently open */

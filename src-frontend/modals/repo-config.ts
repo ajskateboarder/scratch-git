@@ -3,7 +3,7 @@ import api, { Project, remoteExists } from "@/api";
 import { settings, misc, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
 import i18next from "@/i18n";
-import { isValidURL } from "@/utils";
+import { validURL } from "@/utils";
 import van, { State } from "vanjs-core";
 
 const { main, button, h1, div, span, label, br } = van.tags;
@@ -45,7 +45,7 @@ export class RepoConfigModal extends Modal {
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
-          if (!isValidURL(url) && !(await remoteExists(url))) {
+          if (!validURL(url) && !(await remoteExists(url))) {
             $repository.value = "";
           }
         }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // Change this when using a different GitHub App
-const CLIENT_ID: &'static str = "Iv23liJFLwawI1z9jc6S";
+const CLIENT_ID: &str = "Iv23liJFLwawI1z9jc6S";
 
 /// Represents a temporary code to use with github.com/login/device
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,118 +1,22 @@
+pub mod structs;
+mod vec_utils;
+
 use crate::git;
+pub use structs::*;
+use vec_utils::{group_items, intersection};
+
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
 use regex::Regex;
 use serde_json::{Map, Value};
+use std::error::Error;
 use std::path::PathBuf;
 use std::{
     collections::{HashMap, HashSet},
     vec,
 };
 
-pub trait ItemGrouping {
-    fn method(&self) -> HashMap<String, Vec<String>>;
-}
-
-impl ItemGrouping for Vec<(String, String)> {
-    fn method(&self) -> HashMap<String, Vec<String>> {
-        let mut groups: HashMap<String, Vec<String>> = HashMap::new();
-        for row in self.iter() {
-            if !groups.contains_key::<String>(&row.0) {
-                groups.insert(String::from(row.0.clone()), vec![]);
-            }
-            groups
-                .get_mut(&row.0)
-                .unwrap()
-                .push(String::from(row.1.clone()));
-        }
-        groups
-    }
-}
-
-impl ItemGrouping for Vec<Vec<String>> {
-    fn method(&self) -> HashMap<String, Vec<String>> {
-        let mut groups: HashMap<String, Vec<String>> = HashMap::new();
-        for row in self.iter() {
-            if !groups.contains_key::<String>(&row[0]) {
-                groups.insert(String::from(row[0].clone()), vec![]);
-            }
-            groups
-                .get_mut(&row[0])
-                .unwrap()
-                .push(String::from(row[1].clone()));
-        }
-        groups
-    }
-}
-
-/// Set-intersection of costume changes because HashSet::intersection sucks
-fn intersection(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<CostumeChange> {
-    if sets.is_empty() {
-        return HashSet::new();
-    }
-
-    if sets.len() == 1 {
-        return sets.pop().unwrap();
-    }
-
-    let mut result = sets.pop().unwrap();
-    result.retain(|item| sets.iter().all(|set| set.contains(item)));
-    result
-}
-
-fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
-    ItemGrouping::method(&items)
-}
-
-/// Represents a changed costume for a sprite or the stage
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
-pub struct CostumeChange {
-    pub sprite: String,
-    pub costume_name: String,
-    pub costume_path: String,
-    pub on_stage: bool,
-}
-
-/// Represents costumes that were added, removed, or changed
-#[derive(Debug)]
-pub struct CostumeChanges {
-    pub added: Vec<CostumeChange>,
-    pub removed: Vec<CostumeChange>,
-    pub merged: Vec<CostumeChange>,
-}
-
-/// Represents a changed script for a sprite or stage, and how many blocks were added or removed
-#[derive(Debug)]
-pub struct ScriptChanges {
-    pub sprite: String,
-    pub added: usize,
-    pub removed: usize,
-    pub on_stage: bool,
-}
-
-impl ScriptChanges {
-    /// Git commit representation of a script change
-    pub fn format(&self) -> String {
-        let mut commit = format!("{}: ", self.sprite);
-        if self.added > 0 {
-            commit += &format!("+{}", self.added);
-            if self.removed > 0 {
-                commit += ", "
-            }
-        }
-        if self.removed > 0 {
-            commit += &format!("-{}", self.removed)
-        }
-        commit += " blocks";
-        commit
-    }
-}
-
-/// Commit generation methods for Scratch project assets and code
-#[derive(Debug)]
-pub struct Diff {
-    data: Value,
-}
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 impl Diff {
     /// Construct a new diff from a project.json
@@ -122,7 +26,6 @@ impl Diff {
     /// Diff::new(&project);
     /// ```
     pub fn new(data: &Value) -> Self {
-        data.get("targets").expect("targets key is required");
         Diff { data: data.clone() }
     }
 
@@ -133,10 +36,10 @@ impl Diff {
     /// // diff for previous commit
     /// Diff::from_revision(&pth, "HEAD~1:project.json");
     /// ```
-    pub fn from_revision(pth: &PathBuf, commit: &str) -> Self {
+    pub fn from_revision(pth: &PathBuf, commit: &str) -> Result<Self> {
         let json = git::show_revision(pth, commit);
-        let data = serde_json::from_str::<serde_json::Value>(&json).unwrap();
-        Diff { data: data.clone() }
+        let data = serde_json::from_str::<serde_json::Value>(&json?)?;
+        Ok(Diff { data: data.clone() })
     }
 
     /// Attempt to return the MD5 extension of a costume item (project.json)
@@ -333,12 +236,10 @@ impl Diff {
                         let substack = &current_block["inputs"]["SUBSTACK"][1];
                         match substack {
                             Value::String(id) => current_block = &blocks[id],
-                            Value::Null => {
-                                current_block = &blocks[id]
-                            }
+                            Value::Null => current_block = &blocks[id],
                             _ => unreachable!(),
                         }
-                    },
+                    }
                     // block is located in c-block or e-block
                     Value::Null => {
                         let substack = &current_block["inputs"]["SUBSTACK"][1];
@@ -363,7 +264,7 @@ impl Diff {
     }
 
     /// Return all script changes given a newer project
-    pub fn blocks<'a>(&'a self, new: &'a Diff) -> Vec<ScriptChanges> {
+    pub fn blocks<'a>(&'a self, new: &'a Diff) -> Result<Vec<ScriptChanges>> {
         fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
             blocks
                 .iter()
@@ -387,7 +288,9 @@ impl Diff {
                 Right(b) => (&Value::Null, b),
             });
 
-        sprites
+        let mut error = None;
+
+        let changes = sprites
             .clone()
             .filter_map(|(&ref old, &ref new)| {
                 if old["blocks"].as_object() == new["blocks"].as_object() {
@@ -416,6 +319,13 @@ impl Diff {
                     2000,
                 );
 
+                if diff.is_err() {
+                    error = Some(diff.unwrap_err());
+                    return None;
+                };
+
+                let diff = diff.unwrap();
+
                 if diff.added != 0 || diff.removed != 0 {
                     let name = [
                         old["name"].as_str().unwrap(),
@@ -435,14 +345,20 @@ impl Diff {
                     None
                 }
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>();
+
+        if let Some(error) = error {
+            return Err(error);
+        }
+
+        Ok(changes)
     }
 
     /// Create commits for changes from the current project to a newer one
-    pub fn commits(&self, new: &Diff) -> Vec<String> {
+    pub fn commits(&self, new: &Diff) -> Result<Vec<String>> {
         let costume_changes = self._merged_costumes(&new);
         let blocks: Vec<_> = self
-            .blocks(&new)
+            .blocks(&new)?
             .iter()
             .map(|s| {
                 s.format()
@@ -457,10 +373,12 @@ impl Diff {
         let merged = self.format_costumes(costume_changes.merged, "modify");
 
         let _commits = [blocks, added, removed, merged].concat();
-        Vec::from_iter(
-            group_items(_commits)
-                .iter()
-                .map(|(sprite, changes)| format!("{}: {}", sprite, changes.join(", ").to_string())),
-        )
+
+        let commits =
+            Vec::from_iter(group_items(_commits).iter().map(|(sprite, changes)| {
+                format!("{}: {}", sprite, changes.join(", ").to_string())
+            }));
+
+        Ok(commits)
     }
 }
