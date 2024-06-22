@@ -122,7 +122,9 @@ export class WelcomeModal extends Modal {
               $url.setCustomValidity("");
 
               if (!(await remoteExists($url.value))) {
-                $url.setCustomValidity("Repository doesn't exist");
+                $url.setCustomValidity(
+                  "Repository doesn't exist or is private"
+                );
                 $url.reportValidity();
                 return;
               }
@@ -138,13 +140,11 @@ export class WelcomeModal extends Modal {
           i18next.t("welcome.open-project")
         );
 
-        const $form = form(
+        return form(
           { style: "display: flex; width: 100%; gap: 10px" },
           InputField({ style: "flex-grow: 1" }, $url),
           $submit
         );
-
-        return $form;
       }
     });
 

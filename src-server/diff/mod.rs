@@ -7,7 +7,7 @@ use vec_utils::{group_items, intersection};
 
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
-use regex::Regex;
+use regex_static::{once_cell::sync::Lazy, Regex};
 use serde_json::{Map, Value};
 use std::error::Error;
 use std::path::PathBuf;
@@ -15,6 +15,8 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
+
+static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -201,7 +203,6 @@ impl Diff {
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
     fn format_blocks(blocks: &Map<String, Value>) -> String {
-        let re = Regex::new(r#"":\[(?:1|2|3),".*""#).unwrap();
         let top_ids = blocks
             .iter()
             .filter_map(|(id, val)| {
@@ -257,7 +258,7 @@ impl Diff {
             statements.push(_blocks.join("\n"));
         }
         statements.sort_by_key(|blocks| blocks.to_lowercase());
-        let blocks = re
+        let blocks = BLOCK_TYPE
             .replace_all(&statements.join("\n"), "\":[1,\"\"")
             .to_string();
         blocks

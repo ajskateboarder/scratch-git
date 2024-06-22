@@ -1,4 +1,6 @@
 use dunce::canonicalize;
+use regex_static::{once_cell::sync::Lazy, Regex};
+
 use std::error::Error;
 use std::fs::{self, File};
 use std::net::TcpStream;
@@ -17,7 +19,10 @@ use crate::config::{gh_token, project_config};
 use crate::diff::{Diff, ScriptChanges};
 use crate::gh_auth;
 use crate::git;
-use crate::zipping::{self, extract};
+use crate::sb3::{get_assets, ProjectData};
+use crate::zipping::{self, extract, zip};
+
+static CLONE_NAME: Lazy<Regex> = regex_static::lazy_regex!("'(.*)'");
 
 /// Represents all available command types to use with the server
 #[derive(Serialize, Deserialize)]
@@ -51,6 +56,8 @@ pub struct Cmd<'a> {
     data: CmdData<'a>,
 }
 
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
 /// Command handler for use with WebSocket server
 pub struct CmdHandler<'a> {
     debug: bool,
@@ -62,7 +69,7 @@ impl CmdHandler<'_> {
         CmdHandler { debug, socket }
     }
 
-    fn send_json(&mut self, json: Value) -> Result<(), Box<dyn Error>> {
+    fn send_json(&mut self, json: Value) -> Result<()> {
         if self.debug {
             println!("Sending message: {}", json.to_string())
         }
@@ -72,7 +79,7 @@ impl CmdHandler<'_> {
 
     /// Diff two strings
     // ANCHOR[id=diff]
-    fn get_diff(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn get_diff(&mut self, data: CmdData) -> Result<()> {
         let CmdData::GitDiff {
             old_content,
             new_content,
@@ -90,7 +97,7 @@ impl CmdHandler<'_> {
 
     /// Initialize a new project using a project's location and a user's name and email
     // ANCHOR[id=create-project]
-    fn create_project(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn create_project(&mut self, data: CmdData) -> Result<()> {
         let CmdData::ProjectToCreate {
             file_path,
             username,
@@ -162,8 +169,7 @@ impl CmdHandler<'_> {
         extract(
             fs::File::open(Path::new(
                 &project_to_extract["project_file"].as_str().unwrap(),
-            ))
-            .expect("failed to open file"),
+            ))?,
             target_dir.clone(),
         )?;
 
@@ -177,8 +183,7 @@ impl CmdHandler<'_> {
             return self.send_json(json!({ "status": "fail" }));
         }
 
-        fs::write(target_dir.join(".gitignore"), "project.old.json")
-            .expect("failed to write gitignore");
+        fs::write(target_dir.join(".gitignore"), "project.old.json")?;
 
         if !git::run(vec!["add", "."], Some(&project_path))
             .status()?
@@ -215,7 +220,7 @@ impl CmdHandler<'_> {
     }
 
     /// Update a project with new username, email, and repository remote URL
-    fn set_project_details(&mut self, data: CmdData, no_send: bool) -> Result<(), Box<dyn Error>> {
+    fn set_project_details(&mut self, data: CmdData, no_send: bool) -> Result<()> {
         let CmdData::GitDetails {
             username,
             email,
@@ -261,12 +266,13 @@ impl CmdHandler<'_> {
         if !no_send {
             self.send_json(json!({"success": success}))?;
         }
+
         Ok(())
     }
 
     /// Get a project's username, email, and repository remote URL
     // ANCHOR[id=get-project-details]
-    fn get_project_details(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn get_project_details(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -296,7 +302,7 @@ impl CmdHandler<'_> {
 
     /// Check if a project exists
     // ANCHOR[id=exists]
-    fn exists(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn exists(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -307,7 +313,7 @@ impl CmdHandler<'_> {
 
     /// Check if a Git remote URL exists
     // ANCHOR[id=remote-exists]
-    fn remote_exists(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn remote_exists(&mut self, data: CmdData) -> Result<()> {
         let CmdData::URL(url) = data else {
             return self.send_json(json!({}));
         };
@@ -320,7 +326,7 @@ impl CmdHandler<'_> {
 
     /// Unzip the project's configured SB3 into the Git repo directory
     // ANCHOR[id=unzip]
-    fn unzip(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn unzip(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -329,8 +335,7 @@ impl CmdHandler<'_> {
         let pth = &projects.project_path(&project_name);
         let projects = &projects.projects;
 
-        fs::copy(pth.join("project.json"), pth.join("project.old.json"))
-            .expect("failed to move project.json");
+        fs::copy(pth.join("project.json"), pth.join("project.old.json"))?;
 
         // TODO: remove sleep?
         sleep(Duration::from_millis(1000));
@@ -341,8 +346,7 @@ impl CmdHandler<'_> {
                     .as_str()
                     .unwrap()
                     .to_string(),
-            ))
-            .expect("failed to open file"),
+            ))?,
             target_dir.to_path_buf(),
         )?;
 
@@ -351,7 +355,7 @@ impl CmdHandler<'_> {
 
     /// Get a sprite's scripts, either old or new
     // ANCHOR[id=get-sprite-scripts]
-    fn get_sprite_scripts(&mut self, data: CmdData, old: bool) -> Result<(), Box<dyn Error>> {
+    fn get_sprite_scripts(&mut self, data: CmdData, old: bool) -> Result<()> {
         let CmdData::Project {
             project_name,
             sprite_name,
@@ -367,8 +371,7 @@ impl CmdHandler<'_> {
                 pth.join(format!("project{}.json", if old { ".old" } else { "" })),
             )?
             .as_str(),
-        )
-        .expect("failed to parse project.old.json");
+        )?;
         let targets = old_project["targets"].as_array().unwrap().iter();
 
         let blocks = if sprite_name.unwrap() == "Stage (stage)" {
@@ -395,7 +398,7 @@ impl CmdHandler<'_> {
 
     /// Push a project to its configured remote URL
     // ANCHOR[id=push]
-    fn push(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn push(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -439,7 +442,7 @@ impl CmdHandler<'_> {
 
     /// Pull new changes from a project's remote URL
     // ANCHOR[id=pull]
-    fn pull(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn pull(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -477,6 +480,7 @@ impl CmdHandler<'_> {
                 &mut it.filter_map(|e| e.ok()),
                 &pth,
                 File::create(Path::new(sb3))?,
+                false,
             );
 
             self.send_json(json!({"status": "success"}))
@@ -493,7 +497,7 @@ impl CmdHandler<'_> {
 
     /// Commit new changes to a project
     // ANCHOR[id=commit]
-    fn commit(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn commit(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -516,7 +520,7 @@ impl CmdHandler<'_> {
         let new_diff = Diff::new(&new_diff);
 
         for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(pth.join(change.costume_path)).expect("failed to remove asset");
+            fs::remove_file(pth.join(change.costume_path))?;
         }
 
         if !git::run(vec!["add", "."], Some(&pth)).status()?.success() {
@@ -557,7 +561,7 @@ impl CmdHandler<'_> {
 
     /// Get a project's commits
     // ANCHOR[id=get-commits]
-    fn get_commits(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn get_commits(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -580,11 +584,11 @@ impl CmdHandler<'_> {
             binding
         };
 
-        self.send_json(serde_json::from_str(&log_output).expect("failed to parse log output"))
+        self.send_json(serde_json::from_str(&log_output)?)
     }
 
     // ANCHOR[id=get-changed-sprites]
-    fn get_changed_sprites(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn get_changed_sprites(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -627,7 +631,7 @@ impl CmdHandler<'_> {
     }
 
     /// Set up GitHub authentication for use with any configured project
-    fn gh_auth(&mut self) -> Result<(), Box<dyn Error>> {
+    fn gh_auth(&mut self) -> Result<()> {
         let mut gh_token = gh_token().lock()?;
         let current_token = gh_token.get().to_string();
 
@@ -655,23 +659,76 @@ impl CmdHandler<'_> {
     }
 
     // ANCHOR[id=clone-repo]
-    fn clone_repo(&mut self, data: CmdData) -> Result<(), Box<dyn Error>> {
+    fn clone_repo(&mut self, data: CmdData) -> Result<()> {
         let CmdData::URL(url) = data else {
             self.send_json(json!({}))?;
             return Ok(());
         };
 
-        let output = git::run(vec!["clone", &url], None).output()?;
-        dbg!(output);
+        let project_dir = &PathBuf::from("./projects");
+        let clone = git::run(vec!["clone", &url, "--depth=1"], Some(project_dir)).output()?;
+
+        if !clone.status.success() {
+            self.send_json(if clone.status.code().ok_or("no code")? == 32768 {
+                json!({"success": false, "reason": "directory exists"})
+            } else {
+                json!({"success": false, "reason": "fail"})
+            })?;
+            return Ok(());
+        }
+
+        let mut name = CLONE_NAME
+            .find(std::str::from_utf8(&clone.stderr)?)
+            .ok_or("failed to match")?
+            .as_str();
+        name = &name[1..&name.len() - 1];
+
+        let t_project_dir = &project_dir.join(name);
+        let json_path = &canonicalize(t_project_dir.join("project.json"))?;
+
+        if !json_path.exists() {
+            self.send_json(json!({"success": false, "reason": "no project.json"}))?;
+            fs::remove_dir_all(project_dir)?;
+            return Ok(());
+        }
+
+        let json: ProjectData = serde_json::from_reader(File::open(json_path)?)?;
+
+        let mut assets: Vec<_> = get_assets(json);
+        assets.push("project.json".into());
+
+        dbg!(&assets);
+
+        let mut assets_to_zip: Vec<_> = vec![];
+
+        // this broke me
+        for p in WalkDir::new(t_project_dir).into_iter() {
+            // if the repo contains all assets, push every dir entry whos path exists among assets
+            let p = p?;
+            let path = p.path();
+            if !path.exists() {
+                self.send_json(json!({"success": false, "reason": "missing asset"}))?;
+                fs::remove_dir_all(project_dir)?;
+            }
+            if assets.iter().any(|x| path.ends_with(x)) {
+                assets_to_zip.push(p);
+            }
+        }
+
+        dbg!(&assets_to_zip);
+
+        zip(
+            &mut assets_to_zip.into_iter(),
+            &PathBuf::from("."),
+            File::create(format!("{name}.sb3"))?,
+            true,
+        );
+
         self.send_json(json!({"ok": "yes"}))
     }
 }
 
-pub fn handle_command(
-    msg: Cmd,
-    socket: &mut WebSocket<TcpStream>,
-    debug: bool,
-) -> Result<(), Box<dyn Error>> {
+pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) -> Result<()> {
     let mut handler = CmdHandler::new(debug, socket);
 
     match msg.command {
@@ -682,6 +739,7 @@ pub fn handle_command(
         "create-project" => handler.create_project(msg.data),
         "gh-auth" => handler.gh_auth(),
         "clone-repo" => handler.clone_repo(msg.data),
+
         // project-specific
         "set-project-details" => handler.set_project_details(msg.data, false),
         "get-project-details" => handler.get_project_details(msg.data),
@@ -693,6 +751,7 @@ pub fn handle_command(
         "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
+
         _ => unreachable!(),
     }
 }

@@ -35,7 +35,12 @@ pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
 }
 
 /// Zip a directory's contents into a ZIP file
-pub fn zip(it: &mut dyn Iterator<Item = DirEntry>, prefix: &Path, writer: File) {
+pub fn zip(
+    it: &mut dyn Iterator<Item = DirEntry>,
+    prefix: &Path,
+    writer: File,
+    flat_writing: bool,
+) {
     let mut zip = zip::ZipWriter::new(writer);
     let options = FileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
@@ -44,7 +49,11 @@ pub fn zip(it: &mut dyn Iterator<Item = DirEntry>, prefix: &Path, writer: File) 
     let mut buffer = Vec::new();
     for entry in it {
         let path = entry.path();
-        let name = path.strip_prefix(prefix).unwrap();
+        let mut name = path.strip_prefix(prefix).unwrap();
+        let name_path = PathBuf::from(name.file_name().unwrap());
+        if flat_writing {
+            name = &name_path;
+        }
         let path_as_string = name.to_str().map(str::to_owned).unwrap();
 
         if path.is_file() {

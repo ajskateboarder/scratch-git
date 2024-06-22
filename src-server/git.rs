@@ -19,11 +19,7 @@ fn git_object_id(content: String) -> Result<String, Box<dyn Error>> {
     .stdout(Stdio::piped())
     .spawn()?;
 
-    let stdin = child.stdin.take();
-    if stdin.is_none() {
-        return Err("could not receive stdin".into());
-    }
-    let mut stdin = stdin.unwrap();
+    let mut stdin = child.stdin.take().ok_or("could not receive stdin")?;
 
     std::thread::spawn(move || stdin.write_all(&content.as_bytes()).unwrap());
     let output = child.wait_with_output()?;
