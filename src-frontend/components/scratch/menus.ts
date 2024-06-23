@@ -33,10 +33,10 @@ export const fileMenu = new (class {
 
   /** Open a project SB3 file from a file dialog */
   openProject() {
-    this.toggleMenu(true);
-    (this.menu.querySelectorAll("li")[2] as any)[this.events].onClick();
-    this.toggleMenu(false);
-    this.toggleMenu(true);
+    let root = document.querySelector("#app")!.firstElementChild!;
+    (root as any)[
+      getReactHandlers(root)
+    ].children[11].props.onStartSelectingFileUpload();
   }
 
   /** Returns if a project is currently open */
@@ -201,7 +201,7 @@ export const gitMenu = new (class {
    *
    * @param enabled - whether to enable them
    */
-  set allowPushPull(enabled: boolean) {
+  setPushPullStatus(enabled: boolean) {
     if (!enabled) {
       this.item(1).setAttribute("disabled", "");
       this.item(1).setAttribute("title", i18next.t("menu.repo-needed"));

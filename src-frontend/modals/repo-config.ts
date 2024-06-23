@@ -22,10 +22,6 @@ export class RepoConfigModal extends Modal {
   private editing!: State<boolean>;
   private project!: Project;
 
-  constructor() {
-    super();
-  }
-
   connectedCallback() {
     if (this.querySelector("main")) return;
 
@@ -113,16 +109,19 @@ export class RepoConfigModal extends Modal {
           editButton
         ),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
           $name
         ),
         br(),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
           $repository
         ),
         br(),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.email")),
           $email
         ),

@@ -531,7 +531,6 @@ impl CmdHandler<'_> {
 
         if !commit.status.success() {
             if self.debug {
-                dbg!(&commit);
                 println!(
                     "commit: failed to make commit: error code {:?}",
                     commit.status.code().unwrap_or(-2000000000)
@@ -666,13 +665,14 @@ impl CmdHandler<'_> {
         };
 
         let project_dir = &PathBuf::from("./projects");
-        let clone = git::run(vec!["clone", &url, "--depth=1"], Some(project_dir)).output()?;
+        // was considering adding --depth=1 but that might not work here
+        let clone = git::run(vec!["clone", &url], Some(project_dir)).output()?;
 
         if !clone.status.success() {
-            self.send_json(if clone.status.code().ok_or("no code")? == 32768 {
-                json!({"success": false, "reason": "directory exists"})
+            self.send_json(if clone.status.code().ok_or("no code")? == 128 {
+                json!({"success": false, "reason": -4})
             } else {
-                json!({"success": false, "reason": "fail"})
+                json!({"success": false, "reason": -1})
             })?;
             return Ok(());
         }
@@ -682,13 +682,13 @@ impl CmdHandler<'_> {
             .ok_or("failed to match")?
             .as_str();
         name = &name[1..&name.len() - 1];
-
         let t_project_dir = &project_dir.join(name);
+
         let json_path = &canonicalize(t_project_dir.join("project.json"))?;
 
         if !json_path.exists() {
-            self.send_json(json!({"success": false, "reason": "no project.json"}))?;
-            fs::remove_dir_all(project_dir)?;
+            self.send_json(json!({"success": false, "reason": -2}))?;
+            let _ = fs::remove_dir_all(project_dir);
             return Ok(());
         }
 
@@ -696,8 +696,6 @@ impl CmdHandler<'_> {
 
         let mut assets: Vec<_> = get_assets(json);
         assets.push("project.json".into());
-
-        dbg!(&assets);
 
         let mut assets_to_zip: Vec<_> = vec![];
 
@@ -707,15 +705,13 @@ impl CmdHandler<'_> {
             let p = p?;
             let path = p.path();
             if !path.exists() {
-                self.send_json(json!({"success": false, "reason": "missing asset"}))?;
-                fs::remove_dir_all(project_dir)?;
+                self.send_json(json!({"success": false, "reason": -3}))?;
+                let _ = fs::remove_dir_all(project_dir)?;
             }
             if assets.iter().any(|x| path.ends_with(x)) {
                 assets_to_zip.push(p);
             }
         }
-
-        dbg!(&assets_to_zip);
 
         zip(
             &mut assets_to_zip.into_iter(),
@@ -724,7 +720,17 @@ impl CmdHandler<'_> {
             true,
         );
 
-        self.send_json(json!({"ok": "yes"}))
+        let mut config = project_config().lock()?;
+        let project_path = &canonicalize(format!("{name}.sb3"))?;
+
+        config.projects[name] = json!({
+            "base": &canonicalize(t_project_dir)?,
+            "project_file": project_path
+        });
+
+        config.save();
+
+        self.send_json(json!({"success": true, "path": project_path}))
     }
 }
 

@@ -27,10 +27,6 @@ export class CommitModal extends Modal {
     currentPage: State<number>;
   };
 
-  constructor() {
-    super();
-  }
-
   connectedCallback() {
     if (this.querySelector("main")) return;
 

@@ -36,7 +36,9 @@ pub fn get_assets(project: ProjectData) -> Vec<String> {
                     .unwrap_or(format!("{}.{}", s.asset_id, s.data_format))
                     .to_string()
             });
+
             sounds.chain(costumes).collect::<Vec<String>>()
         })
-        .flatten().collect()
+        .flatten()
+        .collect()
 }

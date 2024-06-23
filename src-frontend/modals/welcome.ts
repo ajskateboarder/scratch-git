@@ -19,6 +19,14 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
     div({ class: "welcome-screen-content" }, h1(step.title), children)
   );
 
+// TODO: localize!?
+const CLONE_ERROR = {
+  [-1]: "An error occurred while trying to clone this repository",
+  [-2]: "This repository doesn't have a project.json",
+  [-3]: "This repository uses assets that don't exist",
+  [-4]: "You have already cloned this repository",
+};
+
 /** Project initialization */
 export class WelcomeModal extends Modal {
   $steps: Element[] = [];
@@ -28,10 +36,6 @@ export class WelcomeModal extends Modal {
 
   projectName?: string;
   projectPath?: string;
-
-  constructor() {
-    super();
-  }
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
@@ -89,9 +93,19 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => {
               fileMenu.openProject();
-              VM.on("PROJECT_LOADED", () => {
+              VM.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
-                goToStep2.disabled = false;
+                if ((await api.getCurrentProject())?.exists()) {
+                  goToStep2.disabled = true;
+                  goToStep2.style.cursor = "help";
+                  // TODO: localize
+                  goToStep2.title =
+                    "This project has been configured already so there's no need to continue";
+                } else {
+                  goToStep2.disabled = false;
+                  goToStep2.style.cursor = "unset";
+                  goToStep2.title = "";
+                }
                 goToStep2.classList.remove(settings.disabledButton);
                 openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
                   "welcome.project-opened"
@@ -133,11 +147,22 @@ export class WelcomeModal extends Modal {
               $submit.appendChild(
                 span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning")
               );
-              await cloneRepo($url.value);
-              $submit.innerText = i18next.t("welcome.open-project");
+
+              let response = await cloneRepo($url.value);
+              $submit.innerText = "Clone";
+              if (response.success === false) {
+                $url.setCustomValidity(
+                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR]
+                );
+                $url.reportValidity();
+                return;
+              }
+
+              alert(`Project saved at ${response.path}`); // should i use something other than alert? ehh..
+              loadState.val = true;
             },
           },
-          i18next.t("welcome.open-project")
+          "Clone"
         );
 
         return form(
@@ -152,22 +177,30 @@ export class WelcomeModal extends Modal {
       { title: i18next.t("welcome.welcome"), number: 1 },
       div(
         { style: "font-weight: normal" },
-        p(i18next.t("welcome.get-started"), br(), br()),
+        // TODO: localize
+        p(
+          () =>
+            loadState.val
+              ? i18next.t("welcome.get-started")
+              : "Please load a project for development from a Git repository link to get started",
+          br(),
+          br()
+        ),
         div({ class: "a-gap" }, () => openProject.val),
         br(),
         a(
           {
-            style: "color: var(--menu-bar-background-default)",
+            style:
+              "color: var(--menu-bar-background-default); font-weight: bold",
             onclick: () => (loadState.val = !loadState.val),
           },
           // TODO: localize
           () =>
             loadState.val
-              ? "or load an existing project from online"
+              ? "or clone a repository from online"
               : "or load an existing project from your computer"
         ),
         br(),
-
         br()
       ),
       BottomBar(
@@ -253,7 +286,7 @@ export class WelcomeModal extends Modal {
             ++this.currentStep.val;
           } catch {
             $creationError.innerHTML = "";
-            $creationError.append(
+            $creationError.appendChild(
               span(i({ class: "fa fa-solid fa-circle-exclamation" }), " ")
             );
             return;
