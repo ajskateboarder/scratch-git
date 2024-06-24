@@ -1,4 +1,4 @@
-import { Modal } from "@/modals/base";
+import { Modal } from "../base";
 import api, { Project, remoteExists } from "@/api";
 import { settings, misc, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";

@@ -16,7 +16,7 @@ export const fileMenu = new (class {
   }
 
   private updateMenu() {
-    this.menu = menu.menuItem.selectAll("div")[1] as HTMLDivElement;
+    this.menu = menu.menuItem.selectAll<HTMLDivElement>("div")[1];
     this.events = getReactHandlers(this.menu);
   }
 
