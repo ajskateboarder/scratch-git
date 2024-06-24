@@ -1,24 +1,24 @@
 pub mod structs;
 mod vec_utils;
 
-use crate::git;
 pub use structs::*;
-use vec_utils::{group_items, intersection};
 
-use itertools::EitherOrBoth::{Both, Left, Right};
-use itertools::Itertools;
-use regex_static::{once_cell::sync::Lazy, Regex};
-use serde_json::{Map, Value};
-use std::error::Error;
 use std::path::PathBuf;
 use std::{
     collections::{HashMap, HashSet},
     vec,
 };
 
-static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
+use anyhow::Result;
+use itertools::EitherOrBoth::{Both, Left, Right};
+use itertools::Itertools;
+use regex_static::{once_cell::sync::Lazy, Regex};
+use serde_json::{Map, Value};
 
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
+use crate::git;
+use vec_utils::{group_items, intersection};
+
+static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
 
 impl Diff {
     /// Construct a new diff from a project.json

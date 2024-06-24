@@ -1,5 +1,5 @@
-import { Modal } from "./base";
-import thumbnail from "./thumbnail.svg";
+import { Modal } from "../base";
+import thumbnail from "../thumbnail.svg";
 import api, { cloneRepo, remoteExists } from "@/api";
 import { settings, fileMenu } from "@/components";
 import { InputBox, InputField } from "@/components";

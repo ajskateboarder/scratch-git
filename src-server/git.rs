@@ -1,11 +1,12 @@
-use serde::Serialize;
-use std::error::Error;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use anyhow::{anyhow, Result};
+use serde::Serialize;
+
 /// Return a generated blob ID from a string
-fn git_object_id(content: String) -> Result<String, Box<dyn Error>> {
+fn git_object_id(content: String) -> Result<String> {
     let mut child = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
         cmd.args(["/C", "git", "hash-object", "-w", "--stdin"]);
@@ -19,7 +20,10 @@ fn git_object_id(content: String) -> Result<String, Box<dyn Error>> {
     .stdout(Stdio::piped())
     .spawn()?;
 
-    let mut stdin = child.stdin.take().ok_or("could not receive stdin")?;
+    let mut stdin = child
+        .stdin
+        .take()
+        .ok_or(anyhow!("could not receive stdin"))?;
 
     std::thread::spawn(move || stdin.write_all(&content.as_bytes()).unwrap());
     let output = child.wait_with_output()?;
@@ -34,11 +38,7 @@ pub struct GitDiff {
 }
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
-pub fn diff(
-    mut old_content: String,
-    mut new_content: String,
-    context: i32,
-) -> Result<GitDiff, Box<dyn Error>> {
+pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> Result<GitDiff> {
     if old_content == new_content {
         return Ok(GitDiff {
             removed: 0,
@@ -126,7 +126,7 @@ pub fn diff(
 }
 
 /// Fetch the revision of a certain file
-pub fn show_revision(cwd: &PathBuf, commit: &str) -> Result<String, Box<dyn Error>> {
+pub fn show_revision(cwd: &PathBuf, commit: &str) -> Result<String> {
     let proc = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
         cmd.args(["/C", "git", "show", commit]);
