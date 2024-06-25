@@ -16,12 +16,10 @@ const s = (className: string) => {
   }
   className = _className.split(":")[0];
   return Object.assign(className, {
-    select(elem: string = "") {
-      return document.querySelector(`${elem}.${className}`)!;
-    },
-    selectAll(elem: string = "") {
-      return document.querySelectorAll(`${elem}.${className}`)!;
-    },
+    select: <T extends Element>(elem: string = ""): T =>
+      document.querySelector<T>(`${elem}.${className}`)! as T,
+    selectAll: <T extends Element>(elem: string = ""): T[] =>
+      [...document.querySelectorAll<T>(`${elem}.${className}`)!] as T[],
   });
 };
 

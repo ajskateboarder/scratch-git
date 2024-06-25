@@ -1,7 +1,7 @@
 import type { Project } from "./api";
 
 /** Test if a URL is syntactically valid or not. */
-export const isValidURL = (url: string) => {
+export const validURL = (url: string) => {
   try {
     return Boolean(new URL(url));
   } catch {
@@ -10,7 +10,7 @@ export const isValidURL = (url: string) => {
 };
 
 /** Test if an email is syntactically valid or not. */
-export const isValidEmail = (email: string) => {
+export const validEmail = (email: string) => {
   return email
     .toLowerCase()
     .match(

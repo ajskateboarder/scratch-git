@@ -1,0 +1,50 @@
+#commits {
+    align-items: center;
+    margin-left: 10px;
+    user-select: none;
+    font-weight: normal;
+}
+
+.commit {
+    border: 1px solid grey;
+    padding: 10px 20px;
+
+    &:first-child {
+        border-radius: 5px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    &:not(:first-child) {
+        border-top: none;
+    }
+
+    &:last-child {
+        border-radius: 5px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+
+    &:only-child {
+        border-radius: 5px;
+    }
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.round-left-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    user-select: none;
+}
+
+.round-right-button {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    user-select: none;
+}

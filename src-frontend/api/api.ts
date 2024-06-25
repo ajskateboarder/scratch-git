@@ -12,7 +12,7 @@ export interface Commit {
 export interface Sprite {
   name: string;
   isStage: boolean;
-  format: () => string;
+  format(): string;
 }
 
 export interface GitDetails {
@@ -39,7 +39,18 @@ class Socket {
     return new Promise((resolve, reject) => {
       this.ws.onmessage = (message) => {
         try {
-          resolve(JSON.parse(message.data));
+          const json = JSON.parse(message.data);
+          if (json["unhandled-error"]) {
+            // TODO: localize
+            alert(
+              `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`
+            );
+            console.error(
+              `The following error "${json["unhandled-error"]}" occurred. Please report this issue using GitHub: https://github.com/ajskateboarder/scratch-git/issues or Scratch: https://scratch.mit.edu/users/ajskateboarder#comments`
+            );
+            return;
+          }
+          resolve(json);
         } catch (e: any) {
           console.error(e.stack);
           throw new Error(message.data);
@@ -282,7 +293,7 @@ export class ProjectManager extends Socket {
  * @param newScript - the script after a save
  */
 // LINK src-server/handlers.rs#diff
-export const diff = (
+export const diff = async (
   oldScript: string,
   newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> => {
@@ -295,12 +306,23 @@ export const diff = (
   });
 };
 
+// LINK src-server/handlers.rs#clone
+export const cloneRepo = async (url: string) => {
+  const ws = new Socket(new WebSocket(SOCKET_URL));
+  return ws.request({
+    command: "clone-repo",
+    data: {
+      URL: url,
+    },
+  });
+};
+
 /** Check if a user-provided Git repository remote exists
  *
  * @param url - the URL of the repository to be checked
  */
 // LINK src-server/handlers.rs#remote-exists
-export const remoteExists = (url: string): Promise<boolean> => {
+export const remoteExists = async (url: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(SOCKET_URL);
 

@@ -14,8 +14,9 @@ serde_json = "1.0.113"
 serde = { version = "1.0.196", features = ["derive"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 tungstenite = "0.21.0"
-regex = "1.10.4"
 itertools = "0.12.1"
 dunce = "1.0.4"
 walkdir = "2"
 minreq = { version = "2.11.2", features = ["json-using-serde", "https"] }
+regex_static = "0.1.1"
+anyhow = "1.0.86"

@@ -12,7 +12,7 @@ export default async (args) => {
     output: { file: "userscript.js", format: "iife" },
     logLevel: "silent",
     plugins: [
-      css(),
+      css({ minify: true }),
       nodeResolve(),
       typescript({
         include: [

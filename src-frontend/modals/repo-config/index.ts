@@ -1,9 +1,9 @@
-import { Modal } from "./base";
+import { Modal } from "../base";
 import api, { Project, remoteExists } from "@/api";
 import { settings, misc, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
 import i18next from "@/i18n";
-import { isValidURL } from "@/utils";
+import { validURL } from "@/utils";
 import van, { State } from "vanjs-core";
 
 const { main, button, h1, div, span, label, br } = van.tags;
@@ -21,10 +21,6 @@ export class RepoConfigModal extends Modal {
 
   private editing!: State<boolean>;
   private project!: Project;
-
-  constructor() {
-    super();
-  }
 
   connectedCallback() {
     if (this.querySelector("main")) return;
@@ -45,7 +41,7 @@ export class RepoConfigModal extends Modal {
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (this.editing.val === true) {
-          if (!isValidURL(url) && !(await remoteExists(url))) {
+          if (!validURL(url) && !(await remoteExists(url))) {
             $repository.value = "";
           }
         }
@@ -113,16 +109,19 @@ export class RepoConfigModal extends Modal {
           editButton
         ),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
           $name
         ),
         br(),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
           $repository
         ),
         br(),
         InputField(
+          {},
           label({ class: "input-label" }, i18next.t("repoconfig.email")),
           $email
         ),

@@ -70,7 +70,7 @@ const initialize = async () => {
     if (await project!.exists()) {
       // ensure a click event listener for the save button
       new MutationObserver(() => {
-        const saveButton = misc.saveArea.select() as HTMLDivElement;
+        const saveButton = misc.saveArea.select<HTMLDivElement>();
         saveButton.onclick = () => {
           const observer = new MutationObserver(async () => {
             const saveStatus = saveButton.firstElementChild;

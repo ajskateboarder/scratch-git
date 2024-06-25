@@ -9,10 +9,16 @@ import {
 } from "./components";
 import i18next from "./i18n";
 import { CommitModal, RepoConfigModal } from "./modals";
-import styles from "./styles.css";
-import tippy from "./tippy.css";
+import "./styles.css";
 import van from "vanjs-core";
 import { repoIsGitHub } from "./utils";
+
+// why can't rollup-plugin-import-css follow css imports?? why???
+import styles from "./styles.css";
+import diffStyles from "./modals/diff/styles.css";
+import repoConfigStyles from "./modals/repo-config/styles.css";
+import welcomeStyles from "./modals/welcome/styles.css";
+import commitStyles from "./modals/commit/styles.css";
 
 const { link, style, button, i } = van.tags;
 
@@ -36,7 +42,11 @@ export const Styles = () => {
         background: hsla(163, 57%, 85%, 1) !important;
         border: 1px solid hsla(163, 85%, 30%, 1) !important;
         box-shadow: 0px 0px 0px 2px hsla(163, 57%, 85%, 1) !important;
-      }
+      }@import url(./modals/commit/styles.css);
+      @import url(./modals/diff/styles.css);
+      @import url(./modals/welcome/styles.css);
+      @import url(./modals/repo-config/styles.css);
+      
     `;
 
   return [
@@ -51,7 +61,10 @@ export const Styles = () => {
       ${disabledVersions}
       ${alertSuccess}
       ${styles}
-      ${tippy}
+      ${diffStyles}
+      ${repoConfigStyles}
+      ${welcomeStyles}
+      ${commitStyles}
       `
     ),
   ];
@@ -185,5 +198,5 @@ export const createGitMenu = async (
     },
     changeLocale
   );
-  gitMenu.allowPushPull = (await project!.getDetails()).repository !== "";
+  gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

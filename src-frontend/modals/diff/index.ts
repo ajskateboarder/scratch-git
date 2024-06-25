@@ -10,26 +10,26 @@ import van from "vanjs-core";
 
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
-enum DiffIcon {
-  added = "fa-solid fa-square-plus",
-  removed = "fa-solid fa-square-xmark",
-  modified = "fa-solid fa-square-minus",
-}
+const DiffIcon = {
+  added: "fa-solid fa-square-plus",
+  removed: "fa-solid fa-square-xmark",
+  modified: "fa-solid fa-square-minus",
+};
 
 /** Dark mode block fill colors that TurboWarp use */
-enum DarkBlocks {
-  "sb3-motion" = "#0F1E33",
-  "sb3-looks" = "#1E1433",
-  "sb3-sound" = "#291329",
-  "sb3-events" = "#332600",
-  "sb3-control" = "#332205",
-  "sb3-sensing" = "#12232A",
-  "sb3-operators" = "#112611",
-  "sb3-variables" = "#331C05",
-  "sb3-list" = "#331405",
-  "sb3-custom" = "#331419",
-  "sb3-extension" = "#03251C",
-}
+const DarkBlocks = {
+  "sb3-motion": "#0F1E33",
+  "sb3-looks": "#1E1433",
+  "sb3-sound": "#291329",
+  "sb3-events": "#332600",
+  "sb3-control": "#332205",
+  "sb3-sensing": "#12232A",
+  "sb3-operators": "#112611",
+  "sb3-variables": "#331C05",
+  "sb3-list": "#331405",
+  "sb3-custom": "#331419",
+  "sb3-extension": "#03251C",
+};
 
 interface Diff {
   oldContent: any;
@@ -55,10 +55,6 @@ export class DiffModal extends Modal {
   private currentScripts: any;
 
   private copyCallback!: () => string | SVGElement;
-
-  constructor() {
-    super();
-  }
 
   connectedCallback() {
     if (this.querySelector("main")) return;

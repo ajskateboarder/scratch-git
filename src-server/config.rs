@@ -5,8 +5,8 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
-const PROJECT_CONFIG_PATH: &'static str = "projects/config.json";
-const TOKEN_PATH: &'static str = "projects/.ghtoken";
+const PROJECT_CONFIG_PATH: &str = "projects/config.json";
+const TOKEN_PATH: &str = "projects/.ghtoken";
 
 /// Represents a loaded project path and the path to it
 #[derive(Debug)]

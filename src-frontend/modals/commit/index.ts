@@ -1,4 +1,4 @@
-import { Modal } from "./base";
+import { Modal } from "../base";
 import api, { type Commit } from "@/api";
 import { settings } from "@/components";
 import { CommitItem } from "@/components";
@@ -26,10 +26,6 @@ export class CommitModal extends Modal {
     searchQuery: State<string>;
     currentPage: State<number>;
   };
-
-  constructor() {
-    super();
-  }
 
   connectedCallback() {
     if (this.querySelector("main")) return;

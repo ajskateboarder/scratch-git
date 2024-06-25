@@ -1,13 +1,15 @@
-import { Modal } from "./base";
-import thumbnail from "./thumbnail.svg";
-import api from "@/api";
+import { Modal } from "../base";
+import thumbnail from "../thumbnail.svg";
+import api, { cloneRepo, remoteExists } from "@/api";
 import { settings, fileMenu } from "@/components";
 import { InputBox, InputField } from "@/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
+import { validEmail, validURL } from "@/utils";
 import van, { type State } from "vanjs-core";
 
-const { div, h1, button, p, br, span, input, pre, i, label } = van.tags;
+const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
+  van.tags;
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 
@@ -17,15 +19,12 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
     div({ class: "welcome-screen-content" }, h1(step.title), children)
   );
 
-/** Test if an email is valid or not.
- *
- * Obviously, this won't cover all edge cases, but this will stop blatantly wrong ones */
-const isValidEmail = (email: string) => {
-  return email
-    .toLowerCase()
-    .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    );
+// TODO: localize!?
+const CLONE_ERROR = {
+  [-1]: "An error occurred while trying to clone this repository",
+  [-2]: "This repository doesn't have a project.json",
+  [-3]: "This repository uses assets that don't exist",
+  [-4]: "You have already cloned this repository",
 };
 
 /** Project initialization */
@@ -37,10 +36,6 @@ export class WelcomeModal extends Modal {
 
   projectName?: string;
   projectPath?: string;
-
-  constructor() {
-    super();
-  }
 
   connectedCallback() {
     if (this.querySelector("div") || this.querySelector("style")) return;
@@ -78,6 +73,8 @@ export class WelcomeModal extends Modal {
 
   /** Open a project */
   private $step1() {
+    const loadState = van.state(true);
+
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
@@ -88,34 +85,121 @@ export class WelcomeModal extends Modal {
       i18next.t("welcome.next")
     );
 
-    const openProject = button(
-      {
-        style: "width: 50%",
-        class: settings.settingsButton,
-        onclick: () => {
-          fileMenu.openProjectFromPrompt();
-          VM.on("PROJECT_LOADED", () => {
-            this.loadedProject = true;
-            goToStep2.disabled = false;
-            goToStep2.classList.remove(settings.disabledButton);
-            openProject.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-              "welcome.project-opened"
-            )}`;
-            setTimeout(() => {
-              openProject.innerHTML = i18next.t("welcome.open-project");
-            }, 2000);
-          });
-        },
-      },
-      i18next.t("welcome.open-project")
-    );
+    const openProject = van.derive(() => {
+      if (loadState.val) {
+        return button(
+          {
+            style: "width: 50%",
+            class: settings.settingsButton,
+            onclick: () => {
+              fileMenu.openProject();
+              VM.on("PROJECT_LOADED", async () => {
+                this.loadedProject = true;
+                if ((await api.getCurrentProject())?.exists()) {
+                  goToStep2.disabled = true;
+                  goToStep2.style.cursor = "help";
+                  // TODO: localize
+                  goToStep2.title =
+                    "This project has been configured already so there's no need to continue";
+                } else {
+                  goToStep2.disabled = false;
+                  goToStep2.style.cursor = "unset";
+                  goToStep2.title = "";
+                }
+                goToStep2.classList.remove(settings.disabledButton);
+                openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
+                  "welcome.project-opened"
+                )}`;
+                setTimeout(() => {
+                  openProject.val.innerHTML = i18next.t("welcome.open-project");
+                }, 2000);
+              });
+            },
+          },
+          i18next.t("welcome.open-project")
+        );
+      } else {
+        const $url = InputBox({
+          placeholder: "https://link.to.repo/username/repo",
+          onblur: () => {
+            $submit.disabled = !validURL($url.value);
+          },
+        });
+
+        // TODO: localize!!!
+        const $submit = button(
+          {
+            class: settings.settingsButton,
+            disabled: true,
+            onclick: async () => {
+              if ($submit.disabled) return;
+              $url.setCustomValidity("");
+
+              if (!(await remoteExists($url.value))) {
+                $url.setCustomValidity(
+                  "Repository doesn't exist or is private"
+                );
+                $url.reportValidity();
+                return;
+              }
+
+              $submit.innerHTML = "";
+              $submit.appendChild(
+                span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning")
+              );
+
+              let response = await cloneRepo($url.value);
+              $submit.innerText = "Clone";
+              if (response.success === false) {
+                $url.setCustomValidity(
+                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR]
+                );
+                $url.reportValidity();
+                return;
+              }
+
+              alert(`Project saved at ${response.path}`); // should i use something other than alert? ehh..
+              loadState.val = true;
+            },
+          },
+          "Clone"
+        );
+
+        return form(
+          { style: "display: flex; width: 100%; gap: 10px" },
+          InputField({ style: "flex-grow: 1" }, $url),
+          $submit
+        );
+      }
+    });
 
     return Screen(
       { title: i18next.t("welcome.welcome"), number: 1 },
       div(
         { style: "font-weight: normal" },
-        p(i18next.t("welcome.get-started"), br(), br()),
-        div({ class: "a-gap" }, openProject),
+        // TODO: localize
+        p(
+          () =>
+            loadState.val
+              ? i18next.t("welcome.get-started")
+              : "Please load a project for development from a Git repository link to get started",
+          br(),
+          br()
+        ),
+        div({ class: "a-gap" }, () => openProject.val),
+        br(),
+        a(
+          {
+            style:
+              "color: var(--menu-bar-background-default); font-weight: bold",
+            onclick: () => (loadState.val = !loadState.val),
+          },
+          // TODO: localize
+          () =>
+            loadState.val
+              ? "or clone a repository from online"
+              : "or load an existing project from your computer"
+        ),
         br(),
         br()
       ),
@@ -155,7 +239,8 @@ export class WelcomeModal extends Modal {
       onchange: () => {
         goToStep3.disabled = false;
         goToStep3.classList.remove(settings.disabledButton);
-        this.projectPath = (openProjectPath.files![0] as any).path; // .path is an electron-specific attr
+        // .path is an electron-specific attr
+        this.projectPath = (openProjectPath.files![0] as any).path;
       },
     });
 
@@ -192,19 +277,18 @@ export class WelcomeModal extends Modal {
         class: [settings.settingsButton, settings.disabledButton].join(" "),
         disabled: true,
         onclick: async () => {
-          const res = await api.createProject({
-            projectPath: this.projectPath!,
-            username,
-            email,
-          });
-          if (res.ok) {
+          try {
+            await api.createProject({
+              projectPath: this.projectPath!,
+              username,
+              email,
+            });
             ++this.currentStep.val;
-          } else {
+          } catch {
             $creationError.innerHTML = "";
-            $creationError.append(
+            $creationError.appendChild(
               span(i({ class: "fa fa-solid fa-circle-exclamation" }), " ")
             );
-            res.expect("failed to create project");
             return;
           }
         },
@@ -228,6 +312,7 @@ export class WelcomeModal extends Modal {
     };
 
     const $username = InputField(
+      {},
       label({ class: "input-label" }, i18next.t("repoconfig.name")),
       InputBox({
         onblur: (e: Event) => {
@@ -238,11 +323,12 @@ export class WelcomeModal extends Modal {
     );
 
     const $email = InputField(
+      {},
       label({ class: "input-label" }, i18next.t("repoconfig.email")),
       InputBox({
         onblur: (e: Event) => {
           email = (e.target! as HTMLInputElement).value;
-          if (!isValidEmail(email)) {
+          if (!validEmail(email)) {
             $email.querySelector("input")!.value = "";
             email = "";
           }
