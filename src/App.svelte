@@ -2,20 +2,9 @@
   import Project from "./Project.svelte";
 
   import logo from "/logo.svg";
-  import lightDiff from "/light-diff.mp4";
-  import darkDiff from "/dark-diff.mp4";
   import { onMount } from "svelte";
 
-  let lightDiffVideo: HTMLVideoElement;
-  let darkDiffVideo: HTMLVideoElement;
   let hash = "";
-
-  const playOnHover = (video: HTMLVideoElement) => {
-    Object.assign(video, {
-      onmouseover: () => video.play(),
-      onmouseleave: () => video.pause(),
-    });
-  };
 
   const routeChange = () => {
     let url = window.location.hash.substring(1);
@@ -31,8 +20,6 @@
   };
 
   onMount(() => {
-    playOnHover(lightDiffVideo);
-    playOnHover(darkDiffVideo);
     routeChange();
   });
 </script>
@@ -52,21 +39,6 @@
   </p>
 </header>
 <Project initialUrl={hash}></Project>
-<h2 id="features">Features</h2>
-<p>
-  <details>
-    <summary class="kinda-big"> <span>Diffing</span> </summary>
-    <div style="display: flex; flex-wrap: wrap">
-      <video loop muted height="230" bind:this={lightDiffVideo}>
-        <source src={lightDiff} />
-      </video>
-      <video loop muted height="230" bind:this={darkDiffVideo}>
-        <source src={darkDiff} />
-      </video>
-    </div>
-  </details>
-  <i>(todo: more clips)</i>
-</p>
 <h2 id="installing">Installing</h2>
 <p>
   First install <a href="https://desktop.turbowarp.org">TurboWarp Desktop</a>
@@ -80,13 +52,15 @@
   SmartScreen alert on Windows, you can safely ignore it.
 </p>
 <footer>
+  <hr />
   <br />
   scratch.git is not affiliated with Scratch, the Scratch Team, or the Scratch Foundation.
   <br />
-  Start/stop icons are used under the derived
+  Flag/stop icons are used under the derived
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en"
     >CC By-SA license.</a
   >
-  <br />
-  <a href="https://github.com/ajskateboarder/scratch-git">source code</a>
+  <br /><br />
+  <a href="https://github.com/ajskateboarder/scratch-git">source code</a> •
+  <a href="/privacy">privacy policy</a>
 </footer>
