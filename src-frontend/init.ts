@@ -1,5 +1,5 @@
 /** @file Initializes the Git menu handlers and styles */
-import { GhAuth, type Project } from "./api";
+import { GhAuth, PullMsg, Project, PushMsg } from "./api";
 import {
   GhAuthAlert,
   ScratchAlert,
@@ -70,6 +70,23 @@ export const Styles = () => {
   ];
 };
 
+const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
+  "unrelated histories": new ScratchAlert(
+    i18next.t("alerts.unrelated-changes")
+  ).setType("error"),
+  success: new ScratchAlert(i18next.t("alerts.pull-success"))
+    .setType("success")
+    .addButtons([
+      button(
+        { class: "alert-button", onclick: () => location.reload() },
+        i({ class: "fa-solid fa-rotate-right" })
+      ),
+    ]),
+  "nothing new": new ScratchAlert(i18next.t("alerts.no-changes"))
+    .setType("success")
+    .setTimeout(5000),
+};
+
 /** Handles pulling as a Git menu option
  *
  * @param project - the currently open project
@@ -92,29 +109,40 @@ const pullHandler =
     }
 
     const message = await project!.pull();
-    if (message === "unrelated histories") {
-      new ScratchAlert(i18next.t("alerts.unrelated-changes"))
-        .setType("error")
-        .display();
-    } else if (message === "success") {
-      new ScratchAlert(i18next.t("alerts.pull-success"))
-        .setType("success")
-        .addButtons([
-          button(
-            { class: "alert-button", onclick: () => location.reload() },
-            i({ class: "fa-solid fa-rotate-right" })
-          ),
-        ])
-        .display();
-    } else if (message === "nothing new") {
-      new ScratchAlert(i18next.t("no-changes"))
-        .setType("success")
-        .setTimeout(5000)
-        .display();
-    } else {
-      new ScratchAlert(message).setType("error").display();
-    }
+    (
+      PULL_MESSAGES[message] ?? new ScratchAlert(message).setType("error")
+    ).display();
   };
+
+const PUSH_MESSAGES: Record<
+  PushMsg,
+  (project: Project) => Promise<ScratchAlert>
+> = {
+  "pull needed": async (project) =>
+    new ScratchAlert(i18next.t("alerts.inconsistent-work"))
+      .setType("warn")
+      .addButtons([
+        button(
+          {
+            class: "alert-button",
+            onclick: await pullHandler(project!),
+          },
+          "Pull"
+        ),
+      ]),
+  success: async (project) =>
+    new ScratchAlert(
+      i18next.t("alerts.pull-success", {
+        url: (await project!.getDetails()).repository,
+      })
+    )
+      .setType("success")
+      .setTimeout(5000),
+  "up to date": async (_) =>
+    new ScratchAlert(i18next.t("alerts.up-to-date"))
+      .setType("success")
+      .setTimeout(5000),
+};
 
 /** Handles pushing as a Git menu option
  *
@@ -136,37 +164,8 @@ const pushHandler =
       });
     }
 
-    const message = await project!.push();
-    if (message === "pull needed") {
-      new ScratchAlert(i18next.t("alerts.inconsistent-work"))
-        .setType("warn")
-        .addButtons([
-          button(
-            {
-              class: "alert-button",
-              onclick: await pullHandler(project!),
-            },
-            "Pull"
-          ),
-        ])
-        .display();
-      return;
-    }
-    if (message === "up to date") {
-      new ScratchAlert(i18next.t("alerts.up-to-date"))
-        .setType("success")
-        .setTimeout(5000)
-        .display();
-    } else {
-      new ScratchAlert(
-        i18next.t("alerts.pull-success", {
-          url: (await project!.getDetails()).repository,
-        })
-      )
-        .setType("success")
-        .setTimeout(5000)
-        .display();
-    }
+    const message = await project.push();
+    (await PUSH_MESSAGES[message](project)).display();
   };
 
 /** Builds the final Git Menu

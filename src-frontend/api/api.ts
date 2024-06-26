@@ -27,8 +27,8 @@ interface ProjectCreationDetails {
   projectPath: string;
 }
 
-type PullMsg = "success" | "nothing new" | "unrelated histories";
-type PushMsg = "success" | "up to date" | "pull needed";
+export type PullMsg = "success" | "nothing new" | "unrelated histories";
+export type PushMsg = "success" | "up to date" | "pull needed";
 
 /** Represents a WebSocket interface */
 class Socket {

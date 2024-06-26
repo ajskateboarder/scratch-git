@@ -476,12 +476,19 @@ impl CmdHandler<'_> {
                 .stdout,
         )?;
 
-        let mut pull = git::run(vec!["pull", "origin", "master", "--rebase"], Some(pth));
+        let main_branch = &String::from_utf8(
+            git::run(vec!["branch", "-rl", "\"*/HEAD\""], Some(pth))
+                .output()
+                .context(here!())?
+                .stdout,
+        )?;
 
-        if config_remote.contains("github.com") {
+        let mut pull = git::run(vec!["pull", "origin", main_branch, "--rebase"], Some(pth));
+
+        if config_remote.contains("://github.com") {
             let mut token = gh_token().lock().unwrap();
             pull.env("GITHUB_TOKEN", token.get());
-        }
+        } 
 
         let pull = pull.output().context(here!())?;
 
