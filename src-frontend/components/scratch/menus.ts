@@ -7,7 +7,8 @@ import van, { ChildDom } from "vanjs-core";
 const { i, span } = van.tags;
 
 /** Manages functions with the file menu */
-export const fileMenu = new (class {
+// prettier-ignore
+export const fileMenu = new class {
   menu!: HTMLDivElement;
   private events!: string;
 
@@ -53,9 +54,10 @@ export const fileMenu = new (class {
     this.toggleMenu(true);
     return savedMenu.querySelectorAll("li")[3].innerText.endsWith(".sb3");
   }
-})();
+};
 
-export const gitMenu = new (class {
+// prettier-ignore
+export const gitMenu = new class {
   private savedItems: HTMLElement | undefined;
   private newMenu: HTMLElement | undefined;
 
@@ -214,6 +216,6 @@ export const gitMenu = new (class {
       this.item(2).removeAttribute("title");
     }
   }
-})();
+};
 
 (window as any).fileMenu = fileMenu;

@@ -181,7 +181,10 @@ export class Project extends Socket {
     ).status;
   }
 
-  /** Pull upstream changes from the configured remote */
+  /** Pull upstream changes from the configured remote
+   *
+   * Optionally takes usernames and passwords for hosts that use them
+   */
   // LINK src-server/handlers.rs#pull
   async pull(): Promise<PullMsg> {
     return (

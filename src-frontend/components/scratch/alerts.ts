@@ -5,7 +5,7 @@ import van, { ChildDom } from "vanjs-core";
 
 const { div, img, span, a } = van.tags;
 
-// taken directly from Scratch
+// https://github.com/scratchfoundation/scratch-gui/blob/develop/src/components/close-button/icon--close.svg
 const CLOSE_BUTTON_SVG =
   "data:image/svg+xml;base64,\
 PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d\
@@ -16,9 +16,11 @@ cz48dGl0bGU+aWNvbi0tYWRkPC90aXRsZT48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIzLjc\
 0IiB5MT0iNi40OCIgeDI9IjMuNzQiIHkyPSIxIi8+PGxpbmUgY2xhc3M9ImNscy0xIiB4MT\
 0iMSIgeTE9IjMuNzQiIHgyPSI2LjQ4IiB5Mj0iMy43NCIvPjwvc3ZnPg==";
 
+type AlertType = "success" | "warn" | "error";
+
 /** Displays a custom scratch-gui alert */
 export class ScratchAlert {
-  private type: "success" | "warn" | "error" = "success";
+  private type: AlertType = "success";
   private buttons: ChildDom[] = [];
   private timeout?: number;
 
@@ -29,7 +31,7 @@ export class ScratchAlert {
     return this;
   }
 
-  setType(type: "success" | "warn" | "error") {
+  setType(type: AlertType) {
     this.type = type;
     return this;
   }
@@ -39,6 +41,7 @@ export class ScratchAlert {
     return this;
   }
 
+  /** Displays your alert and returns a reference to the alert to manipulate later */
   display() {
     const container = alert.container.select();
 
@@ -99,5 +102,5 @@ export const GhAuthAlert = (e: DeviceCode) =>
       ` and enter the code: ${e.user_code}`
     )
   )
-    .setType("warn")
+    .setType("success")
     .addButtons([Copy(() => e.user_code)]);

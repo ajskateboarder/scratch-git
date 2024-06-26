@@ -42,11 +42,7 @@ export const Styles = () => {
         background: hsla(163, 57%, 85%, 1) !important;
         border: 1px solid hsla(163, 85%, 30%, 1) !important;
         box-shadow: 0px 0px 0px 2px hsla(163, 57%, 85%, 1) !important;
-      }@import url(./modals/commit/styles.css);
-      @import url(./modals/diff/styles.css);
-      @import url(./modals/welcome/styles.css);
-      @import url(./modals/repo-config/styles.css);
-      
+      }
     `;
 
   return [
@@ -93,22 +89,35 @@ const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
  * @param authed - true if you are authenticated
  */
 const pullHandler =
-  async (project: Project, authed: boolean = false) =>
+  async (project: Project, authed = false) =>
   async () => {
-    if (!authed && (await repoIsGitHub(project))) {
-      const auth = new GhAuth();
-      let authAlert: HTMLDivElement | undefined = undefined;
-      auth.addEventListener("devicecode", ({ detail }: any) => {
-        authAlert = GhAuthAlert(detail).display();
-      });
-      auth.addEventListener("login", async () => {
-        authAlert?.remove();
-        auth.close();
-        await pullHandler(project!, true);
-      });
+    let upassAlert;
+
+    if (!authed) {
+      if (await repoIsGitHub(project)) {
+        const auth = new GhAuth();
+        let authAlert: HTMLDivElement | undefined = undefined;
+        auth.addEventListener("devicecode", ({ detail }: any) => {
+          authAlert = GhAuthAlert(detail).display();
+        });
+        auth.addEventListener("login", async () => {
+          authAlert?.remove();
+          auth.close();
+          await pullHandler(project!, true);
+        });
+      }
+
+      // TODO: localize
+      // asking for username and password in the app would look suspicious
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to pull new changes."
+      )
+        .setType("success")
+        .display();
     }
 
     const message = await project!.pull();
+    upassAlert?.remove();
     (
       PULL_MESSAGES[message] ?? new ScratchAlert(message).setType("error")
     ).display();
@@ -132,7 +141,7 @@ const PUSH_MESSAGES: Record<
       ]),
   success: async (project) =>
     new ScratchAlert(
-      i18next.t("alerts.pull-success", {
+      i18next.t("alerts.push-success", {
         url: (await project!.getDetails()).repository,
       })
     )
@@ -151,20 +160,32 @@ const PUSH_MESSAGES: Record<
 const pushHandler =
   async (project: Project, authed: boolean = false) =>
   async () => {
-    if (!authed && (await repoIsGitHub(project))) {
-      const auth = new GhAuth();
-      let authAlert: HTMLDivElement | undefined = undefined;
-      auth.addEventListener("devicecode", ({ detail }: any) => {
-        authAlert = GhAuthAlert(detail).display();
-      });
-      auth.addEventListener("login", async () => {
-        authAlert?.remove();
-        auth.close();
-        await pushHandler(project!, true);
-      });
+    let upassAlert;
+
+    if (!authed) {
+      if (await repoIsGitHub(project)) {
+        const auth = new GhAuth();
+        let authAlert: HTMLDivElement | undefined = undefined;
+        auth.addEventListener("devicecode", ({ detail }: any) => {
+          authAlert = GhAuthAlert(detail).display();
+        });
+        auth.addEventListener("login", async () => {
+          authAlert?.remove();
+          auth.close();
+          await pushHandler(project!, true);
+        });
+      }
+
+      // TODO: localize
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to push your changes."
+      )
+        .setType("success")
+        .display();
     }
 
     const message = await project.push();
+    upassAlert?.remove();
     (await PUSH_MESSAGES[message](project)).display();
   };
 
