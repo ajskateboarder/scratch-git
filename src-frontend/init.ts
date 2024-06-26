@@ -69,18 +69,18 @@ export const Styles = () => {
 const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
   "unrelated histories": new ScratchAlert(
     i18next.t("alerts.unrelated-changes")
-  ).setType("error"),
+  ).type("error"),
   success: new ScratchAlert(i18next.t("alerts.pull-success"))
-    .setType("success")
-    .addButtons([
+    .type("success")
+    .buttons([
       button(
         { class: "alert-button", onclick: () => location.reload() },
         i({ class: "fa-solid fa-rotate-right" })
       ),
     ]),
   "nothing new": new ScratchAlert(i18next.t("alerts.no-changes"))
-    .setType("success")
-    .setTimeout(5000),
+    .type("success")
+    .timeout(5000),
 };
 
 /** Handles pulling as a Git menu option
@@ -112,14 +112,14 @@ const pullHandler =
       upassAlert = new ScratchAlert(
         "Please enter your username and password in the terminal to pull new changes."
       )
-        .setType("success")
+        .type("success")
         .display();
     }
 
     const message = await project!.pull();
     upassAlert?.remove();
     (
-      PULL_MESSAGES[message] ?? new ScratchAlert(message).setType("error")
+      PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
     ).display();
   };
 
@@ -129,8 +129,8 @@ const PUSH_MESSAGES: Record<
 > = {
   "pull needed": async (project) =>
     new ScratchAlert(i18next.t("alerts.inconsistent-work"))
-      .setType("warn")
-      .addButtons([
+      .type("warn")
+      .buttons([
         button(
           {
             class: "alert-button",
@@ -145,12 +145,12 @@ const PUSH_MESSAGES: Record<
         url: (await project!.getDetails()).repository,
       })
     )
-      .setType("success")
-      .setTimeout(5000),
+      .type("success")
+      .timeout(5000),
   "up to date": async (_) =>
     new ScratchAlert(i18next.t("alerts.up-to-date"))
-      .setType("success")
-      .setTimeout(5000),
+      .type("success")
+      .timeout(5000),
 };
 
 /** Handles pushing as a Git menu option
@@ -180,7 +180,7 @@ const pushHandler =
       upassAlert = new ScratchAlert(
         "Please enter your username and password in the terminal to push your changes."
       )
-        .setType("success")
+        .type("success")
         .display();
     }
 
@@ -206,7 +206,7 @@ export const createGitMenu = async (
           .display(),
       commitCreate: async () => {
         const message = await project!.commit();
-        new ScratchAlert(message).setType("success").setTimeout(5000).display();
+        new ScratchAlert(message).type("success").timeout(5000).display();
       },
       push: await pushHandler(project!),
       pull: await pullHandler(project!),

@@ -80,7 +80,12 @@ export class DiffModal extends Modal {
 
     const commits = p(
       { id: "commits" },
-      span({ style: "display: flex" }, useHighlights, plainText, closeButton),
+      span(
+        { style: "display: flex; user-select: none" },
+        useHighlights,
+        plainText,
+        closeButton
+      ),
       hr(),
       br(),
       pre(
@@ -355,6 +360,7 @@ export class DiffModal extends Modal {
           if ($highlights.checked) this.highlightAsBlocks();
         }
       }
+      $commits.style.userSelect = $plainText.checked ? "text" : "none";
       this.setDiffTheme(uiTheme);
     };
 

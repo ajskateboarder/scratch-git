@@ -20,24 +20,24 @@ type AlertType = "success" | "warn" | "error";
 
 /** Displays a custom scratch-gui alert */
 export class ScratchAlert {
-  private type: AlertType = "success";
-  private buttons: ChildDom[] = [];
-  private timeout?: number;
+  private _type: AlertType = "success";
+  private _buttons: ChildDom[] = [];
+  private _timeout?: number;
 
   constructor(private message: string | ChildDom) {}
 
-  setTimeout(ms: number) {
-    this.timeout = ms;
+  timeout(ms: number) {
+    this._timeout = ms;
     return this;
   }
 
-  setType(type: AlertType) {
-    this.type = type;
+  type(type: AlertType) {
+    this._type = type;
     return this;
   }
 
-  addButtons(buttons: ChildDom[]) {
-    this.buttons = buttons;
+  buttons(buttons: ChildDom[]) {
+    this._buttons = buttons;
     return this;
   }
 
@@ -49,7 +49,7 @@ export class ScratchAlert {
       success: "real-success-alert",
       warn: alert.warn,
       error: alert.success,
-    }[this.type];
+    }[this._type];
 
     const newAlert = div(
       {
@@ -62,7 +62,7 @@ export class ScratchAlert {
         div(
           {
             class: [alert.close, misc.box].join(" "),
-            ...(this.buttons.length !== 0 && {
+            ...(this._buttons.length !== 0 && {
               style: "display: flex; width: 100%; gap: 10px",
             }),
           },
@@ -82,12 +82,12 @@ export class ScratchAlert {
               style: "transform: rotate(45deg) scale(0.5)",
             })
           ),
-          ...this.buttons
+          ...this._buttons
         )
       )
     );
-    if (this.timeout !== undefined) {
-      setTimeout(() => newAlert.remove(), this.timeout);
+    if (this._timeout !== undefined) {
+      setTimeout(() => newAlert.remove(), this._timeout);
     }
     container.appendChild(newAlert);
     return newAlert;
@@ -102,5 +102,5 @@ export const GhAuthAlert = (e: DeviceCode) =>
       ` and enter the code: ${e.user_code}`
     )
   )
-    .setType("success")
-    .addButtons([Copy(() => e.user_code)]);
+    .type("success")
+    .buttons([Copy(() => e.user_code)]);

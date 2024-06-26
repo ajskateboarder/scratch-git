@@ -14,7 +14,7 @@ import {
 import { Modal } from "./modals/base";
 import { getReactHandlers } from "./utils";
 
-const initialize = async () => {
+const main = async () => {
   if (!document.querySelector("dialog[is='diff-modal']")) {
     try {
       customElements.define("commit-modal", CommitModal, { extends: "dialog" });
@@ -55,7 +55,7 @@ const initialize = async () => {
       await showIndicators(project!);
     } catch {
       new ScratchAlert(i18next.t("alerts.wrong-project"))
-        .setType("error")
+        .type("warn")
         .display();
     }
   };
@@ -96,11 +96,12 @@ const initialize = async () => {
         childList: true,
       });
 
-      document.addEventListener("keydown", async (e) => {
+      // this hopefully doesn't conflict with addons
+      document.onkeydown = async (e) => {
         if (e.ctrlKey && e.key === "s") {
           await displayDiffs(project!);
         }
-      });
+      };
 
       // add initialization handlers to each language option
       // to make sure all our stuff gets updated to the new locale
@@ -118,7 +119,7 @@ const initialize = async () => {
                   title: project?.projectName,
                 });
 
-                await initialize();
+                await main();
                 await createGitMenu(project!, getLocale());
                 i18next.changeLanguage(getLocale());
 
@@ -161,6 +162,6 @@ document.head.append(...Styles());
 // avoids scenarios where scratch.git initializes before the editor is finished
 VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
   if (finished === total && finished > 0 && total > 0) {
-    setTimeout(async () => await initialize(), 0.1);
+    setTimeout(async () => await main(), 0.1);
   }
 });

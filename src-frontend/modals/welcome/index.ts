@@ -208,7 +208,10 @@ export class WelcomeModal extends Modal {
           {
             style: "align-items: right: margin-left: -10px",
             class: settings.settingsButton,
-            onclick: () => this.close(),
+            onclick: () => {
+              this.close();
+              if (this.loadedProject) window.location.reload();
+            },
           },
           i18next.t("close")
         ),

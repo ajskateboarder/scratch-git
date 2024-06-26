@@ -55,8 +55,7 @@ export default {
       start: "Authentication needed for GitHub. Please go to",
       end: "and enter the code: {{code}}",
     },
-    "wrong-project":
-      "Couldn't commit since you have opened a different project with the same name as an existing project.",
+    "wrong-project": "Nothing was changed. Did you open the right project?",
   },
   close: "Close",
   okay: "Okay",
