@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::net::TcpStream;
 use std::{
@@ -15,7 +16,7 @@ use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
-use crate::diff::{Diff, ScriptChanges};
+use crate::diff::{CostumeChange, Diff, ScriptChanges};
 use crate::gh_auth;
 use crate::git;
 use crate::sb3::{get_assets, ProjectData};
@@ -638,7 +639,8 @@ impl CmdHandler<'_> {
         )?;
 
         let new_diff = Diff::new(&_new_project);
-        let sprites: Vec<_> = current_diff
+
+        let mut sprites: Vec<_> = current_diff
             .blocks(&new_diff)?
             .into_iter()
             .map(|ScriptChanges { sprite, .. }| {
@@ -651,7 +653,16 @@ impl CmdHandler<'_> {
             })
             .collect();
 
-        self.send_json(json!({ "sprites": sprites }))
+        sprites.extend(current_diff.costumes(&new_diff).into_iter().map(|CostumeChange { sprite, ..}| {
+            let parts = sprite.split(" ").collect::<Vec<_>>();
+            if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
+                (parts[0].to_string(), true)
+            } else {
+                (sprite, false)
+            }
+        }));
+        
+        self.send_json(json!({ "sprites": sprites.iter().collect::<HashSet<_>>() }))
     }
 
     /// Set up GitHub authentication for use with any configured project
