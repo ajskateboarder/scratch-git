@@ -297,6 +297,7 @@ export class ProjectManager extends Socket {
  */
 // LINK src-server/handlers.rs#diff
 export const diff = async (
+  projectName: string,
   oldScript: string,
   newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> => {
@@ -304,7 +305,7 @@ export const diff = async (
   return ws.request({
     command: "diff",
     data: {
-      GitDiff: { old_content: oldScript, new_content: newScript },
+      GitDiff: { project_name: projectName, old_content: oldScript, new_content: newScript },
     },
   });
 };

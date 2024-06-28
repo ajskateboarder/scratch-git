@@ -81,13 +81,14 @@ const _parseScripts = (
 
 /** Parses all scripts in a sprite and diffs them */
 export const parseScripts = async (
+  projectName: string,
   previousScripts: Record<string, any>,
   currentScripts: Record<string, any>
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(
-      scripts.map((script) => diff(script.oldContent, script.newContent))
+      scripts.map((script) => diff(projectName, script.oldContent, script.newContent))
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts[i] }))

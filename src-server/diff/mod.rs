@@ -265,7 +265,7 @@ impl Diff {
     }
 
     /// Return all script changes given a newer project
-    pub fn blocks<'a>(&'a self, new: &'a Diff) -> Result<Vec<ScriptChanges>> {
+    pub fn blocks<'a>(&'a self, cwd: &PathBuf, new: &'a Diff) -> Result<Vec<ScriptChanges>> {
         fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
             blocks
                 .iter()
@@ -315,6 +315,7 @@ impl Diff {
                 }
 
                 let diff = git::diff(
+		    cwd,
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
                     2000,
@@ -356,10 +357,10 @@ impl Diff {
     }
 
     /// Create commits for changes from the current project to a newer one
-    pub fn commits(&self, new: &Diff) -> Result<Vec<String>> {
+    pub fn commits(&self, cwd: &PathBuf, new: &Diff) -> Result<Vec<String>> {
         let costume_changes = self._merged_costumes(&new);
         let blocks: Vec<_> = self
-            .blocks(&new)?
+            .blocks(cwd, &new)?
             .iter()
             .map(|s| {
                 s.format()

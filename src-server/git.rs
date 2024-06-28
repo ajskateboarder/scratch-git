@@ -6,16 +6,17 @@ use anyhow::{anyhow, Result};
 use serde::Serialize;
 
 /// Return a generated blob ID from a string
-fn git_object_id(content: String) -> Result<String> {
+fn git_object_id(cwd: &PathBuf, content: String) -> Result<String> {
     let mut child = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
-        cmd.args(["/C", "git", "hash-object", "-w", "--stdin"]);
+        cmd.args(["/C", "git", "hash-object", "--stdin"]);
         cmd
     } else {
         let mut git = Command::new("git");
-        git.args(["hash-object", "-w", "--stdin"]);
+        git.args(["hash-object", "--stdin"]);
         git
     }
+    .current_dir(&cwd)
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
     .spawn()?;
@@ -38,7 +39,7 @@ pub struct GitDiff {
 }
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
-pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> Result<GitDiff> {
+pub fn diff(cwd: &PathBuf, mut old_content: String, mut new_content: String, context: i32) -> Result<GitDiff> {
     if old_content == new_content {
         return Ok(GitDiff {
             removed: 0,
@@ -54,8 +55,8 @@ pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> R
         new_content += "\n";
     }
 
-    let old_id = git_object_id(old_content.into())?;
-    let new_id = git_object_id(new_content.into())?;
+    let old_id = git_object_id(cwd, old_content.into())?;
+    let new_id = git_object_id(cwd, new_content.into())?;
 
     let proc = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
@@ -81,10 +82,13 @@ pub fn diff(mut old_content: String, mut new_content: String, context: i32) -> R
         git
     }
     .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
     .spawn()?;
 
     let output = &proc.wait_with_output()?;
+    dbg!(&output);
     let output = String::from_utf8_lossy(&output.stdout);
+    dbg!(&output);
     let binding = &output.trim().split("@@").into_iter().collect::<Vec<_>>()[2..];
 
     let patched_lines = binding.join("");

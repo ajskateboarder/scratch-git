@@ -19,6 +19,7 @@ const STAGE: Sprite = {
  * @param loadedJSON - the current JSON loaded in the editor (fetched through vm)
  */
 const changedBlocklyScripts = async (
+  projectName: string,
   sprite: Sprite,
   loadedJSON: any,
   previousScripts: any,
@@ -42,7 +43,7 @@ const changedBlocklyScripts = async (
   const spriteName: string = sprite.format();
   const workspace = getBlockly();
 
-  const diffs = await parseScripts(previousScripts, currentScripts);
+  const diffs = await parseScripts(projectName, previousScripts, currentScripts);
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
@@ -81,6 +82,7 @@ const highlightChanged = async (
   const currentScripts = await project.getCurrentScripts(sprite.format());
 
   const changedScripts = await changedBlocklyScripts(
+    project.projectName,
     sprite,
     loadedJSON,
     previousScripts,
