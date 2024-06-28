@@ -38,6 +38,7 @@ enum CmdData<'a> {
         sprite_name: Option<&'a str>,
     },
     GitDiff {
+	project_name: String,
         old_content: String,
         new_content: String,
     },
@@ -87,16 +88,22 @@ impl CmdHandler<'_> {
         let CmdData::GitDiff {
             old_content,
             new_content,
+            project_name
         } = data
         else {
             return self.send_json(json!({}));
         };
+
+	let pth = &project_config().lock().unwrap().project_path(&project_name);
+
         self.send_json(json!(git::diff(
+	    pth,
             old_content.to_string(),
             new_content.to_string(),
             2000
         )
         .context(here!())?))?;
+
         Ok(())
     }
 
@@ -551,6 +558,7 @@ impl CmdHandler<'_> {
             .context(here!())?;
 
         if !commit.status.success() {
+	    dbg!(&commit);
             if self.debug {
                 println!(
                     "commit: failed to make commit: error code {:?}",
@@ -567,7 +575,7 @@ impl CmdHandler<'_> {
         }
 
         let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json")?;
-        let commit_message = previous_revision.commits(&new_diff)?.join(", ");
+        let commit_message = previous_revision.commits(&pth, &new_diff)?.join(", ");
 
         let commit =
             git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).status()?;
@@ -641,7 +649,7 @@ impl CmdHandler<'_> {
         let new_diff = Diff::new(&_new_project);
 
         let mut sprites: Vec<_> = current_diff
-            .blocks(&new_diff)?
+            .blocks(&pth, &new_diff)?
             .into_iter()
             .map(|ScriptChanges { sprite, .. }| {
                 let parts = sprite.split(" ").collect::<Vec<_>>();

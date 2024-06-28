@@ -234,7 +234,7 @@ export class DiffModal extends Modal {
     oldScripts = this.previousScripts;
     newScripts = this.currentScripts;
 
-    const diffs = await parseScripts(oldScripts, newScripts);
+    const diffs = await parseScripts(project.projectName, oldScripts, newScripts);
 
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
