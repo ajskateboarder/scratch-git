@@ -86,9 +86,8 @@ pub fn diff(cwd: &PathBuf, mut old_content: String, mut new_content: String, con
     .spawn()?;
 
     let output = &proc.wait_with_output()?;
-    dbg!(&output);
     let output = String::from_utf8_lossy(&output.stdout);
-    dbg!(&output);
+
     let binding = &output.trim().split("@@").into_iter().collect::<Vec<_>>()[2..];
 
     let patched_lines = binding.join("");
