@@ -9,11 +9,11 @@ use serde::Serialize;
 fn git_object_id(cwd: &PathBuf, content: String) -> Result<String> {
     let mut child = if cfg!(target_os = "windows") {
         let mut cmd = Command::new("cmd");
-        cmd.args(["/C", "git", "hash-object", "--stdin"]);
+        cmd.args(["/C", "git", "hash-object", "-w", "--stdin"]);
         cmd
     } else {
         let mut git = Command::new("git");
-        git.args(["hash-object", "--stdin"]);
+        git.args(["hash-object", "-w", "--stdin"]);
         git
     }
     .current_dir(&cwd)
@@ -81,6 +81,7 @@ pub fn diff(cwd: &PathBuf, mut old_content: String, mut new_content: String, con
         ]);
         git
     }
+    .current_dir(cwd)
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
     .spawn()?;

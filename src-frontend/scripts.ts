@@ -17,6 +17,7 @@ const _parseScripts = (
   oldProject: Record<string, any>,
   newProject: Record<string, any>
 ): ScriptParse[] => {
+  console.log(oldProject, newProject);
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
     .map((script) => {

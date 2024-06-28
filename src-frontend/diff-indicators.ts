@@ -42,7 +42,7 @@ const changedBlocklyScripts = async (
 
   const spriteName: string = sprite.format();
   const workspace = getBlockly();
-
+  console.log(projectName, previousScripts, currentScripts);
   const diffs = await parseScripts(projectName, previousScripts, currentScripts);
 
   return diffs
