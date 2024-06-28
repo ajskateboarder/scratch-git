@@ -12,7 +12,6 @@ use std::{
     io::{stdin, BufRead},
     net::{TcpListener, TcpStream},
     path::PathBuf,
-    process::exit,
     thread::spawn,
 };
 
@@ -50,7 +49,7 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
 }
 
 fn main() {
-    let path = match turbowarp_path() {
+    let mut path = match turbowarp_path() {
         Some(path) => path,
         None => {
             println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
@@ -66,7 +65,8 @@ fn main() {
 
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
-        exit(1);
+	println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
+        path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
     }
     println!("Script copied to {}", path.to_str().unwrap());
 

@@ -557,6 +557,7 @@ impl CmdHandler<'_> {
             .context(here!())?;
 
         if !commit.status.success() {
+	    dbg!(&commit);
             if self.debug {
                 println!(
                     "commit: failed to make commit: error code {:?}",
