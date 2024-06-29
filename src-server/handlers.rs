@@ -550,7 +550,7 @@ impl CmdHandler<'_> {
         }
 
         if !git::run(vec!["add", "."], Some(&pth)).status()?.success() {
-            return self.send_json(json!({ "message": "Nothing to add" }));
+            return self.send_json(json!({ "message": -1 }));
         }
 
         let commit = git::run(vec!["commit", "-m", "temporary"], Some(pth))
@@ -558,20 +558,13 @@ impl CmdHandler<'_> {
             .context(here!())?;
 
         if !commit.status.success() {
-	    dbg!(&commit);
-            if self.debug {
-                println!(
-                    "commit: failed to make commit: error code {:?}",
-                    commit.status.code().unwrap_or(-2000000000)
-                )
+            let stderr = String::from_utf8(commit.stderr)?;
+            if stderr.contains("git config --global user.email") {
+                return self.send_json(json!({"message": -2 }))
             }
-            // TODO: make error message less generic
-            return self.send_json(json!({ "message": "Nothing to commit" }));
-        }
 
-        if self.debug {
-            let rev = git::show_revision(&pth, "HEAD~1:project.json")?;
-            println!("commit: got revision for HEAD~1:project.json:\n\n{rev}")
+            // TODO: (?) make error message less generic
+            return self.send_json(json!({ "message": -3 }));
         }
 
         let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json")?;
@@ -581,7 +574,7 @@ impl CmdHandler<'_> {
             git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).status()?;
 
         if !commit.success() {
-            return self.send_json(json!({ "message": "fail" }));
+            return self.send_json(json!({ "message": -4 }));
         }
 
         self.send_json(json!({ "message": commit_message }))

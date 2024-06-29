@@ -13,7 +13,7 @@ dialog[is="repo-config-modal"] {
   border-width: 2.5px;
   border-radius: 10px;
   font-weight: normal;
-  user-select: none
+  user-select: none;
 }
 
 dialog[is="commit-modal"],
@@ -53,7 +53,9 @@ dialog[is="welcome-modal"] {
 }
 
 .sprite-diff {
-  transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+  transition:
+    scale 0.15 ease-out,
+    box-shadow 0.15 ease-out;
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0px 0px 0px 2px var(--looks-transparent);

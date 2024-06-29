@@ -56,11 +56,11 @@ export const Copy = (cb: () => string | SVGElement) => {
           },
           () => {
             console.warn("failed to copy to clipboard");
-          }
+          },
         );
       },
     },
-    i({ class: "fa-solid fa-copy" })
+    i({ class: "fa-solid fa-copy" }),
   );
   return copyButton;
 };

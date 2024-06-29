@@ -16,7 +16,7 @@ const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
 const Screen = (step: { number: number; title: string }, ...children: any) =>
   div(
     { class: "screen", id: `step${step.number}` },
-    div({ class: "welcome-screen-content" }, h1(step.title), children)
+    div({ class: "welcome-screen-content" }, h1(step.title), children),
   );
 
 // TODO: localize!?
@@ -44,7 +44,7 @@ export class WelcomeModal extends Modal {
     const thumb = span(
       { class: "thumbnail" },
       new DOMParser().parseFromString(thumbnail, "image/svg+xml")
-        .documentElement
+        .documentElement,
     );
 
     if (!this.querySelector(".screen")) {
@@ -82,7 +82,7 @@ export class WelcomeModal extends Modal {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const openProject = van.derive(() => {
@@ -108,7 +108,7 @@ export class WelcomeModal extends Modal {
                 }
                 goToStep2.classList.remove(settings.disabledButton);
                 openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-                  "welcome.project-opened"
+                  "welcome.project-opened",
                 )}`;
                 setTimeout(() => {
                   openProject.val.innerHTML = i18next.t("welcome.open-project");
@@ -116,7 +116,7 @@ export class WelcomeModal extends Modal {
               });
             },
           },
-          i18next.t("welcome.open-project")
+          i18next.t("welcome.open-project"),
         );
       } else {
         const $url = InputBox({
@@ -137,7 +137,7 @@ export class WelcomeModal extends Modal {
 
               if (!(await remoteExists($url.value))) {
                 $url.setCustomValidity(
-                  "Repository doesn't exist or is private"
+                  "Repository doesn't exist or is private",
                 );
                 $url.reportValidity();
                 return;
@@ -145,14 +145,14 @@ export class WelcomeModal extends Modal {
 
               $submit.innerHTML = "";
               $submit.appendChild(
-                span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning")
+                span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning"),
               );
 
               let response = await cloneRepo($url.value);
               $submit.innerText = "Clone";
               if (response.success === false) {
                 $url.setCustomValidity(
-                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR]
+                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR],
                 );
                 $url.reportValidity();
                 return;
@@ -162,13 +162,13 @@ export class WelcomeModal extends Modal {
               loadState.val = true;
             },
           },
-          "Clone"
+          "Clone",
         );
 
         return form(
           { style: "display: flex; width: 100%; gap: 10px" },
           InputField({ style: "flex-grow: 1" }, $url),
-          $submit
+          $submit,
         );
       }
     });
@@ -184,7 +184,7 @@ export class WelcomeModal extends Modal {
               ? i18next.t("welcome.get-started")
               : "Please load a project for development from a Git repository link to get started",
           br(),
-          br()
+          br(),
         ),
         div({ class: "a-gap" }, () => openProject.val),
         br(),
@@ -198,10 +198,10 @@ export class WelcomeModal extends Modal {
           () =>
             loadState.val
               ? "or clone a repository from online"
-              : "or load an existing project from your computer"
+              : "or load an existing project from your computer",
         ),
         br(),
-        br()
+        br(),
       ),
       BottomBar(
         button(
@@ -213,10 +213,10 @@ export class WelcomeModal extends Modal {
               if (this.loadedProject) window.location.reload();
             },
           },
-          i18next.t("close")
+          i18next.t("close"),
         ),
-        goToStep2
-      )
+        goToStep2,
+      ),
     );
   }
 
@@ -232,7 +232,7 @@ export class WelcomeModal extends Modal {
           ++this.currentStep.val;
         },
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const openProjectPath = input({
@@ -252,7 +252,7 @@ export class WelcomeModal extends Modal {
       div(
         { class: "welcome-screen-content" },
         p(i18next.t("welcome.select-location"), br(), br()),
-        openProjectPath
+        openProjectPath,
       ),
       BottomBar(
         button(
@@ -261,10 +261,10 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => --this.currentStep.val,
           },
-          i18next.t("welcome.back")
+          i18next.t("welcome.back"),
         ),
-        goToStep3
-      )
+        goToStep3,
+      ),
     );
   }
 
@@ -290,13 +290,13 @@ export class WelcomeModal extends Modal {
           } catch {
             $creationError.innerHTML = "";
             $creationError.appendChild(
-              span(i({ class: "fa fa-solid fa-circle-exclamation" }), " ")
+              span(i({ class: "fa fa-solid fa-circle-exclamation" }), " "),
             );
             return;
           }
         },
       },
-      i18next.t("welcome.next")
+      i18next.t("welcome.next"),
     );
 
     const disableIfEmptyFields = () => {
@@ -322,7 +322,7 @@ export class WelcomeModal extends Modal {
           username = (e.target! as HTMLInputElement).value;
           disableIfEmptyFields();
         },
-      })
+      }),
     );
 
     const $email = InputField(
@@ -337,7 +337,7 @@ export class WelcomeModal extends Modal {
           }
           disableIfEmptyFields();
         },
-      })
+      }),
     );
 
     return Screen(
@@ -356,11 +356,11 @@ export class WelcomeModal extends Modal {
               class: settings.settingsButton,
               onclick: () => --this.currentStep.val,
             },
-            i18next.t("welcome.back")
+            i18next.t("welcome.back"),
           ),
-          goToStep4
-        )
-      )
+          goToStep4,
+        ),
+      ),
     );
   }
 
@@ -377,10 +377,10 @@ export class WelcomeModal extends Modal {
               class: settings.settingsButton,
               onclick: () => this.close(),
             },
-            i18next.t("close")
-          )
-        )
-      )
+            i18next.t("close"),
+          ),
+        ),
+      ),
     );
   }
 

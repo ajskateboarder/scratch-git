@@ -61,21 +61,21 @@ export const Styles = () => {
       ${repoConfigStyles}
       ${welcomeStyles}
       ${commitStyles}
-      `
+      `,
     ),
   ];
 };
 
 const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
   "unrelated histories": new ScratchAlert(
-    i18next.t("alerts.unrelated-changes")
+    i18next.t("alerts.unrelated-changes"),
   ).type("error"),
   success: new ScratchAlert(i18next.t("alerts.pull-success"))
     .type("success")
     .buttons([
       button(
         { class: "alert-button", onclick: () => location.reload() },
-        i({ class: "fa-solid fa-rotate-right" })
+        i({ class: "fa-solid fa-rotate-right" }),
       ),
     ]),
   "nothing new": new ScratchAlert(i18next.t("alerts.no-changes"))
@@ -110,7 +110,7 @@ const pullHandler =
       // TODO: localize
       // asking for username and password in the app would look suspicious
       upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to pull new changes."
+        "Please enter your username and password in the terminal to pull new changes.",
       )
         .type("success")
         .display();
@@ -136,14 +136,14 @@ const PUSH_MESSAGES: Record<
             class: "alert-button",
             onclick: await pullHandler(project!),
           },
-          "Pull"
+          "Pull",
         ),
       ]),
   success: async (project) =>
     new ScratchAlert(
       i18next.t("alerts.push-success", {
         url: (await project!.getDetails()).repository,
-      })
+      }),
     )
       .type("success")
       .timeout(5000),
@@ -178,7 +178,7 @@ const pushHandler =
 
       // TODO: localize
       upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to push your changes."
+        "Please enter your username and password in the terminal to push your changes.",
       )
         .type("success")
         .display();
@@ -189,6 +189,19 @@ const pushHandler =
     (await PUSH_MESSAGES[message](project)).display();
   };
 
+const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
+  [-1]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-add")).type(
+    "warn",
+  ),
+  [-2]: new ScratchAlert(i18next.t("alerts.commit.identity-needed")).type(
+    "error",
+  ),
+  [-3]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-commit")).type(
+    "warn",
+  ),
+  [-4]: new ScratchAlert(i18next.t("alerts.commit.fail")).type("error"),
+};
+
 /** Builds the final Git Menu
  *
  * @param project - the currently open project, which should exist
@@ -196,7 +209,7 @@ const pushHandler =
  */
 export const createGitMenu = async (
   project: Project,
-  changeLocale?: string
+  changeLocale?: string,
 ) => {
   gitMenu.create(
     {
@@ -206,7 +219,10 @@ export const createGitMenu = async (
           .display(),
       commitCreate: async () => {
         const message = await project!.commit();
-        new ScratchAlert(message).type("success").timeout(5000).display();
+        (
+          COMMIT_MESSAGES[message as number] ??
+          new ScratchAlert(message).type("success").timeout(5000)
+        ).display();
       },
       push: await pushHandler(project!),
       pull: await pullHandler(project!),
@@ -216,7 +232,7 @@ export const createGitMenu = async (
           .display();
       },
     },
-    changeLocale
+    changeLocale,
   );
   gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

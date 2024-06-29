@@ -43,10 +43,10 @@ class Socket {
           if (json["unhandled-error"]) {
             // TODO: localize
             alert(
-              `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`
+              `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`,
             );
             console.error(
-              `The following error "${json["unhandled-error"]}" occurred. Please report this issue using GitHub: https://github.com/ajskateboarder/scratch-git/issues or Scratch: https://scratch.mit.edu/users/ajskateboarder#comments`
+              `The following error "${json["unhandled-error"]}" occurred. Please report this issue using GitHub: https://github.com/ajskateboarder/scratch-git/issues or Scratch: https://scratch.mit.edu/users/ajskateboarder#comments`,
             );
             return;
           }
@@ -80,7 +80,10 @@ export class Project extends Socket {
    * @param projectName - the name of an initialized project
    * @param ws - a WebSocket connection
    */
-  constructor(public projectName: string, protected ws: WebSocket) {
+  constructor(
+    public projectName: string,
+    protected ws: WebSocket,
+  ) {
     super(ws);
   }
 
@@ -161,7 +164,7 @@ export class Project extends Socket {
 
   /** Commit the current project to Git */
   // LINK src-server/handlers.rs#commit
-  async commit(): Promise<string> {
+  async commit(): Promise<string | number> {
     return (
       await this.request({
         command: "commit",
@@ -263,7 +266,7 @@ export class ProjectManager extends Socket {
             email,
           },
         },
-      })
+      }),
     );
 
     const response = await this.receive();
@@ -272,11 +275,11 @@ export class ProjectManager extends Socket {
         throw new Error(
           `${projectPath
             .split("/")
-            .pop()} is already a project. Either load the existing project or make a copy of the project file.`
+            .pop()} is already a project. Either load the existing project or make a copy of the project file.`,
         );
       } else if (response.status === "fail") {
         throw new Error(
-          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
+          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues.",
         );
       }
     }
@@ -299,13 +302,17 @@ export class ProjectManager extends Socket {
 export const diff = async (
   projectName: string,
   oldScript: string,
-  newScript: string
+  newScript: string,
 ): Promise<{ added: number; removed: number; diffed: string }> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
   return ws.request({
     command: "diff",
     data: {
-      GitDiff: { project_name: projectName, old_content: oldScript, new_content: newScript },
+      GitDiff: {
+        project_name: projectName,
+        old_content: oldScript,
+        new_content: newScript,
+      },
     },
   });
 };
@@ -337,7 +344,7 @@ export const remoteExists = async (url: string): Promise<boolean> => {
           data: {
             URL: url,
           },
-        })
+        }),
       );
     };
     ws.onmessage = (message) => {

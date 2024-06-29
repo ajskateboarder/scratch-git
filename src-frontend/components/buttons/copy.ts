@@ -59,7 +59,7 @@ export const Copy = (cb: () => string | SVGElement) => {
           });
       },
     },
-    i({ class: "fa-solid fa-copy" })
+    i({ class: "fa-solid fa-copy" }),
   );
   return copyButton;
 };

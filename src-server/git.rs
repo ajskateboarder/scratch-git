@@ -31,6 +31,7 @@ fn git_object_id(cwd: &PathBuf, content: String) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
 
+/// Represents the result of a git diff
 #[derive(Serialize, Debug)]
 pub struct GitDiff {
     pub removed: i32,

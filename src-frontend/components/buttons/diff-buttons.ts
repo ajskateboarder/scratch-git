@@ -11,7 +11,7 @@ const BaseDelete = (props: {}, children: HTMLDivElement) =>
       tabIndex: 0,
       ...props,
     },
-    children
+    children,
   );
 
 export const SpriteDiff = (props: {}) =>
@@ -25,8 +25,8 @@ export const SpriteDiff = (props: {}) =>
       i({
         class: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" "),
         style: "color: white",
-      })
-    )
+      }),
+    ),
   );
 
 export const StageDiff = (props: {}) =>
@@ -40,6 +40,6 @@ export const StageDiff = (props: {}) =>
       i({
         class: ["fa-solid", "fa-plus-minus", "fa-sm"].join(" "),
         style: "color: white",
-      })
-    )
+      }),
+    ),
   );

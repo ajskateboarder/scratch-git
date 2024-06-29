@@ -87,6 +87,7 @@ impl GhToken {
         fs::write(self.file_path, &self.token).expect("unable to save new token");
     }
 }
+
 /// Singleton GitHub token
 pub fn gh_token() -> &'static Mutex<GhToken> {
     static CONFIG: OnceLock<Mutex<GhToken>> = OnceLock::new();

@@ -56,6 +56,13 @@ export default {
       end: "and enter the code: {{code}}",
     },
     "wrong-project": "Nothing was changed. Did you open the right project?",
+    commit: {
+      "nothing-to-add": "Nothing to add.",
+      "identity-needed":
+        "Please tell me who you are. Set your name and email in Git -> Setup repository.",
+      "nothing-to-commit": "Nothing to commit.",
+      fail: "Failed to commit",
+    },
   },
   close: "Close",
   okay: "Okay",

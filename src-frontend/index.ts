@@ -28,7 +28,7 @@ const main = async () => {
     } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
+      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
     )!;
     saveArea.style.opacity = "0";
 
@@ -150,11 +150,11 @@ const main = async () => {
 
 localStorage.setItem(
   "scratch-git:highlights",
-  JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
+  JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false"),
 );
 localStorage.setItem(
   "scratch-git:plaintext",
-  JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
+  JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false"),
 );
 
 document.head.append(...Styles());

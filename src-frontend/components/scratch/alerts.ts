@@ -80,11 +80,11 @@ export class ScratchAlert {
             img({
               src: CLOSE_BUTTON_SVG,
               style: "transform: rotate(45deg) scale(0.5)",
-            })
+            }),
           ),
-          ...this._buttons
-        )
-      )
+          ...this._buttons,
+        ),
+      ),
     );
     if (this._timeout !== undefined) {
       setTimeout(() => newAlert.remove(), this._timeout);
@@ -99,8 +99,8 @@ export const GhAuthAlert = (e: DeviceCode) =>
     span(
       "Authentication needed for GitHub. Please go to ",
       a({ href: e.verification_uri }, "github.com/login/device"),
-      ` and enter the code: ${e.user_code}`
-    )
+      ` and enter the code: ${e.user_code}`,
+    ),
   )
     .type("success")
     .buttons([Copy(() => e.user_code)]);

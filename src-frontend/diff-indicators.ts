@@ -23,7 +23,7 @@ const changedBlocklyScripts = async (
   sprite: Sprite,
   loadedJSON: any,
   previousScripts: any,
-  currentScripts: any
+  currentScripts: any,
 ) => {
   if (sprite === undefined) {
     console.warn("provided sprite for diffing was undefined");
@@ -32,18 +32,22 @@ const changedBlocklyScripts = async (
 
   const topLevels = () => {
     const target = loadedJSON.targets.find((e: any) =>
-      spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
+      spriteName.includes("(stage)") ? e.isStage : e.name === spriteName,
     );
 
     return Object.keys(target.blocks).filter(
-      (k) => target.blocks[k].parent === null
+      (k) => target.blocks[k].parent === null,
     );
   };
 
   const spriteName: string = sprite.format();
   const workspace = getBlockly();
-  console.log(projectName, previousScripts, currentScripts);
-  const diffs = await parseScripts(projectName, previousScripts, currentScripts);
+
+  const diffs = await parseScripts(
+    projectName,
+    previousScripts,
+    currentScripts,
+  );
 
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
@@ -53,13 +57,12 @@ const changedBlocklyScripts = async (
 const highlightChanged = async (
   project: Project,
   sprite: Sprite | undefined,
-  loadedJSON: any
+  loadedJSON: any,
 ) => {
   if (!document.querySelector("filter#blocklyStackDiffFilter")) {
     // diff highlight filter for scripts
-    document.querySelector(
-      ".blocklySvg defs"
-    )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    document.querySelector(".blocklySvg defs")!.innerHTML +=
+      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
       <feComponentTransfer result="outBlur">
         <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -86,12 +89,12 @@ const highlightChanged = async (
     sprite,
     loadedJSON,
     previousScripts,
-    currentScripts
+    currentScripts,
   );
 
   console.debug(
     `received following for sprite ${sprite.format()}`,
-    changedScripts
+    changedScripts,
   );
 
   if (changedScripts === undefined) return;
@@ -181,7 +184,7 @@ export const showIndicators = async (project: Project) => {
             childList: true,
             subtree: true,
           });
-        })
+        }),
       );
 
       diffButton.style.marginTop =
@@ -190,7 +193,7 @@ export const showIndicators = async (project: Project) => {
       await highlightChanged(
         project,
         changedSprites.find((e) => e.name === spriteName)!,
-        loadedJSON
+        loadedJSON,
       );
     });
   });

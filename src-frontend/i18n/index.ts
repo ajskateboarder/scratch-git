@@ -28,14 +28,14 @@ i18next.init({
 type _TranslationKeys<T, Cache extends string> = T extends PropertyKey
   ? Cache
   : keyof T extends SupportedLangs
-  ? Cache
-  : {
-      [P in keyof T]: P extends string
-        ? Cache extends ""
-          ? _TranslationKeys<T[P], `${P}`>
-          : Cache | _TranslationKeys<T[P], `${Cache}.${P}`>
-        : never;
-    }[keyof T];
+    ? Cache
+    : {
+        [P in keyof T]: P extends string
+          ? Cache extends ""
+            ? _TranslationKeys<T[P], `${P}`>
+            : Cache | _TranslationKeys<T[P], `${Cache}.${P}`>
+          : never;
+      }[keyof T];
 
 export default Object.assign(i18next, {
   t: i18next.t as unknown as (
