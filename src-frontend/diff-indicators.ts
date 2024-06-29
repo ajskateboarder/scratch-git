@@ -3,14 +3,14 @@ import type { Project, Sprite } from "./api";
 import { misc, sprites } from "./components";
 import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
-import { SpriteDiff, StageDiff } from "./components/diff-buttons";
+import { SpriteDiff, StageDiff } from "./components";
 import { getBlockly } from "./lib/globals";
 
-const STAGE: Sprite = {
+const STAGE = {
   name: "Stage",
   isStage: true,
   format: () => "Stage (stage)",
-};
+} satisfies Sprite;
 
 /** Receive Blockly IDs to top-level blocks that were changed
  *

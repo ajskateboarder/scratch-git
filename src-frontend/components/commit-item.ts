@@ -4,25 +4,27 @@ import van from "vanjs-core";
 
 const { div, br, span } = van.tags;
 
+const RANGES = {
+  years: 3600 * 24 * 365,
+  months: 3600 * 24 * 30,
+  weeks: 3600 * 24 * 7,
+  days: 3600 * 24,
+  hours: 3600,
+  minutes: 60,
+  seconds: 1,
+};
+
 // https://stackoverflow.com/a/69122877/16019146
 const timeAgo = (input: Date | string) => {
   const date = input instanceof Date ? input : new Date(input);
   const formatter = new Intl.RelativeTimeFormat("en");
-  const ranges = {
-    years: 3600 * 24 * 365,
-    months: 3600 * 24 * 30,
-    weeks: 3600 * 24 * 7,
-    days: 3600 * 24,
-    hours: 3600,
-    minutes: 60,
-    seconds: 1,
-  };
+
   const secondsElapsed = (date.getTime() - Date.now()) / 1000;
-  const matched = Object.keys(ranges).find(
-    (key) => ranges[key as keyof typeof ranges] < Math.abs(secondsElapsed),
-  ) as keyof typeof ranges;
+  const matched = Object.keys(RANGES).find(
+    (key) => RANGES[key as keyof typeof RANGES] < Math.abs(secondsElapsed),
+  ) as keyof typeof RANGES;
   return formatter.format(
-    Math.round(secondsElapsed / ranges[matched]),
+    Math.round(secondsElapsed / RANGES[matched]),
     matched as Intl.RelativeTimeFormatUnit,
   );
 };

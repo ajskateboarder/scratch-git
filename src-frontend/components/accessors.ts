@@ -1,5 +1,3 @@
-/** @file A lookup to create elements using scratch-gui classnames */
-
 const classNames: string[] = [
   ...[...document.styleSheets].map((e) => e.cssRules),
 ]
