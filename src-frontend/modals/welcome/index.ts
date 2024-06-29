@@ -19,12 +19,11 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
     div({ class: "welcome-screen-content" }, h1(step.title), children),
   );
 
-// TODO: localize!?
 const CLONE_ERROR = {
-  [-1]: "An error occurred while trying to clone this repository",
-  [-2]: "This repository doesn't have a project.json",
-  [-3]: "This repository uses assets that don't exist",
-  [-4]: "You have already cloned this repository",
+  [-1]: i18next.tlazy("alerts.clone.error"),
+  [-2]: i18next.tlazy("alerts.clone.no-json"),
+  [-3]: i18next.tlazy("alerts.clone.missing-asset"),
+  [-4]: i18next.tlazy("alerts.clone.cloned-already"),
 };
 
 /** Project initialization */
@@ -95,12 +94,10 @@ export class WelcomeModal extends Modal {
               fileMenu.openProject();
               VM.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
-                if ((await api.getCurrentProject())?.exists()) {
+                if (await api.getCurrentProject()?.exists()) {
                   goToStep2.disabled = true;
                   goToStep2.style.cursor = "help";
-                  // TODO: localize
-                  goToStep2.title =
-                    "This project has been configured already so there's no need to continue";
+                  goToStep2.title = i18next.t("welcome.configured-before");
                 } else {
                   goToStep2.disabled = false;
                   goToStep2.style.cursor = "unset";
@@ -126,7 +123,6 @@ export class WelcomeModal extends Modal {
           },
         });
 
-        // TODO: localize!!!
         const $submit = button(
           {
             class: settings.settingsButton,
@@ -137,7 +133,7 @@ export class WelcomeModal extends Modal {
 
               if (!(await remoteExists($url.value))) {
                 $url.setCustomValidity(
-                  "Repository doesn't exist or is private",
+                  i18next.t("welcome.clone.repo-not-found"),
                 );
                 $url.reportValidity();
                 return;
@@ -145,24 +141,25 @@ export class WelcomeModal extends Modal {
 
               $submit.innerHTML = "";
               $submit.appendChild(
-                span(i({ class: "fa-solid fa-sync fa-spin" }), " Cloning"),
+                span(i({ class: "fa-solid fa-sync fa-spin" }), " ", i18next.t("welcome.clone.cloning")),
               );
 
               let response = await cloneRepo($url.value);
-              $submit.innerText = "Clone";
+              $submit.innerText = i18next.t("welcome.clone.clone");
               if (response.success === false) {
                 $url.setCustomValidity(
-                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR],
+                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR](),
                 );
                 $url.reportValidity();
                 return;
               }
 
-              alert(`Project saved at ${response.path}`); // should i use something other than alert? ehh..
+              // should i use something other than alert?
+              alert(i18next.t("welcome.clone.project-saved", {path: response.path}));
               loadState.val = true;
             },
           },
-          "Clone",
+          i18next.t("welcome.clone.clone"),
         );
 
         return form(
@@ -177,12 +174,8 @@ export class WelcomeModal extends Modal {
       { title: i18next.t("welcome.welcome"), number: 1 },
       div(
         { style: "font-weight: normal" },
-        // TODO: localize
         p(
-          () =>
-            loadState.val
-              ? i18next.t("welcome.get-started")
-              : "Please load a project for development from a Git repository link to get started",
+          () => i18next.t(loadState.val ? "welcome.get-started" : "welcome.get-started-w-url"),
           br(),
           br(),
         ),
@@ -194,11 +187,7 @@ export class WelcomeModal extends Modal {
               "color: var(--menu-bar-background-default); font-weight: bold",
             onclick: () => (loadState.val = !loadState.val),
           },
-          // TODO: localize
-          () =>
-            loadState.val
-              ? "or clone a repository from online"
-              : "or load an existing project from your computer",
+          () => i18next.t(loadState.val ? "welcome.or-clone" : "welcome.or-load")
         ),
         br(),
         br(),

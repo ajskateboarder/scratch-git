@@ -153,8 +153,8 @@ export class Project extends Socket {
    * @param sprite - the name of the sprite you want to receive scripts from
    */
   // LINK src-server/handlers.rs#get-sprite-scripts
-  async getPreviousScripts(sprite: string): Promise<Record<string, string>> {
-    return await this.request({
+  getPreviousScripts(sprite: string): Promise<Record<string, string>> {
+    return this.request({
       command: "previous-project",
       data: {
         Project: { project_name: this.projectName, sprite_name: sprite },
@@ -200,8 +200,8 @@ export class Project extends Socket {
 
   /** Unzip a project from its configured location to get the latest JSON */
   // LINK src-server/handlers.rs#unzip
-  async unzip() {
-    await this.request({
+  unzip() {
+    return this.request({
       command: "unzip",
       data: { Project: { project_name: this.projectName } },
     });
@@ -209,8 +209,8 @@ export class Project extends Socket {
 
   /** Get the origin remote, username, and email for a project */
   // LINK src-server/handlers.rs#get-project-details
-  async getDetails(): Promise<GitDetails> {
-    return await this.request({
+  getDetails(): Promise<GitDetails> {
+    return this.request({
       command: "get-project-details",
       data: { Project: { project_name: this.projectName } },
     });
@@ -221,8 +221,8 @@ export class Project extends Socket {
    * @returns whether it succeeded or not
    */
   // LINK src-server/handlers.rs#set-project-details
-  async setDetails(details: GitDetails): Promise<boolean> {
-    return await this.request({
+  setDetails(details: GitDetails): Promise<boolean> {
+    return this.request({
       command: "set-project-details",
       data: { GitDetails: { project_name: this.projectName, ...details } },
     });
@@ -288,7 +288,7 @@ export class ProjectManager extends Socket {
   }
 
   /** Get the current project based on the project name */
-  async getCurrentProject(): Promise<Project | undefined> {
+  getCurrentProject(): Project | undefined {
     return new Project(Redux.getState().scratchGui.projectTitle, this.ws);
   }
 }

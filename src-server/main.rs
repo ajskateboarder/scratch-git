@@ -65,7 +65,7 @@ fn main() {
 
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
-	println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
+        println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
         path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
     }
     println!("Script copied to {}", path.to_str().unwrap());

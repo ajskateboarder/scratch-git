@@ -6,5 +6,4 @@ interface Window {
   ReduxStore: any;
   vm: any;
   _changedScripts: string[];
-  showOpenFilePicker: any;
 }

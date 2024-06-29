@@ -108,7 +108,7 @@ export class CommitModal extends Modal {
   }
 
   public async display() {
-    let commits_ = await (await api.getCurrentProject())!.getCommits();
+    let commits_ = await api.getCurrentProject()!.getCommits();
     const commits = paginate(commits_, 40);
 
     const { $newer, $older, $search } = this.$;
@@ -177,7 +177,7 @@ export class CommitModal extends Modal {
         this.state.paginatedCommits.val = commits[page];
         return;
       }
-      commits_ = await (await api.getCurrentProject())!.getCommits();
+      commits_ = await api.getCurrentProject()!.getCommits();
       this.state.paginatedCommits.val = commits_
         .flat()
         .filter((e) => e.subject.includes(search));

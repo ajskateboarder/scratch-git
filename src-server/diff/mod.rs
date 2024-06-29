@@ -315,7 +315,7 @@ impl Diff {
                 }
 
                 let diff = git::diff(
-		    cwd,
+                    cwd,
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
                     2000,

@@ -215,7 +215,7 @@ export class DiffModal extends Modal {
     const { $commits, $highlights, $plainText, $scripts } = this.$;
 
     // try again in case of undefined
-    if (!project) project = await api.getCurrentProject();
+    if (!project) project = api.getCurrentProject();
     project = project!;
 
     let oldScripts: any, newScripts: any;

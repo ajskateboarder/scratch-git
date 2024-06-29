@@ -149,7 +149,7 @@ export class RepoConfigModal extends Modal {
   }
 
   public async display() {
-    this.project = (await api.getCurrentProject())!;
+    this.project = api.getCurrentProject()!;
 
     if (await this.project?.exists()) {
       const details = await this.project?.getDetails();

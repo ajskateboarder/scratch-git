@@ -65,7 +65,7 @@ const main = async () => {
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
-    const project = await api.getCurrentProject();
+    const project = api.getCurrentProject();
 
     if (await project!.exists()) {
       // ensure a click event listener for the save button

@@ -38,7 +38,7 @@ enum CmdData<'a> {
         sprite_name: Option<&'a str>,
     },
     GitDiff {
-	project_name: String,
+        project_name: String,
         old_content: String,
         new_content: String,
     },
@@ -88,16 +88,16 @@ impl CmdHandler<'_> {
         let CmdData::GitDiff {
             old_content,
             new_content,
-            project_name
+            project_name,
         } = data
         else {
             return self.send_json(json!({}));
         };
 
-	let pth = &project_config().lock().unwrap().project_path(&project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         self.send_json(json!(git::diff(
-	    pth,
+            pth,
             old_content.to_string(),
             new_content.to_string(),
             2000
@@ -437,7 +437,7 @@ impl CmdHandler<'_> {
         )?;
 
         let mut push = git::run(
-            vec!["push", "--set-upstream", "origin", "master"],
+            vec!["push", "--set-upstream", "origin", &git::main_branch(pth)?],
             Some(pth),
         );
 
@@ -447,8 +447,8 @@ impl CmdHandler<'_> {
         }
 
         let output = push.output().context(here!())?;
+        dbg!(&output);
         let stderr = String::from_utf8(output.stderr)?;
-
         // TODO: these checks might be very brittle
         self.send_json(
             if stderr.contains(" ! [") && stderr.contains("git pull ...") {
@@ -484,19 +484,15 @@ impl CmdHandler<'_> {
                 .stdout,
         )?;
 
-        let main_branch = &String::from_utf8(
-            git::run(vec!["branch", "-rl", "\"*/HEAD\""], Some(pth))
-                .output()
-                .context(here!())?
-                .stdout,
-        )?;
-
-        let mut pull = git::run(vec!["pull", "origin", main_branch, "--rebase"], Some(pth));
+        let mut pull = git::run(
+            vec!["pull", "origin", &git::main_branch(pth)?, "--rebase"],
+            Some(pth),
+        );
 
         if config_remote.contains("://github.com") {
             let mut token = gh_token().lock().unwrap();
             pull.env("GITHUB_TOKEN", token.get());
-        } 
+        }
 
         let pull = pull.output().context(here!())?;
 
@@ -560,7 +556,7 @@ impl CmdHandler<'_> {
         if !commit.status.success() {
             let stderr = String::from_utf8(commit.stderr)?;
             if stderr.contains("git config --global user.email") {
-                return self.send_json(json!({"message": -2 }))
+                return self.send_json(json!({"message": -2 }));
             }
 
             // TODO: (?) make error message less generic
@@ -654,15 +650,17 @@ impl CmdHandler<'_> {
             })
             .collect();
 
-        sprites.extend(current_diff.costumes(&new_diff).into_iter().map(|CostumeChange { sprite, ..}| {
-            let parts = sprite.split(" ").collect::<Vec<_>>();
-            if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
-                (parts[0].to_string(), true)
-            } else {
-                (sprite, false)
-            }
-        }));
-        
+        sprites.extend(current_diff.costumes(&new_diff).into_iter().map(
+            |CostumeChange { sprite, .. }| {
+                let parts = sprite.split(" ").collect::<Vec<_>>();
+                if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
+                    (parts[0].to_string(), true)
+                } else {
+                    (sprite, false)
+                }
+            },
+        ));
+
         self.send_json(json!({ "sprites": sprites.iter().collect::<HashSet<_>>() }))
     }
 
