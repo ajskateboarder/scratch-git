@@ -233,7 +233,7 @@ export const showIndicators = async (project: Project) => {
   // when opening the stage, move all the diff buttons up
   stageWrapper.addEventListener("click", async () => {
     sprites.spriteSelDelete
-      .selectAll<HTMLDivElement>("sprites.delete")
+      .selectAll<HTMLDivElement>()
       .filter((button) => !button.classList.contains("stage-diff-button"))
       .forEach((button) => (button.style.marginTop = "0px"));
 

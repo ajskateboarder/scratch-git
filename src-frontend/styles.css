@@ -62,11 +62,11 @@ dialog[is="welcome-modal"] {
 }
 
 .stage-diff {
+  position: absolute;
+  right: 0;
   margin-top: 40px;
   z-index: 99999;
-  transition:
-    scale 0.15 ease-out,
-    box-shadow 0.15 ease-out;
+  transition: all 0.15s ease-out;
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0 0 0 2px var(--looks-transparent);
