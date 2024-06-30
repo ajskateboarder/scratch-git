@@ -51,10 +51,10 @@ const main = async () => {
       ...document.querySelectorAll(`.stage-diff`),
     ].forEach((e) => e.remove());
     await project!.unzip();
+    window._changedScripts = {};
     try {
       await showIndicators(project!);
     } catch (e) {
-      console.log(e);
       new ScratchAlert(i18next.t("alerts.wrong-project"))
         .type("warn")
         .timeout(5000)

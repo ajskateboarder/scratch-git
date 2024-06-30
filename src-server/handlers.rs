@@ -447,8 +447,8 @@ impl CmdHandler<'_> {
         }
 
         let output = push.output().context(here!())?;
-        dbg!(&output);
         let stderr = String::from_utf8(output.stderr)?;
+
         // TODO: these checks might be very brittle
         self.send_json(
             if stderr.contains(" ! [") && stderr.contains("git pull ...") {
@@ -559,7 +559,7 @@ impl CmdHandler<'_> {
                 return self.send_json(json!({"message": -2 }));
             }
 
-            // TODO: (?) make error message less generic
+            // TODO: (?) make this less generic
             return self.send_json(json!({ "message": -3 }));
         }
 
@@ -570,7 +570,7 @@ impl CmdHandler<'_> {
             git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).output()?;
 
         if !commit.status.success() {
-            dbg!(&commit);
+            // TODO: make this less generic
             return self.send_json(json!({ "message": -4 }));
         }
 
