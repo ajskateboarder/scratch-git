@@ -115,15 +115,14 @@ const highlightChanged = async (
   });
 };
 
-const nameOfSprite = (element: HTMLElement) =>
-  element.querySelectorAll("div")[2].innerText;
+const nameOfSprite = (element: HTMLElement) => element.querySelectorAll("div")[2].innerText;
 
 /** Shows buttons to display changes and highlight changed scripts
  *
  * @param project - the currently open project
  */
 export const showIndicators = async (project: Project) => {
-  const changedSprites = await project.getSprites(),
+  const changedSprites = await project.getChangedSprites(),
     editorSprites = [...sprites.sprites.select().children] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
 
@@ -241,7 +240,9 @@ export const showIndicators = async (project: Project) => {
     await highlightChanged(project, STAGE, loadedJSON);
   });
 
-  const selectedSprite = sprites.selectedSprite.select<HTMLDivElement>();
+  // if the user is in costumes/sounds, there may be >1 "selected sprites"
+  const spriteSels = sprites.selectedSprite.selectAll<HTMLDivElement>();
+  const selectedSprite = spriteSels.length > 1 ? spriteSels[spriteSels.length - 1] : spriteSels[0];
 
   const sprite = selectedSprite
     ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!

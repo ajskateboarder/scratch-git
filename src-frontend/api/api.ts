@@ -116,7 +116,7 @@ export class Project extends Socket {
 
   /** Retreive sprites that have been changed since project changes, sorted alphabetically */
   // LINK src-server/handlers.rs#get-changed-sprites
-  async getSprites() {
+  async getChangedSprites() {
     const sprites: [string, boolean][] = (
       await this.request({
         command: "get-changed-sprites",
