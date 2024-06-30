@@ -567,9 +567,10 @@ impl CmdHandler<'_> {
         let commit_message = previous_revision.commits(&pth, &new_diff)?.join(", ");
 
         let commit =
-            git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).status()?;
+            git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).output()?;
 
-        if !commit.success() {
+        if !commit.status.success() {
+            dbg!(&commit);
             return self.send_json(json!({ "message": -4 }));
         }
 
@@ -621,9 +622,6 @@ impl CmdHandler<'_> {
         let project_old_json = match binding {
             Ok(fh) => fh.as_str(),
             Err(_) => {
-                if self.debug {
-                    println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
-                }
                 return self
                     .send_json(json!({ "status": "unzip the project first that should do it" }));
             }
@@ -700,6 +698,7 @@ impl CmdHandler<'_> {
         };
 
         let project_dir = &PathBuf::from("./projects");
+
         // was considering adding --depth=1 but that might not work here
         let clone = git::run(vec!["clone", &url], Some(project_dir))
             .output()

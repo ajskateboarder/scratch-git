@@ -192,13 +192,13 @@ const pushHandler =
 const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
   [-1]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-add")).type(
     "warn",
-  ),
+  ).timeout(5000),
   [-2]: new ScratchAlert(i18next.t("alerts.commit.identity-needed")).type(
     "error",
   ),
   [-3]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-commit")).type(
     "warn",
-  ),
+  ).timeout(5000),
   [-4]: new ScratchAlert(i18next.t("alerts.commit.fail")).type("error"),
 };
 

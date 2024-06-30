@@ -53,9 +53,11 @@ const main = async () => {
     await project!.unzip();
     try {
       await showIndicators(project!);
-    } catch {
+    } catch (e) {
+      console.log(e);
       new ScratchAlert(i18next.t("alerts.wrong-project"))
         .type("warn")
+        .timeout(5000)
         .display();
     }
   };
@@ -147,6 +149,8 @@ const main = async () => {
     }
   }
 };
+
+window._changedScripts = {};
 
 localStorage.setItem(
   "scratch-git:highlights",

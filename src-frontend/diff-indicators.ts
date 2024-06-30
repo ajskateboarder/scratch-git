@@ -49,6 +49,7 @@ const changedBlocklyScripts = async (
     currentScripts,
   );
 
+
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
     .filter((e) => e !== undefined);
@@ -84,7 +85,7 @@ const highlightChanged = async (
   const previousScripts = await project.getPreviousScripts(sprite.format());
   const currentScripts = await project.getCurrentScripts(sprite.format());
 
-  const changedScripts = await changedBlocklyScripts(
+  let changedScripts = await changedBlocklyScripts(
     project.projectName,
     sprite,
     loadedJSON,
@@ -97,10 +98,15 @@ const highlightChanged = async (
     changedScripts,
   );
 
-  if (changedScripts === undefined) return;
+  if (changedScripts === undefined || changedScripts.length === 0) {
+    // fallback onto cache if fetching changed scripts fails
+    changedScripts = window._changedScripts[sprite.format()];
+    // if nothing was actually changed just forget it
+    if (changedScripts === undefined || changedScripts.length === 0) return;
+  };
 
   // persist this until the next save
-  window._changedScripts = changedScripts;
+  window._changedScripts[sprite.format()] = changedScripts;
 
   changedScripts.forEach((e) => {
     const group = getBlockly().getBlockById(e).svgGroup_;

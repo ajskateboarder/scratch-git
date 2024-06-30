@@ -5,5 +5,5 @@ interface Window {
   Blockly: any;
   ReduxStore: any;
   vm: any;
-  _changedScripts: string[];
+  _changedScripts: Record<string, string[]>;
 }
