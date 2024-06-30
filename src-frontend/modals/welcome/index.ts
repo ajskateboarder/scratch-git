@@ -141,7 +141,11 @@ export class WelcomeModal extends Modal {
 
               $submit.innerHTML = "";
               $submit.appendChild(
-                span(i({ class: "fa-solid fa-sync fa-spin" }), " ", i18next.t("welcome.clone.cloning")),
+                span(
+                  i({ class: "fa-solid fa-sync fa-spin" }),
+                  " ",
+                  i18next.t("welcome.clone.cloning"),
+                ),
               );
 
               let response = await cloneRepo($url.value);
@@ -155,7 +159,11 @@ export class WelcomeModal extends Modal {
               }
 
               // should i use something other than alert?
-              alert(i18next.t("welcome.clone.project-saved", {path: response.path}));
+              alert(
+                i18next.t("welcome.clone.project-saved", {
+                  path: response.path,
+                }),
+              );
               loadState.val = true;
             },
           },
@@ -175,7 +183,12 @@ export class WelcomeModal extends Modal {
       div(
         { style: "font-weight: normal" },
         p(
-          () => i18next.t(loadState.val ? "welcome.get-started" : "welcome.get-started-w-url"),
+          () =>
+            i18next.t(
+              loadState.val
+                ? "welcome.get-started"
+                : "welcome.get-started-w-url",
+            ),
           br(),
           br(),
         ),
@@ -187,7 +200,8 @@ export class WelcomeModal extends Modal {
               "color: var(--menu-bar-background-default); font-weight: bold",
             onclick: () => (loadState.val = !loadState.val),
           },
-          () => i18next.t(loadState.val ? "welcome.or-clone" : "welcome.or-load")
+          () =>
+            i18next.t(loadState.val ? "welcome.or-clone" : "welcome.or-load"),
         ),
         br(),
         br(),

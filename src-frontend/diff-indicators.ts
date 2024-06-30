@@ -49,7 +49,6 @@ const changedBlocklyScripts = async (
     currentScripts,
   );
 
-
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
     .filter((e) => e !== undefined);
@@ -103,7 +102,7 @@ const highlightChanged = async (
     changedScripts = window._changedScripts[sprite.format()];
     // if nothing was actually changed just forget it
     if (changedScripts === undefined || changedScripts.length === 0) return;
-  };
+  }
 
   // persist this until the next save
   window._changedScripts[sprite.format()] = changedScripts;
@@ -115,7 +114,8 @@ const highlightChanged = async (
   });
 };
 
-const nameOfSprite = (element: HTMLElement) => element.querySelectorAll("div")[2].innerText;
+const nameOfSprite = (element: HTMLElement) =>
+  element.querySelectorAll("div")[2].innerText;
 
 /** Shows buttons to display changes and highlight changed scripts
  *
@@ -242,7 +242,8 @@ export const showIndicators = async (project: Project) => {
 
   // if the user is in costumes/sounds, there may be >1 "selected sprites"
   const spriteSels = sprites.selectedSprite.selectAll<HTMLDivElement>();
-  const selectedSprite = spriteSels.length > 1 ? spriteSels[spriteSels.length - 1] : spriteSels[0];
+  const selectedSprite =
+    spriteSels.length > 1 ? spriteSels[spriteSels.length - 1] : spriteSels[0];
 
   const sprite = selectedSprite
     ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!

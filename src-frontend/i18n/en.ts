@@ -24,7 +24,8 @@ export default {
     "open-project": "Open project",
     welcome: "Welcome to scratch.git",
     "get-started": "Please load a project for Git development to get started",
-    "get-started-w-url": "Please load a project for development from a Git repository link to get started",
+    "get-started-w-url":
+      "Please load a project for development from a Git repository link to get started",
     "select-project-loc": "Select project location",
     "select-location":
       "Please select the location of your project file. This is so scratch.git can find your project locally to use with your repository.",
@@ -36,12 +37,12 @@ export default {
       cloning: "Cloning",
       clone: "Clone",
       "repo-not-found": "Repository doesn't exist or is private.",
-      "project-saved": "Project saved at {{path}}"
+      "project-saved": "Project saved at {{path}}",
     },
     next: "Next",
     back: "Back",
     "or-clone": "or clone a repository from online",
-    "or-load": "or load an existing project from your computer"
+    "or-load": "or load an existing project from your computer",
   },
   repoconfig: {
     "repo-url-placeholder": "Enter a link to a repository URL",
@@ -74,11 +75,11 @@ export default {
       fail: "Failed to commit",
     },
     clone: {
-      "error": "An error occurred while trying to clone this repository",
+      error: "An error occurred while trying to clone this repository",
       "no-json": "This repository doesn't have a project.json",
       "missing-asset": "This repository uses assets that don't exist",
-      "cloned-already": "You have already cloned this repository" 
-    }
+      "cloned-already": "You have already cloned this repository",
+    },
   },
   close: "Close",
   okay: "Okay",

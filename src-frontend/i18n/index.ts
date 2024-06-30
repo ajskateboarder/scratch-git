@@ -37,10 +37,16 @@ type _TranslationKeys<T, Cache extends string> = T extends PropertyKey
           : never;
       }[keyof T];
 
-type BetterT = (k: _TranslationKeys<typeof en, "">, props?: Record<string, string>) => string;
+type BetterT = (
+  k: _TranslationKeys<typeof en, "">,
+  props?: Record<string, string>,
+) => string;
 
 export default Object.assign(i18next, {
   t: i18next.t as unknown as BetterT,
   // basically im lazy and want to save a few lines
-  tlazy: (k: _TranslationKeys<typeof en, "">, props?: Record<string, string>) => () => i18next.t(k, props),
+  tlazy:
+    (k: _TranslationKeys<typeof en, "">, props?: Record<string, string>) =>
+    () =>
+      i18next.t(k, props),
 });
