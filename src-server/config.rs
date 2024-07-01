@@ -39,8 +39,7 @@ impl ProjectConfig {
     pub fn project_path(&self, project_name: &str) -> PathBuf {
         let base_loc = &self.projects[project_name]["base"]
             .as_str()
-            .unwrap()
-            .to_string();
+            .unwrap();
         Path::new(&base_loc).to_path_buf()
     }
 

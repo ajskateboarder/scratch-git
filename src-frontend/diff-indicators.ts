@@ -5,6 +5,7 @@ import type { DiffModal } from "./modals";
 import { parseScripts } from "./scripts";
 import { SpriteDiff, StageDiff } from "./components";
 import { getBlockly } from "./lib/globals";
+import { userSettings } from "./settings";
 
 const STAGE = {
   name: "Stage",
@@ -59,19 +60,18 @@ const highlightChanged = async (
   sprite: Sprite | undefined,
   loadedJSON: any,
 ) => {
-  if (!document.querySelector("filter#blocklyStackDiffFilter")) {
-    // diff highlight filter for scripts
-    document.querySelector(".blocklySvg defs")!.innerHTML +=
-      `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
-      <feComponentTransfer result="outBlur">
-        <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
-      </feComponentTransfer>
-      <feFlood flood-color="#ed25cf" flood-opacity="1" result="outColor"></feFlood>
-      <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
-      <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
-    </filter>`;
-  }
+  // diff highlight filter for scripts
+  document.querySelector("filter#blocklyStackDiffFilter")?.remove();
+  document.querySelector(".blocklySvg defs")!.innerHTML +=
+    `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
+    <feComponentTransfer result="outBlur">
+      <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
+    </feComponentTransfer>
+    <feFlood flood-color="${userSettings.scriptColor}" flood-opacity="1" result="outColor"></feFlood>
+    <feComposite in="outColor" in2="outBlur" operator="in" result="outGlow"></feComposite>
+    <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
+  </filter>`;
 
   document
     .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)

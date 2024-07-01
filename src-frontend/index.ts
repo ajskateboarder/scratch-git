@@ -13,6 +13,7 @@ import {
 } from "./modals";
 import { Modal } from "./modals/base";
 import { getReactHandlers } from "./utils";
+import { userSettings } from "./settings";
 
 const main = async () => {
   if (!document.querySelector("dialog[is='diff-modal']")) {
@@ -25,7 +26,7 @@ const main = async () => {
       customElements.define("repo-config-modal", RepoConfigModal, {
         extends: "dialog",
       });
-    } catch {}
+    } catch { }
 
     const saveArea = document.querySelector<HTMLElement>(
       `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
@@ -151,15 +152,7 @@ const main = async () => {
 };
 
 window._changedScripts = {};
-
-localStorage.setItem(
-  "scratch-git:highlights",
-  JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false"),
-);
-localStorage.setItem(
-  "scratch-git:plaintext",
-  JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false"),
-);
+userSettings.init();
 
 document.head.append(...Styles());
 

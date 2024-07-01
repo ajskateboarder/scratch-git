@@ -1,7 +1,7 @@
 pub mod structs;
 mod vec_utils;
 
-pub use structs::*;
+use structs::*;
 
 use std::path::PathBuf;
 use std::{
@@ -46,15 +46,14 @@ impl Diff {
 
     /// Attempt to return the MD5 extension of a costume item (project.json)
     pub fn get_costume_path(costume: Value) -> String {
-        match costume["md5ext"] {
-            Value::String(_) => costume["md5ext"].as_str().unwrap().to_string(),
-            Value::Null => format!(
+        costume["md5ext"]
+            .as_str()
+            .map(|md5| md5.to_string())
+            .unwrap_or(format!(
                 "{}.{}",
-                costume["assetId"].as_str().unwrap().to_string(),
-                costume["dataFormat"].as_str().unwrap().to_string()
-            ),
-            _ => todo!("no idea what to do here"),
-        }
+                costume["assetId"].as_str().unwrap(),
+                costume["dataFormat"].as_str().unwrap()
+            ))
     }
 
     /// Return costumes that have changed between projects, but not added or removed
@@ -63,12 +62,10 @@ impl Diff {
         let mut removed = new.costumes(self);
 
         let _m1 = added
-            .clone()
             .iter()
             .map(|x| x.to_owned())
             .collect::<HashSet<_>>();
         let _m2 = removed
-            .clone()
             .iter()
             .map(|x| x.to_owned())
             .collect::<HashSet<_>>()
@@ -160,7 +157,6 @@ impl Diff {
                                     Diff::get_costume_path(costume.clone()),
                                     sprite["isStage"].as_bool().unwrap(),
                                 )
-                                    .clone()
                             })
                             .collect(),
                     );
@@ -198,7 +194,7 @@ impl Diff {
                 .collect();
             commits.insert(sprite, format!("{} {}", act[0].0, act[0].1.join(", ")));
         }
-        commits.clone().into_iter().map(|(x, y)| (x, y)).collect()
+        commits.into_iter().map(|(x, y)| (x, y)).collect()
     }
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
@@ -292,7 +288,6 @@ impl Diff {
         let mut error = None;
 
         let changes = sprites
-            .clone()
             .filter_map(|(&ref old, &ref new)| {
                 if old["blocks"].as_object() == new["blocks"].as_object() {
                     return None;
@@ -370,6 +365,7 @@ impl Diff {
             })
             .map(|v| (v[0].clone(), v[1].clone()))
             .collect::<Vec<(String, String)>>();
+
         let added = self.format_costumes(costume_changes.added, "add");
         let removed = self.format_costumes(costume_changes.removed, "remove");
         let merged = self.format_costumes(costume_changes.merged, "modify");

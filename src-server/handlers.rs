@@ -16,9 +16,10 @@ use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
-use crate::diff::{CostumeChange, Diff, ScriptChanges};
+use crate::diff::structs::{CostumeChange, Diff, ScriptChanges};
 use crate::gh_auth;
 use crate::git;
+
 use crate::sb3::{get_assets, ProjectData};
 use crate::zipping::{self, extract, zip};
 
@@ -75,10 +76,11 @@ impl CmdHandler<'_> {
     }
 
     fn send_json(&mut self, json: Value) -> Result<()> {
+        let message = json.to_string();
         if self.debug {
-            println!("Sending message: {}", json.to_string())
+            println!("Sending message: {}", message)
         }
-        self.socket.send(Message::Text(json.to_string()))?;
+        self.socket.send(Message::Text(message))?;
         Ok(())
     }
 
@@ -98,8 +100,8 @@ impl CmdHandler<'_> {
 
         self.send_json(json!(git::diff(
             pth,
-            old_content.to_string(),
-            new_content.to_string(),
+            old_content,
+            new_content,
             2000
         )
         .context(here!())?))?;
@@ -118,13 +120,15 @@ impl CmdHandler<'_> {
         else {
             return self.send_json(json!({}));
         };
+
         let name = Path::new(&file_path)
             .file_name()
             .unwrap()
-            .to_os_string()
+            .to_os_string();
+        let name = name
             .to_str()
-            .unwrap()
-            .to_string();
+            .unwrap();
+
         let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
 
@@ -152,8 +156,8 @@ impl CmdHandler<'_> {
         match config.projects[&name] {
             Value::Null => {
                 config.projects[name] = json!({
-                    "base": project_path.to_str().unwrap().to_string(),
-                    "project_file": file_path.to_str().unwrap().to_string()
+                    "base": project_path.to_str().unwrap(),
+                    "project_file": file_path.to_str().unwrap()
                 });
             }
             Value::Object(_) => {
@@ -172,10 +176,9 @@ impl CmdHandler<'_> {
             .file_name()
             .unwrap()
             .to_str()
-            .unwrap()
-            .to_string()];
+            .unwrap()];
         let target_dir = PathBuf::from(Path::new(
-            &project_to_extract["base"].as_str().unwrap().to_string(),
+            &project_to_extract["base"].as_str().unwrap(),
         ));
 
         extract(
@@ -368,8 +371,7 @@ impl CmdHandler<'_> {
             fs::File::open(Path::new(
                 &projects[project_name]["project_file"]
                     .as_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
             ))?,
             target_dir.to_path_buf(),
         )?;
@@ -406,7 +408,7 @@ impl CmdHandler<'_> {
         } else {
             targets
                 .filter(|t| {
-                    t["name"].as_str().unwrap().to_string() == sprite_name.unwrap()
+                    t["name"].as_str().unwrap() == sprite_name.unwrap()
                         && !t["isStage"].as_bool().unwrap()
                 })
                 .map(|t| t["blocks"].as_object().unwrap())
@@ -665,9 +667,9 @@ impl CmdHandler<'_> {
     /// Set up GitHub authentication for use with any configured project
     fn gh_auth(&mut self) -> Result<()> {
         let mut gh_token = gh_token().lock().unwrap();
-        let current_token = gh_token.get().to_string();
+        let current_token = gh_token.get();
 
-        if gh_auth::current_user(current_token.clone()).is_some() {
+        if gh_auth::current_user(current_token.to_string()).is_some() {
             self.send_json(json!({"success": true}))?;
             return Ok(());
         }
