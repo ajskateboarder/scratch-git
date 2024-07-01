@@ -1,6 +1,6 @@
-import { diff } from "./api";
-import { toScratchblocks } from "./lib";
-import { zip } from "./utils";
+import { diff } from "../api";
+import { toScratchblocks } from "../../lib";
+import { zip } from "../utils";
 
 export type ScriptStatus = "modified" | "added" | "removed";
 

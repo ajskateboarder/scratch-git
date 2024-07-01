@@ -1,4 +1,4 @@
-import type { Commit } from "@/api";
+import type { Commit } from "@/core/api";
 import i18next from "@/i18n";
 import van from "vanjs-core";
 

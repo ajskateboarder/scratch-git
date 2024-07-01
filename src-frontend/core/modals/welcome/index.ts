@@ -1,11 +1,11 @@
 import { Modal } from "../base";
 import thumbnail from "../thumbnail.svg";
-import api, { cloneRepo, remoteExists } from "@/api";
-import { settings, fileMenu } from "@/components";
-import { InputBox, InputField } from "@/components";
+import api, { cloneRepo, remoteExists } from "@/core/api";
+import { settings, fileMenu } from "@/core/components";
+import { InputBox, InputField } from "@/core/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
-import { validEmail, validURL } from "@/utils";
+import { validEmail, validURL } from "@/core/utils";
 import van, { type State } from "vanjs-core";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =

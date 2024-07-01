@@ -1,12 +1,12 @@
 import { Modal } from "../base";
 import { scrollBlockIntoView, flash } from "./block-utils";
-import api, { Project } from "@/api";
-import { settings } from "@/components";
-import { Checkbox, Copy } from "@/components";
+import api, { Project } from "@/core/api";
+import { settings } from "@/core/components";
+import { Checkbox, Copy } from "@/core/components";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
-import { parseScripts, type ScriptStatus } from "@/scripts";
-import { userSettings } from "@/settings";
+import { parseScripts, type ScriptStatus } from "@/core/diff-indicators";
+import { userSettings } from "@/core/settings";
 import van from "vanjs-core";
 
 const {

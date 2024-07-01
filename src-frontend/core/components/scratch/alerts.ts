@@ -1,5 +1,5 @@
 import { misc, alert, Copy } from "..";
-import type { DeviceCode } from "@/api";
+import type { DeviceCode } from "@/core/api";
 import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
 
@@ -24,7 +24,7 @@ export class ScratchAlert {
   private _buttons: ChildDom[] = [];
   private _timeout?: number;
 
-  constructor(private message: string | ChildDom) {}
+  constructor(private message: string | ChildDom) { }
 
   timeout(ms: number) {
     this._timeout = ms;

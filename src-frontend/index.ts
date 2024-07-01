@@ -1,7 +1,7 @@
-import api, { Project } from "./api";
-import { Styles, createGitMenu } from "./init";
-import { menu, fileMenu, misc, ScratchAlert } from "./components";
-import { showIndicators } from "./diff-indicators";
+import api, { Project } from "./core/api";
+import { Styles, createGitMenu } from "./core/init";
+import { menu, fileMenu, misc, ScratchAlert } from "./core/components";
+import { showIndicators } from "./core/diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
 
@@ -10,10 +10,10 @@ import {
   WelcomeModal,
   DiffModal,
   RepoConfigModal,
-} from "./modals";
-import { Modal } from "./modals/base";
-import { getReactHandlers } from "./utils";
-import { userSettings } from "./settings";
+} from "./core/modals";
+import { Modal } from "./core/modals/base";
+import { getReactHandlers } from "./core/utils";
+import { userSettings } from "./core/settings";
 
 const main = async () => {
   if (!document.querySelector("dialog[is='diff-modal']")) {

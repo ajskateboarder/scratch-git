@@ -7,7 +7,7 @@ import {
   menu,
   settings,
 } from "./components";
-import i18next from "./i18n";
+import i18next from "../i18n";
 import { CommitModal, RepoConfigModal } from "./modals";
 import "./styles.css";
 import van from "vanjs-core";
@@ -90,38 +90,38 @@ const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
  */
 const pullHandler =
   async (project: Project, authed = false) =>
-  async () => {
-    let upassAlert;
+    async () => {
+      let upassAlert;
 
-    if (!authed) {
-      if (await repoIsGitHub(project)) {
-        const auth = new GhAuth();
-        let authAlert: HTMLDivElement | undefined = undefined;
-        auth.addEventListener("devicecode", ({ detail }: any) => {
-          authAlert = GhAuthAlert(detail).display();
-        });
-        auth.addEventListener("login", async () => {
-          authAlert?.remove();
-          auth.close();
-          await pullHandler(project!, true);
-        });
+      if (!authed) {
+        if (await repoIsGitHub(project)) {
+          const auth = new GhAuth();
+          let authAlert: HTMLDivElement | undefined = undefined;
+          auth.addEventListener("devicecode", ({ detail }: any) => {
+            authAlert = GhAuthAlert(detail).display();
+          });
+          auth.addEventListener("login", async () => {
+            authAlert?.remove();
+            auth.close();
+            await pullHandler(project!, true);
+          });
+        }
+
+        // TODO: localize
+        // asking for username and password in the app would look suspicious
+        upassAlert = new ScratchAlert(
+          "Please enter your username and password in the terminal to pull new changes.",
+        )
+          .type("success")
+          .display();
       }
 
-      // TODO: localize
-      // asking for username and password in the app would look suspicious
-      upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to pull new changes.",
-      )
-        .type("success")
-        .display();
-    }
-
-    const message = await project!.pull();
-    upassAlert?.remove();
-    (
-      PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
-    ).display();
-  };
+      const message = await project!.pull();
+      upassAlert?.remove();
+      (
+        PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
+      ).display();
+    };
 
 const PUSH_MESSAGES: Record<
   PushMsg,
@@ -159,35 +159,35 @@ const PUSH_MESSAGES: Record<
  */
 const pushHandler =
   async (project: Project, authed: boolean = false) =>
-  async () => {
-    let upassAlert;
+    async () => {
+      let upassAlert;
 
-    if (!authed) {
-      if (await repoIsGitHub(project)) {
-        const auth = new GhAuth();
-        let authAlert: HTMLDivElement | undefined = undefined;
-        auth.addEventListener("devicecode", ({ detail }: any) => {
-          authAlert = GhAuthAlert(detail).display();
-        });
-        auth.addEventListener("login", async () => {
-          authAlert?.remove();
-          auth.close();
-          await pushHandler(project!, true);
-        });
+      if (!authed) {
+        if (await repoIsGitHub(project)) {
+          const auth = new GhAuth();
+          let authAlert: HTMLDivElement | undefined = undefined;
+          auth.addEventListener("devicecode", ({ detail }: any) => {
+            authAlert = GhAuthAlert(detail).display();
+          });
+          auth.addEventListener("login", async () => {
+            authAlert?.remove();
+            auth.close();
+            await pushHandler(project!, true);
+          });
+        }
+
+        // TODO: localize
+        upassAlert = new ScratchAlert(
+          "Please enter your username and password in the terminal to push your changes.",
+        )
+          .type("success")
+          .display();
       }
 
-      // TODO: localize
-      upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to push your changes.",
-      )
-        .type("success")
-        .display();
-    }
-
-    const message = await project.push();
-    upassAlert?.remove();
-    (await PUSH_MESSAGES[message](project)).display();
-  };
+      const message = await project.push();
+      upassAlert?.remove();
+      (await PUSH_MESSAGES[message](project)).display();
+    };
 
 const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
   [-1]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-add"))

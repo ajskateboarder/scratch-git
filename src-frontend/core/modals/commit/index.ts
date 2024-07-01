@@ -1,7 +1,7 @@
 import { Modal } from "../base";
-import api, { type Commit } from "@/api";
-import { settings } from "@/components";
-import { CommitItem } from "@/components";
+import api, { type Commit } from "@/core/api";
+import { settings } from "@/core/components";
+import { CommitItem } from "@/core/components";
 import i18next from "@/i18n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
@@ -62,9 +62,8 @@ export class CommitModal extends Modal {
       $search: input({
         type: "text",
         style: "border-radius: 5px; width: 50%",
-        class: `${settings.inputField}${
-          Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
-        }`,
+        class: `${settings.inputField}${Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
+          }`,
         placeholder: i18next.t("commit.search-commits"),
       }),
     };

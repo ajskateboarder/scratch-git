@@ -1,7 +1,7 @@
 /** @file Manages creation of Git menu and alerts */
 import { menu } from "../accessors";
 import i18next from "@/i18n";
-import { getReactHandlers } from "@/utils";
+import { getReactHandlers } from "@/core/utils";
 import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
@@ -65,7 +65,7 @@ export const gitMenu = new class {
   private menuInit = false;
   private handlerInit = false;
 
-  constructor() {}
+  constructor() { }
 
   private item(index: number) {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
