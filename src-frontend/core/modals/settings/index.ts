@@ -1,7 +1,7 @@
 import { defaults, userSettings } from "@/core/settings";
 import { Modal } from "../base";
 import van from "vanjs-core";
-import { s, settings } from "@/core/components";
+import { cls, s, settings } from "@/core/components";
 import i18n from "@/i18n";
 
 const { div, label, input, span, h1, p, summary, details, img, button, i } =
@@ -69,7 +69,7 @@ const Highlights = () => {
       },
       "  ",
       input({
-        class: [settings.settingsCheckbox, settings.checkbox].join(" "),
+        class: cls(settings.settingsCheckbox, settings.checkbox),
         style: "pointer-events: auto",
         type: "checkbox",
         onchange: (e: Event) =>
@@ -102,7 +102,7 @@ const PlainText = () => {
       },
       "  ",
       input({
-        class: [settings.settingsCheckbox, settings.checkbox].join(" "),
+        class: cls(settings.settingsCheckbox, settings.checkbox),
         style: "pointer-events: auto",
         type: "checkbox",
         onchange: (e: Event) =>

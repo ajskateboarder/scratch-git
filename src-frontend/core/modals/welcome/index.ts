@@ -1,7 +1,7 @@
 import { Modal } from "../base";
 import thumbnail from "../thumbnail.svg";
 import api, { cloneRepo, remoteExists } from "@/core/api";
-import { settings, fileMenu } from "@/core/components";
+import { settings, fileMenu, cls } from "@/core/components";
 import { InputBox, InputField } from "@/core/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
@@ -77,7 +77,7 @@ export class WelcomeModal extends Modal {
     const goToStep2 = button(
       {
         style: "align-items: right; margin-left: -10px",
-        class: [settings.settingsButton, settings.disabledButton].join(" "),
+        class: cls(settings.settingsButton, settings.disabledButton),
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
@@ -228,7 +228,7 @@ export class WelcomeModal extends Modal {
     const goToStep3 = button(
       {
         style: "align-items: right; margin-left: -10px",
-        class: [settings.settingsButton, settings.disabledButton].join(" "),
+        class: cls(settings.settingsButton, settings.disabledButton),
         disabled: true,
         onclick: async () => {
           this.projectName = Redux.getState().scratchGui.projectTitle;
@@ -280,7 +280,7 @@ export class WelcomeModal extends Modal {
     const goToStep4 = button(
       {
         style: "align-items: right; margin-left: -10px",
-        class: [settings.settingsButton, settings.disabledButton].join(" "),
+        class: cls(settings.settingsButton, settings.disabledButton),
         disabled: true,
         onclick: async () => {
           try {

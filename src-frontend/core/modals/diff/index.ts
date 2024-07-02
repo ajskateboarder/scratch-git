@@ -388,7 +388,6 @@ export class DiffModal extends Modal {
                         activeTabIndex: 0,
                       });
                     }
-                    console.log(window._changedScripts, spriteName);
                     const id = window._changedScripts[spriteName][scriptNo];
                     scrollBlockIntoView(id);
                     flash(getBlockly().getBlockById(id));

@@ -1,6 +1,6 @@
 import { Modal } from "../base";
 import api, { type Commit } from "@/core/api";
-import { settings } from "@/core/components";
+import { cls, settings } from "@/core/components";
 import { CommitItem } from "@/core/components";
 import i18next from "@/i18n";
 import { Redux } from "@/lib";
@@ -48,14 +48,14 @@ export class CommitModal extends Modal {
     this.$ = {
       $newer: button(
         {
-          class: [settings.settingsButton, "round-right-button"].join(" "),
+          class: cls(settings.settingsButton, "round-right-button"),
           disabled: true,
         },
         i18next.t("commit.newer")
       ),
       $older: button(
         {
-          class: [settings.settingsButton, "round-left-button"].join(" "),
+          class: cls(settings.settingsButton, "round-left-button"),
         },
         i18next.t("commit.older")
       ),

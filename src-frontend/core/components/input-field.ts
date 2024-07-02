@@ -1,4 +1,4 @@
-import { settings } from ".";
+import { cls, settings } from ".";
 import van, { PropsWithKnownKeys } from "vanjs-core";
 
 const { p, input } = van.tags;
@@ -12,5 +12,5 @@ export const InputBox = (props: PropsWithKnownKeys<HTMLInputElement>) =>
   input({
     ...props,
     type: "text",
-    class: [settings.inputField, "input-box"].join(" "),
+    class: cls(settings.inputField, "input-box"),
   });

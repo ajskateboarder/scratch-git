@@ -1,6 +1,6 @@
 /** @file Displays indicators and info on sprites that were changed */
 import type { Project, Sprite } from "../api";
-import { misc, s, sprites } from "../components";
+import { s, sprites } from "../components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
 import { SpriteDiff, StageDiff } from "../components";

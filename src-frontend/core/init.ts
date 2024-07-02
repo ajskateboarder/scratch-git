@@ -213,6 +213,7 @@ export const createGitMenu = async (
           .display(),
       commitCreate: async () => {
         const message = await project!.commit();
+        document.querySelector("filter#blocklyStackDiffFilter")?.remove();
         (
           COMMIT_MESSAGES[message as number] ??
           new ScratchAlert(message).type("success").timeout(5000)

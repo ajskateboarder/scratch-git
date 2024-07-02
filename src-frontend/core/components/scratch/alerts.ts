@@ -1,4 +1,4 @@
-import { misc, Copy, s } from "..";
+import { misc, Copy, s, cls } from "..";
 import type { DeviceCode } from "@/core/api";
 import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
@@ -53,7 +53,7 @@ export class ScratchAlert {
 
     const newAlert = div(
       {
-        class: [s("alert_alert"), misc.box, alertType].join(" "),
+        class: cls(s("alert_alert"), misc.box, alertType),
         style: "justify-content: space-between",
       },
       div({ class: s("alert_alert-message") }, this.message),
@@ -61,9 +61,7 @@ export class ScratchAlert {
         { class: s("alert_alert-buttons") },
         div(
           {
-            class: [s("alert_alert-close-button-container"), misc.box].join(
-              " "
-            ),
+            class: cls(s("alert_alert-close-button-container"), misc.box),
             ...(this._buttons.length !== 0 && {
               style: "display: flex; width: 100%; gap: 10px",
             }),
@@ -71,10 +69,10 @@ export class ScratchAlert {
           div(
             {
               ariaLabel: "Close",
-              class: [
+              class: cls(
                 s("close-button_close-button"),
-                s("close-button_large"),
-              ].join(" "),
+                s("close-button_large")
+              ),
               role: "button",
               tabIndex: "0",
               onclick: () => newAlert.remove(),

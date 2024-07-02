@@ -7,6 +7,7 @@ const classNames: string[] = [
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 
+/** Find hashed class names */
 export const s = (className: string) => {
   let _className = classNames.find((e) => e.includes(className))!.split(",")[0];
   if (_className.includes(".")) {
@@ -20,6 +21,9 @@ export const s = (className: string) => {
       [...document.querySelectorAll<T>(`${elem}.${className}`)!] as T[],
   });
 };
+
+/** Join class names into a string */
+export const cls = (...classes: string[]) => classes.join(" ");
 
 export const menu = {
   activeMenuItem: s("menu-bar_active"),

@@ -1,4 +1,4 @@
-import { sprites } from "../accessors";
+import { cls, sprites } from "../accessors";
 import van from "vanjs-core";
 
 const { div, i } = van.tags;
@@ -11,35 +11,35 @@ const BaseDelete = (props: {}, children: HTMLDivElement) =>
       tabIndex: 0,
       ...props,
     },
-    children,
+    children
   );
 
 export const SpriteDiff = (props: {}) =>
   BaseDelete(
     {
-      class: [sprites.delete, sprites.spriteSelDelete, "diff-button"].join(" "),
+      class: cls(sprites.delete, sprites.spriteSelDelete, "diff-button"),
       ...props,
     },
     div(
       { class: sprites.visibleDelete },
       i({
-        class: ["fa-solid", "fa-plus-minus", "fa-lg"].join(" "),
+        class: cls("fa-solid", "fa-plus-minus", "fa-lg"),
         style: "color: white",
-      }),
-    ),
+      })
+    )
   );
 
 export const StageDiff = (props: {}) =>
   BaseDelete(
     {
-      class: [sprites.delete, sprites.spriteSelDelete, "stage-diff"].join(" "),
+      class: cls(sprites.delete, sprites.spriteSelDelete, "stage-diff"),
       ...props,
     },
     div(
       { class: sprites.visibleDelete },
       i({
-        class: ["fa-solid", "fa-plus-minus", "fa-sm"].join(" "),
+        class: cls("fa-solid", "fa-plus-minus", "fa-sm"),
         style: "color: white",
-      }),
-    ),
+      })
+    )
   );

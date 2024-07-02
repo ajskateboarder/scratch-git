@@ -1,4 +1,4 @@
-import { s, settings } from "./accessors";
+import { cls, settings } from "./accessors";
 import van, { PropsWithKnownKeys } from "vanjs-core";
 
 const { div, label, input, span } = van.tags;
@@ -12,7 +12,7 @@ export const Checkbox = (
     label(
       { class: settings.settingsLabel },
       input({
-        class: [settings.settingsCheckbox, settings.checkbox].join(" "),
+        class: cls(settings.settingsCheckbox, settings.checkbox),
         type: "checkbox",
         checked: false,
       }),
