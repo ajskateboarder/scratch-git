@@ -1,7 +1,5 @@
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use super::CostumeChange;
+use std::collections::{HashMap, HashSet};
 
 pub trait ItemGrouping {
     fn method(&self) -> HashMap<String, Vec<String>>;
@@ -40,20 +38,24 @@ impl ItemGrouping for Vec<Vec<String>> {
 }
 
 /// Set-intersection of costume changes because HashSet::intersection sucks
-pub fn intersection<T>(mut sets: Vec<HashSet<T>>) -> HashSet<T>
-where
-    T: Eq + Hash,
-{
+///
+/// Returns costumes present in all sets that have the same costume name and original sprite.
+/// Paths are ignored since they can change on save
+pub fn intersect_costumes(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<CostumeChange> {
     if sets.is_empty() {
         return HashSet::new();
     }
-
     if sets.len() == 1 {
         return sets.pop().unwrap();
     }
 
     let mut result = sets.pop().unwrap();
-    result.retain(|item| sets.iter().all(|set| set.contains(item)));
+    result.retain(|item| {
+        sets.iter().all(|set| {
+            set.iter()
+                .any(|x| x.costume_name == item.costume_name && x.sprite == item.sprite)
+        })
+    });
     result
 }
 

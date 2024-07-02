@@ -98,13 +98,9 @@ impl CmdHandler<'_> {
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
-        self.send_json(json!(git::diff(
-            pth,
-            old_content,
-            new_content,
-            2000
-        )
-        .context(here!())?))?;
+        self.send_json(json!(
+            git::diff(pth, old_content, new_content, 2000).context(here!())?
+        ))?;
 
         Ok(())
     }
@@ -121,13 +117,8 @@ impl CmdHandler<'_> {
             return self.send_json(json!({}));
         };
 
-        let name = Path::new(&file_path)
-            .file_name()
-            .unwrap()
-            .to_os_string();
-        let name = name
-            .to_str()
-            .unwrap();
+        let name = Path::new(&file_path).file_name().unwrap().to_os_string();
+        let name = name.to_str().unwrap();
 
         let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
@@ -172,14 +163,9 @@ impl CmdHandler<'_> {
 
         config.save();
 
-        let project_to_extract = &config.projects[project_path
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()];
-        let target_dir = PathBuf::from(Path::new(
-            &project_to_extract["base"].as_str().unwrap(),
-        ));
+        let project_to_extract =
+            &config.projects[project_path.file_name().unwrap().to_str().unwrap()];
+        let target_dir = PathBuf::from(Path::new(&project_to_extract["base"].as_str().unwrap()));
 
         extract(
             fs::File::open(Path::new(
@@ -369,9 +355,7 @@ impl CmdHandler<'_> {
         let target_dir = &PathBuf::from(Path::new(&pth));
         extract(
             fs::File::open(Path::new(
-                &projects[project_name]["project_file"]
-                    .as_str()
-                    .unwrap(),
+                &projects[project_name]["project_file"].as_str().unwrap(),
             ))?,
             target_dir.to_path_buf(),
         )?;

@@ -16,7 +16,7 @@ use regex_static::{once_cell::sync::Lazy, Regex};
 use serde_json::{Map, Value};
 
 use crate::git;
-use vec_utils::{group_items, intersection};
+use vec_utils::{group_items, intersect_costumes};
 
 static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
 
@@ -61,25 +61,26 @@ impl Diff {
         let mut added = self.costumes(new);
         let mut removed = new.costumes(self);
 
-        let _m1 = added
-            .iter()
-            .map(|x| x.to_owned())
-            .collect::<HashSet<_>>();
+        let _m1 = added.iter().map(|x| x.to_owned()).collect::<HashSet<_>>();
         let _m2 = removed
             .iter()
             .map(|x| x.to_owned())
             .collect::<HashSet<_>>()
             .to_owned();
 
-        let merged = intersection(vec![_m1, _m2]);
+        let merged = intersect_costumes(vec![_m1, _m2]);
+
+        let they_match = |a: &CostumeChange, b: &CostumeChange| {
+            a.costume_name == b.costume_name && a.sprite == b.sprite
+        };
 
         for item in &merged {
-            if let Some(pos) = added.iter().position(|x| x == item) {
+            if let Some(pos) = added.iter().position(|x| they_match(x, item)) {
                 added.remove(pos);
             }
         }
         for item in &merged {
-            if let Some(pos) = removed.iter().position(|x| x == item) {
+            if let Some(pos) = removed.iter().position(|x| they_match(x, item)) {
                 removed.remove(pos);
             }
         }
@@ -369,6 +370,7 @@ impl Diff {
         let added = self.format_costumes(costume_changes.added, "add");
         let removed = self.format_costumes(costume_changes.removed, "remove");
         let merged = self.format_costumes(costume_changes.merged, "modify");
+        dbg!(&added, &removed, &merged, &blocks);
 
         let _commits = [blocks, added, removed, merged].concat();
 
