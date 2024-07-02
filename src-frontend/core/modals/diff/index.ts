@@ -9,22 +9,7 @@ import { parseScripts, type ScriptStatus } from "@/core/diff-indicators";
 import { userSettings } from "@/core/settings";
 import van from "vanjs-core";
 
-const {
-  div,
-  span,
-  ul,
-  button,
-  p,
-  pre,
-  aside,
-  main,
-  br,
-  hr,
-  i,
-  li,
-  label,
-  input,
-} = van.tags;
+const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
 
 const DiffIcon = {
   added: "fa-solid fa-square-plus",
@@ -65,7 +50,6 @@ export class DiffModal extends Modal {
     $commits: HTMLParagraphElement;
     $highlights: HTMLInputElement;
     $plainText: HTMLInputElement;
-    $highlightColor: HTMLInputElement;
   };
 
   private previousScripts: any;
@@ -82,20 +66,10 @@ export class DiffModal extends Modal {
 
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
-    const highlightColor = div(
-      { class: settings.settingsLabel },
-      label(
-        { class: settings.settingsLabel, style: "margin-left: 0.5rem" },
-        "  ",
-        input({ class: settings.settingsCheckbox, type: "color" }),
-        span(" ", "Highlight")
-      )
-    );
 
     const closeButton = button(
       {
-        id: "closeButton",
-        class: [settings.settingsButton, "close-button"].join(" "),
+        class: settings.settingsButton,
         onclick: () => {
           useHighlights.querySelector("input")!.checked = false;
           plainText.querySelector("input")!.checked = false;
@@ -105,14 +79,24 @@ export class DiffModal extends Modal {
       i({ class: "fa-solid fa-xmark" })
     );
 
+    const highlightButton = button(
+      {
+        class: settings.settingsButton,
+        onclick: () => {},
+      },
+      i({ class: "fa-solid fa-palette" })
+    );
+
     const commits = p(
       { id: "commits" },
       span(
-        { style: "display: flex; user-select: none; flex-flow: wrap" },
+        {
+          style:
+            "display: flex; user-select: none; flex-flow: wrap; align-items: center",
+        },
         useHighlights,
         plainText,
-        highlightColor,
-        closeButton
+        span({ class: "button-group" }, highlightButton, closeButton)
       ),
       hr(),
       br(),
@@ -128,7 +112,6 @@ export class DiffModal extends Modal {
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
       $commits: commits.querySelector(".commit-wrap")!,
-      $highlightColor: highlightColor.querySelector("input")!
     };
 
     van.add(
@@ -153,8 +136,8 @@ export class DiffModal extends Modal {
         const fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-            ? "red"
-            : "grey";
+          ? "red"
+          : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
             "path,g,rect"
@@ -188,12 +171,13 @@ export class DiffModal extends Modal {
       let highlights = content.split("\n").map((e, i) =>
         span(
           {
-            style: `background-color: rgba(${e.startsWith("-")
-              ? "255,0,0,0.5"
-              : e.startsWith("+")
+            style: `background-color: rgba(${
+              e.startsWith("-")
+                ? "255,0,0,0.5"
+                : e.startsWith("+")
                 ? "0,255,0,0.5"
                 : "0,0,0,0"
-              })`,
+            })`,
           },
           i == 0 ? e.trimStart() : e
         )
@@ -240,7 +224,7 @@ export class DiffModal extends Modal {
     script = 0,
     cached = false
   ) {
-    const { $commits, $highlights, $plainText, $scripts, $highlightColor } = this.$;
+    const { $commits, $highlights, $plainText, $scripts } = this.$;
 
     // try again in case of undefined
     if (!project) project = api.getCurrentProject();
@@ -301,7 +285,7 @@ export class DiffModal extends Modal {
             .forEach((element) => {
               const darkFill =
                 DarkBlocks[
-                element.classList.item(0) as keyof typeof DarkBlocks
+                  element.classList.item(0) as keyof typeof DarkBlocks
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -312,7 +296,7 @@ export class DiffModal extends Modal {
             .forEach((element) => {
               const darkFill =
                 DarkBlocks[
-                element.classList.item(0) as keyof typeof DarkBlocks
+                  element.classList.item(0) as keyof typeof DarkBlocks
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -390,8 +374,6 @@ export class DiffModal extends Modal {
       this.setDiffTheme(uiTheme);
     };
 
-    $highlightColor.onchange = () => userSettings.scriptColor = $highlightColor.value;
-
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
       const diffButton = li(
@@ -401,27 +383,27 @@ export class DiffModal extends Modal {
           `Script ${diff.scriptNo}`,
           diff.status === "modified" || diff.status === "added"
             ? button(
-              {
-                class: `${settings.settingsButton} open-script`,
-                onclick: async (e: Event) => {
-                  e.stopPropagation();
-                  this.close();
-                  if (
-                    Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
-                  ) {
-                    Redux.dispatch({
-                      type: "scratch-gui/navigation/ACTIVATE_TAB",
-                      activeTabIndex: 0,
-                    });
-                  }
-                  console.log(window._changedScripts, spriteName);
-                  const id = window._changedScripts[spriteName][scriptNo];
-                  scrollBlockIntoView(id);
-                  flash(getBlockly().getBlockById(id));
+                {
+                  class: `${settings.settingsButton} open-script`,
+                  onclick: async (e: Event) => {
+                    e.stopPropagation();
+                    this.close();
+                    if (
+                      Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
+                    ) {
+                      Redux.dispatch({
+                        type: "scratch-gui/navigation/ACTIVATE_TAB",
+                        activeTabIndex: 0,
+                      });
+                    }
+                    console.log(window._changedScripts, spriteName);
+                    const id = window._changedScripts[spriteName][scriptNo];
+                    scrollBlockIntoView(id);
+                    flash(getBlockly().getBlockById(id));
+                  },
                 },
-              },
-              i({ class: "fa-solid fa-up-right-from-square" })
-            )
+                i({ class: "fa-solid fa-up-right-from-square" })
+              )
             : undefined
         )
       );
@@ -465,7 +447,6 @@ export class DiffModal extends Modal {
 
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
-    $highlightColor.value = userSettings.scriptColor;
 
     $plainText.onchange(new Event("init"));
     $highlights.onchange(new Event("init"));

@@ -1,7 +1,8 @@
 dialog[is="diff-modal"],
 dialog[is="commit-modal"],
 dialog[is="welcome-modal"],
-dialog[is="repo-config-modal"] {
+dialog[is="repo-config-modal"],
+dialog[is="settings-modal"] {
   height: 50%;
   width: 50%;
   max-height: 100%;
@@ -17,7 +18,8 @@ dialog[is="repo-config-modal"] {
 }
 
 dialog[is="commit-modal"],
-dialog[is="repo-config-modal"] {
+dialog[is="repo-config-modal"],
+dialog[is="settings-modal"] {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -33,9 +35,11 @@ html[style*="--ui-primary: #111111"] .alert-button {
 dialog[is="diff-modal"] {
   padding: 0;
 
-  .close-button {
+  .button-group {
     padding: 0 1rem;
     margin-left: auto;
+    gap: 10px;
+    display: flex;
     margin-right: 10px;
   }
 }
@@ -53,9 +57,7 @@ dialog[is="welcome-modal"] {
 }
 
 .sprite-diff {
-  transition:
-    scale 0.15 ease-out,
-    box-shadow 0.15 ease-out;
+  transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0px 0px 0px 2px var(--looks-transparent);

@@ -3,6 +3,7 @@ export default {
     push: "Push",
     pull: "Pull",
     commit: "Commit",
+    settings: "Settings",
     "setup-repo": "Setup repository",
     "view-commits": "View commits",
     "repo-needed": "Please set up a repository to use this!",

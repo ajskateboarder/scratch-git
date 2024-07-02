@@ -1,5 +1,5 @@
 /** @file Manages creation of Git menu and alerts */
-import { menu } from "../accessors";
+import { menu, s } from "../accessors";
 import i18next from "@/i18n";
 import { getReactHandlers } from "@/core/utils";
 import van, { ChildDom } from "vanjs-core";
@@ -17,7 +17,7 @@ export const fileMenu = new class {
   }
 
   private updateMenu() {
-    this.menu = menu.menuItem.selectAll<HTMLDivElement>("div")[1];
+    this.menu = s("menu-bar_menu-bar-item").selectAll<HTMLDivElement>("div")[1];
     this.events = getReactHandlers(this.menu);
   }
 
@@ -94,8 +94,9 @@ export const gitMenu = new class {
    * @param push - handler to push code to remote
    * @param pull - handler to pull code from remote
    * @param repoConfig - handler to configure repo
+   * @param settings - handle to change settings
    * @param commitView - handler to view commits
-   * @param commitCreate - handler to create commit
+   * @param commitCreate - handler to create commits
    */
   create(
     {
@@ -104,13 +105,8 @@ export const gitMenu = new class {
       repoConfig,
       commitView,
       commitCreate,
-    }: {
-      push: () => any;
-      pull: () => any;
-      repoConfig: () => any;
-      commitView: () => any;
-      commitCreate: () => any;
-    },
+      settings
+    }: Record<string, () => any>,
     locale: string | undefined
   ) {
     if (this.menuInit && !locale) return;
@@ -141,17 +137,21 @@ export const gitMenu = new class {
     this.item(1).label(
       span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
     );
-    this.item(1).classList.add("push-button");
     this.item(1).onclick(push);
+
     this.item(2).label(
       span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
     );
-    this.item(2).classList.add("pull-button");
     this.item(2).onclick(pull);
-    this.item(3).label(
+
+    this.item(5).label(
       span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo"))
     );
-    this.item(3).onclick(repoConfig);
+    this.item(5).onclick(repoConfig);
+
+    this.item(3).label(span(i({class: "fa-solid fa-check"}), " ", i18next.t("menu.commit")));
+    this.item(3).onclick(commitCreate);
+
     this.item(4).label(
       span(
         i({ class: "fa-solid fa-code-commit" }),
@@ -160,10 +160,13 @@ export const gitMenu = new class {
       )
     );
     this.item(4).onclick(commitView);
-    this.item(5).remove();
-    this.item(5).label(i18next.t("menu.commit"));
-    this.item(5).onclick(commitCreate);
+
     this.item(6).remove();
+    this.item(6).label(span(i({ class: "fa-solid fa-cog" }), " ", i18next.t("menu.settings")))
+    this.item(6).onclick(settings);
+    this.item(6).classList.remove(menu.section);
+
+    this.item(5).classList.add(menu.section);
 
     this.handlerInit = true;
 
@@ -217,5 +220,3 @@ export const gitMenu = new class {
     }
   }
 };
-
-(window as any).fileMenu = fileMenu;

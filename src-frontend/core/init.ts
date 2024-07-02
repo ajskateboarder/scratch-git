@@ -1,15 +1,9 @@
 /** @file Initializes the Git menu handlers and styles */
 import { GhAuth, PullMsg, Project, PushMsg } from "./api";
-import {
-  GhAuthAlert,
-  ScratchAlert,
-  gitMenu,
-  menu,
-  settings,
-} from "./components";
+import { GhAuthAlert, ScratchAlert, gitMenu, s, settings } from "./components";
 import i18next from "../i18n";
 import { CommitModal, RepoConfigModal } from "./modals";
-import "./styles.css";
+
 import van from "vanjs-core";
 import { repoIsGitHub } from "./utils";
 
@@ -19,6 +13,7 @@ import diffStyles from "./modals/diff/styles.css";
 import repoConfigStyles from "./modals/repo-config/styles.css";
 import welcomeStyles from "./modals/welcome/styles.css";
 import commitStyles from "./modals/commit/styles.css";
+import settingsStyles from "./modals/settings/styles.css";
 
 const { link, style, button, i } = van.tags;
 
@@ -31,7 +26,7 @@ export const Styles = () => {
         cursor: default;
       }
 
-      .${menu.menuHoverable}[disabled] {
+      .${s("menu_hoverable")}[disabled] {
         pointer-events: none;
         opacity: 0.5;
       }`;
@@ -61,21 +56,22 @@ export const Styles = () => {
       ${repoConfigStyles}
       ${welcomeStyles}
       ${commitStyles}
-      `,
+      ${settingsStyles}
+      `
     ),
   ];
 };
 
 const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
   "unrelated histories": new ScratchAlert(
-    i18next.t("alerts.unrelated-changes"),
+    i18next.t("alerts.unrelated-changes")
   ).type("error"),
   success: new ScratchAlert(i18next.t("alerts.pull-success"))
     .type("success")
     .buttons([
       button(
         { class: "alert-button", onclick: () => location.reload() },
-        i({ class: "fa-solid fa-rotate-right" }),
+        i({ class: "fa-solid fa-rotate-right" })
       ),
     ]),
   "nothing new": new ScratchAlert(i18next.t("alerts.no-changes"))
@@ -90,38 +86,38 @@ const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
  */
 const pullHandler =
   async (project: Project, authed = false) =>
-    async () => {
-      let upassAlert;
+  async () => {
+    let upassAlert;
 
-      if (!authed) {
-        if (await repoIsGitHub(project)) {
-          const auth = new GhAuth();
-          let authAlert: HTMLDivElement | undefined = undefined;
-          auth.addEventListener("devicecode", ({ detail }: any) => {
-            authAlert = GhAuthAlert(detail).display();
-          });
-          auth.addEventListener("login", async () => {
-            authAlert?.remove();
-            auth.close();
-            await pullHandler(project!, true);
-          });
-        }
-
-        // TODO: localize
-        // asking for username and password in the app would look suspicious
-        upassAlert = new ScratchAlert(
-          "Please enter your username and password in the terminal to pull new changes.",
-        )
-          .type("success")
-          .display();
+    if (!authed) {
+      if (await repoIsGitHub(project)) {
+        const auth = new GhAuth();
+        let authAlert: HTMLDivElement | undefined = undefined;
+        auth.addEventListener("devicecode", ({ detail }: any) => {
+          authAlert = GhAuthAlert(detail).display();
+        });
+        auth.addEventListener("login", async () => {
+          authAlert?.remove();
+          auth.close();
+          await pullHandler(project!, true);
+        });
       }
 
-      const message = await project!.pull();
-      upassAlert?.remove();
-      (
-        PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
-      ).display();
-    };
+      // TODO: localize
+      // asking for username and password in the app would look suspicious
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to pull new changes."
+      )
+        .type("success")
+        .display();
+    }
+
+    const message = await project!.pull();
+    upassAlert?.remove();
+    (
+      PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
+    ).display();
+  };
 
 const PUSH_MESSAGES: Record<
   PushMsg,
@@ -136,14 +132,14 @@ const PUSH_MESSAGES: Record<
             class: "alert-button",
             onclick: await pullHandler(project!),
           },
-          "Pull",
+          "Pull"
         ),
       ]),
   success: async (project) =>
     new ScratchAlert(
       i18next.t("alerts.push-success", {
         url: (await project!.getDetails()).repository,
-      }),
+      })
     )
       .type("success")
       .timeout(5000),
@@ -159,42 +155,42 @@ const PUSH_MESSAGES: Record<
  */
 const pushHandler =
   async (project: Project, authed: boolean = false) =>
-    async () => {
-      let upassAlert;
+  async () => {
+    let upassAlert;
 
-      if (!authed) {
-        if (await repoIsGitHub(project)) {
-          const auth = new GhAuth();
-          let authAlert: HTMLDivElement | undefined = undefined;
-          auth.addEventListener("devicecode", ({ detail }: any) => {
-            authAlert = GhAuthAlert(detail).display();
-          });
-          auth.addEventListener("login", async () => {
-            authAlert?.remove();
-            auth.close();
-            await pushHandler(project!, true);
-          });
-        }
-
-        // TODO: localize
-        upassAlert = new ScratchAlert(
-          "Please enter your username and password in the terminal to push your changes.",
-        )
-          .type("success")
-          .display();
+    if (!authed) {
+      if (await repoIsGitHub(project)) {
+        const auth = new GhAuth();
+        let authAlert: HTMLDivElement | undefined = undefined;
+        auth.addEventListener("devicecode", ({ detail }: any) => {
+          authAlert = GhAuthAlert(detail).display();
+        });
+        auth.addEventListener("login", async () => {
+          authAlert?.remove();
+          auth.close();
+          await pushHandler(project!, true);
+        });
       }
 
-      const message = await project.push();
-      upassAlert?.remove();
-      (await PUSH_MESSAGES[message](project)).display();
-    };
+      // TODO: localize
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to push your changes."
+      )
+        .type("success")
+        .display();
+    }
+
+    const message = await project.push();
+    upassAlert?.remove();
+    (await PUSH_MESSAGES[message](project)).display();
+  };
 
 const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
   [-1]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-add"))
     .type("warn")
     .timeout(5000),
   [-2]: new ScratchAlert(i18next.t("alerts.commit.identity-needed")).type(
-    "error",
+    "error"
   ),
   [-3]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-commit"))
     .type("warn")
@@ -209,7 +205,7 @@ const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
  */
 export const createGitMenu = async (
   project: Project,
-  changeLocale?: string,
+  changeLocale?: string
 ) => {
   gitMenu.create(
     {
@@ -231,8 +227,13 @@ export const createGitMenu = async (
           .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
           .display();
       },
+      settings: () => {
+        document
+          .querySelector<RepoConfigModal>("dialog[is='settings-modal']")!
+          .display();
+      },
     },
-    changeLocale,
+    changeLocale
   );
   gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

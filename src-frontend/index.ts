@@ -1,6 +1,6 @@
 import api, { Project } from "./core/api";
 import { Styles, createGitMenu } from "./core/init";
-import { menu, fileMenu, misc, ScratchAlert } from "./core/components";
+import { fileMenu, misc, ScratchAlert, s } from "./core/components";
 import { showIndicators } from "./core/diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
@@ -10,6 +10,7 @@ import {
   WelcomeModal,
   DiffModal,
   RepoConfigModal,
+  SettingsModal,
 } from "./core/modals";
 import { Modal } from "./core/modals/base";
 import { getReactHandlers } from "./core/utils";
@@ -26,10 +27,15 @@ const main = async () => {
       customElements.define("repo-config-modal", RepoConfigModal, {
         extends: "dialog",
       });
-    } catch { }
+      customElements.define("settings-modal", SettingsModal, {
+        extends: "dialog",
+      });
+    } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`,
+      `#app > div > div.${s("gui_menu-bar-position")}.${s(
+        "menu-bar_menu-bar"
+      )} > div.${s("menu-bar_main-menu")} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
 
@@ -43,7 +49,10 @@ const main = async () => {
           ></dialog>
           <dialog
           is="repo-config-modal"
-        ></dialog>`;
+          ></dialog>
+          <dialog
+          is="settings-modal"
+          ></dialog>`;
   }
 
   const displayDiffs = async (project: Project) => {
@@ -137,6 +146,9 @@ const main = async () => {
                   .refresh();
                 document
                   .querySelector<Modal>("dialog[is=commit-modal]")!
+                  .refresh();
+                document
+                  .querySelector<Modal>("dialog[is=settings-modal]")!
                   .refresh();
               }, 100);
             };

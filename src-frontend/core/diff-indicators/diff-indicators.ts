@@ -1,6 +1,6 @@
 /** @file Displays indicators and info on sprites that were changed */
 import type { Project, Sprite } from "../api";
-import { misc, sprites } from "../components";
+import { misc, s, sprites } from "../components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
 import { SpriteDiff, StageDiff } from "../components";
@@ -24,7 +24,7 @@ const changedBlocklyScripts = async (
   sprite: Sprite,
   loadedJSON: any,
   previousScripts: any,
-  currentScripts: any,
+  currentScripts: any
 ) => {
   if (sprite === undefined) {
     console.warn("provided sprite for diffing was undefined");
@@ -33,11 +33,11 @@ const changedBlocklyScripts = async (
 
   const topLevels = () => {
     const target = loadedJSON.targets.find((e: any) =>
-      spriteName.includes("(stage)") ? e.isStage : e.name === spriteName,
+      spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
     );
 
     return Object.keys(target.blocks).filter(
-      (k) => target.blocks[k].parent === null,
+      (k) => target.blocks[k].parent === null
     );
   };
 
@@ -47,7 +47,7 @@ const changedBlocklyScripts = async (
   const diffs = await parseScripts(
     projectName,
     previousScripts,
-    currentScripts,
+    currentScripts
   );
 
   return diffs
@@ -58,12 +58,13 @@ const changedBlocklyScripts = async (
 const highlightChanged = async (
   project: Project,
   sprite: Sprite | undefined,
-  loadedJSON: any,
+  loadedJSON: any
 ) => {
   // diff highlight filter for scripts
   document.querySelector("filter#blocklyStackDiffFilter")?.remove();
-  document.querySelector(".blocklySvg defs")!.innerHTML +=
-    `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
+  document.querySelector(
+    ".blocklySvg defs"
+  )!.innerHTML += `<filter id="blocklyStackDiffFilter" height="160%" width="180%" y="-30%" x="-40%">
     <feGaussianBlur in="SourceGraphic" stdDeviation="4"></feGaussianBlur>
     <feComponentTransfer result="outBlur">
       <feFuncA type="table" tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"></feFuncA>
@@ -89,12 +90,12 @@ const highlightChanged = async (
     sprite,
     loadedJSON,
     previousScripts,
-    currentScripts,
+    currentScripts
   );
 
   console.debug(
     `received following for sprite ${sprite.format()}`,
-    changedScripts,
+    changedScripts
   );
 
   if (changedScripts === undefined || changedScripts.length === 0) {
@@ -123,7 +124,9 @@ const nameOfSprite = (element: HTMLElement) =>
  */
 export const showIndicators = async (project: Project) => {
   const changedSprites = await project.getChangedSprites(),
-    editorSprites = [...sprites.sprites.select().children] as HTMLElement[],
+    editorSprites = [
+      ...s("sprite-selector_items-wrapper").select().children,
+    ] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
 
   editorSprites.forEach((sprite) => {
@@ -189,7 +192,7 @@ export const showIndicators = async (project: Project) => {
             childList: true,
             subtree: true,
           });
-        }),
+        })
       );
 
       diffButton.style.marginTop =
@@ -198,7 +201,7 @@ export const showIndicators = async (project: Project) => {
       await highlightChanged(
         project,
         changedSprites.find((e) => e.name === spriteName)!,
-        loadedJSON,
+        loadedJSON
       );
     });
   });
@@ -253,14 +256,18 @@ export const showIndicators = async (project: Project) => {
 
   // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {
-    if ((mutation.target as HTMLElement).classList.contains(misc.selectedTab)) {
+    if (
+      (mutation.target as HTMLElement).classList.contains(
+        s("react-tabs_react-tabs__tab--selected")
+      )
+    ) {
       const selectedSprite = sprites.selectedSprite.select<HTMLDivElement>();
       const sprite_ = selectedSprite
         ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
         : STAGE;
       await highlightChanged(project, sprite_, loadedJSON);
     }
-  }).observe(misc.tabList.select().firstChild!, {
+  }).observe(s("react-tabs_react-tabs__tab-list").select().firstChild!, {
     attributes: true,
     attributeFilter: ["class"],
   });
