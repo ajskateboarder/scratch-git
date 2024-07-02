@@ -161,7 +161,6 @@ export class SettingsModal extends Modal {
       "Reset to defaults"
     );
 
-    console.log(userSettings);
     scInput.value = userSettings.scriptColor;
     hlInput.checked = userSettings.highlights;
     ptInput.checked = userSettings.plainText;

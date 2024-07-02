@@ -17,7 +17,7 @@ import settingsStyles from "./modals/settings/styles.css";
 
 const { link, style, button, i } = van.tags;
 
-/** Packages our styles and external dependencies */
+/** Packages styles and external dependencies */
 export const Styles = () => {
   const disabledVersions = `
       .${settings.settingsButton}[disabled] {
