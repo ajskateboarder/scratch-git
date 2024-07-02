@@ -13,7 +13,6 @@ import diffStyles from "./modals/diff/styles.css";
 import repoConfigStyles from "./modals/repo-config/styles.css";
 import welcomeStyles from "./modals/welcome/styles.css";
 import commitStyles from "./modals/commit/styles.css";
-import settingsStyles from "./modals/settings/styles.css";
 
 const { link, style, button, i } = van.tags;
 
@@ -56,7 +55,6 @@ export const Styles = () => {
       ${repoConfigStyles}
       ${welcomeStyles}
       ${commitStyles}
-      ${settingsStyles}
       `
     ),
   ];
@@ -101,15 +99,15 @@ const pullHandler =
           auth.close();
           await pullHandler(project!, true);
         });
+      } else {
+        // TODO: localize
+        // asking for username and password in the app would look suspicious
+        upassAlert = new ScratchAlert(
+          "Please enter your username and password in the terminal to pull new changes."
+        )
+          .type("success")
+          .display();
       }
-
-      // TODO: localize
-      // asking for username and password in the app would look suspicious
-      upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to pull new changes."
-      )
-        .type("success")
-        .display();
     }
 
     const message = await project!.pull();
@@ -170,14 +168,14 @@ const pushHandler =
           auth.close();
           await pushHandler(project!, true);
         });
+      } else {
+        // TODO: localize
+        upassAlert = new ScratchAlert(
+          "Please enter your username and password in the terminal to push your changes."
+        )
+          .type("success")
+          .display();
       }
-
-      // TODO: localize
-      upassAlert = new ScratchAlert(
-        "Please enter your username and password in the terminal to push your changes."
-      )
-        .type("success")
-        .display();
     }
 
     const message = await project.push();

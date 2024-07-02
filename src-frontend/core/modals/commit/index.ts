@@ -6,11 +6,11 @@ import i18next from "@/i18n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 
-const { h1, button, input, div, span, br, main } = van.tags;
+const { h1, button, input, div, span, br, main, i } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
-    list.splice(0, length),
+    list.splice(0, length)
   );
 
 /** Displays a log of all commits to a Git project */
@@ -36,7 +36,7 @@ export class CommitModal extends Modal {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      i18next.t("close"),
+      i({ class: "fa-solid fa-xmark" })
     );
 
     this.state = {
@@ -51,19 +51,20 @@ export class CommitModal extends Modal {
           class: [settings.settingsButton, "round-right-button"].join(" "),
           disabled: true,
         },
-        i18next.t("commit.newer"),
+        i18next.t("commit.newer")
       ),
       $older: button(
         {
           class: [settings.settingsButton, "round-left-button"].join(" "),
         },
-        i18next.t("commit.older"),
+        i18next.t("commit.older")
       ),
       $search: input({
         type: "text",
         style: "border-radius: 5px; width: 50%",
-        class: `${settings.inputField}${Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
-          }`,
+        class: `${settings.inputField}${
+          Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
+        }`,
         placeholder: i18next.t("commit.search-commits"),
       }),
     };
@@ -78,31 +79,23 @@ export class CommitModal extends Modal {
           } else {
             return CommitItem(e, "");
           }
-        }),
-      ),
+        })
+      )
     );
 
     van.add(
       this,
       main(
         { id: "commitList" },
-        h1(i18next.t("commit.commits")),
+        h1({ class: "header" }, i18next.t("commit.commits"), closeButton),
         div(
           { class: "pagination" },
           span(this.$.$newer, this.$.$older),
-          this.$.$search,
+          this.$.$search
         ),
         br(),
-        commitGroup,
-        br(),
-        div(
-          {
-            class: "bottom-bar",
-            style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
-          },
-          closeButton,
-        ),
-      ),
+        commitGroup
+      )
     );
   }
 
@@ -127,9 +120,9 @@ export class CommitModal extends Modal {
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val),
+              e.subject.includes(this.state.searchQuery.val)
           ),
-        40,
+        40
       )[page];
       $older.disabled = page === commits.length - 1;
       $newer.disabled = page !== commits.length - 1;
@@ -147,9 +140,9 @@ export class CommitModal extends Modal {
           .filter(
             (e) =>
               this.state.searchQuery.val !== "" ||
-              e.subject.includes(this.state.searchQuery.val),
+              e.subject.includes(this.state.searchQuery.val)
           ),
-        40,
+        40
       )[page];
       $newer.disabled = page === 0;
       $older.disabled = page !== 0;

@@ -169,7 +169,7 @@ export class SettingsModal extends Modal {
       this,
       div(
         { class: "settings-wrapper" },
-        h1({ class: "settings-header" }, "Settings", closeButton),
+        h1({ class: "header" }, "Settings", closeButton),
         p(
           { style: "color: var(--ui-modal-foreground)" },
           scriptColor,

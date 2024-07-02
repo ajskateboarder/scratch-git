@@ -94,3 +94,9 @@ dialog[is="welcome-modal"] {
     border-radius: 5px;
   }
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

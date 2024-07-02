@@ -79,14 +79,6 @@ export class DiffModal extends Modal {
       i({ class: "fa-solid fa-xmark" })
     );
 
-    const highlightButton = button(
-      {
-        class: settings.settingsButton,
-        onclick: () => {},
-      },
-      i({ class: "fa-solid fa-palette" })
-    );
-
     const commits = p(
       { id: "commits" },
       span(
@@ -96,7 +88,7 @@ export class DiffModal extends Modal {
         },
         useHighlights,
         plainText,
-        span({ class: "button-group" }, highlightButton, closeButton)
+        span({ class: "button-group" }, closeButton)
       ),
       hr(),
       br(),
