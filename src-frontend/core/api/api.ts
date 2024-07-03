@@ -21,18 +21,18 @@ export interface GitDetails {
   repository: string;
 }
 
-interface ProjectCreationDetails {
-  username: string;
-  email: string;
-  projectPath: string;
-}
-
-interface CostumeChanges {
+export interface CostumeChange {
   costumeName: string;
   costumePath: string;
   onStage: boolean;
   sprite: string;
-  format(): string;
+  contents: number[];
+}
+
+interface ProjectCreationDetails {
+  username: string;
+  email: string;
+  projectPath: string;
 }
 
 export type PullMsg = "success" | "nothing new" | "unrelated histories";
@@ -141,7 +141,7 @@ export class Project extends Socket {
 
   // LINK src-server/handlers.rs#get-changed-costumes
   async getChangedCostumes(): Promise<
-    Record<string, Record<string, CostumeChanges[]>>
+    Record<string, Record<string, CostumeChange[]>>
   > {
     return (
       await this.request({

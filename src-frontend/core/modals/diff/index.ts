@@ -1,6 +1,6 @@
 import { Modal } from "../base";
 import { scrollBlockIntoView, flash } from "./block-utils";
-import api, { Project } from "@/core/api";
+import api, { CostumeChange, Project } from "@/core/api";
 import { settings } from "@/core/components";
 import { Checkbox, Copy } from "@/core/components";
 import { Redux, scratchblocks } from "@/lib";
@@ -9,7 +9,8 @@ import { parseScripts, type ScriptStatus } from "@/core/diff-indicators";
 import { userSettings } from "@/core/settings";
 import van from "vanjs-core";
 
-const { div, span, ul, button, p, pre, aside, main, br, hr, i, li } = van.tags;
+const { div, span, ul, button, p, pre, aside, main, br, hr, i, li, img } =
+  van.tags;
 
 const DiffIcon = {
   added: "fa-solid fa-square-plus",
@@ -43,6 +44,9 @@ interface Diff {
   diffed: string;
 }
 
+const toDataURI = (ext: string, content: string) =>
+  `data:image/${ext === "svg" ? "svg+xml" : ext};base64,${btoa(content)}`;
+
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
   private $!: {
@@ -54,6 +58,7 @@ export class DiffModal extends Modal {
 
   private previousScripts: any;
   private currentScripts: any;
+  private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
 
@@ -230,10 +235,12 @@ export class DiffModal extends Modal {
       ) {
         this.previousScripts = await project.getPreviousScripts(spriteName);
         this.currentScripts = await project.getCurrentScripts(spriteName);
+        this.costumeChanges = await project.getChangedCostumes();
       }
     } else {
       this.previousScripts = await project.getPreviousScripts(spriteName);
       this.currentScripts = await project.getCurrentScripts(spriteName);
+      this.costumeChanges = await project.getChangedCostumes();
     }
     oldScripts = this.previousScripts;
     newScripts = this.currentScripts;
@@ -243,7 +250,7 @@ export class DiffModal extends Modal {
       oldScripts,
       newScripts
     );
-    const costumeDiffs = (await project.getChangedCostumes())[spriteName];
+    const costumeDiffs = this.costumeChanges[spriteName];
 
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
@@ -367,8 +374,6 @@ export class DiffModal extends Modal {
       this.setDiffTheme(uiTheme);
     };
 
-    let lastScriptNo = 1;
-
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
       const diffButton = li(
@@ -426,52 +431,83 @@ export class DiffModal extends Modal {
       }
 
       $scripts.appendChild(diffButton);
-      lastScriptNo = scriptNo;
     });
 
-    lastScriptNo = lastScriptNo === 0 ? 1 : lastScriptNo;
+    let lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
 
-    Object.entries(costumeDiffs).forEach(([costumeName, changes], _costNo) => {
-      if (changes.length !== 2) return;
-      const costNo = lastScriptNo + _costNo;
+    if (costumeDiffs)
+      Object.entries(costumeDiffs).forEach(
+        ([costumeName, changes], _costNo) => {
+          if (changes.length !== 2) return;
+          const costNo = lastScriptNo + _costNo;
 
-      const diffButton = li(
-        button(
-          { class: "tab-btn" },
-          // i({ class: `${DiffIcon[diff.status]} change-icon` }),
-          `Costume ${costumeName}`
-        )
+          const diffButton = li(
+            button(
+              { class: "tab-btn" },
+              // i({ class: `${DiffIcon[diff.status]} change-icon` }),
+              `Costume ${costumeName}`
+            )
+          );
+
+          const btnRef = diffButton.querySelector("button")!;
+          btnRef.setAttribute("script-no", costNo.toString());
+          btnRef.setAttribute("diff-type", "costume");
+          btnRef.setAttribute("costume-name", costumeName);
+
+          if (costNo !== script) {
+            diffButton.onclick = async () => {
+              document
+                .querySelectorAll(".tab-btn")
+                .forEach((e) => e.classList.remove("active-tab"));
+              diffButton.querySelector("button")!.classList.add("active-tab");
+              await this.display(
+                project,
+                spriteName,
+                parseInt(
+                  this.querySelector("button.active-tab")!.getAttribute(
+                    "script-no"
+                  )!
+                ),
+                true
+              );
+            };
+          }
+
+          $scripts.appendChild(diffButton);
+        }
       );
 
-      const btnRef = diffButton.querySelector("button")!;
-      btnRef.setAttribute("script-no", costNo.toString());
-      btnRef.setAttribute("diff-type", "costume");
+    const btnRef = this.querySelector(`button[script-no="${script}"]`)!;
 
-      if (costNo !== script) {
-        diffButton.onclick = async () => {
-          document
-            .querySelectorAll(".tab-btn")
-            .forEach((e) => e.classList.remove("active-tab"));
-          diffButton.querySelector("button")!.classList.add("active-tab");
-          await this.display(
-            project,
-            spriteName,
-            parseInt(
-              this.querySelector("button.active-tab")!.getAttribute(
-                "script-no"
-              )!
-            ),
-            true
-          );
-        };
-      }
+    btnRef.classList.add("active-tab");
+    const isScriptDiff = btnRef.getAttribute("diff-type") === "script";
 
-      $scripts.appendChild(diffButton);
-    });
-
-    this.querySelector(`button[script-no="${script}"]`)!.classList.add(
-      "active-tab"
-    );
+    // costume diff view
+    document.querySelector<HTMLDivElement>(".copy-button")!.style.display =
+      isScriptDiff ? "block" : "none";
+    $highlights.parentElement!.parentElement!.style.pointerEvents = isScriptDiff
+      ? "all"
+      : "none";
+    $plainText.parentElement!.parentElement!.style.pointerEvents = isScriptDiff
+      ? "all"
+      : "none";
+    if (!isScriptDiff) {
+      document.querySelector(".scratchblocks")!.remove();
+      const [current, previous] =
+        costumeDiffs[btnRef.getAttribute("costume-name")!];
+      const previousCostume = toDataURI(
+        current.costumePath.split(".").pop()!,
+        String.fromCharCode.apply(null, previous.contents)
+      );
+      const currentCostume = toDataURI(
+        current.costumePath.split(".").pop()!,
+        String.fromCharCode.apply(null, current.contents)
+      );
+      $commits.append(
+        img({ src: previousCostume }),
+        img({ src: currentCostume })
+      );
+    }
 
     // dark mode
     if (uiTheme === "dark")
@@ -480,11 +516,13 @@ export class DiffModal extends Modal {
 
     this.setDiffTheme(uiTheme);
 
+    if (isScriptDiff) {
+      $plainText.onchange(new Event("init"));
+      $highlights.onchange(new Event("init"));
+    }
+
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
-
-    $plainText.onchange(new Event("init"));
-    $highlights.onchange(new Event("init"));
 
     if (!this.open) this.showModal();
   }
