@@ -1,12 +1,15 @@
+use serde::Serialize;
 use serde_json::Value;
 
 /// Represents a changed costume for a sprite or the stage
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CostumeChange {
     pub sprite: String,
     pub costume_name: String,
     pub costume_path: String,
     pub on_stage: bool,
+    pub contents: Option<Box<[u8]>>,
 }
 
 /// Represents costumes that were added, removed, or changed

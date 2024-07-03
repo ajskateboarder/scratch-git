@@ -27,6 +27,14 @@ interface ProjectCreationDetails {
   projectPath: string;
 }
 
+interface CostumeChanges {
+  costumeName: string;
+  costumePath: string;
+  onStage: boolean;
+  sprite: string;
+  format(): string;
+}
+
 export type PullMsg = "success" | "nothing new" | "unrelated histories";
 export type PushMsg = "success" | "up to date" | "pull needed";
 
@@ -43,10 +51,10 @@ class Socket {
           if (json["unhandled-error"]) {
             // TODO: localize
             alert(
-              `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`,
+              `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`
             );
             console.error(
-              `The following error "${json["unhandled-error"]}" occurred. Please report this issue using GitHub: https://github.com/ajskateboarder/scratch-git/issues or Scratch: https://scratch.mit.edu/users/ajskateboarder#comments`,
+              `The following error "${json["unhandled-error"]}" occurred. Please report this issue using GitHub: https://github.com/ajskateboarder/scratch-git/issues or Scratch: https://scratch.mit.edu/users/ajskateboarder#comments`
             );
             return;
           }
@@ -80,10 +88,7 @@ export class Project extends Socket {
    * @param projectName - the name of an initialized project
    * @param ws - a WebSocket connection
    */
-  constructor(
-    public projectName: string,
-    protected ws: WebSocket,
-  ) {
+  constructor(public projectName: string, protected ws: WebSocket) {
     super(ws);
   }
 
@@ -132,6 +137,18 @@ export class Project extends Socket {
           return this.name + (this.isStage ? " (stage)" : "");
         },
       })) satisfies Sprite[];
+  }
+
+  // LINK src-server/handlers.rs#get-changed-costumes
+  async getChangedCostumes(): Promise<
+    Record<string, Record<string, CostumeChanges[]>>
+  > {
+    return (
+      await this.request({
+        command: "get-changed-costumes",
+        data: { Project: { project_name: this.projectName } },
+      })
+    ).data;
   }
 
   /** Get the current scripts of a project's JSON
@@ -266,7 +283,7 @@ export class ProjectManager extends Socket {
             email,
           },
         },
-      }),
+      })
     );
 
     const response = await this.receive();
@@ -275,11 +292,11 @@ export class ProjectManager extends Socket {
         throw new Error(
           `${projectPath
             .split("/")
-            .pop()} is already a project. Either load the existing project or make a copy of the project file.`,
+            .pop()} is already a project. Either load the existing project or make a copy of the project file.`
         );
       } else if (response.status === "fail") {
         throw new Error(
-          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues.",
+          "An uncaught error has occurred. Please check your server's logs and make a bug report at https://github.com/ajskateboarder/scratch-git/issues."
         );
       }
     }
@@ -302,7 +319,7 @@ export class ProjectManager extends Socket {
 export const diff = async (
   projectName: string,
   oldScript: string,
-  newScript: string,
+  newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
   return ws.request({
@@ -344,7 +361,7 @@ export const remoteExists = async (url: string): Promise<boolean> => {
           data: {
             URL: url,
           },
-        }),
+        })
       );
     };
     ws.onmessage = (message) => {

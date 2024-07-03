@@ -62,3 +62,14 @@ pub fn intersect_costumes(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<Cost
 pub fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
     ItemGrouping::method(&items)
 }
+
+/// Group costumes by their sprite and costumes changes for each sprite by costume name
+pub fn group_costumes(items: Vec<CostumeChange>) -> HashMap<String, HashMap<String, Vec<CostumeChange>>> {
+    let mut groups: HashMap<String, HashMap<String, Vec<CostumeChange>>> = HashMap::new();
+    for item in items.iter() {
+        let inner_map = groups.entry(item.sprite.clone()).or_insert_with(HashMap::new);
+        let changes = inner_map.entry(item.costume_name.clone()).or_insert_with(Vec::new);
+        changes.push(item.clone())
+    }
+    groups
+}

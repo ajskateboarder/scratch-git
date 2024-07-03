@@ -125,10 +125,11 @@ const PlainText = () => {
 
 export class SettingsModal extends Modal {
   connectedCallback() {
-    const scriptColor = ScriptColor();
-    const highlights = Highlights();
-    const plainText = PlainText();
-
+    const [scriptColor, highlights, plainText] = [
+      ScriptColor(),
+      Highlights(),
+      PlainText(),
+    ];
     const [scInput, hlInput, ptInput] = [
       scriptColor,
       highlights,

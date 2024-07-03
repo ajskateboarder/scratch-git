@@ -243,6 +243,7 @@ export class DiffModal extends Modal {
       oldScripts,
       newScripts
     );
+    const costumeDiffs = (await project.getChangedCostumes())[spriteName];
 
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
@@ -366,6 +367,8 @@ export class DiffModal extends Modal {
       this.setDiffTheme(uiTheme);
     };
 
+    let lastScriptNo = 1;
+
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
       const diffButton = li(
@@ -399,11 +402,52 @@ export class DiffModal extends Modal {
         )
       );
 
-      diffButton
-        .querySelector("button")!
-        .setAttribute("script-no", scriptNo.toString());
+      const btnRef = diffButton.querySelector("button")!;
+      btnRef.setAttribute("script-no", scriptNo.toString());
+      btnRef.setAttribute("diff-type", "script");
 
       if (scriptNo !== script) {
+        diffButton.onclick = async () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((e) => e.classList.remove("active-tab"));
+          diffButton.querySelector("button")!.classList.add("active-tab");
+          await this.display(
+            project,
+            spriteName,
+            parseInt(
+              this.querySelector("button.active-tab")!.getAttribute(
+                "script-no"
+              )!
+            ),
+            true
+          );
+        };
+      }
+
+      $scripts.appendChild(diffButton);
+      lastScriptNo = scriptNo;
+    });
+
+    lastScriptNo = lastScriptNo === 0 ? 1 : lastScriptNo;
+
+    Object.entries(costumeDiffs).forEach(([costumeName, changes], _costNo) => {
+      if (changes.length !== 2) return;
+      const costNo = lastScriptNo + _costNo;
+
+      const diffButton = li(
+        button(
+          { class: "tab-btn" },
+          // i({ class: `${DiffIcon[diff.status]} change-icon` }),
+          `Costume ${costumeName}`
+        )
+      );
+
+      const btnRef = diffButton.querySelector("button")!;
+      btnRef.setAttribute("script-no", costNo.toString());
+      btnRef.setAttribute("diff-type", "costume");
+
+      if (costNo !== script) {
         diffButton.onclick = async () => {
           document
             .querySelectorAll(".tab-btn")

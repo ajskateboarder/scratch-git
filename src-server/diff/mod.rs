@@ -1,5 +1,5 @@
 pub mod structs;
-mod vec_utils;
+pub mod vec_utils;
 
 use structs::*;
 
@@ -105,6 +105,7 @@ impl Diff {
                         costume_name: costume.0.clone(),
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
+                        contents: None,
                     })
                     .collect::<Vec<CostumeChange>>()
             })
@@ -122,6 +123,7 @@ impl Diff {
                         costume_name: costume.0.clone(),
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
+                        contents: None,
                     })
                     .collect::<Vec<CostumeChange>>()
             })

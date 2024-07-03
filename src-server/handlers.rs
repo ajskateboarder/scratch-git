@@ -17,6 +17,7 @@ use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
 use crate::diff::structs::{CostumeChange, Diff, ScriptChanges};
+use crate::diff::vec_utils::group_costumes;
 use crate::gh_auth;
 use crate::git;
 
@@ -528,7 +529,7 @@ impl CmdHandler<'_> {
         )?);
 
         for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(pth.join(change.costume_path))?;
+            let _ = fs::remove_file(pth.join(change.costume_path));
         }
 
         if !git::run(vec!["add", "."], Some(&pth)).status()?.success() {
@@ -754,6 +755,45 @@ impl CmdHandler<'_> {
 
         self.send_json(json!({"success": true, "path": project_path}))
     }
+
+    // ANCHOR[id=get-changed-costumes]
+    fn get_changed_costumes(&mut self, data: CmdData) -> Result<()> {
+        let CmdData::Project { project_name, .. } = data else {
+            return self.send_json(json!({}));
+        };
+
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
+
+        let binding = &fs::read_to_string(pth.join("project.old.json"));
+        let project_old_json = match binding {
+            Ok(fh) => fh.as_str(),
+            Err(_) => {
+                return self.send_json(json!({ "status": -2 }));
+            }
+        };
+        let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json)?;
+
+        let current_diff = Diff::new(&_current_project);
+        let _new_project = serde_json::from_str::<serde_json::Value>(
+            &fs::read_to_string(pth.join("project.json"))?.as_str(),
+        )?;
+
+        let new_diff = Diff::new(&_new_project);
+
+        let mut costume_changes = current_diff.costumes(&new_diff);
+        costume_changes.extend(new_diff.costumes(&current_diff));
+
+        for change in &mut costume_changes {
+            if !pth.join(change.costume_path.clone()).exists() {
+                return self.send_json(json!({ "status": -1 }));
+            }
+            change.contents = Some(fs::read(pth.join(change.costume_path.clone()))?.into());
+        }
+
+        let costume_changes = group_costumes(costume_changes);
+
+        self.send_json(json!({"status": 0, "data": costume_changes}))
+    }
 }
 
 pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) -> Result<()> {
@@ -779,6 +819,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
+        "get-changed-costumes" => handler.get_changed_costumes(msg.data),
 
         _ => unreachable!(),
     }
