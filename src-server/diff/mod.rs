@@ -106,6 +106,7 @@ impl Diff {
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
                         contents: None,
+                        kind: None,
                     })
                     .collect::<Vec<CostumeChange>>()
             })
@@ -124,6 +125,7 @@ impl Diff {
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
                         contents: None,
+                        kind: None,
                     })
                     .collect::<Vec<CostumeChange>>()
             })

@@ -16,7 +16,7 @@ use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
-use crate::diff::structs::{CostumeChange, Diff, ScriptChanges};
+use crate::diff::structs::{CostumeChange, CostumeChangeType, Diff, ScriptChanges};
 use crate::diff::vec_utils::group_costumes;
 use crate::gh_auth;
 use crate::git;
@@ -523,13 +523,34 @@ impl CmdHandler<'_> {
         let current_diff = Diff::new(&serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.old.json"))?.as_str(),
         )?);
-
-        let new_diff = Diff::new(&serde_json::from_str::<serde_json::Value>(
+        let current_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.json"))?.as_str(),
-        )?);
+        )?;
+
+        let new_diff = Diff::new(&current_project);
 
         for change in new_diff.costumes(&current_diff) {
             let _ = fs::remove_file(pth.join(change.costume_path));
+        }
+
+        // remove all assets that aren't used in the json
+        let project_assets = get_assets(serde_json::from_value(current_project)?);
+        let unused_assets = fs::read_dir(pth)?
+            .map(|res| res.unwrap().path())
+            .filter(|path| {
+                let ext = path.extension();
+                if ext.is_none() {
+                    return false;
+                };
+                let ext = ext.unwrap();
+                ext == "svg" || ext == "png" || ext == "mp3" || ext == "wav"
+            })
+            .filter(|path| {
+                !project_assets.contains(&path.file_name().unwrap().to_str().unwrap().to_string())
+            });
+
+        for asset in unused_assets {
+            let _ = fs::remove_file(asset);
         }
 
         if !git::run(vec!["add", "."], Some(&pth)).status()?.success() {
@@ -635,16 +656,22 @@ impl CmdHandler<'_> {
             })
             .collect();
 
-        sprites.extend(current_diff.costumes(&new_diff).into_iter().map(
-            |CostumeChange { sprite, .. }| {
+        sprites.extend(
+            [
+                new_diff.costumes(&current_diff),
+                current_diff.costumes(&new_diff),
+            ]
+            .concat()
+            .into_iter()
+            .map(|CostumeChange { sprite, .. }| {
                 let parts = sprite.split(" ").collect::<Vec<_>>();
                 if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
                     (parts[0].to_string(), true)
                 } else {
                     (sprite, false)
                 }
-            },
-        ));
+            }),
+        );
 
         self.send_json(json!({ "sprites": sprites.iter().collect::<HashSet<_>>() }))
     }
@@ -781,7 +808,18 @@ impl CmdHandler<'_> {
         let new_diff = Diff::new(&_new_project);
 
         let mut costume_changes = current_diff.costumes(&new_diff);
-        costume_changes.extend(new_diff.costumes(&current_diff));
+
+        for change in &mut costume_changes {
+            change.kind = Some(CostumeChangeType::After);
+        }
+
+        let mut newer_changes = new_diff.costumes(&current_diff);
+
+        for change in &mut newer_changes {
+            change.kind = Some(CostumeChangeType::Before);
+        }
+
+        costume_changes.extend(newer_changes);
 
         for change in &mut costume_changes {
             if !pth.join(change.costume_path.clone()).exists() {

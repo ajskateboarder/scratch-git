@@ -436,46 +436,43 @@ export class DiffModal extends Modal {
     let lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
 
     if (costumeDiffs)
-      Object.entries(costumeDiffs).forEach(
-        ([costumeName, changes], _costNo) => {
-          if (changes.length !== 2) return;
-          const costNo = lastScriptNo + _costNo;
+      Object.keys(costumeDiffs).forEach((costumeName, _costNo) => {
+        const costNo = lastScriptNo + _costNo;
 
-          const diffButton = li(
-            button(
-              { class: "tab-btn" },
-              // i({ class: `${DiffIcon[diff.status]} change-icon` }),
-              `Costume ${costumeName}`
-            )
-          );
+        const diffButton = li(
+          button(
+            { class: "tab-btn" },
+            // i({ class: `${DiffIcon[diff.status]} change-icon` }),
+            `Costume ${costumeName}`
+          )
+        );
 
-          const btnRef = diffButton.querySelector("button")!;
-          btnRef.setAttribute("script-no", costNo.toString());
-          btnRef.setAttribute("diff-type", "costume");
-          btnRef.setAttribute("costume-name", costumeName);
+        const btnRef = diffButton.querySelector("button")!;
+        btnRef.setAttribute("script-no", costNo.toString());
+        btnRef.setAttribute("diff-type", "costume");
+        btnRef.setAttribute("costume-name", costumeName);
 
-          if (costNo !== script) {
-            diffButton.onclick = async () => {
-              document
-                .querySelectorAll(".tab-btn")
-                .forEach((e) => e.classList.remove("active-tab"));
-              diffButton.querySelector("button")!.classList.add("active-tab");
-              await this.display(
-                project,
-                spriteName,
-                parseInt(
-                  this.querySelector("button.active-tab")!.getAttribute(
-                    "script-no"
-                  )!
-                ),
-                true
-              );
-            };
-          }
-
-          $scripts.appendChild(diffButton);
+        if (costNo !== script) {
+          diffButton.onclick = async () => {
+            document
+              .querySelectorAll(".tab-btn")
+              .forEach((e) => e.classList.remove("active-tab"));
+            diffButton.querySelector("button")!.classList.add("active-tab");
+            await this.display(
+              project,
+              spriteName,
+              parseInt(
+                this.querySelector("button.active-tab")!.getAttribute(
+                  "script-no"
+                )!
+              ),
+              true
+            );
+          };
         }
-      );
+
+        $scripts.appendChild(diffButton);
+      });
 
     const btnRef = this.querySelector(`button[script-no="${script}"]`)!;
 

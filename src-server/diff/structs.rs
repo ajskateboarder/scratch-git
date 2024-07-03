@@ -1,6 +1,13 @@
 use serde::Serialize;
 use serde_json::Value;
 
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CostumeChangeType {
+    Before,
+    After,
+}
+
 /// Represents a changed costume for a sprite or the stage
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -9,6 +16,7 @@ pub struct CostumeChange {
     pub costume_name: String,
     pub costume_path: String,
     pub on_stage: bool,
+    pub kind: Option<CostumeChangeType>,
     pub contents: Option<Box<[u8]>>,
 }
 
