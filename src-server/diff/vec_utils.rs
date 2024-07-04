@@ -1,4 +1,4 @@
-use super::CostumeChange;
+use super::AssetChange;
 use std::collections::{HashMap, HashSet};
 
 pub trait ItemGrouping {
@@ -41,7 +41,7 @@ impl ItemGrouping for Vec<Vec<String>> {
 ///
 /// Returns costumes present in all sets that have the same costume name and original sprite.
 /// Paths are ignored since they can change on save
-pub fn intersect_costumes(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<CostumeChange> {
+pub fn intersect_costumes(mut sets: Vec<HashSet<AssetChange>>) -> HashSet<AssetChange> {
     if sets.is_empty() {
         return HashSet::new();
     }
@@ -53,7 +53,7 @@ pub fn intersect_costumes(mut sets: Vec<HashSet<CostumeChange>>) -> HashSet<Cost
     result.retain(|item| {
         sets.iter().all(|set| {
             set.iter()
-                .any(|x| x.costume_name == item.costume_name && x.sprite == item.sprite)
+                .any(|x| x.name == item.name && x.sprite == item.sprite)
         })
     });
     result
@@ -65,17 +65,15 @@ pub fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
 
 /// Group costumes by their sprite and costumes changes for each sprite by costume name
 pub fn group_costumes(
-    items: Vec<CostumeChange>,
-) -> HashMap<String, HashMap<String, Vec<CostumeChange>>> {
-    let mut groups: HashMap<String, HashMap<String, Vec<CostumeChange>>> = HashMap::new();
+    items: Vec<AssetChange>,
+) -> HashMap<String, HashMap<String, Vec<AssetChange>>> {
+    let mut groups: HashMap<String, HashMap<String, Vec<AssetChange>>> = HashMap::new();
 
     for item in items.iter() {
         let inner_map = groups
             .entry(item.sprite.clone())
             .or_insert_with(HashMap::new);
-        let changes = inner_map
-            .entry(item.costume_name.clone())
-            .or_insert_with(Vec::new);
+        let changes = inner_map.entry(item.name.clone()).or_insert_with(Vec::new);
         changes.push(item.clone())
     }
 

@@ -73,7 +73,6 @@
 
   & .change-icon {
     font-size: 17px;
-    margin-right: 10px;
   }
 
   .open-script {
@@ -147,7 +146,13 @@
 .costume-diff {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.settings-group {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .header {

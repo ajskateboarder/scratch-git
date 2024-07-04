@@ -22,8 +22,9 @@ export interface GitDetails {
 }
 
 export interface CostumeChange {
-  costumeName: string;
-  costumePath: string;
+  name: string;
+  path: string;
+  ext: string;
   onStage: boolean;
   sprite: string;
   kind: "before" | "after";

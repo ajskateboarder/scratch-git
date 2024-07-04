@@ -11,18 +11,33 @@ import van from "vanjs-core";
 
 import iconCodeSvg from "./icon--code.svg";
 import iconCostumesSvg from "./icon--costumes.svg";
+import iconSoundsSvg from "./icon--sounds.svg";
 
-const { div, span, ul, button, p, pre, aside, main, br, hr, i, li, img } =
-  van.tags;
+const {
+  div,
+  span,
+  ul,
+  button,
+  p,
+  pre,
+  aside,
+  main,
+  br,
+  hr,
+  i,
+  li,
+  img,
+  audio,
+} = van.tags;
 
-const DiffIcon = {
+const DIFF_ICON = {
   added: "fa-solid fa-square-plus",
   removed: "fa-solid fa-square-xmark",
   modified: "fa-solid fa-square-minus",
 };
 
 /** Dark mode block fill colors that TurboWarp use */
-const DarkBlocks = {
+const DARK_BLOCKS = {
   "sb3-motion": "#0F1E33",
   "sb3-looks": "#1E1433",
   "sb3-sound": "#291329",
@@ -34,6 +49,15 @@ const DarkBlocks = {
   "sb3-list": "#331405",
   "sb3-custom": "#331419",
   "sb3-extension": "#03251C",
+};
+
+const MIMETYPE_EXT = {
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  svg: "image/svg+xml",
+  png: "image/png",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
 };
 
 interface Diff {
@@ -48,7 +72,9 @@ interface Diff {
 }
 
 const toDataURI = (ext: string, content: string) =>
-  `data:image/${ext === "svg" ? "svg+xml" : ext};base64,${btoa(content)}`;
+  `data:${MIMETYPE_EXT[ext as keyof typeof MIMETYPE_EXT]};base64,${btoa(
+    content
+  )}`;
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
@@ -285,8 +311,8 @@ export class DiffModal extends Modal {
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
               const darkFill =
-                DarkBlocks[
-                  element.classList.item(0) as keyof typeof DarkBlocks
+                DARK_BLOCKS[
+                  element.classList.item(0) as keyof typeof DARK_BLOCKS
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -296,8 +322,8 @@ export class DiffModal extends Modal {
             .querySelectorAll<SVGPathElement | SVGRectElement>("path, rect")
             .forEach((element) => {
               const darkFill =
-                DarkBlocks[
-                  element.classList.item(0) as keyof typeof DarkBlocks
+                DARK_BLOCKS[
+                  element.classList.item(0) as keyof typeof DARK_BLOCKS
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -380,8 +406,11 @@ export class DiffModal extends Modal {
       const diffButton = li(
         button(
           { class: "tab-btn" },
-          i({ class: `${DiffIcon[diff.status]} change-icon` }),
-          iconCodeSvg(),
+          span(
+            { style: "display: flex; align-items: center: gap: 5px" },
+            i({ class: `${DIFF_ICON[diff.status]} change-icon` }),
+            span({ style: "padding-right: 10px" }, iconCodeSvg())
+          ),
           diff.scriptNo,
           diff.status === "modified" || diff.status === "added"
             ? button(
@@ -438,9 +467,12 @@ export class DiffModal extends Modal {
     let lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
 
     if (costumeDiffs)
-      Object.keys(costumeDiffs).forEach((costumeName, _costNo) => {
+      Object.keys(costumeDiffs).forEach((assetName, _costNo) => {
         const costNo = lastScriptNo + _costNo;
-        const diff = costumeDiffs[costumeName];
+        const diff = costumeDiffs[assetName];
+        const isSoundDiff = diff.some(
+          (e) => e?.ext === "wav" || e?.ext === "mp3"
+        );
 
         const status =
           diff[0] && diff[1]
@@ -452,16 +484,22 @@ export class DiffModal extends Modal {
         const diffButton = li(
           button(
             { class: "tab-btn" },
-            i({ class: `${DiffIcon[status]} change-icon` }),
-            iconCostumesSvg(),
-            costumeName
+            span(
+              { style: "display: flex; align-items: center; gap: 5px" },
+              i({ class: `${DIFF_ICON[status]} change-icon` }),
+              span(
+                { style: "padding-right: 10px" },
+                isSoundDiff ? iconSoundsSvg() : iconCostumesSvg()
+              )
+            ),
+            assetName
           )
         );
 
         const btnRef = diffButton.querySelector("button")!;
         btnRef.setAttribute("script-no", costNo.toString());
-        btnRef.setAttribute("diff-type", "costume");
-        btnRef.setAttribute("costume-name", costumeName);
+        btnRef.setAttribute("diff-type", isSoundDiff ? "sound" : "costume");
+        btnRef.setAttribute("asset-name", assetName);
 
         if (costNo !== script) {
           diffButton.onclick = async () => {
@@ -500,39 +538,44 @@ export class DiffModal extends Modal {
     if (!isScriptDiff) {
       document.querySelector(".scratchblocks")!.remove();
       const [current, previous] =
-        costumeDiffs[btnRef.getAttribute("costume-name")!];
+        costumeDiffs[btnRef.getAttribute("asset-name")!];
+      const isSoundDiff = btnRef.getAttribute("diff-type") === "sound";
 
-      let previousCostume = "";
-      let currentCostume = "";
+      let previousAsset = "";
+      let currentAsset = "";
       if (current && previous) {
-        previousCostume = toDataURI(
-          previous.costumePath.split(".").pop()!,
+        previousAsset = toDataURI(
+          previous.path.split(".").pop()!,
           String.fromCharCode.apply(null, previous.contents)
         );
-        currentCostume = toDataURI(
-          current.costumePath.split(".").pop()!,
+        currentAsset = toDataURI(
+          current.path.split(".").pop()!,
           String.fromCharCode.apply(null, current.contents)
         );
       } else {
         if (current && !previous && current.kind !== "before") {
-          currentCostume = toDataURI(
-            current.costumePath.split(".").pop()!,
+          currentAsset = toDataURI(
+            current.path.split(".").pop()!,
             String.fromCharCode.apply(null, current.contents)
           );
         } else if (current.kind === "before" && !previous) {
-          previousCostume = toDataURI(
-            current.costumePath.split(".").pop()!,
+          previousAsset = toDataURI(
+            current.path.split(".").pop()!,
             String.fromCharCode.apply(null, current.contents)
           );
         }
       }
-
+      console.log(previousAsset, currentAsset);
       $commits.appendChild(
         span(
           { class: "costume-diff" },
-          img({ src: previousCostume }),
+          isSoundDiff
+            ? audio({ src: previousAsset, controls: true })
+            : img({ src: previousAsset }),
           i({ class: "fa-solid fa-arrow-right" }),
-          img({ src: currentCostume })
+          isSoundDiff
+            ? audio({ src: currentAsset, controls: true })
+            : img({ src: currentAsset })
         )
       );
     }

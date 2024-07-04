@@ -16,7 +16,7 @@ use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
-use crate::diff::structs::{CostumeChange, CostumeChangeType, Diff, ScriptChanges};
+use crate::diff::structs::{AssetChange, AssetChangeType, Diff, ScriptChanges};
 use crate::diff::vec_utils::group_costumes;
 use crate::gh_auth;
 use crate::git;
@@ -529,8 +529,8 @@ impl CmdHandler<'_> {
 
         let new_diff = Diff::new(&current_project);
 
-        for change in new_diff.costumes(&current_diff, None) {
-            let _ = fs::remove_file(pth.join(change.costume_path));
+        for change in new_diff.assets(&current_diff, None) {
+            let _ = fs::remove_file(pth.join(change.path));
         }
 
         // remove all assets that aren't used in the json
@@ -656,14 +656,19 @@ impl CmdHandler<'_> {
             })
             .collect();
 
+        dbg!(
+            new_diff.assets(&current_diff, None),
+            current_diff.assets(&new_diff, None)
+        );
+
         sprites.extend(
             [
-                new_diff.costumes(&current_diff, None),
-                current_diff.costumes(&new_diff, None),
+                new_diff.assets(&current_diff, None),
+                current_diff.assets(&new_diff, None),
             ]
             .concat()
             .into_iter()
-            .map(|CostumeChange { sprite, .. }| {
+            .map(|AssetChange { sprite, .. }| {
                 let parts = sprite.split(" ").collect::<Vec<_>>();
                 if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
                     (parts[0].to_string(), true)
@@ -807,16 +812,16 @@ impl CmdHandler<'_> {
 
         let new_diff = Diff::new(&_new_project);
 
-        let mut costume_changes = current_diff.costumes(&new_diff, Some(CostumeChangeType::After));
-        let newer_changes = new_diff.costumes(&current_diff, Some(CostumeChangeType::Before));
+        let mut costume_changes = current_diff.assets(&new_diff, Some(AssetChangeType::After));
+        let newer_changes = new_diff.assets(&current_diff, Some(AssetChangeType::Before));
 
         costume_changes.extend(newer_changes);
 
         for change in &mut costume_changes {
-            if !pth.join(change.costume_path.clone()).exists() {
+            if !pth.join(change.path.clone()).exists() {
                 return self.send_json(json!({ "status": -1 }));
             }
-            change.contents = Some(fs::read(pth.join(change.costume_path.clone()))?.into());
+            change.contents = Some(fs::read(pth.join(change.path.clone()))?.into());
         }
 
         let costume_changes = group_costumes(costume_changes);
