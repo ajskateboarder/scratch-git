@@ -9,6 +9,9 @@ import { parseScripts, type ScriptStatus } from "@/core/diff-indicators";
 import { userSettings } from "@/core/settings";
 import van from "vanjs-core";
 
+import iconCodeSvg from "./icon--code.svg";
+import iconCostumesSvg from "./icon--costumes.svg";
+
 const { div, span, ul, button, p, pre, aside, main, br, hr, i, li, img } =
   van.tags;
 
@@ -378,7 +381,8 @@ export class DiffModal extends Modal {
         button(
           { class: "tab-btn" },
           i({ class: `${DiffIcon[diff.status]} change-icon` }),
-          `Script ${diff.scriptNo}`,
+          iconCodeSvg(),
+          diff.scriptNo,
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {
@@ -436,12 +440,21 @@ export class DiffModal extends Modal {
     if (costumeDiffs)
       Object.keys(costumeDiffs).forEach((costumeName, _costNo) => {
         const costNo = lastScriptNo + _costNo;
+        const diff = costumeDiffs[costumeName];
+
+        const status =
+          diff[0] && diff[1]
+            ? "modified"
+            : diff[0] && !diff[1]
+            ? "added"
+            : "removed";
 
         const diffButton = li(
           button(
             { class: "tab-btn" },
-            // i({ class: `${DiffIcon[diff.status]} change-icon` }),
-            `Costume ${costumeName}`
+            i({ class: `${DiffIcon[status]} change-icon` }),
+            iconCostumesSvg(),
+            costumeName
           )
         );
 

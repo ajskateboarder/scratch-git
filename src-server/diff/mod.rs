@@ -375,7 +375,6 @@ impl Diff {
         let added = self.format_costumes(costume_changes.added, "add");
         let removed = self.format_costumes(costume_changes.removed, "remove");
         let merged = self.format_costumes(costume_changes.merged, "modify");
-        dbg!(&added, &removed, &merged, &blocks);
 
         let _commits = [blocks, added, removed, merged].concat();
 
