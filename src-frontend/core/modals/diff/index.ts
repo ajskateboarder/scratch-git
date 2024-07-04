@@ -477,7 +477,7 @@ export class DiffModal extends Modal {
         const status =
           diff[0] && diff[1]
             ? "modified"
-            : diff[0] && !diff[1]
+            : diff[0]?.kind === "after" && !diff[1]
             ? "added"
             : "removed";
 
