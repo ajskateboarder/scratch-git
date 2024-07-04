@@ -656,11 +656,6 @@ impl CmdHandler<'_> {
             })
             .collect();
 
-        dbg!(
-            new_diff.assets(&current_diff, None),
-            current_diff.assets(&new_diff, None)
-        );
-
         sprites.extend(
             [
                 new_diff.assets(&current_diff, None),

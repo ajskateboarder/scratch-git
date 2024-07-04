@@ -149,7 +149,6 @@ impl Diff {
         if let Some(sprites) = self.data["targets"].as_array() {
             for sprite in sprites {
                 if let Some(sprite_costumes) = sprite["costumes"].as_array() {
-                    dbg!(sprite_costumes);
                     assets.insert(
                         sprite["name"].as_str().unwrap().to_string()
                             + if sprite["isStage"].as_bool().unwrap() {
@@ -197,7 +196,6 @@ impl Diff {
                 }
             }
         }
-        dbg!(&assets);
         assets
     }
 
@@ -220,8 +218,12 @@ impl Diff {
         for (sprite, actions) in group_items(_changes) {
             let split_ = actions
                 .iter()
-                .map(|a| a.split(" ").map(|x| x.to_string()).collect::<Vec<_>>())
+                .map(|a| {
+                    let parts = a.split_at(a.match_indices(" ").nth(0).unwrap().0);
+                    (parts.0.to_string(), parts.1.to_string())
+                })
                 .collect::<Vec<_>>();
+
             let binding = group_items(split_);
             let act: Vec<(&String, &Vec<String>)> = binding
                 .iter()

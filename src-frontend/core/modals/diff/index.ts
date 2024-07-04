@@ -565,7 +565,7 @@ export class DiffModal extends Modal {
           );
         }
       }
-      console.log(previousAsset, currentAsset);
+
       $commits.appendChild(
         span(
           { class: "costume-diff" },
