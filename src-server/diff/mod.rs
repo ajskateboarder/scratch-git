@@ -58,8 +58,8 @@ impl Diff {
 
     /// Return costumes that have changed between projects, but not added or removed
     fn _merged_costumes<'a>(&'a self, new: &'a Self) -> CostumeChanges {
-        let mut added = self.costumes(new);
-        let mut removed = new.costumes(self);
+        let mut added = self.costumes(new, None);
+        let mut removed = new.costumes(self, None);
 
         let _m1 = added.iter().map(|x| x.to_owned()).collect::<HashSet<_>>();
         let _m2 = removed
@@ -92,8 +92,9 @@ impl Diff {
         }
     }
 
-    /// Return the costume differences between each sprite in two projects
-    pub fn costumes(&self, new: &Self) -> Vec<CostumeChange> {
+    /// Return the costume differences between each sprite in two projects 
+    // `kind` is used to mark changes as a certain type for frontend purposes 
+    pub fn costumes(&self, new: &Self, kind: Option<CostumeChangeType>) -> Vec<CostumeChange> {
         let new_costumes: Vec<CostumeChange> = new
             ._costumes()
             .into_iter()
@@ -106,7 +107,7 @@ impl Diff {
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
                         contents: None,
-                        kind: None,
+                        kind,
                     })
                     .collect::<Vec<CostumeChange>>()
             })
@@ -125,7 +126,7 @@ impl Diff {
                         costume_path: costume.1.clone(),
                         on_stage: costume.2,
                         contents: None,
-                        kind: None,
+                        kind,
                     })
                     .collect::<Vec<CostumeChange>>()
             })

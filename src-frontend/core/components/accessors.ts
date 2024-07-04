@@ -1,4 +1,4 @@
-const classNames: string[] = [
+const CLASS_NAMES: string[] = [
   ...[...document.styleSheets].map((e) => e.cssRules),
 ]
   .map((e) => Array.from(e))
@@ -7,9 +7,11 @@ const classNames: string[] = [
   .filter((e) => e !== undefined)
   .map((e) => e.slice(1));
 
-/** Find hashed class names */
+/** Finds the first hashed class name that matches */
 export const s = (className: string) => {
-  let _className = classNames.find((e) => e.includes(className))!.split(",")[0];
+  let _className = CLASS_NAMES.find((e) => e.includes(className))!.split(
+    ","
+  )[0];
   if (_className.includes(".")) {
     _className = _className.split(".")[1];
   }
@@ -22,8 +24,8 @@ export const s = (className: string) => {
   });
 };
 
-/** Join class names into a string */
-export const cls = (...classes: string[]) => classes.join(" ");
+/** Join class names into a valid attribute */
+export const cls = (...classes: (string | undefined)[]) => classes.join(" ");
 
 export const menu = {
   activeMenuItem: s("menu-bar_active"),

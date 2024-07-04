@@ -130,8 +130,7 @@
   --dot-bg: white;
   --dot-color: #d2d2d2;
 
-  background:
-    linear-gradient(
+  background: linear-gradient(
         90deg,
         var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
         transparent 1%
@@ -143,4 +142,22 @@
       )
       center / var(--dot-space) var(--dot-space),
     var(--dot-color);
+}
+
+.costume-diff {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header {
+  display: flex;
+  user-select: none;
+  flex-flow: wrap;
+  align-items: center;
+}
+
+.disabled-area {
+  opacity: 0.5;
+  pointer-events: none;
 }

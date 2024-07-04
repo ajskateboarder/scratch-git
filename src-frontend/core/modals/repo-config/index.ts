@@ -127,13 +127,7 @@ export class RepoConfigModal extends Modal {
         ),
         br(),
         br(),
-        div(
-          {
-            class: "bottom-bar",
-            style: "margin: 0; padding: 0; bottom: 10px; margin-left: 10px",
-          },
-          closeButton
-        )
+        div({ class: "bottom-bar repo-config-bottom-bar" }, closeButton)
       )
     );
 

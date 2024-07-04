@@ -61,10 +61,11 @@ export class ScratchAlert {
         { class: s("alert_alert-buttons") },
         div(
           {
-            class: cls(s("alert_alert-close-button-container"), misc.box),
-            ...(this._buttons.length !== 0 && {
-              style: "display: flex; width: 100%; gap: 10px",
-            }),
+            class: cls(
+              s("alert_alert-close-button-container"),
+              misc.box,
+              this._buttons.length !== 0 ? "alert-with-buttons" : undefined
+            ),
           },
           div(
             {

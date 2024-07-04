@@ -88,11 +88,9 @@ export class DiffModal extends Modal {
       { id: "commits" },
       span(
         {
-          style:
-            "display: flex; user-select: none; flex-flow: wrap; align-items: center",
+          class: "header",
         },
-        useHighlights,
-        plainText,
+        span({ class: "settings-group" }, useHighlights, plainText),
         span({ class: "button-group" }, closeButton)
       ),
       hr(),
@@ -482,27 +480,47 @@ export class DiffModal extends Modal {
     // costume diff view
     document.querySelector<HTMLDivElement>(".copy-button")!.style.display =
       isScriptDiff ? "block" : "none";
-    $highlights.parentElement!.parentElement!.style.pointerEvents = isScriptDiff
-      ? "all"
-      : "none";
-    $plainText.parentElement!.parentElement!.style.pointerEvents = isScriptDiff
-      ? "all"
-      : "none";
+    document
+      .querySelector<HTMLDivElement>(".settings-group")!
+      .classList.toggle("disabled-area", !isScriptDiff);
+
     if (!isScriptDiff) {
       document.querySelector(".scratchblocks")!.remove();
       const [current, previous] =
         costumeDiffs[btnRef.getAttribute("costume-name")!];
-      const previousCostume = toDataURI(
-        current.costumePath.split(".").pop()!,
-        String.fromCharCode.apply(null, previous.contents)
-      );
-      const currentCostume = toDataURI(
-        current.costumePath.split(".").pop()!,
-        String.fromCharCode.apply(null, current.contents)
-      );
-      $commits.append(
-        img({ src: previousCostume }),
-        img({ src: currentCostume })
+
+      let previousCostume = "";
+      let currentCostume = "";
+      if (current && previous) {
+        previousCostume = toDataURI(
+          previous.costumePath.split(".").pop()!,
+          String.fromCharCode.apply(null, previous.contents)
+        );
+        currentCostume = toDataURI(
+          current.costumePath.split(".").pop()!,
+          String.fromCharCode.apply(null, current.contents)
+        );
+      } else {
+        if (current && !previous && current.kind !== "before") {
+          currentCostume = toDataURI(
+            current.costumePath.split(".").pop()!,
+            String.fromCharCode.apply(null, current.contents)
+          );
+        } else if (current.kind === "before" && !previous) {
+          previousCostume = toDataURI(
+            current.costumePath.split(".").pop()!,
+            String.fromCharCode.apply(null, current.contents)
+          );
+        }
+      }
+
+      $commits.appendChild(
+        span(
+          { class: "costume-diff" },
+          img({ src: previousCostume }),
+          i({ class: "fa-solid fa-arrow-right" }),
+          img({ src: currentCostume })
+        )
       );
     }
 

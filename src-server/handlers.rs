@@ -529,7 +529,7 @@ impl CmdHandler<'_> {
 
         let new_diff = Diff::new(&current_project);
 
-        for change in new_diff.costumes(&current_diff) {
+        for change in new_diff.costumes(&current_diff, None) {
             let _ = fs::remove_file(pth.join(change.costume_path));
         }
 
@@ -658,8 +658,8 @@ impl CmdHandler<'_> {
 
         sprites.extend(
             [
-                new_diff.costumes(&current_diff),
-                current_diff.costumes(&new_diff),
+                new_diff.costumes(&current_diff, None),
+                current_diff.costumes(&new_diff, None),
             ]
             .concat()
             .into_iter()
@@ -807,17 +807,8 @@ impl CmdHandler<'_> {
 
         let new_diff = Diff::new(&_new_project);
 
-        let mut costume_changes = current_diff.costumes(&new_diff);
-
-        for change in &mut costume_changes {
-            change.kind = Some(CostumeChangeType::After);
-        }
-
-        let mut newer_changes = new_diff.costumes(&current_diff);
-
-        for change in &mut newer_changes {
-            change.kind = Some(CostumeChangeType::Before);
-        }
+        let mut costume_changes = current_diff.costumes(&new_diff, Some(CostumeChangeType::After));
+        let newer_changes = new_diff.costumes(&current_diff, Some(CostumeChangeType::Before));
 
         costume_changes.extend(newer_changes);
 

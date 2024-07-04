@@ -76,8 +76,11 @@ export class WelcomeModal extends Modal {
 
     const goToStep2 = button(
       {
-        style: "align-items: right; margin-left: -10px",
-        class: cls(settings.settingsButton, settings.disabledButton),
+        class: cls(
+          settings.settingsButton,
+          settings.disabledButton,
+          "back-button"
+        ),
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
@@ -209,8 +212,7 @@ export class WelcomeModal extends Modal {
       BottomBar(
         button(
           {
-            style: "align-items: right: margin-left: -10px",
-            class: settings.settingsButton,
+            class: cls(settings.settingsButton, "back-button"),
             onclick: () => {
               this.close();
               if (this.loadedProject) window.location.reload();
@@ -227,8 +229,11 @@ export class WelcomeModal extends Modal {
   private $step2() {
     const goToStep3 = button(
       {
-        style: "align-items: right; margin-left: -10px",
-        class: cls(settings.settingsButton, settings.disabledButton),
+        class: cls(
+          settings.settingsButton,
+          settings.disabledButton,
+          "back-button"
+        ),
         disabled: true,
         onclick: async () => {
           this.projectName = Redux.getState().scratchGui.projectTitle;
@@ -260,8 +265,7 @@ export class WelcomeModal extends Modal {
       BottomBar(
         button(
           {
-            style: "align-items: right; margin-left: -10px",
-            class: settings.settingsButton,
+            class: cls(settings.settingsButton, "back-button"),
             onclick: () => --this.currentStep.val,
           },
           i18next.t("welcome.back")
@@ -279,8 +283,11 @@ export class WelcomeModal extends Modal {
 
     const goToStep4 = button(
       {
-        style: "align-items: right; margin-left: -10px",
-        class: cls(settings.settingsButton, settings.disabledButton),
+        class: cls(
+          settings.settingsButton,
+          settings.disabledButton,
+          "back-button"
+        ),
         disabled: true,
         onclick: async () => {
           try {
@@ -355,8 +362,7 @@ export class WelcomeModal extends Modal {
         BottomBar(
           button(
             {
-              style: "align-items: right; margin-left: -10px",
-              class: settings.settingsButton,
+              class: cls(settings.settingsButton, "back-button"),
               onclick: () => --this.currentStep.val,
             },
             i18next.t("welcome.back")
@@ -376,8 +382,7 @@ export class WelcomeModal extends Modal {
         BottomBar(
           button(
             {
-              style: "align-items: right; margin-left: -10px",
-              class: settings.settingsButton,
+              class: cls(settings.settingsButton, "back-button"),
               onclick: () => this.close(),
             },
             i18next.t("close")

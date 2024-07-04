@@ -26,6 +26,7 @@ export interface CostumeChange {
   costumePath: string;
   onStage: boolean;
   sprite: string;
+  kind: "before" | "after";
   contents: number[];
 }
 

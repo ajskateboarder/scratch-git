@@ -100,3 +100,9 @@ dialog[is="welcome-modal"] {
   justify-content: space-between;
   align-items: center;
 }
+
+.alert-with-buttons {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}

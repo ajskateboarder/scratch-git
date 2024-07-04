@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::Value;
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize)]
+#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CostumeChangeType {
     Before,

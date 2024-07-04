@@ -33,3 +33,8 @@
   align-items: center;
   gap: 10px;
 }
+
+.back-button {
+  align-items: right;
+  margin-left: -10px;
+}
