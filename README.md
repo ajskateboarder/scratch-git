@@ -80,7 +80,7 @@ Commits then specify the change they are making using one of the following state
 | `modify [costumes]`     | The following costumes: `[costumes]` have been edited              |
 | `{+\|-}{blocks} blocks` | `{blocks}` number of blocks have been added (`+`) or removed (`-`) |
 
-This is implemented in [src-server/diff.rs](./src-server/diff.rs).
+This is implemented in [src-server/diff/](./src-server/diff/).
 
 ### Commit examples
 

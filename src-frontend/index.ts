@@ -1,7 +1,7 @@
-import api, { Project } from "./api";
-import { Styles, createGitMenu } from "./init";
-import { menu, fileMenu, misc, ScratchAlert } from "./components";
-import { showIndicators } from "./diff-indicators";
+import api, { Project } from "./core/api";
+import { Styles, createGitMenu } from "./core/init";
+import { fileMenu, misc, ScratchAlert, s } from "./core/components";
+import { showIndicators } from "./core/diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
 
@@ -10,9 +10,11 @@ import {
   WelcomeModal,
   DiffModal,
   RepoConfigModal,
-} from "./modals";
-import { Modal } from "./modals/base";
-import { getReactHandlers } from "./utils";
+  SettingsModal,
+} from "./core/modals";
+import { Modal } from "./core/modals/base";
+import { getReactHandlers } from "./core/utils";
+import { userSettings } from "./core/settings";
 
 const main = async () => {
   if (!document.querySelector("dialog[is='diff-modal']")) {
@@ -25,10 +27,15 @@ const main = async () => {
       customElements.define("repo-config-modal", RepoConfigModal, {
         extends: "dialog",
       });
+      customElements.define("settings-modal", SettingsModal, {
+        extends: "dialog",
+      });
     } catch {}
 
     const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${menu.menuPos}.${menu.menuBar} > div.${menu.container} > div:nth-child(4)`
+      `#app > div > div.${s("gui_menu-bar-position")}.${s(
+        "menu-bar_menu-bar"
+      )} > div.${s("menu-bar_main-menu")} > div:nth-child(4)`
     )!;
     saveArea.style.opacity = "0";
 
@@ -42,7 +49,10 @@ const main = async () => {
           ></dialog>
           <dialog
           is="repo-config-modal"
-        ></dialog>`;
+          ></dialog>
+          <dialog
+          is="settings-modal"
+          ></dialog>`;
   }
 
   const displayDiffs = async (project: Project) => {
@@ -51,11 +61,13 @@ const main = async () => {
       ...document.querySelectorAll(`.stage-diff`),
     ].forEach((e) => e.remove());
     await project!.unzip();
+    window._changedScripts = {};
     try {
       await showIndicators(project!);
-    } catch {
+    } catch (e) {
       new ScratchAlert(i18next.t("alerts.wrong-project"))
         .type("warn")
+        .timeout(5000)
         .display();
     }
   };
@@ -65,7 +77,7 @@ const main = async () => {
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
   } else {
-    const project = await api.getCurrentProject();
+    const project = api.getCurrentProject();
 
     if (await project!.exists()) {
       // ensure a click event listener for the save button
@@ -135,6 +147,9 @@ const main = async () => {
                 document
                   .querySelector<Modal>("dialog[is=commit-modal]")!
                   .refresh();
+                document
+                  .querySelector<Modal>("dialog[is=settings-modal]")!
+                  .refresh();
               }, 100);
             };
           });
@@ -148,14 +163,8 @@ const main = async () => {
   }
 };
 
-localStorage.setItem(
-  "scratch-git:highlights",
-  JSON.parse(localStorage.getItem("scratch-git:highlights") ?? "false")
-);
-localStorage.setItem(
-  "scratch-git:plaintext",
-  JSON.parse(localStorage.getItem("scratch-git:plaintext") ?? "false")
-);
+window._changedScripts = {};
+userSettings.init();
 
 document.head.append(...Styles());
 

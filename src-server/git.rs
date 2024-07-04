@@ -31,6 +31,7 @@ fn git_object_id(cwd: &PathBuf, content: String) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
 
+/// Represents the result of a git diff
 #[derive(Serialize, Debug)]
 pub struct GitDiff {
     pub removed: i32,
@@ -39,7 +40,12 @@ pub struct GitDiff {
 }
 
 /// Diff two strings, specifically scratchblocks code, using `git diff`
-pub fn diff(cwd: &PathBuf, mut old_content: String, mut new_content: String, context: i32) -> Result<GitDiff> {
+pub fn diff(
+    cwd: &PathBuf,
+    mut old_content: String,
+    mut new_content: String,
+    context: i32,
+) -> Result<GitDiff> {
     if old_content == new_content {
         return Ok(GitDiff {
             removed: 0,
@@ -143,6 +149,19 @@ pub fn show_revision(cwd: &PathBuf, commit: &str) -> Result<String> {
     .current_dir(cwd)
     .output()?;
     Ok(String::from_utf8_lossy(&proc.stdout).to_string())
+}
+
+pub fn main_branch(cwd: &PathBuf) -> Result<String> {
+    let git_branch = &String::from_utf8(
+        run(vec!["branch", "-rl", "*/HEAD"], Some(cwd))
+            .output()?
+            .stdout,
+    )?;
+    let main_branch = git_branch.split("origin/").last().ok_or(anyhow!("couldn't find origin. you probably havent setup a repository so why are you pushing?? what???"))?;
+    Ok(main_branch
+        .strip_suffix("\n")
+        .unwrap_or(main_branch)
+        .to_string())
 }
 
 /// Run a Git command

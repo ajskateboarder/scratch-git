@@ -5,6 +5,5 @@ interface Window {
   Blockly: any;
   ReduxStore: any;
   vm: any;
-  _changedScripts: string[];
-  showOpenFilePicker: any;
+  _changedScripts: Record<string, string[]>;
 }

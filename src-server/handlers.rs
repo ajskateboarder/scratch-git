@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::net::TcpStream;
 use std::{
@@ -15,9 +16,11 @@ use tungstenite::{Message, WebSocket};
 use walkdir::WalkDir;
 
 use crate::config::{gh_token, project_config};
-use crate::diff::{Diff, ScriptChanges};
+use crate::diff::structs::{AssetChange, AssetChangeType, Diff, ScriptChanges};
+use crate::diff::vec_utils::group_costumes;
 use crate::gh_auth;
 use crate::git;
+
 use crate::sb3::{get_assets, ProjectData};
 use crate::zipping::{self, extract, zip};
 
@@ -37,7 +40,7 @@ enum CmdData<'a> {
         sprite_name: Option<&'a str>,
     },
     GitDiff {
-	project_name: String,
+        project_name: String,
         old_content: String,
         new_content: String,
     },
@@ -74,10 +77,11 @@ impl CmdHandler<'_> {
     }
 
     fn send_json(&mut self, json: Value) -> Result<()> {
+        let message = json.to_string();
         if self.debug {
-            println!("Sending message: {}", json.to_string())
+            println!("Sending message: {}", message)
         }
-        self.socket.send(Message::Text(json.to_string()))?;
+        self.socket.send(Message::Text(message))?;
         Ok(())
     }
 
@@ -87,21 +91,17 @@ impl CmdHandler<'_> {
         let CmdData::GitDiff {
             old_content,
             new_content,
-            project_name
+            project_name,
         } = data
         else {
             return self.send_json(json!({}));
         };
 
-	let pth = &project_config().lock().unwrap().project_path(&project_name);
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
 
-        self.send_json(json!(git::diff(
-	    pth,
-            old_content.to_string(),
-            new_content.to_string(),
-            2000
-        )
-        .context(here!())?))?;
+        self.send_json(json!(
+            git::diff(pth, old_content, new_content, 2000).context(here!())?
+        ))?;
 
         Ok(())
     }
@@ -117,13 +117,10 @@ impl CmdHandler<'_> {
         else {
             return self.send_json(json!({}));
         };
-        let name = Path::new(&file_path)
-            .file_name()
-            .unwrap()
-            .to_os_string()
-            .to_str()
-            .unwrap()
-            .to_string();
+
+        let name = Path::new(&file_path).file_name().unwrap().to_os_string();
+        let name = name.to_str().unwrap();
+
         let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
 
@@ -151,8 +148,8 @@ impl CmdHandler<'_> {
         match config.projects[&name] {
             Value::Null => {
                 config.projects[name] = json!({
-                    "base": project_path.to_str().unwrap().to_string(),
-                    "project_file": file_path.to_str().unwrap().to_string()
+                    "base": project_path.to_str().unwrap(),
+                    "project_file": file_path.to_str().unwrap()
                 });
             }
             Value::Object(_) => {
@@ -167,15 +164,9 @@ impl CmdHandler<'_> {
 
         config.save();
 
-        let project_to_extract = &config.projects[project_path
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string()];
-        let target_dir = PathBuf::from(Path::new(
-            &project_to_extract["base"].as_str().unwrap().to_string(),
-        ));
+        let project_to_extract =
+            &config.projects[project_path.file_name().unwrap().to_str().unwrap()];
+        let target_dir = PathBuf::from(Path::new(&project_to_extract["base"].as_str().unwrap()));
 
         extract(
             fs::File::open(Path::new(
@@ -365,10 +356,7 @@ impl CmdHandler<'_> {
         let target_dir = &PathBuf::from(Path::new(&pth));
         extract(
             fs::File::open(Path::new(
-                &projects[project_name]["project_file"]
-                    .as_str()
-                    .unwrap()
-                    .to_string(),
+                &projects[project_name]["project_file"].as_str().unwrap(),
             ))?,
             target_dir.to_path_buf(),
         )?;
@@ -405,7 +393,7 @@ impl CmdHandler<'_> {
         } else {
             targets
                 .filter(|t| {
-                    t["name"].as_str().unwrap().to_string() == sprite_name.unwrap()
+                    t["name"].as_str().unwrap() == sprite_name.unwrap()
                         && !t["isStage"].as_bool().unwrap()
                 })
                 .map(|t| t["blocks"].as_object().unwrap())
@@ -436,7 +424,7 @@ impl CmdHandler<'_> {
         )?;
 
         let mut push = git::run(
-            vec!["push", "--set-upstream", "origin", "master"],
+            vec!["push", "--set-upstream", "origin", &git::main_branch(pth)?],
             Some(pth),
         );
 
@@ -483,19 +471,15 @@ impl CmdHandler<'_> {
                 .stdout,
         )?;
 
-        let main_branch = &String::from_utf8(
-            git::run(vec!["branch", "-rl", "\"*/HEAD\""], Some(pth))
-                .output()
-                .context(here!())?
-                .stdout,
-        )?;
-
-        let mut pull = git::run(vec!["pull", "origin", main_branch, "--rebase"], Some(pth));
+        let mut pull = git::run(
+            vec!["pull", "origin", &git::main_branch(pth)?, "--rebase"],
+            Some(pth),
+        );
 
         if config_remote.contains("://github.com") {
             let mut token = gh_token().lock().unwrap();
             pull.env("GITHUB_TOKEN", token.get());
-        } 
+        }
 
         let pull = pull.output().context(here!())?;
 
@@ -539,17 +523,38 @@ impl CmdHandler<'_> {
         let current_diff = Diff::new(&serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.old.json"))?.as_str(),
         )?);
-
-        let new_diff = Diff::new(&serde_json::from_str::<serde_json::Value>(
+        let current_project = serde_json::from_str::<serde_json::Value>(
             &fs::read_to_string(pth.join("project.json"))?.as_str(),
-        )?);
+        )?;
 
-        for change in new_diff.costumes(&current_diff) {
-            fs::remove_file(pth.join(change.costume_path))?;
+        let new_diff = Diff::new(&current_project);
+
+        for change in new_diff.assets(&current_diff, None) {
+            let _ = fs::remove_file(pth.join(change.path));
+        }
+
+        // remove all assets that aren't used in the json
+        let project_assets = get_assets(serde_json::from_value(current_project)?);
+        let unused_assets = fs::read_dir(pth)?
+            .map(|res| res.unwrap().path())
+            .filter(|path| {
+                let ext = path.extension();
+                if ext.is_none() {
+                    return false;
+                };
+                let ext = ext.unwrap();
+                ext == "svg" || ext == "png" || ext == "mp3" || ext == "wav"
+            })
+            .filter(|path| {
+                !project_assets.contains(&path.file_name().unwrap().to_str().unwrap().to_string())
+            });
+
+        for asset in unused_assets {
+            let _ = fs::remove_file(asset);
         }
 
         if !git::run(vec!["add", "."], Some(&pth)).status()?.success() {
-            return self.send_json(json!({ "message": "Nothing to add" }));
+            return self.send_json(json!({ "message": -1 }));
         }
 
         let commit = git::run(vec!["commit", "-m", "temporary"], Some(pth))
@@ -557,30 +562,24 @@ impl CmdHandler<'_> {
             .context(here!())?;
 
         if !commit.status.success() {
-	    dbg!(&commit);
-            if self.debug {
-                println!(
-                    "commit: failed to make commit: error code {:?}",
-                    commit.status.code().unwrap_or(-2000000000)
-                )
+            let stderr = String::from_utf8(commit.stderr)?;
+            if stderr.contains("git config --global user.email") {
+                return self.send_json(json!({"message": -2 }));
             }
-            // TODO: make error message less generic
-            return self.send_json(json!({ "message": "Nothing to commit" }));
-        }
 
-        if self.debug {
-            let rev = git::show_revision(&pth, "HEAD~1:project.json")?;
-            println!("commit: got revision for HEAD~1:project.json:\n\n{rev}")
+            // TODO: (?) make this less generic
+            return self.send_json(json!({ "message": -3 }));
         }
 
         let previous_revision = Diff::from_revision(&pth, "HEAD~1:project.json")?;
         let commit_message = previous_revision.commits(&pth, &new_diff)?.join(", ");
 
         let commit =
-            git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).status()?;
+            git::run(vec!["commit", "--amend", "-m", &commit_message], Some(&pth)).output()?;
 
-        if !commit.success() {
-            return self.send_json(json!({ "message": "fail" }));
+        if !commit.status.success() {
+            // TODO: make this less generic
+            return self.send_json(json!({ "message": -4 }));
         }
 
         self.send_json(json!({ "message": commit_message }))
@@ -631,9 +630,6 @@ impl CmdHandler<'_> {
         let project_old_json = match binding {
             Ok(fh) => fh.as_str(),
             Err(_) => {
-                if self.debug {
-                    println!("get_changed_sprites: project.old.json does not exist, try commiting this first")
-                }
                 return self
                     .send_json(json!({ "status": "unzip the project first that should do it" }));
             }
@@ -646,7 +642,8 @@ impl CmdHandler<'_> {
         )?;
 
         let new_diff = Diff::new(&_new_project);
-        let sprites: Vec<_> = current_diff
+
+        let mut sprites: Vec<_> = current_diff
             .blocks(&pth, &new_diff)?
             .into_iter()
             .map(|ScriptChanges { sprite, .. }| {
@@ -659,15 +656,32 @@ impl CmdHandler<'_> {
             })
             .collect();
 
-        self.send_json(json!({ "sprites": sprites }))
+        sprites.extend(
+            [
+                new_diff.assets(&current_diff, None),
+                current_diff.assets(&new_diff, None),
+            ]
+            .concat()
+            .into_iter()
+            .map(|AssetChange { sprite, .. }| {
+                let parts = sprite.split(" ").collect::<Vec<_>>();
+                if parts[0] == "Stage" && parts[1..].join("") == "(stage)" {
+                    (parts[0].to_string(), true)
+                } else {
+                    (sprite, false)
+                }
+            }),
+        );
+
+        self.send_json(json!({ "sprites": sprites.iter().collect::<HashSet<_>>() }))
     }
 
     /// Set up GitHub authentication for use with any configured project
     fn gh_auth(&mut self) -> Result<()> {
         let mut gh_token = gh_token().lock().unwrap();
-        let current_token = gh_token.get().to_string();
+        let current_token = gh_token.get();
 
-        if gh_auth::current_user(current_token.clone()).is_some() {
+        if gh_auth::current_user(current_token.to_string()).is_some() {
             self.send_json(json!({"success": true}))?;
             return Ok(());
         }
@@ -698,6 +712,7 @@ impl CmdHandler<'_> {
         };
 
         let project_dir = &PathBuf::from("./projects");
+
         // was considering adding --depth=1 but that might not work here
         let clone = git::run(vec!["clone", &url], Some(project_dir))
             .output()
@@ -767,6 +782,47 @@ impl CmdHandler<'_> {
 
         self.send_json(json!({"success": true, "path": project_path}))
     }
+
+    // ANCHOR[id=get-changed-costumes]
+    fn get_changed_costumes(&mut self, data: CmdData) -> Result<()> {
+        let CmdData::Project { project_name, .. } = data else {
+            return self.send_json(json!({}));
+        };
+
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
+
+        let binding = &fs::read_to_string(pth.join("project.old.json"));
+        let project_old_json = match binding {
+            Ok(fh) => fh.as_str(),
+            Err(_) => {
+                return self.send_json(json!({ "status": -2 }));
+            }
+        };
+        let _current_project = serde_json::from_str::<serde_json::Value>(project_old_json)?;
+
+        let current_diff = Diff::new(&_current_project);
+        let _new_project = serde_json::from_str::<serde_json::Value>(
+            &fs::read_to_string(pth.join("project.json"))?.as_str(),
+        )?;
+
+        let new_diff = Diff::new(&_new_project);
+
+        let mut costume_changes = current_diff.assets(&new_diff, Some(AssetChangeType::After));
+        let newer_changes = new_diff.assets(&current_diff, Some(AssetChangeType::Before));
+
+        costume_changes.extend(newer_changes);
+
+        for change in &mut costume_changes {
+            if !pth.join(change.path.clone()).exists() {
+                return self.send_json(json!({ "status": -1 }));
+            }
+            change.contents = Some(fs::read(pth.join(change.path.clone()))?.into());
+        }
+
+        let costume_changes = group_costumes(costume_changes);
+
+        self.send_json(json!({"status": 0, "data": costume_changes}))
+    }
 }
 
 pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) -> Result<()> {
@@ -792,6 +848,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
+        "get-changed-costumes" => handler.get_changed_costumes(msg.data),
 
         _ => unreachable!(),
     }

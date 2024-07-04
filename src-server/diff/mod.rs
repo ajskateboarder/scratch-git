@@ -1,7 +1,7 @@
 pub mod structs;
-mod vec_utils;
+pub mod vec_utils;
 
-pub use structs::*;
+use structs::*;
 
 use std::path::PathBuf;
 use std::{
@@ -16,7 +16,7 @@ use regex_static::{once_cell::sync::Lazy, Regex};
 use serde_json::{Map, Value};
 
 use crate::git;
-use vec_utils::{group_items, intersection};
+use vec_utils::{group_items, intersect_costumes};
 
 static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
 
@@ -45,49 +45,46 @@ impl Diff {
     }
 
     /// Attempt to return the MD5 extension of a costume item (project.json)
-    pub fn get_costume_path(costume: Value) -> String {
-        match costume["md5ext"] {
-            Value::String(_) => costume["md5ext"].as_str().unwrap().to_string(),
-            Value::Null => format!(
+    pub fn get_asset_path(costume: Value) -> String {
+        costume["md5ext"]
+            .as_str()
+            .map(|md5| md5.to_string())
+            .unwrap_or(format!(
                 "{}.{}",
-                costume["assetId"].as_str().unwrap().to_string(),
-                costume["dataFormat"].as_str().unwrap().to_string()
-            ),
-            _ => todo!("no idea what to do here"),
-        }
+                costume["assetId"].as_str().unwrap(),
+                costume["dataFormat"].as_str().unwrap()
+            ))
     }
 
     /// Return costumes that have changed between projects, but not added or removed
-    fn _merged_costumes<'a>(&'a self, new: &'a Self) -> CostumeChanges {
-        let mut added = self.costumes(new);
-        let mut removed = new.costumes(self);
+    fn _merged_costumes<'a>(&'a self, new: &'a Self) -> AssetChanges {
+        let mut added = self.assets(new, None);
+        let mut removed = new.assets(self, None);
 
-        let _m1 = added
-            .clone()
-            .iter()
-            .map(|x| x.to_owned())
-            .collect::<HashSet<_>>();
+        let _m1 = added.iter().map(|x| x.to_owned()).collect::<HashSet<_>>();
         let _m2 = removed
-            .clone()
             .iter()
             .map(|x| x.to_owned())
             .collect::<HashSet<_>>()
             .to_owned();
 
-        let merged = intersection(vec![_m1, _m2]);
+        let merged = intersect_costumes(vec![_m1, _m2]);
+
+        let they_match =
+            |a: &AssetChange, b: &AssetChange| a.name == b.name && a.sprite == b.sprite;
 
         for item in &merged {
-            if let Some(pos) = added.iter().position(|x| x == item) {
+            if let Some(pos) = added.iter().position(|x| they_match(x, item)) {
                 added.remove(pos);
             }
         }
         for item in &merged {
-            if let Some(pos) = removed.iter().position(|x| x == item) {
+            if let Some(pos) = removed.iter().position(|x| they_match(x, item)) {
                 removed.remove(pos);
             }
         }
 
-        CostumeChanges {
+        AssetChanges {
             added,
             removed,
             merged: Vec::from_iter(merged),
@@ -95,57 +92,64 @@ impl Diff {
     }
 
     /// Return the costume differences between each sprite in two projects
-    pub fn costumes(&self, new: &Self) -> Vec<CostumeChange> {
-        let new_costumes: Vec<CostumeChange> = new
-            ._costumes()
+    // `kind` is used to mark changes as a certain type for frontend purposes
+    pub fn assets(&self, new: &Self, kind: Option<AssetChangeType>) -> Vec<AssetChange> {
+        let new_assets: Vec<AssetChange> = new
+            ._assets()
             .into_iter()
             .map(|(sprite, changes)| {
                 changes
                     .iter()
-                    .map(|costume| CostumeChange {
+                    .map(|costume| AssetChange {
                         sprite: sprite.clone(),
-                        costume_name: costume.0.clone(),
-                        costume_path: costume.1.clone(),
-                        on_stage: costume.2,
+                        name: costume.0.clone(),
+                        path: costume.2.clone(),
+                        ext: costume.1.clone(),
+                        on_stage: costume.3,
+                        contents: None,
+                        kind,
                     })
-                    .collect::<Vec<CostumeChange>>()
+                    .collect::<Vec<AssetChange>>()
             })
             .flatten()
             .collect();
 
-        let old_costumes: Vec<CostumeChange> = self
-            ._costumes()
+        let old_assets: Vec<AssetChange> = self
+            ._assets()
             .into_iter()
             .map(|(sprite, changes)| {
                 changes
                     .iter()
-                    .map(|costume| CostumeChange {
+                    .map(|costume| AssetChange {
                         sprite: sprite.clone(),
-                        costume_name: costume.0.clone(),
-                        costume_path: costume.1.clone(),
-                        on_stage: costume.2,
+                        name: costume.0.clone(),
+                        path: costume.2.clone(),
+                        ext: costume.1.clone(),
+                        on_stage: costume.3,
+                        contents: None,
+                        kind,
                     })
-                    .collect::<Vec<CostumeChange>>()
+                    .collect::<Vec<AssetChange>>()
             })
             .flatten()
             .collect();
 
-        let _old_set = HashSet::from_iter(old_costumes);
-        let _new_set = HashSet::<CostumeChange>::from_iter(new_costumes.clone());
+        let _old_set = HashSet::from_iter(old_assets);
+        let _new_set = HashSet::<AssetChange>::from_iter(new_assets.clone());
         let difference: _ = Vec::from_iter(_new_set.difference(&_old_set));
-        new_costumes
+        new_assets
             .into_iter()
             .filter(|x| difference.contains(&x))
             .collect()
     }
 
     /// Return the path to every costume being used
-    fn _costumes(&self) -> HashMap<String, Vec<(String, String, bool)>> {
-        let mut costumes: HashMap<String, Vec<(String, String, bool)>> = HashMap::new();
+    fn _assets(&self) -> HashMap<String, Vec<(String, String, String, bool)>> {
+        let mut assets: HashMap<String, Vec<(String, String, String, bool)>> = HashMap::new();
         if let Some(sprites) = self.data["targets"].as_array() {
             for sprite in sprites {
                 if let Some(sprite_costumes) = sprite["costumes"].as_array() {
-                    costumes.insert(
+                    assets.insert(
                         sprite["name"].as_str().unwrap().to_string()
                             + if sprite["isStage"].as_bool().unwrap() {
                                 " (stage)"
@@ -157,23 +161,48 @@ impl Diff {
                             .map(|costume| {
                                 (
                                     costume["name"].as_str().unwrap().to_string(),
-                                    Diff::get_costume_path(costume.clone()),
+                                    costume["dataFormat"].as_str().unwrap().to_string(),
+                                    Diff::get_asset_path(costume.clone()),
                                     sprite["isStage"].as_bool().unwrap(),
                                 )
-                                    .clone()
                             })
                             .collect(),
                     );
                 }
+                if let Some(sprite_sounds) = sprite["sounds"].as_array() {
+                    assets
+                        .get_mut(
+                            &(sprite["name"].as_str().unwrap().to_string()
+                                + if sprite["isStage"].as_bool().unwrap() {
+                                    " (stage)"
+                                } else {
+                                    ""
+                                }),
+                        )
+                        .unwrap()
+                        .extend(
+                            sprite_sounds
+                                .iter()
+                                .map(|sound| {
+                                    (
+                                        sound["name"].as_str().unwrap().to_string(),
+                                        sound["dataFormat"].as_str().unwrap().to_string(),
+                                        Diff::get_asset_path(sound.clone()),
+                                        sprite["isStage"].as_bool().unwrap(),
+                                    )
+                                })
+                                .collect::<Vec<_>>(),
+                        );
+                }
             }
         }
-        costumes
+        assets
     }
 
-    /// Group and format a set of costume changes into proper commits
-    pub fn format_costumes(
+    /// Group and format a set of asset changes into proper commits
+    pub fn format_assets(
         &self,
-        changes: Vec<CostumeChange>,
+        changes: Vec<AssetChange>,
         action: &'static str,
     ) -> Vec<(String, String)> {
         let _changes: Vec<(String, String)> = changes
@@ -181,7 +210,7 @@ impl Diff {
             .map(|change| {
                 (
                     change.sprite.to_owned() + if change.on_stage { " (stage)" } else { "" },
-                    format!("{} {}", action, change.costume_name),
+                    format!("{} {}.{}", action, change.name, change.ext),
                 )
             })
             .collect();
@@ -189,8 +218,12 @@ impl Diff {
         for (sprite, actions) in group_items(_changes) {
             let split_ = actions
                 .iter()
-                .map(|a| a.split(" ").map(|x| x.to_string()).collect::<Vec<_>>())
+                .map(|a| {
+                    let parts = a.split_at(a.match_indices(" ").nth(0).unwrap().0);
+                    (parts.0.to_string(), parts.1.to_string())
+                })
                 .collect::<Vec<_>>();
+
             let binding = group_items(split_);
             let act: Vec<(&String, &Vec<String>)> = binding
                 .iter()
@@ -198,7 +231,7 @@ impl Diff {
                 .collect();
             commits.insert(sprite, format!("{} {}", act[0].0, act[0].1.join(", ")));
         }
-        commits.clone().into_iter().map(|(x, y)| (x, y)).collect()
+        commits.into_iter().map(|(x, y)| (x, y)).collect()
     }
 
     /// Formats scripts as a flat object representation with opcode, fields, and inputs
@@ -292,7 +325,6 @@ impl Diff {
         let mut error = None;
 
         let changes = sprites
-            .clone()
             .filter_map(|(&ref old, &ref new)| {
                 if old["blocks"].as_object() == new["blocks"].as_object() {
                     return None;
@@ -315,7 +347,7 @@ impl Diff {
                 }
 
                 let diff = git::diff(
-		    cwd,
+                    cwd,
                     Diff::format_blocks(old["blocks"].as_object().unwrap()),
                     Diff::format_blocks(new["blocks"].as_object().unwrap()),
                     2000,
@@ -370,9 +402,10 @@ impl Diff {
             })
             .map(|v| (v[0].clone(), v[1].clone()))
             .collect::<Vec<(String, String)>>();
-        let added = self.format_costumes(costume_changes.added, "add");
-        let removed = self.format_costumes(costume_changes.removed, "remove");
-        let merged = self.format_costumes(costume_changes.merged, "modify");
+
+        let added = self.format_assets(costume_changes.added, "add");
+        let removed = self.format_assets(costume_changes.removed, "remove");
+        let merged = self.format_assets(costume_changes.merged, "modify");
 
         let _commits = [blocks, added, removed, merged].concat();
 

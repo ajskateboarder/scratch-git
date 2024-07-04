@@ -9,7 +9,7 @@ pub fn turbowarp_path() -> Option<PathBuf> {
     {
         use std::{fs::DirEntry, io::Result};
 
-        let pth = Path::new(&env::var("APPDATA").unwrap().to_string()).join("turbowarp-desktop");
+        let pth = Path::new(&env::var("APPDATA").unwrap()).join("turbowarp-desktop");
         if let Ok(mut dir) = pth.read_dir() {
             if !dir.next().is_none() {
                 return Some(pth);
@@ -17,7 +17,7 @@ pub fn turbowarp_path() -> Option<PathBuf> {
         };
         let file_name =
             |f: Result<DirEntry>| f.unwrap().file_name().to_os_string().into_string().unwrap();
-        let pth = Path::new(&env::var("LOCALAPPDATA").unwrap().to_string()).join("Packages");
+        let pth = Path::new(&env::var("LOCALAPPDATA").unwrap()).join("Packages");
         if let Ok(__store_folder) = pth.read_dir() {
             let _store_folder = __store_folder
                 .into_iter()

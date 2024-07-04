@@ -1,0 +1,29 @@
+.tip {
+  border-bottom: 1px dashed grey;
+  cursor: pointer;
+
+  &:hover {
+    cursor: help;
+  }
+}
+
+.disabled-config-input {
+  pointer-events: none;
+  border: none;
+  font-size: 14px;
+}
+
+.floppy-save-button {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repo-config-bottom-bar {
+  margin: 0;
+  padding: 0;
+  bottom: 10px;
+  margin-left: 10px;
+}

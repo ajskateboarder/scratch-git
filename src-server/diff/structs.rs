@@ -1,20 +1,32 @@
+use serde::Serialize;
 use serde_json::Value;
 
+#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AssetChangeType {
+    Before,
+    After,
+}
+
 /// Represents a changed costume for a sprite or the stage
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
-pub struct CostumeChange {
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetChange {
     pub sprite: String,
-    pub costume_name: String,
-    pub costume_path: String,
+    pub name: String,
+    pub ext: String,
+    pub path: String,
     pub on_stage: bool,
+    pub kind: Option<AssetChangeType>,
+    pub contents: Option<Box<[u8]>>,
 }
 
 /// Represents costumes that were added, removed, or changed
 #[derive(Debug)]
-pub struct CostumeChanges {
-    pub added: Vec<CostumeChange>,
-    pub removed: Vec<CostumeChange>,
-    pub merged: Vec<CostumeChange>,
+pub struct AssetChanges {
+    pub added: Vec<AssetChange>,
+    pub removed: Vec<AssetChange>,
+    pub merged: Vec<AssetChange>,
 }
 
 /// Represents a changed script for a sprite or stage, and how many blocks were added or removed

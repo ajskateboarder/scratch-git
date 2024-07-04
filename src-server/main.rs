@@ -32,7 +32,7 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {
                 let msg = msg.to_string();
                 if debug {
-                    println!("<- Received message: {}", msg.to_string());
+                    println!("<- Received message: {}", &msg);
                 }
                 let cmd = from_str::<Cmd>(&msg).unwrap();
                 handle_command(cmd, &mut socket, debug).unwrap_or_else(|err| {
@@ -57,17 +57,14 @@ fn main() {
         }
     };
 
-    let debug = if let Some(arg) = env::args().nth(1) {
-        arg == "--debug"
-    } else {
-        false
-    };
+    let debug = env::args().nth(1).is_some_and(|arg| arg == "--debug");
 
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
-	println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
+        println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
         path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
     }
+
     println!("Script copied to {}", path.to_str().unwrap());
 
     let _ = fs::create_dir("projects");
