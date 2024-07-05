@@ -15,7 +15,7 @@ interface ScriptParse {
 /** Parse scripts in a project that have been modified */
 const _parseScripts = (
   oldProject: Record<string, any>,
-  newProject: Record<string, any>,
+  newProject: Record<string, any>
 ): ScriptParse[] => {
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
@@ -26,12 +26,12 @@ const _parseScripts = (
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', ""),
+            .replaceAll(',"SUBSTACK":[1,null]', "")
         ),
         "en",
         {
           tabs: "",
-        },
+        }
       );
     })
     .sort((a, b) => a.localeCompare(b));
@@ -45,12 +45,12 @@ const _parseScripts = (
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', ""),
+              .replaceAll(',"SUBSTACK":[1,null]', "")
           ),
           "en",
           {
             tabs: "",
-          },
+          }
         ),
         script,
       };
@@ -60,7 +60,7 @@ const _parseScripts = (
   const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
-    // @ts-expect-error - this doesn't have to be a Symbol.iterator
+    // @ts-expect-error
     .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
       if (newContent === undefined) {
         newContent = "";
@@ -70,8 +70,8 @@ const _parseScripts = (
         oldContent !== "" && newContent !== ""
           ? "modified"
           : oldContent === "" && newContent !== ""
-            ? "added"
-            : "removed";
+          ? "added"
+          : "removed";
 
       return { oldContent, newContent, status, scriptNo, script };
     });
@@ -83,14 +83,14 @@ const _parseScripts = (
 export const parseScripts = async (
   projectName: string,
   previousScripts: Record<string, any>,
-  currentScripts: Record<string, any>,
+  currentScripts: Record<string, any>
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
   return (
     await Promise.all(
       scripts.map((script) =>
-        diff(projectName, script.oldContent, script.newContent),
-      ),
+        diff(projectName, script.oldContent, script.newContent)
+      )
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
