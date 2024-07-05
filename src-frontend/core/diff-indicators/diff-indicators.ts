@@ -50,11 +50,6 @@ const changedBlocklyScripts = async (
     currentScripts
   );
 
-  console.log(
-    diffs,
-    diffs.map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
-  );
-
   return diffs
     .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
     .filter((e) => e !== undefined);

@@ -285,7 +285,6 @@ export class DiffModal extends Modal {
       newScripts
     );
     const costumeDiffs = this.cache.costumeChanges[spriteName];
-
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
 
