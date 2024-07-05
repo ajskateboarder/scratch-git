@@ -823,6 +823,25 @@ impl CmdHandler<'_> {
 
         self.send_json(json!({"status": 0, "data": costume_changes}))
     }
+
+    // ANCHOR[id=repo-status]
+    fn repo_status(&mut self, data: CmdData) -> Result<()> {
+        let CmdData::Project { project_name, .. } = data else {
+            return self.send_json(json!({}));
+        };
+
+        let pth = &project_config().lock().unwrap().project_path(&project_name);
+
+        let status = String::from_utf8(git::run(vec!["status"], Some(pth)).output()?.stdout)?;
+        
+        if status.contains("nothing to commit") {
+            self.send_json(json!({"status": 1}))
+        } else if status.contains("no changes added to commit") {
+            self.send_json(json!({"status": 2}))
+        } else {
+            self.send_json(json!({"status": 2}))   
+        }
+    }
 }
 
 pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) -> Result<()> {
@@ -849,6 +868,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
         "get-changed-costumes" => handler.get_changed_costumes(msg.data),
+        "repo-status" => handler.repo_status(msg.data),
 
         _ => unreachable!(),
     }

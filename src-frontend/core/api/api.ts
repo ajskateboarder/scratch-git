@@ -246,6 +246,17 @@ export class Project extends Socket {
       data: { GitDetails: { project_name: this.projectName, ...details } },
     });
   }
+
+  /** Check whether the user can commit or not */
+  // LINK src-server/handlers.rs#repo-status
+  async repoStatus(): Promise<number> {
+    return (
+      await this.request({
+        command: "repo-status",
+        data: { Project: { project_name: this.projectName } },
+      })
+    ).status as number;
+  }
 }
 
 /** Represents a connection to fetch and initialize projects */

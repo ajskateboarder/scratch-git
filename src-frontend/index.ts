@@ -5,72 +5,28 @@ import { showIndicators } from "./core/diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
 
-import {
-  CommitModal,
-  WelcomeModal,
-  DiffModal,
-  RepoConfigModal,
-  SettingsModal,
-} from "./core/modals";
-import { Modal } from "./core/modals/base";
+import { initModals, refreshModals, WelcomeModal } from "./core/modals";
 import { getReactHandlers } from "./core/utils";
 import { userSettings } from "./core/settings";
 
+const displayDiffs = async (project: Project) => {
+  [
+    ...document.querySelectorAll(`.diff-button`),
+    ...document.querySelectorAll(`.stage-diff`),
+  ].forEach((e) => e.remove());
+  await project!.unzip();
+  window._changedScripts = {};
+  try {
+    await showIndicators(project!);
+  } catch (e) {
+    new ScratchAlert(i18next.t("alerts.wrong-project"))
+      .type("warn")
+      .timeout(5000)
+      .display();
+}
+
 const main = async () => {
-  if (!document.querySelector("dialog[is='diff-modal']")) {
-    try {
-      customElements.define("commit-modal", CommitModal, { extends: "dialog" });
-      customElements.define("diff-modal", DiffModal, { extends: "dialog" });
-      customElements.define("welcome-modal", WelcomeModal, {
-        extends: "dialog",
-      });
-      customElements.define("repo-config-modal", RepoConfigModal, {
-        extends: "dialog",
-      });
-      customElements.define("settings-modal", SettingsModal, {
-        extends: "dialog",
-      });
-    } catch {}
-
-    const saveArea = document.querySelector<HTMLElement>(
-      `#app > div > div.${s("gui_menu-bar-position")}.${s(
-        "menu-bar_menu-bar"
-      )} > div.${s("menu-bar_main-menu")} > div:nth-child(4)`
-    )!;
-    saveArea.style.opacity = "0";
-
-    // appending van elems will not work
-    saveArea.innerHTML += `<dialog is="diff-modal"></dialog>
-          <dialog
-            is="commit-modal"
-          ></dialog>
-          <dialog
-            is="welcome-modal"
-          ></dialog>
-          <dialog
-          is="repo-config-modal"
-          ></dialog>
-          <dialog
-          is="settings-modal"
-          ></dialog>`;
-  }
-
-  const displayDiffs = async (project: Project) => {
-    [
-      ...document.querySelectorAll(`.diff-button`),
-      ...document.querySelectorAll(`.stage-diff`),
-    ].forEach((e) => e.remove());
-    await project!.unzip();
-    window._changedScripts = {};
-    try {
-      await showIndicators(project!);
-    } catch (e) {
-      new ScratchAlert(i18next.t("alerts.wrong-project"))
-        .type("warn")
-        .timeout(5000)
-        .display();
-    }
-  };
+  initModals();
 
   if (!fileMenu.projectOpen()) {
     await document
@@ -80,6 +36,7 @@ const main = async () => {
     const project = api.getCurrentProject();
 
     if (await project!.exists()) {
+      window._repoStatus = await project!.repoStatus();
       // ensure a click event listener for the save button
       new MutationObserver(() => {
         const saveButton = misc.saveArea.select<HTMLDivElement>();
@@ -90,12 +47,12 @@ const main = async () => {
               observer.disconnect();
               return;
             }
-            // i think this is language-insensitive.. i tested
             if (
               (saveStatus as any)[getReactHandlers(saveStatus)].children[1]
                 .props.defaultMessage === "Saving project…"
             ) {
               await displayDiffs(project!);
+              window._repoStatus = await project!.repoStatus();
               return;
             }
           });
@@ -134,22 +91,7 @@ const main = async () => {
                 await main();
                 await createGitMenu(project!, getLocale());
                 i18next.changeLanguage(getLocale());
-
-                document
-                  .querySelector<Modal>("dialog[is=repo-config-modal]")!
-                  .refresh();
-                document
-                  .querySelector<Modal>("dialog[is=welcome-modal]")!
-                  .refresh();
-                document
-                  .querySelector<Modal>("dialog[is=diff-modal]")!
-                  .refresh();
-                document
-                  .querySelector<Modal>("dialog[is=commit-modal]")!
-                  .refresh();
-                document
-                  .querySelector<Modal>("dialog[is=settings-modal]")!
-                  .refresh();
+                refreshModals();
               }, 100);
             };
           });

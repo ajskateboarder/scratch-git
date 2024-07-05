@@ -85,9 +85,11 @@ export class DiffModal extends Modal {
     $plainText: HTMLInputElement;
   };
 
-  private previousScripts: any;
-  private currentScripts: any;
-  private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
+  private cache!: {
+    previousScripts: any;
+    currentScripts: any;
+    costumeChanges: Record<string, Record<string, CostumeChange[]>>;
+  };
 
   private copyCallback!: () => string | SVGElement;
 
@@ -257,28 +259,32 @@ export class DiffModal extends Modal {
     let oldScripts: any, newScripts: any;
     if (cached) {
       if (
-        this.previousScripts === undefined &&
-        this.currentScripts === undefined
+        !this.cache.previousScripts &&
+        !this.cache.currentScripts &&
+        !this.cache.costumeChanges
       ) {
-        this.previousScripts = await project.getPreviousScripts(spriteName);
-        this.currentScripts = await project.getCurrentScripts(spriteName);
-        this.costumeChanges = await project.getChangedCostumes();
+        this.cache = {
+          previousScripts: await project.getPreviousScripts(spriteName),
+          currentScripts: await project.getCurrentScripts(spriteName),
+          costumeChanges: await project.getChangedCostumes(),
+        };
       }
     } else {
-      this.previousScripts = await project.getPreviousScripts(spriteName);
-      this.currentScripts = await project.getCurrentScripts(spriteName);
-      this.costumeChanges = await project.getChangedCostumes();
+      this.cache = {
+        previousScripts: await project.getPreviousScripts(spriteName),
+        currentScripts: await project.getCurrentScripts(spriteName),
+        costumeChanges: await project.getChangedCostumes(),
+      };
     }
-    oldScripts = this.previousScripts;
-    newScripts = this.currentScripts;
+    oldScripts = this.cache.previousScripts;
+    newScripts = this.cache.currentScripts;
 
     const diffs = await parseScripts(
       project.projectName,
       oldScripts,
       newScripts
     );
-    const costumeDiffs = this.costumeChanges[spriteName];
-
+    const costumeDiffs = this.cache.costumeChanges[spriteName];
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
 
