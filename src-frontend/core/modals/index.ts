@@ -9,7 +9,7 @@ import type { Modal } from "./base";
 const MODALS = ["diff", "commit", "welcome", "repo-config", "settings"];
 
 export const initModals = () => {
-  if (customElements.get("commit-modal")) return;
+  if (document.querySelector("[is=commit-modal]")) return;
 
   try {
     customElements.define("commit-modal", CommitModal, { extends: "dialog" });

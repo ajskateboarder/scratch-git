@@ -833,13 +833,13 @@ impl CmdHandler<'_> {
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         let status = String::from_utf8(git::run(vec!["status"], Some(pth)).output()?.stdout)?;
-        
+
         if status.contains("nothing to commit") {
             self.send_json(json!({"status": 1}))
         } else if status.contains("no changes added to commit") {
             self.send_json(json!({"status": 2}))
         } else {
-            self.send_json(json!({"status": 2}))   
+            self.send_json(json!({"status": 2}))
         }
     }
 }

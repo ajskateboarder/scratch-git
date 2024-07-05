@@ -27,7 +27,16 @@ pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
             use std::os::unix::fs::PermissionsExt;
 
             if let Some(mode) = file.unix_mode() {
-                fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
+                let perms = fs::set_permissions(&outpath, fs::Permissions::from_mode(mode));
+                match perms {
+                    Ok(_) => {}
+                    Err(_) => {
+                        fs::set_permissions(
+                            target_dir.clone().join(&outpath),
+                            fs::Permissions::from_mode(mode),
+                        ).unwrap();
+                    }
+                }
             }
         }
     }

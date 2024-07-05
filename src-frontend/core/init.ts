@@ -18,6 +18,7 @@ const { link, style, button, i } = van.tags;
 
 /** Packages styles and external dependencies */
 export const Styles = () => {
+  console.debug("building styles");
   const disabledVersions = `
       .${settings.settingsButton}[disabled] {
         background-color: var(--menu-bar-background-default);
@@ -205,6 +206,7 @@ export const createGitMenu = async (
   project: Project,
   changeLocale?: string
 ) => {
+  console.debug("building git menu");
   gitMenu.create(
     {
       commitView: () =>

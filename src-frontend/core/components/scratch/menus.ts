@@ -176,6 +176,12 @@ export const gitMenu = new class {
         this.newMenu!.classList.add(menu.activeMenuItem);
         this.savedItems!.style.display = "block";
         this.open = true;
+        if (window._repoStatus === 1) {
+          this.item(3).style.pointerEvents = "none";
+          this.item(3).style.opacity = "0.5"
+        } else {
+          this.item(3).setAttribute("style", "");
+        }
       } else {
         this.newMenu!.classList.remove(menu.activeMenuItem);
         this.savedItems!.style.display = "none";
