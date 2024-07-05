@@ -1,6 +1,6 @@
 import api, { Project } from "./core/api";
 import { Styles, createGitMenu } from "./core/init";
-import { fileMenu, misc, ScratchAlert, s } from "./core/components";
+import { fileMenu, misc, ScratchAlert } from "./core/components";
 import { showIndicators } from "./core/diff-indicators";
 import i18next, { getLocale } from "./i18n";
 import { Redux, VM } from "./lib";
@@ -23,7 +23,8 @@ const displayDiffs = async (project: Project) => {
       .type("warn")
       .timeout(5000)
       .display();
-}
+  }
+};
 
 const main = async () => {
   initModals();
