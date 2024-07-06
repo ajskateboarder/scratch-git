@@ -784,8 +784,8 @@ impl CmdHandler<'_> {
         self.send_json(json!({"success": true, "path": project_path}))
     }
 
-    // ANCHOR[id=get-changed-costumes]
-    fn get_changed_costumes(&mut self, data: CmdData) -> Result<()> {
+    // ANCHOR[id=get-changed-assets]
+    fn get_changed_assets(&mut self, data: CmdData) -> Result<()> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
@@ -875,7 +875,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
-        "get-changed-costumes" => handler.get_changed_costumes(msg.data),
+        "get-changed-costumes" => handler.get_changed_assets(msg.data),
         "repo-status" => handler.repo_status(msg.data),
 
         _ => unreachable!(),

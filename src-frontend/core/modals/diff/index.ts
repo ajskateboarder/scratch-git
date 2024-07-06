@@ -266,14 +266,14 @@ export class DiffModal extends Modal {
         this.cache = {
           previousScripts: await project.getPreviousScripts(spriteName),
           currentScripts: await project.getCurrentScripts(spriteName),
-          costumeChanges: await project.getChangedCostumes(),
+          costumeChanges: await project.getChangedAssets(),
         };
       }
     } else {
       this.cache = {
         previousScripts: await project.getPreviousScripts(spriteName),
         currentScripts: await project.getCurrentScripts(spriteName),
-        costumeChanges: await project.getChangedCostumes(),
+        costumeChanges: await project.getChangedAssets(),
       };
     }
     oldScripts = this.cache.previousScripts;

@@ -142,12 +142,12 @@ export class Project extends Socket {
   }
 
   // LINK src-server/handlers.rs#get-changed-costumes
-  async getChangedCostumes(): Promise<
+  async getChangedAssets(): Promise<
     Record<string, Record<string, CostumeChange[]>>
   > {
     return (
       await this.request({
-        command: "get-changed-costumes",
+        command: "get-changed-assets",
         data: { Project: { project_name: this.projectName } },
       })
     ).data;

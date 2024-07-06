@@ -63,7 +63,7 @@ And run the debug script (Linux only for now):
 
 Alternatively, if you are using VSCode, there is a build task you can configure to run with `Ctrl+Shift+B`.
 
-## Commit specification
+## Commit spec
 
 scratch-git uses a derivative of [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/) which has been adapted to fit Scratch programming.
 
@@ -73,23 +73,19 @@ Commits start with the name of the sprite you are making changes to (e.g. Sprite
 
 Commits then specify the change they are making using one of the following statements:
 
-| Statement               | Description                                                        |
-| ----------------------- | ------------------------------------------------------------------ |
-| `add [costumes]`        | The following costumes: `[costumes]` have been added               |
-| `remove [costumes]`     | The following costumes: `[costumes]` have been removed             |
-| `modify [costumes]`     | The following costumes: `[costumes]` have been edited              |
-| `{+\|-}{blocks} blocks` | `{blocks}` number of blocks have been added (`+`) or removed (`-`) |
+| Statement               | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `add [costumes]`        | The following costumes: `[costumes]` have been added           |
+| `remove [costumes]`     | The following costumes: `[costumes]` have been removed         |
+| `modify [costumes]`     | The following costumes: `[costumes]` have been edited          |
+| `{+}{#}, {-}{#} blocks` | `{#}` number of blocks have been added (`+`) and removed (`-`) |
 
 This is implemented in [src-server/diff/](./src-server/diff/).
 
 ### Commit examples
 
 ```text
-Sprite1: +3 blocks, add costume1, Stage: remove backdrop3
-```
-
-```text
-Ball: /12 blocks, add red-ball, Stage: add matrix
+Sprite1: +3 blocks, add costume1.png, move.mp3, Stage: remove backdrop3
 ```
 
 ```text
