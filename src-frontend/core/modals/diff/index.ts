@@ -134,7 +134,7 @@ export class DiffModal extends Modal {
     );
 
     this.$ = {
-      $scripts: ul({ id: "scripts" }),
+      $scripts: ul({ style: "max-width: 200px" }),
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
       $commits: commits.querySelector(".commit-wrap")!,
@@ -409,6 +409,9 @@ export class DiffModal extends Modal {
 
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
+      const labelText = getBlockly()
+        .getBlockById(window._changedScripts[spriteName][scriptNo])
+        .comment?.getLabelText();
       const diffButton = li(
         button(
           { class: "tab-btn" },
@@ -417,7 +420,7 @@ export class DiffModal extends Modal {
             i({ class: `${DIFF_ICON[diff.status]} change-icon` }),
             span({ style: "padding-right: 10px" }, iconCodeSvg())
           ),
-          diff.scriptNo,
+          labelText ?? diff.scriptNo,
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {

@@ -11,6 +11,9 @@ export interface Block {
   svgGroup_: SVGElement;
   svgPath_: SVGElement;
   id: string;
+  comment: {
+    getLabelText(): string;
+  } | null;
 }
 
 interface Workspace {
