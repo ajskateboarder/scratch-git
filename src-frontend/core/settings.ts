@@ -1,5 +1,7 @@
+const ns = "scratch-git";
+
 const getItem = (name: string, _default: any = null) => {
-  const value = localStorage.getItem(`scratch-git:${name}`) ?? String(_default);
+  const value = localStorage.getItem(`${ns}:${name}`) ?? String(_default);
   try {
     return JSON.parse(value);
   } catch {
@@ -7,9 +9,11 @@ const getItem = (name: string, _default: any = null) => {
   }
 };
 
+const delItem = (name: string) => localStorage.removeItem(`${ns}:${name}`);
+
 const setItem = (name: string, value: any) =>
   localStorage.setItem(
-    `scratch-git:${name}`,
+    `${ns}:${name}`,
     typeof value === "string" ? value : JSON.stringify(value)
   );
 
@@ -50,7 +54,13 @@ export const userSettings = {
     setItem("scriptcolor", getItem("scriptcolor", defaults.scriptColor));
   },
 
-  setDefaults() {
+  clear() {
+    delItem("highlights");
+    delItem("plaintext");
+    delItem("scriptcolor");
+  },
+
+  defaults() {
     setItem("highlights", defaults.highlights);
     setItem("plaintext", defaults.plainText);
     setItem("scriptcolor", defaults.scriptColor);

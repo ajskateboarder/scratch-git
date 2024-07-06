@@ -329,7 +329,7 @@ export class ProjectManager extends Socket {
  * @param newScript - the script after a save
  */
 // LINK src-server/handlers.rs#diff
-export const diff = async (
+export const diff = (
   projectName: string,
   oldScript: string,
   newScript: string
@@ -348,7 +348,7 @@ export const diff = async (
 };
 
 // LINK src-server/handlers.rs#clone
-export const cloneRepo = async (url: string) => {
+export const cloneRepo = (url: string) => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
   return ws.request({
     command: "clone-repo",
@@ -383,5 +383,13 @@ export const remoteExists = async (url: string): Promise<boolean> => {
     ws.onerror = (error) => {
       return reject(error);
     };
+  });
+};
+
+export const uninstall = async () => {
+  const ws = new Socket(new WebSocket(SOCKET_URL));
+  return !!ws.request({
+    command: "uninstall",
+    data: { Project: { project_name: "" } },
   });
 };

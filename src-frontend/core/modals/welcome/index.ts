@@ -1,5 +1,5 @@
 import { Modal } from "../base";
-import thumbnail from "../thumbnail.svg";
+import thumbnail from "./thumbnail.svg";
 import api, { cloneRepo, remoteExists } from "@/core/api";
 import { settings, fileMenu, cls } from "@/core/components";
 import { InputBox, InputField } from "@/core/components";
@@ -40,11 +40,7 @@ export class WelcomeModal extends Modal {
     if (this.querySelector("div")) return;
     this.$steps = [this.$step1(), this.$step2(), this.$step3(), this.$step4()];
 
-    const thumb = span(
-      { class: "thumbnail" },
-      new DOMParser().parseFromString(thumbnail, "image/svg+xml")
-        .documentElement
-    );
+    const thumb = span({ class: "thumbnail" }, thumbnail());
 
     if (!this.querySelector(".screen")) {
       van.add(this, this.$steps[this.currentStep.val], thumb);

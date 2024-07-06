@@ -54,6 +54,23 @@ export default {
     "no-empty-fields": "Don't leave starred fields blank!",
     "repo-tip": "A repository (repo) is a place to store your project online",
   },
+  settings: {
+    "uninstall-note": "Are you sure you want to uninstall scratch.git?",
+    uninstall: "Uninstall",
+    "reset-to-defaults": "Reset to defaults",
+    highlight: {
+      name: "Highlight",
+      help: "Changes the highlight color of changed scripts",
+    },
+    "highlight-diffs": {
+      name: "Show diffs with highlights",
+      help: "If this is enabled, diffs will be highlighted instead of being outlined or crossed out.",
+    },
+    "plain-text": {
+      name: "Show diffs in plain text",
+      help: "If this is enabled, diffs will be shown in plain text instead of Scratch blocks.",
+    },
+  },
   alerts: {
     "unrelated-changes":
       "Couldn't pull new changes since they are unrelated with your changes.",

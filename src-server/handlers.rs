@@ -22,11 +22,12 @@ use crate::gh_auth;
 use crate::git;
 
 use crate::sb3::{get_assets, ProjectData};
+use crate::tw_path::turbowarp_path;
 use crate::zipping::{self, extract, zip};
 
 macro_rules! here {
-    () => {
-        concat!("at ", file!(), " line ", line!(), " column ", column!())
+    ($error:expr) => {
+        concat!($error, " at ", file!(), " line ", line!(), " column ", column!())
     };
 }
 
@@ -100,7 +101,7 @@ impl CmdHandler<'_> {
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
         self.send_json(json!(
-            git::diff(pth, old_content, new_content, 2000).context(here!())?
+            git::diff(pth, old_content, new_content, 2000).context(here!("failed to get git diff"))?
         ))?;
 
         Ok(())
@@ -133,7 +134,7 @@ impl CmdHandler<'_> {
             Ok(file) => file,
             Err(_) => {
                 let _ = fs::create_dir(Path::new("projects").join(&name));
-                canonicalize(Path::new("projects").join(&name)).context(here!())?
+                canonicalize(Path::new("projects").join(&name)).context(here!("failed to find project path"))?
             }
         };
 
@@ -172,13 +173,13 @@ impl CmdHandler<'_> {
             fs::File::open(Path::new(
                 &project_to_extract["project_file"].as_str().unwrap(),
             ))
-            .context(here!())?,
+            .context(here!("failed to open project file to extract"))?,
             target_dir.clone(),
         )?;
 
         let init_repo = git::run(vec!["init"], Some(&project_path))
             .output()
-            .context(here!())?;
+            .context(here!(""))?;
         let response = String::from_utf8(init_repo.stdout)?;
 
         if !response.contains("Git repository") {
@@ -188,7 +189,7 @@ impl CmdHandler<'_> {
             return self.send_json(json!({ "status": "fail" }));
         }
 
-        fs::write(target_dir.join(".gitignore"), "project.old.json").context(here!())?;
+        fs::write(target_dir.join(".gitignore"), "project.old.json").context(here!("failed to write gitignore"))?;
 
         if !git::run(vec!["add", "."], Some(&project_path))
             .status()?
@@ -207,7 +208,7 @@ impl CmdHandler<'_> {
 
         let commit = git::run(vec!["commit", "-m", "Initial commit"], Some(&project_path))
             .output()
-            .context(here!())?;
+            .context(here!(""))?;
         let response = String::from_utf8(commit.stdout)?;
 
         if !response.contains("Initial commit") {
@@ -242,12 +243,12 @@ impl CmdHandler<'_> {
         let mut success = true;
 
         let mut config_user = git::run(vec!["config", "user.name", &username], Some(&pth));
-        if !config_user.status().context(here!())?.success() {
+        if !config_user.status().context(here!(""))?.success() {
             success = false;
         }
 
         let mut config_email = git::run(vec!["config", "user.email", &email], Some(&pth));
-        if !config_email.status().context(here!())?.success() {
+        if !config_email.status().context(here!(""))?.success() {
             success = false;
         }
 
@@ -260,12 +261,12 @@ impl CmdHandler<'_> {
             Some(&pth),
         )
         .output()
-        .context(here!())?;
+        .context(here!(""))?;
 
         if !String::from_utf8(config_remote.stdout)?.ends_with("already exists") {
             let mut config_remote =
                 git::run(vec!["remote", "set-url", "origin", &repository], Some(&pth));
-            if !config_remote.status().context(here!())?.success() {
+            if !config_remote.status().context(here!(""))?.success() {
                 success = false;
             }
         }
@@ -289,19 +290,19 @@ impl CmdHandler<'_> {
         let config_user = String::from_utf8(
             git::run(vec!["config", "user.name"], Some(&pth))
                 .output()
-                .context(here!())?
+                .context(here!("failed to find stdout"))?
                 .stdout,
         )?;
         let config_email = String::from_utf8(
             git::run(vec!["config", "user.email"], Some(&pth))
                 .output()
-                .context(here!())?
+                .context(here!("failed to find stdout"))?
                 .stdout,
         )?;
         let config_remote = String::from_utf8(
             git::run(vec!["remote", "get-url", "origin"], Some(&pth))
                 .output()
-                .context(here!())?
+                .context(here!("failed to find stdout"))?
                 .stdout,
         )?;
 
@@ -331,7 +332,7 @@ impl CmdHandler<'_> {
         let ls_remote = String::from_utf8(
             git::run(vec!["ls-remote", &url], None)
                 .output()
-                .context(here!())?
+                .context(here!(""))?
                 .stderr,
         )?;
 
@@ -419,7 +420,7 @@ impl CmdHandler<'_> {
         let config_remote = String::from_utf8(
             git::run(vec!["remote", "get-url", "origin"], Some(&pth))
                 .output()
-                .context(here!())?
+                .context(here!(""))?
                 .stdout,
         )?;
 
@@ -433,7 +434,7 @@ impl CmdHandler<'_> {
             push.env("GITHUB_TOKEN", token.get());
         }
 
-        let output = push.output().context(here!())?;
+        let output = push.output().context(here!(""))?;
         let stderr = String::from_utf8(output.stderr)?;
 
         // TODO: these checks might be very brittle
@@ -467,7 +468,7 @@ impl CmdHandler<'_> {
         let config_remote = String::from_utf8(
             git::run(vec!["remote", "get-url", "origin"], Some(&pth))
                 .output()
-                .context(here!())?
+                .context(here!(""))?
                 .stdout,
         )?;
 
@@ -481,7 +482,7 @@ impl CmdHandler<'_> {
             pull.env("GITHUB_TOKEN", token.get());
         }
 
-        let pull = pull.output().context(here!())?;
+        let pull = pull.output().context(here!(""))?;
 
         if pull.status.success() {
             let stdout = String::from_utf8(pull.stdout)?;
@@ -559,7 +560,7 @@ impl CmdHandler<'_> {
 
         let commit = git::run(vec!["commit", "-m", "temporary"], Some(pth))
             .output()
-            .context(here!())?;
+            .context(here!(""))?;
 
         if !commit.status.success() {
             let stderr = String::from_utf8(commit.stderr)?;
@@ -597,7 +598,7 @@ impl CmdHandler<'_> {
         let git_log = String::from_utf8(
             git::run(vec!["log", format], Some(pth))
                 .output()
-                .context(here!())?
+                .context(here!(""))?
                 .stdout,
         )?;
 
@@ -716,7 +717,7 @@ impl CmdHandler<'_> {
         // was considering adding --depth=1 but that might not work here
         let clone = git::run(vec!["clone", &url], Some(project_dir))
             .output()
-            .context(here!())?;
+            .context(here!(""))?;
 
         if !clone.status.success() {
             self.send_json(if clone.status.code().ok_or(anyhow!("no code"))? == 128 {
@@ -842,6 +843,12 @@ impl CmdHandler<'_> {
             self.send_json(json!({"status": 2}))
         }
     }
+
+    fn uninstall(&mut self) -> Result<()> {
+        fs::remove_file(turbowarp_path().context(here!("failed to get turbowarp path"))?.join("userscript.js"))?;
+
+        self.send_json(json!({}))
+    }
 }
 
 pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) -> Result<()> {
@@ -855,6 +862,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "create-project" => handler.create_project(msg.data),
         "gh-auth" => handler.gh_auth(),
         "clone-repo" => handler.clone_repo(msg.data),
+        "uninstall" => handler.uninstall(),
 
         // project-specific
         "set-project-details" => handler.set_project_details(msg.data, false),

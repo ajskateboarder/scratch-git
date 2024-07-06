@@ -34,7 +34,8 @@ pub fn extract(file: File, target_dir: PathBuf) -> Result<(), ZipError> {
                         fs::set_permissions(
                             target_dir.clone().join(&outpath),
                             fs::Permissions::from_mode(mode),
-                        ).unwrap();
+                        )
+                        .unwrap();
                     }
                 }
             }

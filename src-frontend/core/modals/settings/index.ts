@@ -2,13 +2,13 @@ import { defaults, userSettings } from "@/core/settings";
 import { Modal } from "../base";
 import van from "vanjs-core";
 import { cls, s, settings } from "@/core/components";
+import { uninstall } from "@/core/api";
 import i18n from "@/i18n";
 
 const { div, label, input, span, h1, p, summary, details, img, button, i } =
   van.tags;
 
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/components/tw-settings-modal/help-icon.svg
-// please don't change this icon upstream turbowarp
 const HELP_ICON_SVG = `data:image/svg+xml;base64,\
 PCEtLSBodHRwczovL21hdGVyaWFsLmlvL3Jlc291cmNlcy9pY29ucy8/c2Vhc\
 mNoPWhlbHAmaWNvbj1oZWxwJnN0eWxlPWJhc2VsaW5lIC0tPgo8c3ZnIHhtbG5\
@@ -42,7 +42,7 @@ const ScriptColor = () => {
         type: "color",
         onchange: (e) => (userSettings.scriptColor = e.target.value),
       }),
-      span(" ", "Highlight")
+      span(" ", i18n.t("settings.highlight.name"))
     ),
     HelpIcon()
   );
@@ -53,7 +53,7 @@ const ScriptColor = () => {
       style: "pointer-events: none",
     },
     summary(colorInput),
-    "Changes the highlight color of changed scripts"
+    i18n.t("settings.highlight.help")
   );
 };
 
@@ -75,7 +75,7 @@ const Highlights = () => {
         onchange: (e: Event) =>
           (userSettings.highlights = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", "Show diffs with highlights")
+      span(" ", i18n.t("settings.highlight-diffs.name"))
     ),
     HelpIcon()
   );
@@ -86,7 +86,7 @@ const Highlights = () => {
       style: "pointer-events: none",
     },
     summary(hlInput),
-    "If this is enabled, diffs will be highlighted instead of being outlined or crossed out."
+    i18n.t("settings.highlight-diffs.help")
   );
 };
 
@@ -108,7 +108,7 @@ const PlainText = () => {
         onchange: (e: Event) =>
           (userSettings.plainText = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", "Show diffs in plain text")
+      span(" ", i18n.t("settings.plain-text.name"))
     ),
     HelpIcon()
   );
@@ -119,7 +119,7 @@ const PlainText = () => {
       style: "pointer-events: none",
     },
     summary(ptInput),
-    "If this is enabled, diffs will be shown in plain text instead of Scratch blocks."
+    i18n.t("settings.plain-text.help")
   );
 };
 
@@ -153,13 +153,29 @@ export class SettingsModal extends Modal {
       {
         class: settings.settingsButton,
         onclick: () => {
-          userSettings.setDefaults();
+          userSettings.defaults();
           scInput.value = defaults.scriptColor;
           hlInput.checked = defaults.highlights;
           ptInput.checked = defaults.plainText;
         },
       },
-      "Reset to defaults"
+      i18n.t("settings.reset-to-defaults")
+    );
+
+    const uninstallButton = button(
+      {
+        class: settings.settingsButton,
+        onclick: async () => {
+          if (confirm(i18n.t("settings.uninstall-note"))) {
+            await uninstall();
+            userSettings.clear();
+            (window._changedScripts as any) = undefined;
+            (window._repoStatus as any) = undefined;
+            window.location.reload();
+          }
+        },
+      },
+      i18n.t("settings.uninstall")
     );
 
     scInput.value = userSettings.scriptColor;
@@ -182,7 +198,8 @@ export class SettingsModal extends Modal {
             class: "bottom-bar",
             style: "margin-top: 10px",
           },
-          restoreDefaults
+          restoreDefaults,
+          uninstallButton
         )
       )
     );
