@@ -19,7 +19,7 @@ use crate::git;
 use vec_utils::{group_items, intersect_costumes};
 
 // removes ids from block statements to make diffs accurate
-static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#":\[(?:1|2|3),".*"#);
+static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),"\w""#);
 
 impl Diff {
     /// Construct a new diff from a project.json
@@ -320,7 +320,9 @@ impl Diff {
             statements.push(_blocks.join("\n"));
         }
         statements.sort_by_key(|blocks| blocks.to_lowercase());
-        statements.join("\n")
+
+        let blocks = &mut statements.join("\n");
+        REMOVE_IDS.replace_all(blocks, "\":[1,\"\"").to_string()
     }
 
     /// Return all script changes given a newer project
