@@ -5,7 +5,7 @@ import { cls, s, settings } from "@/core/components";
 import { uninstall } from "@/core/api";
 import i18n from "@/i18n";
 
-const { div, label, input, span, h1, p, summary, details, img, button, i } =
+const { div, label, input, span, h1, p, summary, details, img, button, i, a } =
   van.tags;
 
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/components/tw-settings-modal/help-icon.svg
@@ -200,6 +200,21 @@ export class SettingsModal extends Modal {
           },
           restoreDefaults,
           uninstallButton
+        ),
+        p(
+          {
+            style:
+              "color: var(--ui-modal-foreground); position: absolute; bottom: 10px",
+          },
+          a(
+            { href: "https://github.com/ajskateboarder/scratch-git" },
+            i({ class: "fa-brands fa-github" })
+          ),
+          " ",
+          a(
+            { href: "https://ajskateboarder.github.io/scratch-git/privacy" },
+            i({ class: "fa-solid fa-shield-halved" })
+          )
         )
       )
     );
