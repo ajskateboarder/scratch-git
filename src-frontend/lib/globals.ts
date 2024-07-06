@@ -17,7 +17,7 @@ export interface Block {
 }
 
 interface Workspace {
-  getBlockById(id: string): Block;
+  getBlockById(id: string): Block | null;
   getMetrics(): {
     viewLeft: number;
     viewTop: number;

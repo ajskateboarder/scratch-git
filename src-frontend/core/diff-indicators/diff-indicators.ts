@@ -109,7 +109,7 @@ const highlightChanged = async (
   window._changedScripts[sprite.format()] = changedScripts;
 
   changedScripts.forEach((e) => {
-    const group = getBlockly().getBlockById(e).svgGroup_;
+    const group = getBlockly().getBlockById(e)!.svgGroup_;
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });

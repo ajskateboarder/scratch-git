@@ -411,7 +411,7 @@ export class DiffModal extends Modal {
     diffs.forEach(async (diff, scriptNo) => {
       const labelText = getBlockly()
         .getBlockById(window._changedScripts[spriteName][scriptNo])
-        .comment?.getLabelText();
+        ?.comment?.getLabelText();
       const diffButton = li(
         button(
           { class: "tab-btn" },
