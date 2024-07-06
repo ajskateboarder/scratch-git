@@ -27,7 +27,15 @@ use crate::zipping::{self, extract, zip};
 
 macro_rules! here {
     ($error:expr) => {
-        concat!($error, " at ", file!(), " line ", line!(), " column ", column!())
+        concat!(
+            $error,
+            " at ",
+            file!(),
+            " line ",
+            line!(),
+            " column ",
+            column!()
+        )
     };
 }
 
@@ -100,9 +108,8 @@ impl CmdHandler<'_> {
 
         let pth = &project_config().lock().unwrap().project_path(&project_name);
 
-        self.send_json(json!(
-            git::diff(pth, old_content, new_content, 2000).context(here!("failed to get git diff"))?
-        ))?;
+        self.send_json(json!(git::diff(pth, old_content, new_content, 2000)
+            .context(here!("failed to get git diff"))?))?;
 
         Ok(())
     }
@@ -134,7 +141,8 @@ impl CmdHandler<'_> {
             Ok(file) => file,
             Err(_) => {
                 let _ = fs::create_dir(Path::new("projects").join(&name));
-                canonicalize(Path::new("projects").join(&name)).context(here!("failed to find project path"))?
+                canonicalize(Path::new("projects").join(&name))
+                    .context(here!("failed to find project path"))?
             }
         };
 
@@ -189,7 +197,8 @@ impl CmdHandler<'_> {
             return self.send_json(json!({ "status": "fail" }));
         }
 
-        fs::write(target_dir.join(".gitignore"), "project.old.json").context(here!("failed to write gitignore"))?;
+        fs::write(target_dir.join(".gitignore"), "project.old.json")
+            .context(here!("failed to write gitignore"))?;
 
         if !git::run(vec!["add", "."], Some(&project_path))
             .status()?
@@ -845,7 +854,11 @@ impl CmdHandler<'_> {
     }
 
     fn uninstall(&mut self) -> Result<()> {
-        fs::remove_file(turbowarp_path().context(here!("failed to get turbowarp path"))?.join("userscript.js"))?;
+        fs::remove_file(
+            turbowarp_path()
+                .context(here!("failed to get turbowarp path"))?
+                .join("userscript.js"),
+        )?;
 
         self.send_json(json!({}))
     }
@@ -875,7 +888,7 @@ pub fn handle_command(msg: Cmd, socket: &mut WebSocket<TcpStream>, debug: bool) 
         "previous-project" => handler.get_sprite_scripts(msg.data, true),
         "get-commits" => handler.get_commits(msg.data),
         "get-changed-sprites" => handler.get_changed_sprites(msg.data),
-        "get-changed-costumes" => handler.get_changed_assets(msg.data),
+        "get-changed-assets" => handler.get_changed_assets(msg.data),
         "repo-status" => handler.repo_status(msg.data),
 
         _ => unreachable!(),

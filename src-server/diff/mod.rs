@@ -18,7 +18,8 @@ use serde_json::{Map, Value};
 use crate::git;
 use vec_utils::{group_items, intersect_costumes};
 
-static BLOCK_TYPE: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),".*""#);
+// removes ids from block statements to make diffs accurate
+static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#":\[(?:1|2|3),".*"#);
 
 impl Diff {
     /// Construct a new diff from a project.json
@@ -254,11 +255,39 @@ impl Diff {
             let mut current_block = &blocks[id];
 
             loop {
+                let inputs =
+                    serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap();
+                let mut _reporters = vec![];
+                let mut current_reporter = inputs;
+
+                // dirty hack to fetch inner reporters
+                loop {
+                    if let Some(mat) = REMOVE_IDS.find(&current_reporter) {
+                        let seg = &current_reporter[mat.start()..mat.end()];
+                        let seg = seg.split(",").nth(1).unwrap().replace("]}", "");
+
+                        let next_block = &blocks[&seg[1..seg.len() - 1]];
+                        let next_inputs =
+                            serde_json::to_string(next_block["inputs"].as_object().unwrap())
+                                .unwrap();
+                        let next_opcode = next_block["opcode"].as_str().unwrap();
+                        let next_fields =
+                            serde_json::to_string(next_block["fields"].as_object().unwrap())
+                                .unwrap();
+
+                        _reporters.push(format!("{} {} {}", next_opcode, next_inputs, next_fields));
+                        current_reporter = next_inputs;
+                    } else {
+                        break;
+                    };
+                }
+
                 _blocks.push(format!(
-                    "{} {} {}",
+                    "{} {} {} {}",
                     current_block["opcode"].as_str().unwrap(),
                     serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap(),
-                    serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap()
+                    serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap(),
+                    _reporters.join(" ")
                 ));
 
                 let next = &current_block["next"];
@@ -291,10 +320,7 @@ impl Diff {
             statements.push(_blocks.join("\n"));
         }
         statements.sort_by_key(|blocks| blocks.to_lowercase());
-        let blocks = BLOCK_TYPE
-            .replace_all(&statements.join("\n"), "\":[1,\"\"")
-            .to_string();
-        blocks
+        statements.join("\n")
     }
 
     /// Return all script changes given a newer project
@@ -346,12 +372,12 @@ impl Diff {
                     });
                 }
 
-                let diff = git::diff(
-                    cwd,
-                    Diff::format_blocks(old["blocks"].as_object().unwrap()),
-                    Diff::format_blocks(new["blocks"].as_object().unwrap()),
-                    2000,
-                );
+                let old_content = Diff::format_blocks(old["blocks"].as_object().unwrap());
+                let new_content = Diff::format_blocks(new["blocks"].as_object().unwrap());
+                println!("{}", &old_content);
+                println!("\n{}", &new_content);
+
+                let diff = git::diff(cwd, old_content, new_content, 2000);
 
                 if diff.is_err() {
                     error = Some(diff.unwrap_err());
