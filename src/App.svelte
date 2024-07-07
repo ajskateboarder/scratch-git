@@ -62,5 +62,6 @@
   >
   <br /><br />
   <a href="https://github.com/ajskateboarder/scratch-git">source code</a> •
-  <a href="/scratch-git/privacy">privacy policy</a>
+  <a href="/scratch-git/privacy.html">privacy policy</a> •
+  <a href="/scratch-git/faq.html">FAQ</a>
 </footer>

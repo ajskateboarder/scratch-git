@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+    <title>scratch.git - FAQ</title>
+    <style>
+      :root {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        background-color: white;
+        color: #111;
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: auto 30%;
+      }
+
+      a {
+        color: #25d;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #171717;
+          color: #eee;
+          color-scheme: dark;
+        }
+
+        a {
+          color: rgb(68, 196, 255);
+        }
+      }
+
+      @media (max-device-width: 760px) {
+        body {
+          margin: 10px;
+        }
+      }
+
+      footer {
+        color: grey;
+        text-align: center;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      li {
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="display: flex; align-items: center; gap: 15px">
+      <img src="/scratch-git/logo.svg" alt="" height="50" />
+      <span> <a href="/scratch-git">scratch.git</a> FAQ</span>
+    </h1>
+    <h2 id="nothing-happens">Why does nothing happen when I commit?</h2>
+    <p>
+      You may have opened the wrong project. Make sure that the project that you
+      opened was in the same folder as the one you chose when starting the
+      project. In the future, this may be made less confusing.
+      
+      Also, make sure that the Sprite folders addon is disabled (for now).
+    </p>
+    <h2 id="valid-creds">Do I have to use a valid name or registered email to make commits?</h2>
+    <p>No, just make sure that the email is formatted correctly.</p>
+    <h2>How can I label script changes with something other than a number?</h2>
+    <p>
+      If you attach a text comment to the first block of a script, scratch.git
+      will use the comment's label instead of a number.
+    </p>
+    <h2 id="addon-incompat">When I enable an addon, it breaks. Why?</h2>
+    <p>
+    As of now, the following addons are not fully compatible with scratch.git:
+    <ul>
+      <li>
+        <a href="https://github.com/ajskateboarder/scratch-git/issues/48">Sprite folders</a>
+      </li>
+      <li>Cat blocks</li>
+      <li>
+        Customizable block colors (diffs only use regular, high-contrast, and
+        dark-mode colors)
+      </li>
+      <li>Square block inputs</li>
+    </ul>
+    </p>
+    <h2 id="wrong-scripts">When I delete or detach a block from script, it selects the wrong scripts. Why?</h2>
+    <p>
+      If you save after forming two identical scripts, the wrong script may be selected due to how we process scripts.
+      Additionally, scratch.git may also display extraneous diffs where more scripts are changed than in reality.
+      Both of these oddities don't have a meaningful impact on development or an easy solution, so they will likely stick around. 
+    </p>
+  </body>
+</html>
+<footer>
+  <hr />
+  <br />
+  scratch.git is not affiliated with Scratch, the Scratch Team, or the Scratch
+  Foundation.
+  <br /><br />
+  <a href="https://github.com/ajskateboarder/scratch-git">source code</a> •
+  <a href="/scratch-git/privacy.html">privacy policy</a> •
+  <a href="/scratch-git/faq.html">FAQ</a>
+</footer>

@@ -158,3 +158,77 @@
     {/if}
   </div>
 </main>
+
+<style>
+
+.project-input-wrapper {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.close-button {
+  padding: 5px;
+}
+
+.project-input {
+  border: none;
+  width: 75%;
+  font-size: 23px;
+  line-height: 32px;
+  margin-top: 5px;
+  background-color: transparent;
+}
+
+.project-input :focus {
+  color: white !important;
+}
+
+.project-commit-viewer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.commit {
+  width: 100%;
+  text-align: left;
+}
+
+.commit.selected {
+  filter: invert(100%);
+}
+
+.project-commit-viewer .project-viewer {
+  overflow: auto;
+  width: 75%;
+  height: 422px;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 10px;
+}
+
+.controls button {
+  border-radius: 60%;
+  height: 50px;
+  border: none;
+  width: 50px;
+}
+
+.controls button:hover {
+  filter: brightness(110%);
+}
+
+.controls button svg {
+  transform: scale(0.8);
+  margin-top: 3px;
+}
+</style>
