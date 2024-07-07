@@ -6,5 +6,5 @@ interface Window {
   ReduxStore: any;
   vm: any;
   _changedScripts: Record<string, string[]>;
-  _repoStatus: number;
+  _repoStatus: { status: number; commits_ahead: number };
 }

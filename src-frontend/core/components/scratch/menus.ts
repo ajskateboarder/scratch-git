@@ -149,6 +149,8 @@ export const gitMenu = new class {
     );
     this.item(5).onclick(repoConfig);
 
+    // wrap the item in a span to show commit title right
+    this.item(3).outerHTML = `<span>${this.item(3).outerHTML}</span>`;
     this.item(3).label(span(i({class: "fa-solid fa-check"}), " ", i18next.t("menu.commit")));
     this.item(3).onclick(commitCreate);
 
@@ -176,11 +178,19 @@ export const gitMenu = new class {
         this.newMenu!.classList.add(menu.activeMenuItem);
         this.savedItems!.style.display = "block";
         this.open = true;
-        if (window._repoStatus === 1) {
-          this.item(3).style.pointerEvents = "none";
-          this.item(3).style.opacity = "0.5"
+        const itemRef = this.item(3);
+        if (window._repoStatus.commits_ahead !== 0 && !this.item(1).getAttribute("disabled")) {
+          itemRef.parentElement!.title = `${window._repoStatus.commits_ahead} commits ahead`;
         } else {
-          this.item(3).setAttribute("style", "");
+          itemRef.parentElement!.setAttribute("title", "");
+        }
+        if (window._repoStatus.status === 1) {
+          itemRef.style.pointerEvents = "none";
+          itemRef.style.opacity = "0.5";
+          itemRef.parentElement!.style.cursor = "default";
+        } else {
+          itemRef.setAttribute("style", "");
+          itemRef.parentElement!.style.cursor = "pointer";
         }
       } else {
         this.newMenu!.classList.remove(menu.activeMenuItem);

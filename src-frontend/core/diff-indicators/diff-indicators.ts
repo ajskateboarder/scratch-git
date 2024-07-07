@@ -257,7 +257,7 @@ export const showIndicators = async (project: Project) => {
   // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {
     // if there's no changes don't show
-    if (window._repoStatus === 1) return;
+    if (window._repoStatus.status === 1) return;
     if (
       (mutation.target as HTMLElement).classList.contains(
         s("react-tabs_react-tabs__tab--selected")
@@ -276,7 +276,7 @@ export const showIndicators = async (project: Project) => {
 
   // retain diff highlights for when editor theme
   new MutationObserver(async () => {
-    if (window._repoStatus === 1) return;
+    if (window._repoStatus.status === 1) return;
     const selectedSprite = sprites.selectedSprite.select<HTMLDivElement>();
     const sprite_ = selectedSprite
       ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!

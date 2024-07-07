@@ -40,6 +40,7 @@ macro_rules! here {
 }
 
 static CLONE_NAME: Lazy<Regex> = regex_static::lazy_regex!("'(.*)'");
+static AHEAD_COMMITS: Lazy<Regex> = regex_static::lazy_regex!(r#"' by (\d+) commit(?:s)?\."#);
 
 /// Represents all available command types to use with the server
 #[derive(Serialize, Deserialize)]
@@ -844,12 +845,18 @@ impl CmdHandler<'_> {
 
         let status = String::from_utf8(git::run(vec!["status"], Some(pth)).output()?.stdout)?;
 
-        if status.contains("nothing to commit") {
-            self.send_json(json!({"status": 1}))
-        } else if status.contains("no changes added to commit") {
-            self.send_json(json!({"status": 2}))
+        let commits_ahead = if let Some(group) = AHEAD_COMMITS.captures(&status).map(|c| c.get(1)) {
+            group.unwrap().as_str().parse::<usize>().unwrap()
         } else {
-            self.send_json(json!({"status": 2}))
+            0
+        };
+
+        if status.contains("nothing to commit") {
+            self.send_json(json!({"status": 1, "commits_ahead": commits_ahead}))
+        } else if status.contains("no changes added to commit") {
+            self.send_json(json!({"status": 2, "commits_ahead": commits_ahead}))
+        } else {
+            self.send_json(json!({"status": 2, "commits_ahead": commits_ahead}))
         }
     }
 

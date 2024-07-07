@@ -247,15 +247,13 @@ export class Project extends Socket {
     });
   }
 
-  /** Check whether the user can commit or not */
+  /** Check whether the user can commit or not and how many commits ahead the user is */
   // LINK src-server/handlers.rs#repo-status
-  async repoStatus(): Promise<number> {
-    return (
-      await this.request({
-        command: "repo-status",
-        data: { Project: { project_name: this.projectName } },
-      })
-    ).status as number;
+  async repoStatus(): Promise<{ status: number; commits_ahead: number }> {
+    return await this.request({
+      command: "repo-status",
+      data: { Project: { project_name: this.projectName } },
+    });
   }
 }
 
