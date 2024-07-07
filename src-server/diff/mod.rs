@@ -309,6 +309,7 @@ impl Diff {
                         match substack {
                             Value::String(id) => current_block = &blocks[id],
                             Value::Null => {
+                                _blocks.push("".into());
                                 break;
                             }
                             _ => unreachable!(),
