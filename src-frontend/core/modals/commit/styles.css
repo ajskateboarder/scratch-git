@@ -10,7 +10,7 @@
   padding: 10px 20px;
 
   &:first-child {
-    border-radius: 5px !important;
+    border-radius: 5px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }

@@ -15,8 +15,6 @@ export default {
   commit: {
     "search-commits": "Commits durchsuchen",
     commits: "Commits",
-    newer: "< Neuere",
-    older: "Ältere >",
     "committed-when": "wurde von {{name}} {{time}} gecommitet",
   },
   welcome: {

@@ -6,7 +6,7 @@ import i18next from "@/i18n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 
-const { h1, button, input, div, span, br, main, i, h3 } = van.tags;
+const { h1, button, input, div, span, br, main, i, h3, p } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
@@ -19,6 +19,7 @@ export class CommitModal extends Modal {
     $older: HTMLButtonElement;
     $newer: HTMLButtonElement;
     $search: HTMLInputElement;
+    $showing: HTMLParagraphElement;
   };
 
   allCommits: Commit[] | undefined;
@@ -52,13 +53,13 @@ export class CommitModal extends Modal {
           class: cls(settings.settingsButton, "round-right-button"),
           disabled: true,
         },
-        i18next.t("commit.newer")
+        i({ class: "fa-solid fa-arrow-left" })
       ),
       $older: button(
         {
           class: cls(settings.settingsButton, "round-left-button"),
         },
-        i18next.t("commit.older")
+        i({ class: "fa-solid fa-arrow-right" })
       ),
       $search: input({
         type: "text",
@@ -68,6 +69,7 @@ export class CommitModal extends Modal {
         }`,
         placeholder: i18next.t("commit.search-commits"),
       }),
+      $showing: p(),
     };
 
     const commitGroup = div(
@@ -75,12 +77,9 @@ export class CommitModal extends Modal {
       span(() => {
         const commits = this.state.paginatedCommits.val;
         const groups = commits.reduce((groups: Record<string, Commit[]>, e) => {
-          const date = e.author.date.split("T")[0];
-          if (!groups[date]) {
-            groups[date] = [];
-          }
-          console.log("group: ", JSON.stringify(date));
-          groups[date].push(e);
+          // TODO: make this friendlier for other languages
+          const date = e.author.date.split(" ").slice(1, 4).join(" ");
+          (groups[date] || (groups[date] = [])).push(e);
           return groups;
         }, {});
         return span(
@@ -113,6 +112,8 @@ export class CommitModal extends Modal {
           this.$.$search
         ),
         br(),
+        this.$.$showing,
+        br(),
         commitGroup
       )
     );
@@ -127,7 +128,7 @@ export class CommitModal extends Modal {
     let commits_ = this.allCommits?.slice()!;
     const commits = paginate(commits_, 40);
 
-    const { $newer, $older, $search } = this.$;
+    const { $newer, $older, $search, $showing } = this.$;
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 
@@ -154,6 +155,10 @@ export class CommitModal extends Modal {
         $older.disabled = false;
         $newer.disabled = false;
       }
+      $showing.innerText = `Showing ${40 * page}-${Math.min(
+        this.allCommits!.length,
+        40 * page + 40
+      )} of ${this.allCommits?.length}`;
     };
 
     $newer.onclick = () => {
@@ -174,6 +179,9 @@ export class CommitModal extends Modal {
         $older.disabled = false;
         $newer.disabled = false;
       }
+      $showing.innerText = `Showing ${40 * page}-${40 * page + 40} of ${
+        this.allCommits?.length
+      }`;
     };
 
     $search.oninput = async (s) => {
@@ -199,6 +207,7 @@ export class CommitModal extends Modal {
         .filter((e) => e.subject.includes(search));
       $older.disabled = true;
       $newer.disabled = true;
+      $showing.innerText = `Showing ${commits_.length} of ${this.allCommits?.length}`;
     };
 
     const header = this.querySelector(".header") as HTMLDivElement;
@@ -217,6 +226,8 @@ export class CommitModal extends Modal {
     if (!this.open) {
       this.state.currentPage.val = 0;
       this.showModal();
+      $search.focus();
+      $showing.innerText = `Showing 0-40 of ${this.allCommits?.length}`;
     }
   }
 }
