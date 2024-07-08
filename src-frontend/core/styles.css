@@ -1,8 +1,7 @@
-dialog[is="diff-modal"],
-dialog[is="commit-modal"],
-dialog[is="welcome-modal"],
-dialog[is="repo-config-modal"],
-dialog[is="settings-modal"] {
+dialog {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+  border: 0.5px solid grey;
   height: 50%;
   width: 50%;
   max-height: 100%;
@@ -14,7 +13,6 @@ dialog[is="settings-modal"] {
   border-radius: 10px;
   font-weight: normal;
   user-select: none;
-  border: none;
   box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.4);
 }
 
@@ -100,6 +98,11 @@ dialog[is="welcome-modal"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: -20px;
+  position: sticky;
+  padding: 5px;
+  background: var(--page-background);
 }
 
 .alert-with-buttons {
