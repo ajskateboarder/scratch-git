@@ -11,10 +11,11 @@ dialog[is="settings-modal"] {
   white-space: normal;
   padding: 20px;
   box-sizing: border-box;
-  border-width: 2.5px;
   border-radius: 10px;
   font-weight: normal;
   user-select: none;
+  border: none;
+  box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.4);
 }
 
 dialog[is="commit-modal"],

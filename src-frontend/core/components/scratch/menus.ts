@@ -69,6 +69,7 @@ export const gitMenu = new class {
 
   private item(index: number) {
     const li = this.savedItems!.querySelectorAll("li")[index - 1];
+
     return Object.assign(li, {
       onclick: (handler: () => any) => {
         if (this.handlerInit) return;
@@ -178,12 +179,17 @@ export const gitMenu = new class {
         this.newMenu!.classList.add(menu.activeMenuItem);
         this.savedItems!.style.display = "block";
         this.open = true;
+
         const itemRef = this.item(3);
-        if (window._repoStatus.commits_ahead !== 0 && !this.item(1).getAttribute("disabled")) {
-          itemRef.parentElement!.title = `${window._repoStatus.commits_ahead} commits ahead`;
+        const commitsAhead = window._repoStatus.commits_ahead;
+
+        if (commitsAhead !== 0 && !this.item(1).getAttribute("disabled")) {
+          // TODO: localize
+          itemRef.parentElement!.title = `${commitsAhead} commit${commitsAhead > 1 ? "s" : ""} ahead`;
         } else {
           itemRef.parentElement!.setAttribute("title", "");
         }
+
         if (window._repoStatus.status === 1) {
           itemRef.style.pointerEvents = "none";
           itemRef.style.opacity = "0.5";
