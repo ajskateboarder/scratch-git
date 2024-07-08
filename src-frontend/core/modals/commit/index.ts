@@ -6,7 +6,7 @@ import i18next from "@/i18n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 
-const { h1, button, input, div, span, br, main, i } = van.tags;
+const { h1, button, input, div, span, br, main, i, h3 } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
@@ -70,18 +70,36 @@ export class CommitModal extends Modal {
       }),
     };
 
-    const commitGroup = div({ class: "commit-group" }, () =>
-      span(
-        this.state.paginatedCommits.val.map((e) => {
-          if (this.state.searchQuery.val !== "") {
-            if (e.subject.includes(this.state.searchQuery.val)) {
-              return CommitItem(e, this.state.searchQuery.val);
-            }
-          } else {
-            return CommitItem(e, "");
+    const commitGroup = div(
+      { class: "commit-group" },
+      span(() => {
+        const commits = this.state.paginatedCommits.val;
+        const groups = commits.reduce((groups: Record<string, Commit[]>, e) => {
+          const date = e.author.date.split("T")[0];
+          if (!groups[date]) {
+            groups[date] = [];
           }
-        })
-      )
+          console.log("group: ", JSON.stringify(date));
+          groups[date].push(e);
+          return groups;
+        }, {});
+        return span(
+          Object.entries(groups).map(([heading, commits]) => {
+            const finalCommits = commits.map((e) => {
+              if (this.state.searchQuery.val !== "") {
+                if (e.subject.includes(this.state.searchQuery.val)) {
+                  return CommitItem(e, this.state.searchQuery.val);
+                }
+              } else {
+                return CommitItem(e, "");
+              }
+            });
+            return heading !== ""
+              ? span(h3(heading), finalCommits)
+              : span(finalCommits);
+          })
+        );
+      })
     );
 
     van.add(
@@ -101,13 +119,15 @@ export class CommitModal extends Modal {
   }
 
   public async display() {
-    const { $newer, $older, $search } = this.$;
     this.allCommits = await api.getCurrentProject()?.getCommits();
-
+    this.state.currentPage.val = 0;
+    this.$.$newer.disabled = true;
     // for some odd reason, this.allCommits gets completely emptied if you access it
-    // so as a temporary fix, we copy the commit array, which is at least better than requesting it over and over
+    // so as a temporary fix, we copy the commit array, which is at least better than requesting it
     let commits_ = this.allCommits?.slice()!;
     const commits = paginate(commits_, 40);
+
+    const { $newer, $older, $search } = this.$;
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 

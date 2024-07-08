@@ -10,7 +10,7 @@
   padding: 10px 20px;
 
   &:first-child {
-    border-radius: 5px;
+    border-radius: 5px !important;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
@@ -25,8 +25,10 @@
     border-top-right-radius: 0;
   }
 
-  &:only-child {
+  &:first-child,
+  &:last-child {
     border-radius: 5px;
+    border: 1px solid grey;
   }
 }
 
