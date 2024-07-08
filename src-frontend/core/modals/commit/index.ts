@@ -21,6 +21,7 @@ export class CommitModal extends Modal {
     $search: HTMLInputElement;
   };
 
+  allCommits: Commit[] | undefined;
   private state!: {
     paginatedCommits: State<Commit[]>;
     searchQuery: State<string>;
@@ -100,10 +101,13 @@ export class CommitModal extends Modal {
   }
 
   public async display() {
-    let commits_ = await api.getCurrentProject()!.getCommits();
-    const commits = paginate(commits_, 40);
-
     const { $newer, $older, $search } = this.$;
+    this.allCommits = await api.getCurrentProject()?.getCommits();
+
+    // for some odd reason, this.allCommits gets completely emptied if you access it
+    // so as a temporary fix, we copy the commit array, which is at least better than requesting it over and over
+    let commits_ = this.allCommits?.slice()!;
+    const commits = paginate(commits_, 40);
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 
@@ -169,12 +173,25 @@ export class CommitModal extends Modal {
         this.state.paginatedCommits.val = commits[page];
         return;
       }
-      commits_ = await api.getCurrentProject()!.getCommits();
+      commits_ = this.allCommits?.slice()!;
       this.state.paginatedCommits.val = commits_
         .flat()
         .filter((e) => e.subject.includes(search));
       $older.disabled = true;
       $newer.disabled = true;
+    };
+
+    const header = this.querySelector(".header") as HTMLDivElement;
+    const closeButton = header.querySelector("button") as HTMLButtonElement;
+
+    this.onscroll = () => {
+      if (this.scrollTop > 50) {
+        header.style.fontSize = "20px";
+        closeButton.style.scale = "0.8";
+      } else {
+        header.setAttribute("style", "");
+        closeButton.setAttribute("style", "");
+      }
     };
 
     if (!this.open) {

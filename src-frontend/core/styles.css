@@ -99,10 +99,15 @@ dialog[is="welcome-modal"] {
   justify-content: space-between;
   align-items: center;
   position: sticky;
-  top: -20px;
+  top: -22px;
   position: sticky;
   padding: 5px;
   background: var(--page-background);
+  transition: font-size 0.2s ease;
+}
+
+.header button {
+  transition: scale 0.2s ease;
 }
 
 .alert-with-buttons {
