@@ -87,7 +87,7 @@
   }
 }
 
-.commit-view:has(.commit-wrap > pre) {
+.commit-view:has(.commit-wrap > pre) > pre {
   background: #f1f1f1;
 }
 
@@ -107,23 +107,27 @@
     color: #707070;
   }
 
-  .commit-view {
+  .commit-wrap {
     --dot-space: 22px;
     --dot-size: 1px;
     --dot-bg: #1e1e1e;
     --dot-color: #707070;
   }
 
-  .commit-view:has(.commit-wrap > pre) {
+  .commit-view:has(.commit-wrap > pre) > pre {
     background: #1e1e1e;
   }
 }
 
 .commit-view {
   padding: 10px;
-  width: fit-content;
   border-radius: 10px;
+  display: contents;
+  overflow-x: auto;
+  overflow-y: auto;
+}
 
+.commit-wrap {
   --dot-space: 22px;
   --dot-size: 1px;
   --dot-bg: white;
@@ -141,6 +145,8 @@
       )
       center / var(--dot-space) var(--dot-space),
     var(--dot-color);
+  padding: 10px;
+  border-radius: 10px;
 }
 
 .costume-diff {

@@ -92,14 +92,12 @@ const pullHandler =
       if (await repoIsGitHub(project)) {
         const auth = new GhAuth();
         let authAlert: HTMLDivElement | undefined = undefined;
-        auth.addEventListener("devicecode", ({ detail }: any) => {
-          authAlert = GhAuthAlert(detail).display();
-        });
-        auth.addEventListener("login", async () => {
+        auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
+        auth.onlogin = async () => {
           authAlert?.remove();
           auth.close();
           await pullHandler(project!, true);
-        });
+        };
       } else {
         // TODO: localize
         // asking for username and password in the app would look suspicious
@@ -161,14 +159,12 @@ const pushHandler =
       if (await repoIsGitHub(project)) {
         const auth = new GhAuth();
         let authAlert: HTMLDivElement | undefined = undefined;
-        auth.addEventListener("devicecode", ({ detail }: any) => {
-          authAlert = GhAuthAlert(detail).display();
-        });
-        auth.addEventListener("login", async () => {
+        auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
+        auth.onlogin = async () => {
           authAlert?.remove();
           auth.close();
           await pushHandler(project!, true);
-        });
+        };
       } else {
         // TODO: localize
         upassAlert = new ScratchAlert(

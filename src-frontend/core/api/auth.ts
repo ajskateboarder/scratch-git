@@ -5,11 +5,12 @@ export interface DeviceCode {
   verification_uri: string;
 }
 
-export class GhAuth extends EventTarget {
+export class GhAuth {
   private ws: WebSocket;
+  onlogin: () => any = () => {};
+  ondevicecode: (data: DeviceCode) => any = () => {};
 
   constructor() {
-    super();
     this.ws = new WebSocket(SOCKET_URL);
     this.login();
   }
@@ -22,18 +23,16 @@ export class GhAuth extends EventTarget {
           data: {
             Project: { project_name: "" },
           },
-        }),
+        })
       );
     };
 
     this.ws.onmessage = (message) => {
       const data: { success: true } & DeviceCode = JSON.parse(message.data);
       if (data.success) {
-        this.dispatchEvent(new CustomEvent("login"));
+        this.onlogin();
       } else {
-        this.dispatchEvent(
-          new CustomEvent("devicecode", { detail: data as DeviceCode }),
-        );
+        this.ondevicecode(data);
       }
     };
   }

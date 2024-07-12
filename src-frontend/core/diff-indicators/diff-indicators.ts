@@ -6,6 +6,7 @@ import { parseScripts } from "./script-parser";
 import { SpriteDiff, StageDiff } from "../components";
 import { getBlockly } from "../../lib/globals";
 import { userSettings } from "../settings";
+import { contextMenu } from "./inject-context";
 
 const STAGE = {
   name: "Stage",
@@ -128,6 +129,22 @@ export const showIndicators = async (project: Project) => {
       ...s("sprite-selector_items-wrapper").select().children,
     ] as HTMLElement[],
     loadedJSON = JSON.parse(window.vm.toJSON());
+  contextMenu.onopen = (e) => {
+    const currentSprite = nameOfSprite(sprites.selectedSprite.select());
+    const index = window._changedScripts[currentSprite].indexOf(e.dataset.id!);
+    if (index === -1) return;
+
+    contextMenu.setCustomItem({
+      // TODO: localize
+      title: "Show Changes",
+      onclick() {
+        (
+          document.querySelector("dialog[is='diff-modal']") as DiffModal
+        ).display(project, currentSprite, index);
+        contextMenu.close();
+      },
+    });
+  };
 
   editorSprites.forEach((sprite) => {
     const divs = sprite
