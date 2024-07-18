@@ -114,6 +114,6 @@ document.head.append(...Styles());
 // avoids scenarios where scratch.git initializes before the editor is finished
 VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
   if (finished === total && finished > 0 && total > 0) {
-    setTimeout(async () => await main(), 0.1);
+    setTimeout(async () => await main());
   }
 });

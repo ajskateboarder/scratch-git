@@ -42,6 +42,14 @@ export type PushMsg = "success" | "up to date" | "pull needed";
 
 /** Represents a WebSocket interface */
 class Socket {
+  private static lastRequest: {
+    request: { command: any; data: any };
+    response: any;
+  } = {
+    request: { command: null, data: null },
+    response: null,
+  };
+
   constructor(protected ws: WebSocket) {}
 
   /** Receive the next message or error */
@@ -49,6 +57,7 @@ class Socket {
     return new Promise((resolve, reject) => {
       this.ws.onmessage = (message) => {
         try {
+          console.debug("message", message.data);
           const json = JSON.parse(message.data);
           if (json["unhandled-error"]) {
             // TODO: localize
@@ -60,6 +69,7 @@ class Socket {
             );
             return;
           }
+          Socket.lastRequest.response = json;
           resolve(json);
         } catch (e: any) {
           console.error(e.stack);
@@ -72,13 +82,18 @@ class Socket {
   }
 
   /** Make a request with a command and data */
-  async request({ command, data }: any) {
-    if (this.ws.readyState == WebSocket.CONNECTING) {
-      this.ws.onopen = () => this.ws.send(JSON.stringify({ command, data }));
-    } else {
-      this.ws.send(JSON.stringify({ command, data }));
+  async request(request: any) {
+    if (
+      JSON.stringify(Socket.lastRequest.request) === JSON.stringify(request)
+    ) {
+      return await Socket.lastRequest.response;
     }
-
+    Socket.lastRequest.request = request;
+    if (this.ws.readyState == WebSocket.CONNECTING) {
+      this.ws.onopen = () => this.ws.send(JSON.stringify(request));
+    } else {
+      this.ws.send(JSON.stringify(request));
+    }
     return await this.receive();
   }
 }
@@ -97,12 +112,14 @@ export class Project extends Socket {
   /** Returns if the project has been linked to scratch.git */
   // LINK src-server/handlers.rs#exists
   async exists(): Promise<boolean> {
-    return (
+    const exists = (
       await this.request({
         command: "exists",
         data: { Project: { project_name: this.projectName } },
       })
     ).exists;
+    console.log(exists);
+    return exists;
   }
 
   /** Receive all the commits made for a project */

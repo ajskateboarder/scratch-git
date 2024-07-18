@@ -6,7 +6,7 @@ import { InputBox, InputField } from "@/core/components";
 import i18next from "@/i18n";
 import { Redux, VM } from "@/lib";
 import { validEmail, validURL } from "@/core/utils";
-import van, { type State } from "vanjs-core";
+import van from "vanjs-core";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
   van.tags;
@@ -31,7 +31,7 @@ export class WelcomeModal extends Modal {
   $steps: Element[] = [];
 
   loadedProject: boolean = false;
-  currentStep: State<number> = van.state(0);
+  currentStep = van.state(0);
 
   projectName?: string;
   projectPath?: string;
@@ -91,10 +91,10 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => {
               fileMenu.openProject();
-              VM.on("PROJECT_LOADED", async () => {
+              VM.once("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
                 if (await api.getCurrentProject()?.exists()) {
-                  goToStep2.disabled = true;
+                  goToStep2.disabled = false;
                   goToStep2.style.cursor = "help";
                   goToStep2.title = i18next.t("welcome.configured-before");
                 } else {

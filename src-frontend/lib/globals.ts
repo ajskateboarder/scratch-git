@@ -58,6 +58,7 @@ interface ReduxStore {
 
 interface VMRuntime {
   on(type: string, callback: (...e: any[]) => void): void;
+  once(type: string, callback: (...e: any[]) => void): void;
 }
 
 export const getBlockly = (): Workspace => window.Blockly.getMainWorkspace();

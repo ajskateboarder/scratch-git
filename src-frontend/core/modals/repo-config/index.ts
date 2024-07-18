@@ -1,16 +1,12 @@
 import { Modal } from "../base";
 import api, { Project, remoteExists } from "@/core/api";
-import { settings, misc, gitMenu } from "@/core/components";
+import { settings, gitMenu } from "@/core/components";
 import { InputBox, InputField } from "@/core/components/input-field";
 import i18next from "@/i18n";
 import { validURL } from "@/core/utils";
-import van, { State } from "vanjs-core";
+import van from "vanjs-core";
 
-const { main, button, h1, div, span, label, br } = van.tags;
-
-const PENCIL = misc.menuItems
-  .select()
-  .children[2].children[0].cloneNode() as HTMLImageElement;
+const { main, button, h1, div, span, label, br, i } = van.tags;
 
 export class RepoConfigModal extends Modal {
   private $!: {
@@ -19,13 +15,10 @@ export class RepoConfigModal extends Modal {
     $email: HTMLInputElement;
   };
 
-  private editing!: State<boolean>;
   private project!: Project;
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-
-    this.editing = van.state(false);
 
     const closeButton = button(
       {
@@ -33,62 +26,42 @@ export class RepoConfigModal extends Modal {
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
-      i18next.t("close")
+      i({ class: "fa-solid fa-xmark" })
     );
 
     const $repository = InputBox({
       placeholder: i18next.t("repoconfig.repo-url-placeholder"),
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
-        if (this.editing.val === true) {
-          if (!validURL(url) && !(await remoteExists(url))) {
-            $repository.value = "";
-          }
+        if (!validURL(url) && !(await remoteExists(url))) {
+          $repository.value = "";
         }
       },
     });
     const $name = InputBox({});
     const $email = InputBox({});
 
-    const editButton = button(
+    const saveButton = button(
       {
         class: settings.settingsButton,
-        style:
-          "display: flex; padding: 0.4rem; margin-left: auto; align-items: center",
         onclick: () => {
-          if (!this.editing.val) {
-            this.editing.val = true;
-            editButton.innerHTML = `<i class="fa-solid fa-floppy-disk floppy-save-button"></i>`;
-          } else {
-            if ($name.value.trim() === "") {
-              alert(i18next.t("repoconfig.no-empty-fields"));
-              return;
-            }
-            if ($repository.value.trim() !== "") {
-              gitMenu.setPushPullStatus(true);
-            }
-            this.editing.val = false;
-            editButton.innerHTML = "";
-            editButton.appendChild(PENCIL);
-            this.project.setDetails({
-              username: $name.value,
-              email: $email.value,
-              repository: $repository.value,
-            });
+          if ($name.value.trim() === "") {
+            alert(i18next.t("repoconfig.no-empty-fields"));
+            return;
           }
+          if ($repository.value.trim() !== "") {
+            gitMenu.setPushPullStatus(true);
+          }
+          this.project.setDetails({
+            username: $name.value,
+            email: $email.value,
+            repository: $repository.value,
+          });
         },
       },
-      PENCIL
+      // TODO: localize
+      "Save"
     );
-
-    van.derive(() => {
-      if (this.editing.oldVal !== this.editing.val) {
-        const e: "add" | "remove" = !this.editing.val ? "add" : "remove";
-        $repository.classList[e]("disabled-config-input");
-        $name.classList[e]("disabled-config-input");
-        $email.classList[e]("disabled-config-input");
-      }
-    });
 
     const config = i18next
       .t("repoconfig.repoconfig")
@@ -102,11 +75,10 @@ export class RepoConfigModal extends Modal {
     van.add(
       this,
       main(
-        { id: "commitList" },
         h1(
-          { style: "display: flex; gap: 10px" },
+          { style: "display: flex; justify-content: space-between" },
           span({ innerHTML: config }),
-          editButton
+          closeButton
         ),
         InputField(
           {},
@@ -127,13 +99,9 @@ export class RepoConfigModal extends Modal {
         ),
         br(),
         br(),
-        div({ class: "bottom-bar repo-config-bottom-bar" }, closeButton)
+        div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
       )
     );
-
-    $repository.classList.add("disabled-config-input");
-    $name.classList.add("disabled-config-input");
-    $email.classList.add("disabled-config-input");
 
     this.$ = {
       $repository,
