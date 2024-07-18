@@ -91,21 +91,23 @@ export class WelcomeModal extends Modal {
             class: settings.settingsButton,
             onclick: () => {
               fileMenu.openProject();
-              VM.once("PROJECT_LOADED", async () => {
+              VM.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
-                if (await api.getCurrentProject()?.exists()) {
-                  goToStep2.disabled = false;
-                  goToStep2.style.cursor = "help";
-                  goToStep2.title = i18next.t("welcome.configured-before");
-                } else {
-                  goToStep2.disabled = false;
-                  goToStep2.style.cursor = "unset";
-                  goToStep2.title = "";
-                }
-                goToStep2.classList.remove(settings.disabledButton);
-                openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-                  "welcome.project-opened"
-                )}`;
+                setTimeout(async () => {
+                  if (await api.getCurrentProject()?.exists()) {
+                    goToStep2.disabled = false;
+                    goToStep2.style.cursor = "help";
+                    goToStep2.title = i18next.t("welcome.configured-before");
+                  } else {
+                    goToStep2.disabled = true;
+                    goToStep2.style.cursor = "unset";
+                    goToStep2.title = "";
+                  }
+                  goToStep2.classList.remove(settings.disabledButton);
+                  openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
+                    "welcome.project-opened"
+                  )}`;
+                });
                 setTimeout(() => {
                   openProject.val.innerHTML = i18next.t("welcome.open-project");
                 }, 2000);
