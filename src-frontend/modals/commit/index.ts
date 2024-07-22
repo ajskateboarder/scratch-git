@@ -34,7 +34,7 @@ export class CommitModal extends Modal {
 
     const closeButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
@@ -50,14 +50,14 @@ export class CommitModal extends Modal {
     this.$ = {
       $newer: button(
         {
-          class: cls(settings.settingsButton, "round-right-button"),
+          class: cls(settings.button, "round-right-button"),
           disabled: true,
         },
         i({ class: "fa-solid fa-arrow-left" })
       ),
       $older: button(
         {
-          class: cls(settings.settingsButton, "round-left-button"),
+          class: cls(settings.button, "round-left-button"),
         },
         i({ class: "fa-solid fa-arrow-right" })
       ),

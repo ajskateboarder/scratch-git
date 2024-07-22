@@ -20,7 +20,7 @@ const { link, style, button, i } = van.tags;
 export const Styles = () => {
   console.debug("building styles");
   const disabledVersions = `
-      .${settings.settingsButton}[disabled] {
+      .${settings.button}[disabled] {
         background-color: var(--menu-bar-background-default);
         color: rgba(255, 255, 255, 0.4);
         cursor: default;

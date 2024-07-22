@@ -72,11 +72,7 @@ export class WelcomeModal extends Modal {
 
     const goToStep2 = button(
       {
-        class: cls(
-          settings.settingsButton,
-          settings.disabledButton,
-          "back-button"
-        ),
+        class: cls(settings.button, settings.disabledButton, "back-button"),
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
@@ -88,7 +84,7 @@ export class WelcomeModal extends Modal {
         return button(
           {
             style: "width: 50%",
-            class: settings.settingsButton,
+            class: settings.button,
             onclick: () => {
               fileMenu.openProject();
               VM.on("PROJECT_LOADED", async () => {
@@ -126,7 +122,7 @@ export class WelcomeModal extends Modal {
 
         const $submit = button(
           {
-            class: settings.settingsButton,
+            class: settings.button,
             disabled: true,
             onclick: async () => {
               if ($submit.disabled) return;
@@ -210,7 +206,7 @@ export class WelcomeModal extends Modal {
       BottomBar(
         button(
           {
-            class: cls(settings.settingsButton, "back-button"),
+            class: cls(settings.button, "back-button"),
             onclick: () => {
               this.close();
               if (this.loadedProject) {
@@ -231,11 +227,7 @@ export class WelcomeModal extends Modal {
   private $step2() {
     const goToStep3 = button(
       {
-        class: cls(
-          settings.settingsButton,
-          settings.disabledButton,
-          "back-button"
-        ),
+        class: cls(settings.button, settings.disabledButton, "back-button"),
         disabled: true,
         onclick: async () => {
           this.projectName = Redux.getState().scratchGui.projectTitle;
@@ -247,7 +239,7 @@ export class WelcomeModal extends Modal {
 
     const openProjectPath = input({
       type: "file",
-      class: settings.settingsButton,
+      class: settings.button,
       accept: ".sb,.sb2,.sb3",
       onchange: () => {
         goToStep3.disabled = false;
@@ -267,7 +259,7 @@ export class WelcomeModal extends Modal {
       BottomBar(
         button(
           {
-            class: cls(settings.settingsButton, "back-button"),
+            class: cls(settings.button, "back-button"),
             onclick: () => --this.currentStep.val,
           },
           i18next.t("welcome.back")
@@ -285,11 +277,7 @@ export class WelcomeModal extends Modal {
 
     const goToStep4 = button(
       {
-        class: cls(
-          settings.settingsButton,
-          settings.disabledButton,
-          "back-button"
-        ),
+        class: cls(settings.button, settings.disabledButton, "back-button"),
         disabled: true,
         onclick: async () => {
           try {
@@ -364,7 +352,7 @@ export class WelcomeModal extends Modal {
         BottomBar(
           button(
             {
-              class: cls(settings.settingsButton, "back-button"),
+              class: cls(settings.button, "back-button"),
               onclick: () => --this.currentStep.val,
             },
             i18next.t("welcome.back")
@@ -384,7 +372,7 @@ export class WelcomeModal extends Modal {
         BottomBar(
           button(
             {
-              class: cls(settings.settingsButton, "back-button"),
+              class: cls(settings.button, "back-button"),
               onclick: () => this.close(),
             },
             i18next.t("close")

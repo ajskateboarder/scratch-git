@@ -138,7 +138,7 @@ export class SettingsModal extends Modal {
 
     const closeButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: () => {
           this.close();
           scriptColor.open = false;
@@ -151,7 +151,7 @@ export class SettingsModal extends Modal {
 
     const restoreDefaults = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: () => {
           userSettings.defaults();
           scInput.value = defaults.scriptColor;
@@ -164,7 +164,7 @@ export class SettingsModal extends Modal {
 
     const uninstallButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: async () => {
           if (confirm(i18n.t("settings.uninstall-note"))) {
             await uninstall();

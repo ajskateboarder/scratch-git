@@ -1,7 +1,7 @@
 import { Modal } from "../base";
 import { scrollBlockIntoView, flash } from "./block-utils";
 import api, { CostumeChange, Project } from "@/api";
-import { settings } from "@/components";
+import { cls, settings } from "@/components";
 import { Checkbox, Copy } from "@/components";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
@@ -71,7 +71,7 @@ export class DiffModal extends Modal {
     $commits: HTMLParagraphElement;
     $highlights: HTMLInputElement;
     $plainText: HTMLInputElement;
-    $unified: HTMLButtonElement;
+    $unified: HTMLElement;
   };
 
   private cache!: {
@@ -92,14 +92,28 @@ export class DiffModal extends Modal {
 
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
-    const unified = button(
-      { onclick: () => (this.unify.val = !this.unify.val) },
-      () => (this.unify.val ? "Split" : "Unified")
+    const unified = span(
+      button(
+        {
+          onclick: () => (this.unify.val = false),
+          class: cls(settings.button, "round-right-button"),
+          style: () => (this.unify.val ? "filter: brightness(0.88)" : ""),
+        },
+        "Split"
+      ),
+      button(
+        {
+          onclick: () => (this.unify.val = true),
+          class: cls(settings.button, "round-left-button"),
+          style: () => (!this.unify.val ? "filter: brightness(0.88)" : ""),
+        },
+        "Unified"
+      )
     );
 
     const closeButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: () => {
           useHighlights.querySelector("input")!.checked = false;
           plainText.querySelector("input")!.checked = false;
@@ -414,7 +428,7 @@ export class DiffModal extends Modal {
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {
-                  class: `${settings.settingsButton} open-script`,
+                  class: `${settings.button} open-script`,
                   onclick: async (e: Event) => {
                     e.stopPropagation();
                     this.close();

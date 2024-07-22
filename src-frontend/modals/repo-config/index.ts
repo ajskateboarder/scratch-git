@@ -22,7 +22,7 @@ export class RepoConfigModal extends Modal {
 
     const closeButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         style: "margin-left: 10px",
         onclick: () => this.close(),
       },
@@ -43,7 +43,7 @@ export class RepoConfigModal extends Modal {
 
     const saveButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: () => {
           if ($name.value.trim() === "") {
             alert(i18next.t("repoconfig.no-empty-fields"));
