@@ -14,7 +14,7 @@ export const validEmail = (email: string) => {
   return email
     .toLowerCase()
     .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
 };
 
@@ -35,6 +35,6 @@ export const zip = <T, K>(a: T[], b: K[]) =>
 /** Return the React event handler hash for an element */
 export const getReactHandlers = (element: Element) => {
   return Object.keys(element).find((e) =>
-    e.startsWith("__reactEventHandlers"),
+    e.startsWith("__reactEventHandlers")
   )!;
 };

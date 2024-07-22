@@ -1,5 +1,5 @@
-import type { Commit } from "@/core/api";
-import i18next from "@/i18n";
+import type { Commit } from "@/api";
+import i18next from "@/l10n";
 import van from "vanjs-core";
 
 const { div, br, span } = van.tags;
@@ -21,11 +21,11 @@ const timeAgo = (input: Date | string) => {
 
   const secondsElapsed = (date.getTime() - Date.now()) / 1000;
   const matched = Object.keys(RANGES).find(
-    (key) => RANGES[key as keyof typeof RANGES] < Math.abs(secondsElapsed),
+    (key) => RANGES[key as keyof typeof RANGES] < Math.abs(secondsElapsed)
   ) as keyof typeof RANGES;
   return formatter.format(
     Math.round(secondsElapsed / RANGES[matched]),
-    matched as Intl.RelativeTimeFormatUnit,
+    matched as Intl.RelativeTimeFormatUnit
   );
 };
 
@@ -34,7 +34,7 @@ const highlight = (fullText: string, search: string) => {
     const text = new Option(fullText).innerHTML;
     const newText = text.replaceAll(
       new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),
-      `<mark>${search}</mark>`,
+      `<mark>${search}</mark>`
     );
     return span({ innerHTML: newText });
   }
@@ -51,6 +51,6 @@ export const CommitItem = (commit: Commit, search: string) =>
       i18next.t("commit.committed-when", {
         time: timeAgo(commit.author.date),
         name: commit.author.name,
-      }),
-    ),
+      })
+    )
   );

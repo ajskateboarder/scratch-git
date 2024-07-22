@@ -1,13 +1,13 @@
-import api, { Project } from "./core/api";
-import { Styles, createGitMenu } from "./core/init";
-import { fileMenu, misc, ScratchAlert } from "./core/components";
-import { showIndicators } from "./core/diff-indicators";
-import i18next, { getLocale } from "./i18n";
+import api, { Project } from "./api";
+import { Styles, createGitMenu } from "./init";
+import { fileMenu, misc, ScratchAlert } from "./components";
+import { showIndicators } from "./diff-indicators";
+import i18next, { getLocale } from "./l10n";
 import { Redux, VM } from "./lib";
 
-import { initModals, refreshModals, WelcomeModal } from "./core/modals";
-import { getReactHandlers } from "./core/utils";
-import { userSettings } from "./core/settings";
+import { initModals, refreshModals, WelcomeModal } from "./modals";
+import { getReactHandlers } from "./utils";
+import { userSettings } from "./settings";
 
 const displayDiffs = async (project: Project) => {
   [

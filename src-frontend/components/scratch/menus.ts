@@ -1,7 +1,7 @@
 /** @file Manages creation of Git menu and alerts */
 import { menu, s } from "../accessors";
-import i18next from "@/i18n";
-import { getReactHandlers } from "@/core/utils";
+import i18next from "@/l10n";
+import { getReactHandlers } from "@/utils";
 import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;

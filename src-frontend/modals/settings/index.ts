@@ -1,9 +1,9 @@
-import { defaults, userSettings } from "@/core/settings";
+import { defaults, userSettings } from "@/settings";
 import { Modal } from "../base";
 import van from "vanjs-core";
-import { cls, s, settings } from "@/core/components";
-import { uninstall } from "@/core/api";
-import i18n from "@/i18n";
+import { cls, s, settings } from "@/components";
+import { uninstall } from "@/api";
+import i18n from "@/l10n";
 
 const { div, label, input, span, h1, p, summary, details, img, button, i, a } =
   van.tags;

@@ -1,9 +1,9 @@
 import { Modal } from "../base";
-import api, { Project, remoteExists } from "@/core/api";
-import { settings, gitMenu } from "@/core/components";
-import { InputBox, InputField } from "@/core/components/input-field";
-import i18next from "@/i18n";
-import { validURL } from "@/core/utils";
+import api, { Project, remoteExists } from "@/api";
+import { settings, gitMenu } from "@/components";
+import { InputBox, InputField } from "@/components/input-field";
+import i18next from "@/l10n";
+import { validURL } from "@/utils";
 import van from "vanjs-core";
 
 const { main, button, h1, div, span, label, br, i } = van.tags;

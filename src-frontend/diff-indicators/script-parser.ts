@@ -1,5 +1,5 @@
 import { diff } from "../api";
-import { toScratchblocks } from "../../lib";
+import { toScratchblocks } from "../lib";
 import { zip } from "../utils";
 
 export type ScriptStatus = "modified" | "added" | "removed";
@@ -15,7 +15,7 @@ interface ScriptParse {
 /** Parse scripts in a project that have been modified */
 const _parseScripts = (
   oldProject: Record<string, any>,
-  newProject: Record<string, any>,
+  newProject: Record<string, any>
 ): ScriptParse[] => {
   const oldBlocks = Object.keys(oldProject)
     .filter((key) => oldProject[key].parent === null)
@@ -26,12 +26,12 @@ const _parseScripts = (
         JSON.parse(
           JSON.stringify(oldProject)
             .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', ""),
+            .replaceAll(',"SUBSTACK":[1,null]', "")
         ),
         "en",
         {
           tabs: "",
-        },
+        }
       );
     })
     .sort((a, b) => a.localeCompare(b));
@@ -45,12 +45,12 @@ const _parseScripts = (
           JSON.parse(
             JSON.stringify(newProject)
               .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', ""),
+              .replaceAll(',"SUBSTACK":[1,null]', "")
           ),
           "en",
           {
             tabs: "",
-          },
+          }
         ),
         script,
       };
@@ -89,7 +89,7 @@ export const parseScripts = async (
     await Promise.all(
       scripts.map((script) =>
         diff(projectName, script.oldContent, script.newContent)
-      ),
+      )
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts[i] }))

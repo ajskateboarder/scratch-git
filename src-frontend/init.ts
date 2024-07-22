@@ -1,7 +1,7 @@
 /** @file Initializes the Git menu handlers and styles */
 import { GhAuth, PullMsg, Project, PushMsg } from "./api";
 import { GhAuthAlert, ScratchAlert, gitMenu, s, settings } from "./components";
-import i18next from "../i18n";
+import i18next from "./l10n";
 import { CommitModal, RepoConfigModal } from "./modals";
 
 import van from "vanjs-core";

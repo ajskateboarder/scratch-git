@@ -1,11 +1,11 @@
 import { Modal } from "../base";
 import thumbnail from "./thumbnail.svg";
-import api, { cloneRepo, remoteExists } from "@/core/api";
-import { settings, fileMenu, cls } from "@/core/components";
-import { InputBox, InputField } from "@/core/components";
-import i18next from "@/i18n";
+import api, { cloneRepo, remoteExists } from "@/api";
+import { settings, fileMenu, cls } from "@/components";
+import { InputBox, InputField } from "@/components";
+import i18next from "@/l10n";
 import { Redux, VM } from "@/lib";
-import { validEmail, validURL } from "@/core/utils";
+import { validEmail, validURL } from "@/utils";
 import van from "vanjs-core";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
@@ -213,7 +213,11 @@ export class WelcomeModal extends Modal {
             class: cls(settings.settingsButton, "back-button"),
             onclick: () => {
               this.close();
-              if (this.loadedProject) window.location.reload();
+              if (this.loadedProject) {
+                // nothing is changed at this point so ignore warnings
+                window.onbeforeunload = () => {};
+                window.location.reload();
+              }
             },
           },
           i18next.t("close")
