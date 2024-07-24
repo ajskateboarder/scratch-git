@@ -1,10 +1,10 @@
 /** @file Displays indicators and info on sprites that were changed */
-import type { Project, Sprite } from "../api";
-import { s, sprites } from "../components";
+import type { Project, Sprite } from "@/api";
+import { s, sprites } from "@/components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
-import { SpriteDiff, StageDiff } from "../components";
-import { getBlockly } from "../../lib/globals";
+import { SpriteDiff, StageDiff } from "@/components";
+import { getBlockly } from "@/lib/globals";
 import { userSettings } from "../settings";
 import { contextMenu } from "./inject-context";
 

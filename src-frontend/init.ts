@@ -1,7 +1,7 @@
 /** @file Initializes the Git menu handlers and styles */
 import { GhAuth, PullMsg, Project, PushMsg } from "./api";
 import { GhAuthAlert, ScratchAlert, gitMenu, s, settings } from "./components";
-import i18next from "../i18n";
+import i18next from "./l10n";
 import { CommitModal, RepoConfigModal } from "./modals";
 
 import van from "vanjs-core";
@@ -20,7 +20,7 @@ const { link, style, button, i } = van.tags;
 export const Styles = () => {
   console.debug("building styles");
   const disabledVersions = `
-      .${settings.settingsButton}[disabled] {
+      .${settings.button}[disabled] {
         background-color: var(--menu-bar-background-default);
         color: rgba(255, 255, 255, 0.4);
         cursor: default;

@@ -15,11 +15,7 @@ export default async (args) => {
       css({ minify: true }),
       nodeResolve(),
       typescript({
-        include: [
-          "node_modules/@oxi/result/mod.ts",
-          "src-frontend/*.ts",
-          "src-frontend/**/*.ts",
-        ],
+        include: ["src-frontend/*.ts", "src-frontend/**/*.ts"],
       }),
     ],
   };

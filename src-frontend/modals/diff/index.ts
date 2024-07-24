@@ -1,17 +1,19 @@
 import { Modal } from "../base";
 import { scrollBlockIntoView, flash } from "./block-utils";
-import api, { CostumeChange, Project } from "@/core/api";
-import { settings } from "@/core/components";
-import { Checkbox, Copy } from "@/core/components";
+import api, { CostumeChange, Project } from "@/api";
+import { cls, settings } from "@/components";
+import { Checkbox, Copy } from "@/components";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
-import { parseScripts, type ScriptStatus } from "@/core/diff-indicators";
-import { userSettings } from "@/core/settings";
+import { parseScripts, type ScriptStatus } from "@/diff-indicators";
+import { userSettings } from "@/settings";
 import van from "vanjs-core";
 
 import iconCodeSvg from "./icon--code.svg";
 import iconCostumesSvg from "./icon--costumes.svg";
 import iconSoundsSvg from "./icon--sounds.svg";
+import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
+import { getLocale } from "@/l10n";
 
 const {
   div,
@@ -51,15 +53,6 @@ const DARK_BLOCKS = {
   "sb3-extension": "#03251C",
 };
 
-const MIMETYPE_EXT = {
-  mp3: "audio/mpeg",
-  wav: "audio/wav",
-  svg: "image/svg+xml",
-  png: "image/png",
-  jpeg: "image/jpeg",
-  jpg: "image/jpeg",
-};
-
 interface Diff {
   oldContent: any;
   newContent: any;
@@ -71,11 +64,6 @@ interface Diff {
   diffed: string;
 }
 
-const toDataURI = (ext: string, content: string) =>
-  `data:${MIMETYPE_EXT[ext as keyof typeof MIMETYPE_EXT]};base64,${btoa(
-    content
-  )}`;
-
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
   private $!: {
@@ -83,6 +71,7 @@ export class DiffModal extends Modal {
     $commits: HTMLParagraphElement;
     $highlights: HTMLInputElement;
     $plainText: HTMLInputElement;
+    $unified: HTMLElement;
   };
 
   private cache!: {
@@ -92,6 +81,7 @@ export class DiffModal extends Modal {
   };
 
   private copyCallback!: () => string | SVGElement;
+  private unify = van.state(true);
 
   connectedCallback() {
     if (this.querySelector("main")) return;
@@ -102,10 +92,28 @@ export class DiffModal extends Modal {
 
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
+    const unified = span(
+      button(
+        {
+          onclick: () => (this.unify.val = false),
+          class: cls(settings.button, "round-right-button"),
+          style: () => (this.unify.val ? "filter: brightness(0.88)" : ""),
+        },
+        "Split"
+      ),
+      button(
+        {
+          onclick: () => (this.unify.val = true),
+          class: cls(settings.button, "round-left-button"),
+          style: () => (!this.unify.val ? "filter: brightness(0.88)" : ""),
+        },
+        "Unified"
+      )
+    );
 
     const closeButton = button(
       {
-        class: settings.settingsButton,
+        class: settings.button,
         onclick: () => {
           useHighlights.querySelector("input")!.checked = false;
           plainText.querySelector("input")!.checked = false;
@@ -116,12 +124,12 @@ export class DiffModal extends Modal {
     );
 
     const commits = p(
-      { id: "commits" },
+      { style: "margin-right: 10px; margin-left: 10px" },
       span(
         {
           class: "header",
         },
-        span({ class: "settings-group" }, useHighlights, plainText),
+        span({ class: "settings-group" }, useHighlights, plainText, unified),
         span({ class: "button-group" }, closeButton)
       ),
       hr(),
@@ -138,6 +146,7 @@ export class DiffModal extends Modal {
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
       $commits: commits.querySelector(".commit-wrap")!,
+      $unified: unified,
     };
 
     van.add(
@@ -250,32 +259,27 @@ export class DiffModal extends Modal {
     script = 0,
     cached = false
   ) {
-    const { $commits, $highlights, $plainText, $scripts } = this.$;
+    const { $commits, $highlights, $plainText, $scripts, $unified } = this.$;
 
     // try again in case of undefined
     if (!project) project = api.getCurrentProject();
     project = project!;
 
     let oldScripts: any, newScripts: any;
-    if (cached) {
-      if (
-        !this.cache.previousScripts &&
-        !this.cache.currentScripts &&
-        !this.cache.costumeChanges
-      ) {
-        this.cache = {
-          previousScripts: await project.getPreviousScripts(spriteName),
-          currentScripts: await project.getCurrentScripts(spriteName),
-          costumeChanges: await project.getChangedAssets(),
-        };
-      }
-    } else {
+
+    if (
+      !cached ||
+      !this.cache.previousScripts ||
+      !this.cache.currentScripts ||
+      !this.cache.costumeChanges
+    ) {
       this.cache = {
         previousScripts: await project.getPreviousScripts(spriteName),
         currentScripts: await project.getCurrentScripts(spriteName),
         costumeChanges: await project.getChangedAssets(),
       };
     }
+
     oldScripts = this.cache.previousScripts;
     newScripts = this.cache.currentScripts;
 
@@ -424,7 +428,7 @@ export class DiffModal extends Modal {
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {
-                  class: `${settings.settingsButton} open-script`,
+                  class: `${settings.button} open-script`,
                   onclick: async (e: Event) => {
                     e.stopPropagation();
                     this.close();
@@ -535,71 +539,175 @@ export class DiffModal extends Modal {
     const btnRef = this.querySelector(`button[script-no="${script}"]`)!;
 
     btnRef.classList.add("active-tab");
-    const isScriptDiff = btnRef.getAttribute("diff-type") === "script";
+    const scriptDiff = btnRef.getAttribute("diff-type");
 
     // costume diff view
+    const display = scriptDiff === "script" ? "block" : "none";
     document.querySelector<HTMLDivElement>(".copy-button")!.style.display =
-      isScriptDiff ? "block" : "none";
-    document
-      .querySelector<HTMLDivElement>(".settings-group")!
-      .classList.toggle("disabled-area", !isScriptDiff);
+      display;
+    $plainText.parentElement!.style.display = display;
+    $highlights.parentElement!.style.display = display;
+    $unified.style.display = scriptDiff === "costume" ? "block" : "none";
 
-    if (!isScriptDiff) {
+    if (scriptDiff === "costume") {
       document.querySelector(".scratchblocks")!.remove();
       const [current, previous] =
         costumeDiffs[btnRef.getAttribute("asset-name")!];
       const isSoundDiff = btnRef.getAttribute("diff-type") === "sound";
 
-      let previousAsset = "";
-      let currentAsset = "";
+      let previousAsset = { contents: "", size: 0 };
+      let currentAsset = { contents: "", size: 0 };
       if (current && previous) {
-        previousAsset = toDataURI(
-          previous.path.split(".").pop()!,
-          String.fromCharCode.apply(null, previous.contents)
-        );
-        currentAsset = toDataURI(
-          current.path.split(".").pop()!,
-          String.fromCharCode.apply(null, current.contents)
-        );
+        previousAsset = {
+          contents: toDataURI(
+            previous.path.split(".").pop()!,
+            String.fromCharCode.apply(null, previous.contents)
+          ),
+          size: previous.contents.length,
+        };
+        currentAsset = {
+          contents: toDataURI(
+            current.path.split(".").pop()!,
+            String.fromCharCode.apply(null, current.contents)
+          ),
+          size: current.contents.length,
+        };
       } else {
         if (current && !previous && current.kind !== "before") {
-          currentAsset = toDataURI(
-            current.path.split(".").pop()!,
-            String.fromCharCode.apply(null, current.contents)
-          );
+          currentAsset = {
+            contents: toDataURI(
+              current.path.split(".").pop()!,
+              String.fromCharCode.apply(null, current.contents)
+            ),
+            size: current.contents.length,
+          };
         } else if (current.kind === "before" && !previous) {
-          previousAsset = toDataURI(
-            current.path.split(".").pop()!,
-            String.fromCharCode.apply(null, current.contents)
-          );
+          previousAsset = {
+            contents: toDataURI(
+              current.path.split(".").pop()!,
+              String.fromCharCode.apply(null, current.contents)
+            ),
+            size: current.contents.length,
+          };
         }
       }
+
+      const previousAssetImg = imageLayer(
+          img({ src: previousAsset.contents }),
+          "#ff0000"
+        ),
+        currentAssetImg = imageLayer(
+          img({ src: currentAsset.contents }),
+          "#00ff00"
+        );
+
+      let imageDiff;
+      try {
+        imageDiff = unifiedDiff(previousAssetImg, currentAssetImg);
+      } catch {
+        this.unify.val = false;
+      }
+
+      const UnifyToggle = (
+        [a, aBytes]: [HTMLImageElement, number],
+        [b, bBytes]: [HTMLImageElement, number],
+        unified: HTMLCanvasElement
+      ) => {
+        const byteFormat = Intl.NumberFormat(getLocale(), {
+          notation: "compact",
+          style: "unit",
+          unit: "byte",
+          unitDisplay: "narrow",
+        });
+
+        const percentFormat = Intl.NumberFormat(getLocale(), {
+          style: "percent",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 1,
+        });
+
+        const sizeChange = `${byteFormat.format(bBytes)}${
+          aBytes === 0
+            ? " "
+            : " (" +
+              percentFormat.format((bBytes - aBytes) / Math.abs(aBytes)) +
+              ")"
+        }`;
+
+        return span(
+          {
+            style:
+              'font-family: "Helvetica Neue", Helvetica, Arial, sans-serif',
+          },
+          () =>
+            !this.unify.val
+              ? span(
+                  { style: "display: flex; align-items: center; gap: 10px" },
+                  span({ class: "image" }, a, byteFormat.format(aBytes)),
+                  i({ class: "fa-solid fa-arrow-right fa-xl" }),
+                  span({ class: "image" }, b, sizeChange)
+                )
+              : span(
+                  { class: "image" },
+                  unified,
+                  span(
+                    byteFormat.format(aBytes),
+                    " ",
+                    i({ class: "fa-solid fa-arrow-right" }),
+                    " ",
+                    sizeChange
+                  )
+                )
+        );
+      };
 
       $commits.appendChild(
         span(
           { class: "costume-diff" },
           isSoundDiff
-            ? audio({ src: previousAsset, controls: true })
-            : img({ src: previousAsset }),
-          i({ class: "fa-solid fa-arrow-right" }),
+            ? audio({ src: previousAsset.contents, controls: true })
+            : UnifyToggle(
+                [
+                  img({
+                    src: previousAsset.contents,
+                    class: "costume-diff-canvas",
+                    style: "border: 0.5px solid red",
+                  }),
+                  previousAsset.size,
+                ],
+                [
+                  img({
+                    src: currentAsset.contents,
+                    class: "costume-diff-canvas",
+                    style: "border: 0.5px solid green",
+                  }),
+                  currentAsset.size,
+                ],
+                imageDiff!
+              ),
           isSoundDiff
-            ? audio({ src: currentAsset, controls: true })
-            : img({ src: currentAsset })
+            ? audio({ src: currentAsset.contents, controls: true })
+            : undefined
         )
       );
     }
 
     // dark mode
-    if (uiTheme === "dark")
-      this.querySelector(".diff-view")!.classList.add("dark");
-    else this.querySelector(".diff-view")!.classList.remove("dark");
-
+    this.querySelector(".diff-view")!.classList.toggle(
+      "dark",
+      uiTheme === "dark"
+    );
     this.setDiffTheme(uiTheme);
 
-    if (isScriptDiff) {
+    if (scriptDiff === "script") {
       $plainText.onchange(new Event("init"));
       $highlights.onchange(new Event("init"));
     }
+
+    this.querySelector(".commit-wrap")?.classList.toggle(
+      "costume-diff-wrap",
+      scriptDiff === "costume"
+    );
 
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;

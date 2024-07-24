@@ -1,7 +1,7 @@
 /** @file Manages creation of Git menu and alerts */
 import { menu, s } from "../accessors";
-import i18next from "@/i18n";
-import { getReactHandlers } from "@/core/utils";
+import i18next from "@/l10n";
+import { getReactHandlers } from "@/utils";
 import van, { ChildDom } from "vanjs-core";
 
 const { i, span } = van.tags;
@@ -34,10 +34,14 @@ export const fileMenu = new class {
 
   /** Open a project SB3 file from a file dialog */
   openProject() {
-    let root = document.querySelector("#app")!.firstElementChild!;
-    (root as any)[
-      getReactHandlers(root)
-    ].children[11].props.onStartSelectingFileUpload();
+    const realConfirm = window.confirm;
+    window.confirm = () => true;
+    this.toggleMenu(true);
+    const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
+    loadFromComputer[this.events].onClick();
+    this.toggleMenu(false);
+    this.toggleMenu(true);
+    window.confirm = realConfirm;
   }
 
   /** Returns if a project is currently open */

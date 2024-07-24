@@ -45,7 +45,7 @@ export const settings = {
   settingsLabel: s("settings-modal_label"),
   settingsCheckbox: s("settings-modal_checkbox"),
   checkbox: s("checkbox_checkbox"),
-  settingsButton: s("settings-modal_button"),
+  button: s("settings-modal_button"),
   disabledButton: s("button_mod-disabled"),
   inputField: s("input_input-form"),
 };

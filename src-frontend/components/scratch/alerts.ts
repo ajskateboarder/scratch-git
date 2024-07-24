@@ -1,5 +1,5 @@
 import { misc, Copy, s, cls } from "..";
-import type { DeviceCode } from "@/core/api";
+import type { DeviceCode } from "@/api";
 import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
 

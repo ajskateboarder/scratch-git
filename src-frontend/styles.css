@@ -1,6 +1,4 @@
 dialog {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
   border: 0.5px solid grey;
   height: 50%;
   width: 50%;
