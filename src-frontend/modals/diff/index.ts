@@ -124,7 +124,7 @@ export class DiffModal extends Modal {
     );
 
     const commits = p(
-      { id: "commits" },
+      { style: "margin-right: 10px; margin-left: 10px" },
       span(
         {
           class: "header",
@@ -555,37 +555,58 @@ export class DiffModal extends Modal {
         costumeDiffs[btnRef.getAttribute("asset-name")!];
       const isSoundDiff = btnRef.getAttribute("diff-type") === "sound";
 
-      let previousAsset = "";
-      let currentAsset = "";
+      let previousAsset = { contents: "", size: 0 };
+      let currentAsset = { contents: "", size: 0 };
       if (current && previous) {
-        previousAsset = toDataURI(
-          previous.path.split(".").pop()!,
-          String.fromCharCode.apply(null, previous.contents)
-        );
-        currentAsset = toDataURI(
-          current.path.split(".").pop()!,
-          String.fromCharCode.apply(null, current.contents)
-        );
+        previousAsset = {
+          contents: toDataURI(
+            previous.path.split(".").pop()!,
+            String.fromCharCode.apply(null, previous.contents)
+          ),
+          size: previous.contents.length,
+        };
+        currentAsset = {
+          contents: toDataURI(
+            current.path.split(".").pop()!,
+            String.fromCharCode.apply(null, current.contents)
+          ),
+          size: current.contents.length,
+        };
       } else {
         if (current && !previous && current.kind !== "before") {
-          currentAsset = toDataURI(
-            current.path.split(".").pop()!,
-            String.fromCharCode.apply(null, current.contents)
-          );
+          currentAsset = {
+            contents: toDataURI(
+              current.path.split(".").pop()!,
+              String.fromCharCode.apply(null, current.contents)
+            ),
+            size: current.contents.length,
+          };
         } else if (current.kind === "before" && !previous) {
-          previousAsset = toDataURI(
-            current.path.split(".").pop()!,
-            String.fromCharCode.apply(null, current.contents)
-          );
+          previousAsset = {
+            contents: toDataURI(
+              current.path.split(".").pop()!,
+              String.fromCharCode.apply(null, current.contents)
+            ),
+            size: current.contents.length,
+          };
         }
       }
 
       const previousAssetImg = imageLayer(
-          img({ src: previousAsset }),
+          img({ src: previousAsset.contents }),
           "#ff0000"
         ),
-        currentAssetImg = imageLayer(img({ src: currentAsset }), "#00ff00");
-      const imageDiff = unifiedDiff(previousAssetImg, currentAssetImg);
+        currentAssetImg = imageLayer(
+          img({ src: currentAsset.contents }),
+          "#00ff00"
+        );
+
+      let imageDiff;
+      try {
+        imageDiff = unifiedDiff(previousAssetImg, currentAssetImg);
+      } catch {
+        this.unify.val = false;
+      }
 
       const UnifyToggle = (
         [a, aBytes]: [HTMLImageElement, number],
@@ -605,6 +626,14 @@ export class DiffModal extends Modal {
           maximumFractionDigits: 1,
         });
 
+        const sizeChange = `${byteFormat.format(bBytes)}${
+          aBytes === 0
+            ? " "
+            : " (" +
+              percentFormat.format((bBytes - aBytes) / Math.abs(aBytes)) +
+              ")"
+        }`;
+
         return span(
           {
             style:
@@ -616,15 +645,19 @@ export class DiffModal extends Modal {
                   { style: "display: flex; align-items: center; gap: 10px" },
                   span({ class: "image" }, a, byteFormat.format(aBytes)),
                   i({ class: "fa-solid fa-arrow-right fa-xl" }),
+                  span({ class: "image" }, b, sizeChange)
+                )
+              : span(
+                  { class: "image" },
+                  unified,
                   span(
-                    { class: "image" },
-                    b,
-                    `${byteFormat.format(bBytes)} (${percentFormat.format(
-                      (bBytes - aBytes) / Math.abs(aBytes)
-                    )})`
+                    byteFormat.format(aBytes),
+                    " ",
+                    i({ class: "fa-solid fa-arrow-right" }),
+                    " ",
+                    sizeChange
                   )
                 )
-              : unified
         );
       };
 
@@ -632,19 +665,29 @@ export class DiffModal extends Modal {
         span(
           { class: "costume-diff" },
           isSoundDiff
-            ? audio({ src: previousAsset, controls: true })
+            ? audio({ src: previousAsset.contents, controls: true })
             : UnifyToggle(
                 [
-                  img({ src: previousAsset, class: "costume-diff-canvas" }),
-                  previous.contents.length,
+                  img({
+                    src: previousAsset.contents,
+                    class: "costume-diff-canvas",
+                    style: "border: 0.5px solid red",
+                  }),
+                  previousAsset.size,
                 ],
                 [
-                  img({ src: currentAsset, class: "costume-diff-canvas" }),
-                  current.contents.length,
+                  img({
+                    src: currentAsset.contents,
+                    class: "costume-diff-canvas",
+                    style: "border: 0.5px solid green",
+                  }),
+                  currentAsset.size,
                 ],
-                imageDiff
+                imageDiff!
               ),
-          isSoundDiff ? audio({ src: currentAsset, controls: true }) : undefined
+          isSoundDiff
+            ? audio({ src: currentAsset.contents, controls: true })
+            : undefined
         )
       );
     }

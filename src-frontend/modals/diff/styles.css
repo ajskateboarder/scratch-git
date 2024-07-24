@@ -158,11 +158,6 @@
   border-radius: 10px;
 }
 
-.costume-diff-wrap {
-  display: flex;
-  justify-content: center;
-}
-
 .image {
   display: flex;
   flex-direction: column;

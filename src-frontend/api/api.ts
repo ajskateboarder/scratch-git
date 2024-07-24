@@ -112,14 +112,12 @@ export class Project extends Socket {
   /** Returns if the project has been linked to scratch.git */
   // LINK src-server/handlers.rs#exists
   async exists(): Promise<boolean> {
-    const exists = (
+    return (
       await this.request({
         command: "exists",
         data: { Project: { project_name: this.projectName } },
       })
     ).exists;
-    console.log(exists);
-    return exists;
   }
 
   /** Receive all the commits made for a project */
