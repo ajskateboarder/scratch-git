@@ -1,0 +1,181 @@
+.diff-view {
+  display: flex;
+  height: 100%;
+  padding-right: 5px;
+
+  & .in diff-modal {
+    margin: 0;
+    padding: 0;
+    width: 98%;
+    bottom: 15px;
+    justify-content: right;
+  }
+
+  & main {
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  & ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  & li {
+    list-style-type: none;
+
+    & .tab-btn {
+      padding: 15px 30px;
+      border: 0.5px solid grey;
+      background-color: #d9e3f2;
+      color: hsl(225deg 15% 40% / 75%);
+      transition: 0.2s background-color ease-in;
+      margin-top: 10px;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+
+      &:hover {
+        background-color: #ccd3dd;
+      }
+    }
+  }
+
+  & aside {
+    padding: 1rem;
+    border-right: 1px solid grey;
+    background-color: #e6f0ff;
+    margin-left: -20px;
+  }
+
+  & hr {
+    background-color: grey;
+    height: 1px;
+    border: 0;
+    width: 95%;
+  }
+
+  .content {
+    margin-top: 10px;
+    overflow-x: hidden;
+  }
+}
+
+.active-tab {
+  color: var(--menu-bar-background-default) !important;
+  background-color: white !important;
+  outline: none;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+
+  & .change-icon {
+    font-size: 17px;
+  }
+
+  .open-script {
+    font-size: 10px;
+    padding: 5px;
+    margin-left: 10px;
+    filter: none;
+
+    &:hover {
+      filter: brightness(1.7);
+    }
+  }
+}
+
+.dark .tab-btn.active-tab {
+  background-color: rgb(76 76 76) !important;
+  color: #eee !important;
+}
+
+.dark {
+  & aside {
+    background-color: #111 !important;
+    color: #eee;
+  }
+
+  & .tab-btn {
+    background-color: rgb(46 46 46) !important;
+    color: #707070 !important;
+  }
+
+  [class=commit-wrap] {
+    --dot-space: 22px;
+    --dot-size: 1px;
+    --dot-bg: #1e1e1e;
+    --dot-color: #707070;
+  }
+
+  .costume-diff-canvas {
+    --color-1: #111;
+    --color-2: #1e1e1e;
+  }
+}
+
+.commit-view {
+  padding: 10px;
+  border-radius: 10px;
+  display: contents;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+[class=commit-wrap] {
+  --dot-space: 22px;
+  --dot-size: 1px;
+  --dot-bg: white;
+  --dot-color: #d2d2d2;
+
+  background: linear-gradient(90deg,
+      var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+      transparent 1%) center / var(--dot-space) var(--dot-space),
+    linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+      transparent 1%) center / var(--dot-space) var(--dot-space),
+    var(--dot-color);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.costume-diff-canvas {
+  --color-1: white;
+  --color-2: #d2d2d2;
+  --size: 8px;
+  background-image: conic-gradient(var(--color-1) 25%, var(--color-2) 25%, var(--color-2) 50%, var(--color-1) 50%, var(--color-1) 75%, var(--color-2) 75%);
+  background-size: calc(var(--size)* 2) calc(var(--size)* 2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.image {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.costume-diff {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.settings-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.header {
+  display: flex;
+  user-select: none;
+  flex-flow: wrap;
+  align-items: center;
+}
+
+.disabled-area {
+  opacity: 0.5;
+  pointer-events: none;
+}

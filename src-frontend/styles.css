@@ -1,0 +1,115 @@
+dialog {
+  border: 0.5px solid grey;
+  height: 50%;
+  width: 50%;
+  max-height: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  white-space: normal;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-weight: normal;
+  user-select: none;
+  box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.4);
+}
+
+dialog[is="commit-modal"],
+dialog[is="repo-config-modal"],
+dialog[is="settings-modal"] {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+dialog[is="welcome-modal"] {
+  overflow: hidden;
+}
+
+html[style*="--ui-primary: #111111"] .alert-button {
+  color: white;
+}
+
+dialog[is="diff-modal"] {
+  padding: 0;
+
+  .button-group {
+    padding: 0 1rem;
+    margin-left: auto;
+    gap: 10px;
+    display: flex;
+    margin-right: 10px;
+  }
+}
+
+dialog[is="welcome-modal"] {
+  display: flex;
+  gap: 15px;
+  padding: 0;
+}
+
+.copy-button {
+  margin-left: auto;
+  margin-right: 0;
+  display: block;
+}
+
+.sprite-diff {
+  transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+  scale: 0.8;
+  border-radius: 20px;
+  box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+}
+
+.stage-diff {
+  position: absolute;
+  right: 0;
+  margin-top: 40px;
+  z-index: 99999;
+  transition: all 0.15s ease-out;
+  scale: 0.8;
+  border-radius: 20px;
+  box-shadow: 0 0 0 2px var(--looks-transparent);
+}
+
+.bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  background-color: transparent;
+  padding: 10px;
+}
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  & .input-label {
+    font-weight: bold;
+  }
+
+  & .input-box {
+    border-radius: 5px;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: -22px;
+  position: sticky;
+  padding: 5px;
+  background: var(--page-background);
+  transition: font-size 0.2s ease;
+}
+
+.header button {
+  transition: scale 0.2s ease;
+}
+
+.alert-with-buttons {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
