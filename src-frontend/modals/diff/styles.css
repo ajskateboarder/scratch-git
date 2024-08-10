@@ -87,10 +87,6 @@
   }
 }
 
-.commit-view:has([class=commit-wrap] > pre)>pre {
-  background: #f1f1f1;
-}
-
 .dark .tab-btn.active-tab {
   background-color: rgb(76 76 76) !important;
   color: #eee !important;
@@ -103,8 +99,8 @@
   }
 
   & .tab-btn {
-    background-color: rgb(46 46 46);
-    color: #707070;
+    background-color: rgb(46 46 46) !important;
+    color: #707070 !important;
   }
 
   [class=commit-wrap] {
@@ -117,10 +113,6 @@
   .costume-diff-canvas {
     --color-1: #111;
     --color-2: #1e1e1e;
-  }
-
-  .commit-view:has([class=commit-wrap] > pre)>pre {
-    background: #1e1e1e;
   }
 }
 

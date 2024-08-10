@@ -66,19 +66,15 @@ interface Diff {
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
-  private $!: {
-    $scripts: HTMLUListElement;
-    $commits: HTMLParagraphElement;
-    $highlights: HTMLInputElement;
-    $plainText: HTMLInputElement;
-    $unified: HTMLElement;
-  };
+  $scripts!: HTMLUListElement;
+  $commits!: HTMLParagraphElement;
+  $highlights!: HTMLInputElement;
+  $plainText!: HTMLInputElement;
+  $unified!: HTMLElement;
 
-  private cache!: {
-    previousScripts: any;
-    currentScripts: any;
-    costumeChanges: Record<string, Record<string, CostumeChange[]>>;
-  };
+  previousScripts: any;
+  currentScripts: any;
+  costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
   private unify = van.state(true);
@@ -88,7 +84,7 @@ export class DiffModal extends Modal {
 
     this.copyCallback = () =>
       (this.querySelector(".scratchblocks svg") as SVGElement) ??
-      (this.querySelector(".commit-wrap") as HTMLElement).innerText;
+      (this.querySelector(".commit-wrap") as HTMLElement)?.innerText;
 
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
@@ -133,27 +129,29 @@ export class DiffModal extends Modal {
         span({ class: "button-group" }, closeButton)
       ),
       hr(),
-      br(),
       pre(
         { class: "commit-view" },
-        Copy(this.copyCallback),
-        pre({ class: "commit-wrap" })
+        pre(
+          { class: "commit-wrap" },
+          Copy(this.copyCallback),
+          pre({ class: "real-commit-wrap" })
+        )
       )
     );
 
-    this.$ = {
+    Object.assign(this, {
       $scripts: ul({ style: "max-width: 200px" }),
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
-      $commits: commits.querySelector(".commit-wrap")!,
+      $commits: commits.querySelector(".real-commit-wrap")!,
       $unified: unified,
-    };
+    });
 
     van.add(
       this,
       main(
         { class: "diff-view" },
-        aside(this.$.$scripts),
+        aside(this.$scripts),
         main(div({ class: "content" }, commits))
       )
     );
@@ -195,7 +193,7 @@ export class DiffModal extends Modal {
    * @param script -
    */
   private highlightAsText(diffs: Diff[], script: number) {
-    const { $commits, $highlights } = this.$;
+    const { $commits, $highlights } = this;
 
     // TODO: passing in diffs and script idx is probably unneeded
     const content = diffs[script].diffed.trimStart() ?? "";
@@ -259,7 +257,7 @@ export class DiffModal extends Modal {
     script = 0,
     cached = false
   ) {
-    const { $commits, $highlights, $plainText, $scripts, $unified } = this.$;
+    const { $commits, $highlights, $plainText, $scripts, $unified } = this;
 
     // try again in case of undefined
     if (!project) project = api.getCurrentProject();
@@ -269,26 +267,26 @@ export class DiffModal extends Modal {
 
     if (
       !cached ||
-      !this.cache.previousScripts ||
-      !this.cache.currentScripts ||
-      !this.cache.costumeChanges
+      !this.previousScripts ||
+      !this.currentScripts ||
+      !this.costumeChanges
     ) {
-      this.cache = {
+      Object.assign(this, {
         previousScripts: await project.getPreviousScripts(spriteName),
         currentScripts: await project.getCurrentScripts(spriteName),
         costumeChanges: await project.getChangedAssets(),
-      };
+      });
     }
 
-    oldScripts = this.cache.previousScripts;
-    newScripts = this.cache.currentScripts;
+    oldScripts = this.previousScripts;
+    newScripts = this.currentScripts;
 
     const diffs = await parseScripts(
       project.projectName,
       oldScripts,
       newScripts
     );
-    const costumeDiffs = this.cache.costumeChanges[spriteName];
+    const costumeDiffs = this.costumeChanges[spriteName];
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
 
@@ -299,8 +297,7 @@ export class DiffModal extends Modal {
     };
 
     const diffBlocks = () => {
-      scratchblocks.appendStyles();
-      scratchblocks.renderMatching(".commit-wrap", config);
+      scratchblocks.renderMatching(".real-commit-wrap", config);
 
       const svg = this.querySelector(".scratchblocks svg > g")!;
 
@@ -643,14 +640,35 @@ export class DiffModal extends Modal {
             !this.unify.val
               ? span(
                   { style: "display: flex; align-items: center; gap: 10px" },
-                  span({ class: "image" }, a, byteFormat.format(aBytes)),
+                  span(
+                    {
+                      class: "image costume-diff-canvas",
+                      style: "border: 2px solid red",
+                    },
+                    Copy(() => a),
+                    a,
+                    byteFormat.format(aBytes)
+                  ),
                   i({ class: "fa-solid fa-arrow-right fa-xl" }),
-                  span({ class: "image" }, b, sizeChange)
+                  span(
+                    {
+                      class: "image costume-diff-canvas",
+                      style: "border: 2px solid green",
+                    },
+                    Copy(() => b),
+                    b,
+                    sizeChange
+                  )
                 )
               : span(
-                  { class: "image" },
+                  {
+                    class: "image costume-diff-canvas",
+                    style: "border: 2px solid grey",
+                  },
+                  Copy(() => img({ src: unified.toDataURL() })),
                   unified,
                   span(
+                    { style: "text-align: right" },
                     byteFormat.format(aBytes),
                     " ",
                     i({ class: "fa-solid fa-arrow-right" }),
@@ -670,16 +688,12 @@ export class DiffModal extends Modal {
                 [
                   img({
                     src: previousAsset.contents,
-                    class: "costume-diff-canvas",
-                    style: "border: 0.5px solid red",
                   }),
                   previousAsset.size,
                 ],
                 [
                   img({
                     src: currentAsset.contents,
-                    class: "costume-diff-canvas",
-                    style: "border: 0.5px solid green",
                   }),
                   currentAsset.size,
                 ],

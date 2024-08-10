@@ -7,7 +7,7 @@ export const scrollBlockIntoView = (blockOrId: string) => {
   const workspace = getBlockly();
   const offsetX = 32;
   const offsetY = 32;
-  const block = workspace.getBlockById(blockOrId);
+  const block = workspace.getBlockById(blockOrId)!;
 
   const root = block.getRootBlock();
   let base = block;

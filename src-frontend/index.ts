@@ -3,7 +3,7 @@ import { Styles, createGitMenu } from "./init";
 import { fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
 import i18next, { getLocale } from "./l10n";
-import { Redux, VM } from "./lib";
+import { Redux, scratchblocks, VM } from "./lib";
 
 import { initModals, refreshModals, WelcomeModal } from "./modals";
 import { getReactHandlers } from "./utils";
@@ -27,6 +27,7 @@ const displayDiffs = async (project: Project) => {
 };
 
 const main = async () => {
+  scratchblocks.appendStyles();
   initModals();
 
   if (!fileMenu.projectOpen()) {

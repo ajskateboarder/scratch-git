@@ -9,12 +9,9 @@ import van from "vanjs-core";
 const { main, button, h1, div, span, label, br, i } = van.tags;
 
 export class RepoConfigModal extends Modal {
-  private $!: {
-    $repository: HTMLInputElement;
-    $name: HTMLInputElement;
-    $email: HTMLInputElement;
-  };
-
+  $repository: HTMLInputElement;
+  $name: HTMLInputElement;
+  $email: HTMLInputElement;
   private project!: Project;
 
   connectedCallback() {

@@ -21,13 +21,13 @@ export const defaults = {
   highlights: false,
   plainText: false,
   scriptColor: "#ed25cf",
+  unified: false,
 };
 
 export const userSettings = {
   get highlights() {
     return getItem("highlights")!;
   },
-
   set highlights(value: boolean) {
     setItem("highlights", value);
   },
@@ -35,7 +35,6 @@ export const userSettings = {
   get plainText() {
     return getItem("plaintext")!;
   },
-
   set plainText(value: boolean) {
     setItem("plaintext", value);
   },
@@ -43,15 +42,22 @@ export const userSettings = {
   get scriptColor() {
     return getItem("scriptcolor")!;
   },
-
   set scriptColor(value: string) {
     setItem("scriptcolor", value);
+  },
+
+  get unified() {
+    return getItem("unified")!;
+  },
+  set unified(value: boolean) {
+    setItem("unified", value);
   },
 
   init() {
     setItem("highlights", getItem("highlights", defaults.highlights));
     setItem("plaintext", getItem("plaintext", defaults.plainText));
     setItem("scriptcolor", getItem("scriptcolor", defaults.scriptColor));
+    setItem("unified", getItem("unified", defaults.scriptColor));
   },
 
   clear() {
