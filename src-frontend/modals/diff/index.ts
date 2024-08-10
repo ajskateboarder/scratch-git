@@ -30,6 +30,8 @@ const {
   li,
   img,
   audio,
+  details,
+  summary,
 } = van.tags;
 
 const DIFF_ICON = {
@@ -120,7 +122,7 @@ export class DiffModal extends Modal {
     );
 
     const commits = p(
-      { style: "margin-right: 10px; margin-left: 10px" },
+      { style: "margin-right: 10px; margin-left: 10px", id: "commits" },
       span(
         {
           class: "header",
@@ -129,7 +131,7 @@ export class DiffModal extends Modal {
         span({ class: "button-group" }, closeButton)
       ),
       hr(),
-      pre(
+      div(
         { class: "commit-view" },
         pre(
           { class: "commit-wrap" },
@@ -286,6 +288,7 @@ export class DiffModal extends Modal {
       oldScripts,
       newScripts
     );
+
     const costumeDiffs = this.costumeChanges[spriteName];
     const { blocks: blockTheme, gui: uiTheme } =
       Redux.getState().scratchGui.theme.theme;
@@ -410,9 +413,11 @@ export class DiffModal extends Modal {
 
     // assign diff displaying to diffs
     diffs.forEach(async (diff, scriptNo) => {
-      const labelText = getBlockly()
-        .getBlockById(window._changedScripts[spriteName][scriptNo])
-        ?.comment?.getLabelText();
+      let labelText;
+      if (window._changedScripts[spriteName])
+        labelText = getBlockly()
+          .getBlockById(window._changedScripts[spriteName][scriptNo])
+          ?.comment?.getLabelText();
       const diffButton = li(
         button(
           { class: "tab-btn" },
@@ -722,6 +727,25 @@ export class DiffModal extends Modal {
       "costume-diff-wrap",
       scriptDiff === "costume"
     );
+
+    // TODO: this is annoying, refactor sometime
+    if (diffs[script].status === "removed") {
+      // TODO: localize
+      const view = document.querySelector(".commit-view");
+      const wrapper = details(
+        summary({ style: "display: list-item" }, "This script was deleted")
+      );
+      if (view) {
+        view.parentNode!.insertBefore(wrapper, view);
+        wrapper.appendChild(view);
+      }
+    } else {
+      if (this.querySelector("details")) {
+        const el = document.querySelector(".commit-view")!;
+        document.querySelector("#commits")!.appendChild(el);
+        this.querySelector("details")!.remove();
+      }
+    }
 
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
