@@ -41,6 +41,11 @@
     }
   }
 
+  & .tab-btn:not(.active-tab) button {
+    filter: brightness(0.5);
+    pointer-events: none;
+  }
+
   & aside {
     padding: 1rem;
     border-right: 1px solid grey;
