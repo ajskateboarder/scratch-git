@@ -66,6 +66,78 @@ interface Diff {
   diffed: string;
 }
 
+const UnifyToggle = (
+  ref: DiffModal,
+  [a, aBytes]: [HTMLImageElement, number],
+  [b, bBytes]: [HTMLImageElement, number],
+  unified: HTMLCanvasElement
+) => {
+  const byteFormat = Intl.NumberFormat(getLocale(), {
+    notation: "compact",
+    style: "unit",
+    unit: "byte",
+    unitDisplay: "narrow",
+  });
+
+  const percentFormat = Intl.NumberFormat(getLocale(), {
+    style: "percent",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
+
+  const sizeChange = `${byteFormat.format(bBytes)}${
+    aBytes === 0
+      ? " "
+      : " (" + percentFormat.format((bBytes - aBytes) / Math.abs(aBytes)) + ")"
+  }`;
+
+  return span(
+    {
+      style: 'font-family: "Helvetica Neue", Helvetica, Arial, sans-serif',
+    },
+    () =>
+      !ref.unify.val
+        ? span(
+            { style: "display: flex; align-items: center; gap: 10px" },
+            span(
+              {
+                class: "image costume-diff-canvas",
+                style: "border: 2px solid red",
+              },
+              Copy(() => a),
+              a,
+              byteFormat.format(aBytes)
+            ),
+            i({ class: "fa-solid fa-arrow-right fa-xl" }),
+            span(
+              {
+                class: "image costume-diff-canvas",
+                style: "border: 2px solid green",
+              },
+              Copy(() => b),
+              b,
+              sizeChange
+            )
+          )
+        : span(
+            {
+              class: "image costume-diff-canvas",
+              style: "border: 2px solid grey",
+            },
+            Copy(() => img({ src: unified.toDataURL() })),
+            unified,
+            span(
+              { style: "text-align: right" },
+              byteFormat.format(aBytes),
+              " ",
+              i({ class: "fa-solid fa-arrow-right" }),
+              " ",
+              sizeChange
+            )
+          )
+  );
+};
+
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
   $scripts!: HTMLUListElement;
@@ -79,7 +151,7 @@ export class DiffModal extends Modal {
   costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
-  private unify = van.state(true);
+  unify = van.state(true);
 
   connectedCallback() {
     if (this.querySelector("main")) return;
@@ -551,7 +623,7 @@ export class DiffModal extends Modal {
     $highlights.parentElement!.style.display = display;
     $unified.style.display = scriptDiff === "costume" ? "block" : "none";
 
-    if (scriptDiff === "costume") {
+    if (scriptDiff !== "script") {
       document.querySelector(".scratchblocks")!.remove();
       const [current, previous] =
         costumeDiffs[btnRef.getAttribute("asset-name")!];
@@ -610,86 +682,13 @@ export class DiffModal extends Modal {
         this.unify.val = false;
       }
 
-      const UnifyToggle = (
-        [a, aBytes]: [HTMLImageElement, number],
-        [b, bBytes]: [HTMLImageElement, number],
-        unified: HTMLCanvasElement
-      ) => {
-        const byteFormat = Intl.NumberFormat(getLocale(), {
-          notation: "compact",
-          style: "unit",
-          unit: "byte",
-          unitDisplay: "narrow",
-        });
-
-        const percentFormat = Intl.NumberFormat(getLocale(), {
-          style: "percent",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 1,
-        });
-
-        const sizeChange = `${byteFormat.format(bBytes)}${
-          aBytes === 0
-            ? " "
-            : " (" +
-              percentFormat.format((bBytes - aBytes) / Math.abs(aBytes)) +
-              ")"
-        }`;
-
-        return span(
-          {
-            style:
-              'font-family: "Helvetica Neue", Helvetica, Arial, sans-serif',
-          },
-          () =>
-            !this.unify.val
-              ? span(
-                  { style: "display: flex; align-items: center; gap: 10px" },
-                  span(
-                    {
-                      class: "image costume-diff-canvas",
-                      style: "border: 2px solid red",
-                    },
-                    Copy(() => a),
-                    a,
-                    byteFormat.format(aBytes)
-                  ),
-                  i({ class: "fa-solid fa-arrow-right fa-xl" }),
-                  span(
-                    {
-                      class: "image costume-diff-canvas",
-                      style: "border: 2px solid green",
-                    },
-                    Copy(() => b),
-                    b,
-                    sizeChange
-                  )
-                )
-              : span(
-                  {
-                    class: "image costume-diff-canvas",
-                    style: "border: 2px solid grey",
-                  },
-                  Copy(() => img({ src: unified.toDataURL() })),
-                  unified,
-                  span(
-                    { style: "text-align: right" },
-                    byteFormat.format(aBytes),
-                    " ",
-                    i({ class: "fa-solid fa-arrow-right" }),
-                    " ",
-                    sizeChange
-                  )
-                )
-        );
-      };
-
       $commits.appendChild(
         span(
           { class: "costume-diff" },
           isSoundDiff
             ? audio({ src: previousAsset.contents, controls: true })
             : UnifyToggle(
+                this,
                 [
                   img({
                     src: previousAsset.contents,
@@ -704,9 +703,12 @@ export class DiffModal extends Modal {
                 ],
                 imageDiff!
               ),
-          isSoundDiff
-            ? audio({ src: currentAsset.contents, controls: true })
-            : undefined
+          ...(isSoundDiff
+            ? [
+                i({ class: "fa-solid fa-arrow-right fa-xl" }),
+                audio({ src: currentAsset.contents, controls: true }),
+              ]
+            : [undefined])
         )
       );
     }
@@ -729,7 +731,7 @@ export class DiffModal extends Modal {
     );
 
     // TODO: this is annoying, refactor sometime
-    if (diffs[script].status === "removed") {
+    if (diffs[script] && diffs[script].status === "removed") {
       // TODO: localize
       const view = document.querySelector(".commit-view");
       const wrapper = details(
