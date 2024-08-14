@@ -66,77 +66,18 @@ interface Diff {
   diffed: string;
 }
 
-const UnifyToggle = (
-  ref: DiffModal,
-  [a, aBytes]: [HTMLImageElement, number],
-  [b, bBytes]: [HTMLImageElement, number],
-  unified: HTMLCanvasElement
-) => {
-  const byteFormat = Intl.NumberFormat(getLocale(), {
-    notation: "compact",
-    style: "unit",
-    unit: "byte",
-    unitDisplay: "narrow",
-  });
+const byteFormatter = Intl.NumberFormat(getLocale(), {
+  notation: "compact",
+  style: "unit",
+  unit: "byte",
+  unitDisplay: "narrow",
+});
 
-  const percentFormat = Intl.NumberFormat(getLocale(), {
-    style: "percent",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-  });
-
-  const sizeChange = `${byteFormat.format(bBytes)}${
-    aBytes === 0
-      ? " "
-      : " (" + percentFormat.format((bBytes - aBytes) / Math.abs(aBytes)) + ")"
-  }`;
-
-  return span(
-    {
-      style: 'font-family: "Helvetica Neue", Helvetica, Arial, sans-serif',
-    },
-    () =>
-      !ref.unify.val
-        ? span(
-            { style: "display: flex; align-items: center; gap: 10px" },
-            span(
-              {
-                class: "image costume-diff-canvas",
-                style: "border: 2px solid red",
-              },
-              Copy(() => a),
-              a,
-              byteFormat.format(aBytes)
-            ),
-            i({ class: "fa-solid fa-arrow-right fa-xl" }),
-            span(
-              {
-                class: "image costume-diff-canvas",
-                style: "border: 2px solid green",
-              },
-              Copy(() => b),
-              b,
-              sizeChange
-            )
-          )
-        : span(
-            {
-              class: "image costume-diff-canvas",
-              style: "border: 2px solid grey",
-            },
-            Copy(() => img({ src: unified.toDataURL() })),
-            unified,
-            span(
-              { style: "text-align: right" },
-              byteFormat.format(aBytes),
-              " ",
-              i({ class: "fa-solid fa-arrow-right" }),
-              " ",
-              sizeChange
-            )
-          )
-  );
-};
+const percentFormatter = Intl.NumberFormat(getLocale(), {
+  style: "percent",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Modal {
@@ -323,6 +264,69 @@ export class DiffModal extends Modal {
           .forEach((diff) => (diff.style.cssText = ""));
       });
     }
+  }
+
+  private UnifyToggle(
+    a: { contents: string; size: number },
+    b: { contents: string; size: number },
+    unified: HTMLCanvasElement
+  ) {
+    const sizeChange = `${byteFormatter.format(b.size)}${
+      a.size === 0
+        ? " "
+        : " (" +
+          percentFormatter.format((b.size - a.size) / Math.abs(a.size)) +
+          ")"
+    }`;
+
+    const aImage = img({ src: a.contents }),
+      bImage = img({ src: b.contents });
+
+    return span(
+      {
+        style: 'font-family: "Helvetica Neue", Helvetica, Arial, sans-serif',
+      },
+      () =>
+        !this.unify.val
+          ? span(
+              { style: "display: flex; align-items: center; gap: 10px" },
+              span(
+                {
+                  class: "image costume-diff-canvas",
+                  style: "border: 2px solid red",
+                },
+                Copy(() => aImage),
+                aImage,
+                byteFormatter.format(a.size)
+              ),
+              i({ class: "fa-solid fa-arrow-right fa-xl" }),
+              span(
+                {
+                  class: "image costume-diff-canvas",
+                  style: "border: 2px solid green",
+                },
+                Copy(() => bImage),
+                bImage,
+                sizeChange
+              )
+            )
+          : span(
+              {
+                class: "image costume-diff-canvas",
+                style: "border: 2px solid grey",
+              },
+              Copy(() => img({ src: unified.toDataURL() })),
+              unified,
+              span(
+                { style: "text-align: right" },
+                byteFormatter.format(a.size),
+                " ",
+                i({ class: "fa-solid fa-arrow-right" }),
+                " ",
+                sizeChange
+              )
+            )
+    );
   }
 
   public async display(
@@ -668,11 +672,11 @@ export class DiffModal extends Modal {
 
       const previousAssetImg = imageLayer(
           img({ src: previousAsset.contents }),
-          "#ff0000"
+          userSettings.imgRmColor
         ),
         currentAssetImg = imageLayer(
           img({ src: currentAsset.contents }),
-          "#00ff00"
+          userSettings.imgAddColor
         );
 
       let imageDiff;
@@ -687,22 +691,7 @@ export class DiffModal extends Modal {
           { class: "costume-diff" },
           isSoundDiff
             ? audio({ src: previousAsset.contents, controls: true })
-            : UnifyToggle(
-                this,
-                [
-                  img({
-                    src: previousAsset.contents,
-                  }),
-                  previousAsset.size,
-                ],
-                [
-                  img({
-                    src: currentAsset.contents,
-                  }),
-                  currentAsset.size,
-                ],
-                imageDiff!
-              ),
+            : this.UnifyToggle(previousAsset, currentAsset, imageDiff!),
           ...(isSoundDiff
             ? [
                 i({ class: "fa-solid fa-arrow-right fa-xl" }),
