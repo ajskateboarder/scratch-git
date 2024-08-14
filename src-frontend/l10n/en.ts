@@ -68,6 +68,10 @@ export default {
       name: "Show diffs in plain text",
       help: "If this is enabled, diffs will be shown in plain text instead of Scratch blocks.",
     },
+    "img-change-colors": {
+      name: "Image addition/removal colors",
+      help: "Changes the colors for parts of an image that were added or removed",
+    },
   },
   alerts: {
     "unrelated-changes":

@@ -1,9 +1,10 @@
-import { defaults, userSettings } from "@/settings";
+import { DEFAULTS, userSettings } from "@/settings";
 import { Modal } from "../base";
 import van from "vanjs-core";
 import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
 import i18n from "@/l10n";
+import { Redux } from "@/lib";
 
 const { div, label, input, span, h1, p, summary, details, img, button, i, a } =
   van.tags;
@@ -22,15 +23,17 @@ NmMuMzctLjM2LjU5LS44Ni41OS0xLjQxIDAtMS4xLS45LTItMi0ycy0yIC45LTIg\
 Mkg4YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDRjMCAuODgtLjM2IDEuNjgt\
 LjkzIDIuMjV6Ii8+PC9zdmc+`;
 
-const HelpIcon = () =>
+const HelpIcon = (dark: boolean) =>
   img({
     class: s("settings-modal_help-icon"),
     src: HELP_ICON_SVG,
-    style: "margin-left: 0.5rem; pointer-events: auto",
+    style: `margin-left: 0.5rem; pointer-events: auto${
+      dark ? "; filter: invert(1)" : ""
+    }`,
     title: "Click for help",
   });
 
-const ScriptColor = () => {
+const ScriptColor = (dark: boolean) => {
   const colorInput = div(
     { class: settings.settingsLabel },
     label(
@@ -40,11 +43,12 @@ const ScriptColor = () => {
         class: settings.settingsCheckbox,
         style: "pointer-events: auto",
         type: "color",
+        value: userSettings.scriptColor,
         onchange: (e) => (userSettings.scriptColor = e.target.value),
       }),
       span(" ", i18n.t("settings.highlight.name"))
     ),
-    HelpIcon()
+    HelpIcon(dark)
   );
 
   return details(
@@ -57,7 +61,43 @@ const ScriptColor = () => {
   );
 };
 
-const Highlights = () => {
+const ImgChangeColors = (dark: boolean) => {
+  const colorInput = div(
+    { class: settings.settingsLabel },
+    label(
+      { class: settings.settingsLabel, style: "margin-left: 0.5rem" },
+      "  ",
+      input({
+        class: settings.settingsCheckbox,
+        style: "pointer-events: auto",
+        type: "color",
+        value: userSettings.imgAddColor,
+        onchange: (e) => (userSettings.imgAddColor = e.target.value),
+      }),
+      "  ",
+      input({
+        class: settings.settingsCheckbox,
+        style: "pointer-events: auto",
+        type: "color",
+        value: userSettings.imgRmColor,
+        onchange: (e) => (userSettings.imgRmColor = e.target.value),
+      }),
+      span(" ", i18n.t("settings.img-change-colors.name"))
+    ),
+    HelpIcon(dark)
+  );
+
+  return details(
+    {
+      class: s("settings-modal_setting"),
+      style: "pointer-events: none",
+    },
+    summary(colorInput),
+    i18n.t("settings.img-change-colors.help")
+  );
+};
+
+const Highlights = (dark: boolean) => {
   const hlInput = div(
     {
       class: settings.settingsLabel,
@@ -77,7 +117,7 @@ const Highlights = () => {
       }),
       span(" ", i18n.t("settings.highlight-diffs.name"))
     ),
-    HelpIcon()
+    HelpIcon(dark)
   );
 
   return details(
@@ -90,7 +130,7 @@ const Highlights = () => {
   );
 };
 
-const PlainText = () => {
+const PlainText = (dark: boolean) => {
   const ptInput = div(
     {
       class: settings.settingsLabel,
@@ -110,7 +150,7 @@ const PlainText = () => {
       }),
       span(" ", i18n.t("settings.plain-text.name"))
     ),
-    HelpIcon()
+    HelpIcon(dark)
   );
 
   return details(
@@ -123,18 +163,26 @@ const PlainText = () => {
   );
 };
 
+const Settings = (dark: boolean) => [
+  ScriptColor(dark),
+  ImgChangeColors(dark),
+  Highlights(dark),
+  PlainText(dark),
+];
+
 export class SettingsModal extends Modal {
   connectedCallback() {
-    const [scriptColor, highlights, plainText] = [
-      ScriptColor(),
-      Highlights(),
-      PlainText(),
-    ];
-    const [scInput, hlInput, ptInput] = [
+    const dark = Redux.getState().scratchGui.theme.theme.gui === "dark";
+
+    const [scriptColor, imgChangeColors, highlights, plainText] =
+      Settings(dark);
+
+    const [scInput, icInput, hlInput, ptInput] = [
       scriptColor,
+      imgChangeColors,
       highlights,
       plainText,
-    ].map((e) => e.querySelector("input")!);
+    ].map((e) => e.querySelectorAll("input")!);
 
     const closeButton = button(
       {
@@ -154,9 +202,11 @@ export class SettingsModal extends Modal {
         class: settings.button,
         onclick: () => {
           userSettings.defaults();
-          scInput.value = defaults.scriptColor;
-          hlInput.checked = defaults.highlights;
-          ptInput.checked = defaults.plainText;
+          scInput[0].value = DEFAULTS.scriptColor;
+          icInput[0].value = DEFAULTS.imgAddColor;
+          icInput[1].value = DEFAULTS.imgRmColor;
+          hlInput[0].checked = DEFAULTS.highlights;
+          ptInput[0].checked = DEFAULTS.plainText;
         },
       },
       i18n.t("settings.reset-to-defaults")
@@ -178,9 +228,11 @@ export class SettingsModal extends Modal {
       i18n.t("settings.uninstall")
     );
 
-    scInput.value = userSettings.scriptColor;
-    hlInput.checked = userSettings.highlights;
-    ptInput.checked = userSettings.plainText;
+    scInput[0].value = userSettings.scriptColor;
+    hlInput[0].checked = userSettings.highlights;
+    ptInput[0].checked = userSettings.plainText;
+    icInput[0].value = userSettings.imgAddColor;
+    icInput[1].value = userSettings.imgRmColor;
 
     van.add(
       this,
@@ -190,6 +242,7 @@ export class SettingsModal extends Modal {
         p(
           { style: "color: var(--ui-modal-foreground)" },
           scriptColor,
+          imgChangeColors,
           highlights,
           plainText
         ),
@@ -221,6 +274,9 @@ export class SettingsModal extends Modal {
   }
 
   public display() {
+    // TODO: probably a better alt to doing a modal refresh every time
+    this.querySelector(".settings-wrapper")!.remove();
+    this.connectedCallback();
     this.showModal();
   }
 

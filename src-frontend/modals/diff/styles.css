@@ -176,6 +176,7 @@
 .header {
   display: flex;
   user-select: none;
+  z-index: 99999;
   flex-flow: wrap;
   align-items: center;
 }
