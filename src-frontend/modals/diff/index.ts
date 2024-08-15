@@ -124,6 +124,7 @@ export class DiffModal extends HTMLElement {
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
     const unified = span(
+      { style: "margin-left: -15px" },
       button(
         {
           onclick: () => (this.unify.val = false),
@@ -305,7 +306,11 @@ export class DiffModal extends HTMLElement {
                   style: "border: 2px solid red",
                 },
                 Copy(() => aImage),
-                aImage,
+                img({
+                  src: a.contents,
+                  height: aImage.height / 2,
+                  width: aImage.width / 2,
+                }),
                 byteFormatter.format(a.size)
               ),
               i({ class: "fa-solid fa-arrow-right fa-xl" }),
@@ -315,7 +320,11 @@ export class DiffModal extends HTMLElement {
                   style: "border: 2px solid green",
                 },
                 Copy(() => bImage),
-                bImage,
+                img({
+                  src: b.contents,
+                  height: bImage.height / 2,
+                  width: bImage.width / 2,
+                }),
                 sizeChange
               )
             )
@@ -681,12 +690,22 @@ export class DiffModal extends HTMLElement {
         }
       }
 
+      const _previousAssetImg = img({ src: previousAsset.contents }),
+        _currentAssetImg = img({ src: currentAsset.contents });
       const previousAssetImg = imageLayer(
-          img({ src: previousAsset.contents }),
+          img({
+            src: previousAsset.contents,
+            width: _previousAssetImg.width / 2,
+            height: _previousAssetImg.height / 2,
+          }),
           userSettings.imgRmColor
         ),
         currentAssetImg = imageLayer(
-          img({ src: currentAsset.contents }),
+          img({
+            src: currentAsset.contents,
+            width: _currentAssetImg.width / 2,
+            height: _currentAssetImg.height / 2,
+          }),
           userSettings.imgAddColor
         );
 
