@@ -1,18 +1,16 @@
 import { parseSB3Blocks as parseSB3Blocks_ } from "./parse-sb3-blocks.js";
 import { scratchblocks as scratchblocks_ } from "./scratchblocks.js";
 
-type ScratchBlocks = {
+export const scratchblocks: {
   appendStyles: () => void;
   renderMatching: (loc: string, config: Record<string, any>) => void;
-};
+} = scratchblocks_;
 
-type toScratchblocks = (
+export const toScratchblocks: (
   script: string,
   json: Record<string, any>,
   language: string,
-  config: Record<string, any>,
-) => string;
+  config: Record<string, any>
+) => string = parseSB3Blocks_.toScratchblocks;
 
-export const scratchblocks: ScratchBlocks = scratchblocks_;
-export const toScratchblocks: toScratchblocks = parseSB3Blocks_.toScratchblocks;
 export * from "./globals";

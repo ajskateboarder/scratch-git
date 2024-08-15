@@ -9,9 +9,9 @@ import van from "vanjs-core";
 const { main, button, h1, div, span, label, br, i } = van.tags;
 
 export class RepoConfigModal extends Modal {
-  $repository: HTMLInputElement;
-  $name: HTMLInputElement;
-  $email: HTMLInputElement;
+  $repository!: HTMLInputElement;
+  $name!: HTMLInputElement;
+  $email!: HTMLInputElement;
   private project!: Project;
 
   connectedCallback() {
@@ -100,11 +100,11 @@ export class RepoConfigModal extends Modal {
       )
     );
 
-    this.$ = {
+    Object.assign(this, {
       $repository,
       $name,
       $email,
-    };
+    });
   }
 
   public async display() {
@@ -112,12 +112,11 @@ export class RepoConfigModal extends Modal {
 
     if (await this.project?.exists()) {
       const details = await this.project?.getDetails();
-      const { $repository, $name, $email } = this.$;
 
-      // in the future, these will never be blank
-      $repository.value = details.repository ?? "";
-      $name.value = details.username ?? "";
-      $email.value = details.email ?? "";
+      // in the future, these will never be blank, I think
+      this.$repository.value = details.repository ?? "";
+      this.$name.value = details.username ?? "";
+      this.$email.value = details.email ?? "";
     }
 
     if (!this.open) this.showModal();

@@ -51,16 +51,14 @@ interface State {
   };
 }
 
-interface ReduxStore {
+export const getBlockly = (): Workspace => window.Blockly.getMainWorkspace();
+
+export const Redux: {
   getState(): State;
   dispatch(_: { type: string; [key: string]: any | undefined }): void;
-}
+} = window.ReduxStore;
 
-interface VMRuntime {
+export const VM: {
   on(type: string, callback: (...e: any[]) => void): void;
   once(type: string, callback: (...e: any[]) => void): void;
-}
-
-export const getBlockly = (): Workspace => window.Blockly.getMainWorkspace();
-export const Redux: ReduxStore = window.ReduxStore;
-export const VM: VMRuntime = window.vm.runtime;
+} = window.vm.runtime;

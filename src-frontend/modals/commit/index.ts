@@ -15,12 +15,10 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Modal {
-  private $!: {
-    $older: HTMLButtonElement;
-    $newer: HTMLButtonElement;
-    $search: HTMLInputElement;
-    $showing: HTMLParagraphElement;
-  };
+  $older!: HTMLButtonElement;
+  $newer!: HTMLButtonElement;
+  $search!: HTMLInputElement;
+  $showing!: HTMLParagraphElement;
 
   allCommits: Commit[] | undefined;
   private state!: {
@@ -47,7 +45,7 @@ export class CommitModal extends Modal {
       currentPage: van.state(0),
     };
 
-    this.$ = {
+    Object.assign(this, {
       $newer: button(
         {
           class: cls(settings.button, "round-right-button"),
@@ -70,7 +68,7 @@ export class CommitModal extends Modal {
         placeholder: i18next.t("commit.search-commits"),
       }),
       $showing: p(),
-    };
+    });
 
     const commitGroup = div(
       { class: "commit-group" },
@@ -108,11 +106,11 @@ export class CommitModal extends Modal {
         h1({ class: "header" }, i18next.t("commit.commits"), closeButton),
         div(
           { class: "pagination" },
-          span(this.$.$newer, this.$.$older),
-          this.$.$search
+          span(this.$newer, this.$older),
+          this.$search
         ),
         br(),
-        this.$.$showing,
+        this.$showing,
         br(),
         commitGroup
       )
@@ -122,13 +120,13 @@ export class CommitModal extends Modal {
   public async display() {
     this.allCommits = await api.getCurrentProject()?.getCommits();
     this.state.currentPage.val = 0;
-    this.$.$newer.disabled = true;
+    this.$newer.disabled = true;
     // for some odd reason, this.allCommits gets completely emptied if you access it
     // so as a temporary fix, we copy the commit array, which is at least better than requesting it
     let commits_ = this.allCommits?.slice()!;
     const commits = paginate(commits_, 40);
 
-    const { $newer, $older, $search, $showing } = this.$;
+    const { $newer, $older, $search, $showing } = this;
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 
@@ -184,7 +182,7 @@ export class CommitModal extends Modal {
       }`;
     };
 
-    $search.oninput = async (s) => {
+    $search.oninput = async (s: Event) => {
       const search = (s.target! as any).value;
       this.state.searchQuery.val = search;
       if (search === "") {

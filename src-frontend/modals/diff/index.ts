@@ -217,11 +217,9 @@ export class DiffModal extends HTMLElement {
    * @param diffs - b
    * @param script -
    */
-  private highlightAsText(diffs: Diff[], script: number) {
+  private highlightAsText(diff: Diff) {
     const { $commits, $highlights } = this;
-
-    // TODO: passing in diffs and script idx is probably unneeded
-    const content = diffs[script].diffed.trimStart() ?? "";
+    const content = diff.diffed.trimStart() ?? "";
 
     $commits.innerHTML = `<pre>${content}</pre><br>`;
 
@@ -356,8 +354,7 @@ export class DiffModal extends HTMLElement {
     const { $commits, $highlights, $plainText, $scripts, $unified } = this;
 
     // try again in case of undefined
-    if (!project) project = api.getCurrentProject();
-    project = project!;
+    project ??= api.getCurrentProject()!;
 
     let oldScripts: any, newScripts: any;
 
@@ -470,7 +467,7 @@ export class DiffModal extends HTMLElement {
       if ($highlights.checked) {
         this.highlightAsBlocks();
         if ($plainText.checked) {
-          this.highlightAsText(diffs, script);
+          this.highlightAsText(diffs[script]);
         }
       } else {
         if ($plainText.checked) {
@@ -489,7 +486,7 @@ export class DiffModal extends HTMLElement {
       userSettings.plainText = $plainText.checked;
       if ($plainText.checked) {
         if ($highlights.checked) {
-          this.highlightAsText(diffs, script);
+          this.highlightAsText(diffs[script]);
         } else {
           const content = diffs[script].diffed ?? "";
           $commits.innerHTML = "";
