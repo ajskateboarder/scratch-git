@@ -96,23 +96,6 @@ export class DiffModal extends HTMLElement {
     super();
   }
 
-  // placeholders so i don't have to change a lot of code
-  // TODO: don't
-  close() {
-    this.style.display = "none";
-  }
-  showModal() {
-    this.style.display = "flex";
-  }
-  refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
-  }
-
-  get open() {
-    return this.style.display !== "none";
-  }
-
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
@@ -177,6 +160,7 @@ export class DiffModal extends HTMLElement {
           aside(this.$scripts),
           main(div({ class: "content" }, commits))
         ),
+        "Diff",
         () => this.close()
       )
     );
@@ -637,9 +621,9 @@ export class DiffModal extends HTMLElement {
     const scriptDiff = btnRef.getAttribute("diff-type");
 
     // costume diff view
-    const display = scriptDiff === "script" ? "block" : "none";
+    const display = scriptDiff === "script" ? "flex" : "none";
     document.querySelector<HTMLDivElement>(".copy-button")!.style.display =
-      display;
+      scriptDiff === "script" ? "block" : "none";
     $plainText.parentElement!.style.display = display;
     $highlights.parentElement!.style.display = display;
     $unified.style.display = scriptDiff === "costume" ? "block" : "none";
@@ -768,6 +752,23 @@ export class DiffModal extends HTMLElement {
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
 
+    this.querySelector<HTMLElement>(".card-title")!.innerText = spriteName;
     if (!this.open) this.showModal();
+  }
+
+  // placeholders so i don't have to change a lot of code
+  // TODO: don't
+  close() {
+    this.style.display = "none";
+  }
+  showModal() {
+    this.style.display = "flex";
+  }
+  refresh() {
+    this.querySelector("main")?.remove();
+    this.connectedCallback();
+  }
+  get open() {
+    return this.style.display !== "none";
   }
 }

@@ -70,20 +70,10 @@ export const Copy = (cb: () => string | SVGElement | HTMLImageElement) => {
   const copyButton = button(
     {
       class: "copy-button",
-      onmouseover: (e) => {
+      title: "Click while holding Shift to download image.",
+      onclick: async (e: KeyboardEvent) => {
         const node = cb();
-        if (e.ctrlKey && typeof node !== "string") {
-          copyButton.innerHTML = '<i class="fa-solid fa-download"></i>';
-        } else {
-          copyButton.innerHTML = '<i class="fa-solid fa-copy"></i>';
-        }
-      },
-      onmouseleave: () => {
-        copyButton.innerHTML = '<i class="fa-solid fa-copy"></i>';
-      },
-      onclick: async (e) => {
-        const node = cb();
-        if (e.ctrlKey && typeof node !== "string") {
+        if (e.shiftKey && typeof node !== "string") {
           downloadImage(node);
         } else {
           copyToClipboard(node).catch(() => {

@@ -141,8 +141,10 @@
     linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
       transparent 1%) center / var(--dot-space) var(--dot-space),
     var(--dot-color);
+
   padding: 10px;
   border-radius: 10px;
+  margin-top: 0;
 }
 
 .costume-diff-canvas {

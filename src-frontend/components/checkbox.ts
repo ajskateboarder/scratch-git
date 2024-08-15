@@ -10,7 +10,7 @@ export const Checkbox = (
   div(
     { class: settings.settingsLabel, ...props },
     label(
-      { class: settings.settingsLabel },
+      { class: settings.settingsLabel, style: "display: flex" },
       input({
         class: cls(settings.settingsCheckbox, settings.checkbox),
         type: "checkbox",

@@ -1,9 +1,9 @@
 import van, { ChildDom } from "vanjs-core";
 import { cls, s } from "../../components/accessors";
 
-const { div, img, span } = van.tags;
+const { div, img, span, ul } = van.tags;
 
-export const Card = (children: ChildDom, closeCb: () => any) => {
+export const Card = (children: ChildDom, title: string, closeCb: () => any) => {
   let mouseOffsetX = 0;
   let mouseOffsetY = 0;
   let lastX = 0;
@@ -48,6 +48,10 @@ export const Card = (children: ChildDom, closeCb: () => any) => {
       class: s("card_header-buttons"),
       onmousedown: handleStartDrag,
     },
+    ul(
+      { class: "sa-debugger-tabs" },
+      span({ style: "font-size: 0.9rem", class: "card-title" }, title)
+    ),
     div(
       { class: s("card_header-buttons-right"), style: "margin-left: auto" },
       div(
