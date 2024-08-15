@@ -1,7 +1,7 @@
 import { Modal } from "../base";
 import api, { Project, remoteExists } from "@/api";
-import { settings, gitMenu } from "@/components";
-import { InputBox, InputField } from "@/components/input-field";
+import { settings, gitMenu } from "@/core";
+import { InputBox, InputField } from "@/core/input-field";
 import i18next from "@/l10n";
 import { validURL } from "@/utils";
 import van from "vanjs-core";

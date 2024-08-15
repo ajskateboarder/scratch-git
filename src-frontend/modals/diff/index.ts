@@ -1,8 +1,7 @@
-import { Modal } from "../base";
 import { scrollBlockIntoView, flash } from "./block-utils";
 import api, { CostumeChange, Project } from "@/api";
-import { cls, settings } from "@/components";
-import { Checkbox, Copy } from "@/components";
+import { Card, cls, settings } from "@/core";
+import { Checkbox, Copy } from "@/core";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
 import { parseScripts, type ScriptStatus } from "@/diff-indicators";
@@ -25,7 +24,6 @@ const {
   aside,
   main,
   br,
-  hr,
   i,
   li,
   img,
@@ -80,7 +78,7 @@ const percentFormatter = Intl.NumberFormat(getLocale(), {
 });
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
-export class DiffModal extends Modal {
+export class DiffModal extends HTMLElement {
   $scripts!: HTMLUListElement;
   $commits!: HTMLParagraphElement;
   $highlights!: HTMLInputElement;
@@ -94,8 +92,30 @@ export class DiffModal extends Modal {
   private copyCallback!: () => string | SVGElement;
   unify = van.state(true);
 
+  constructor() {
+    super();
+  }
+
+  // placeholders so i don't have to change a lot of code
+  // TODO: don't
+  close() {
+    this.style.display = "none";
+  }
+  showModal() {
+    this.style.display = "flex";
+  }
+  refresh() {
+    this.querySelector("main")?.remove();
+    this.connectedCallback();
+  }
+
+  get open() {
+    return this.style.display !== "none";
+  }
+
   connectedCallback() {
     if (this.querySelector("main")) return;
+    this.close();
 
     this.copyCallback = () =>
       (this.querySelector(".scratchblocks svg") as SVGElement) ??
@@ -122,28 +142,14 @@ export class DiffModal extends Modal {
       )
     );
 
-    const closeButton = button(
-      {
-        class: settings.button,
-        onclick: () => {
-          useHighlights.querySelector("input")!.checked = false;
-          plainText.querySelector("input")!.checked = false;
-          this.close();
-        },
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
-
     const commits = p(
       { style: "margin-right: 10px; margin-left: 10px", id: "commits" },
       span(
         {
           class: "header",
         },
-        span({ class: "settings-group" }, useHighlights, plainText, unified),
-        span({ class: "button-group" }, closeButton)
+        span({ class: "settings-group" }, useHighlights, plainText, unified)
       ),
-      hr(),
       div(
         { class: "commit-view" },
         pre(
@@ -164,10 +170,13 @@ export class DiffModal extends Modal {
 
     van.add(
       this,
-      main(
-        { class: "diff-view" },
-        aside(this.$scripts),
-        main(div({ class: "content" }, commits))
+      Card(
+        main(
+          { class: "diff-view" },
+          aside(this.$scripts),
+          main(div({ class: "content" }, commits))
+        ),
+        () => this.close()
       )
     );
   }
@@ -509,7 +518,7 @@ export class DiffModal extends Modal {
                   class: `${settings.button} open-script`,
                   onclick: async (e: Event) => {
                     e.stopPropagation();
-                    this.close();
+                    this.style.opacity = "0.5";
                     if (
                       Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
                     ) {
@@ -520,7 +529,9 @@ export class DiffModal extends Modal {
                     }
                     const id = window._changedScripts[spriteName][scriptNo];
                     scrollBlockIntoView(id);
-                    flash(getBlockly().getBlockById(id));
+                    flash(getBlockly().getBlockById(id)).then(() => {
+                      this.style.opacity = "1";
+                    });
                   },
                 },
                 i({ class: "fa-solid fa-up-right-from-square" })

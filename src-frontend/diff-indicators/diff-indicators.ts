@@ -1,9 +1,9 @@
 /** @file Displays indicators and info on sprites that were changed */
 import type { Project, Sprite } from "@/api";
-import { s, sprites } from "@/components";
+import { s, sprites } from "@/core";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
-import { SpriteDiff, StageDiff } from "@/components";
+import { SpriteDiff, StageDiff } from "@/core";
 import { getBlockly } from "@/lib/globals";
 import { userSettings } from "../settings";
 import { contextMenu } from "./inject-context";
@@ -139,9 +139,11 @@ export const showIndicators = async (project: Project) => {
       // TODO: localize
       title: "Show Changes",
       onclick() {
-        (
-          document.querySelector("dialog[is='diff-modal']") as DiffModal
-        ).display(project, currentSprite, index);
+        (document.querySelector("diff-modal") as DiffModal).display(
+          project,
+          currentSprite,
+          index
+        );
         contextMenu.close();
       },
     });
@@ -179,7 +181,7 @@ export const showIndicators = async (project: Project) => {
       border-radius: 20px;
       transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
       scale: 0.8;
-      z-index: 99999;
+      z-index: 1;
     `,
       onmouseover: () => {
         diffButton.style.scale = "0.9";
@@ -191,9 +193,10 @@ export const showIndicators = async (project: Project) => {
       },
       onclick: async (e: Event) => {
         e.stopPropagation();
-        (
-          document.querySelector("dialog[is='diff-modal']") as DiffModal
-        ).display(project, spriteName);
+        (document.querySelector("diff-modal") as DiffModal).display(
+          project,
+          spriteName
+        );
       },
     });
 
@@ -243,7 +246,7 @@ export const showIndicators = async (project: Project) => {
       onclick: async (e: Event) => {
         e.stopPropagation();
         document
-          .querySelector<DiffModal>("dialog[is='diff-modal']")!
+          .querySelector<DiffModal>("diff-modal")!
           .display(project, "Stage (stage)");
       },
     });

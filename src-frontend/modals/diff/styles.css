@@ -185,3 +185,13 @@
   opacity: 0.5;
   pointer-events: none;
 }
+
+
+.git-card {
+  position: absolute;
+  z-index: 492;
+  background-color: var(--ui-modal-background);
+  width: 565px;
+  height: 25rem;
+  align-items: normal
+}

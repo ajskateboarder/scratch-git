@@ -1,7 +1,7 @@
 import { DEFAULTS, userSettings } from "@/settings";
 import { Modal } from "../base";
 import van from "vanjs-core";
-import { cls, s, settings } from "@/components";
+import { cls, s, settings } from "@/core";
 import { uninstall } from "@/api";
 import i18n from "@/l10n";
 import { Redux } from "@/lib";

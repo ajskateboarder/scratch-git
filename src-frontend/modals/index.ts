@@ -3,17 +3,17 @@ import { DiffModal } from "./diff";
 import { CommitModal } from "./commit";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
-import { s } from "../components";
+import { s } from "../core";
 import type { Modal } from "./base";
 
-const MODALS = ["diff", "commit", "welcome", "repo-config", "settings"];
+const MODALS = ["commit", "welcome", "repo-config", "settings"];
 
 export const initModals = () => {
   if (document.querySelector("[is=commit-modal]")) return;
 
   try {
     customElements.define("commit-modal", CommitModal, { extends: "dialog" });
-    customElements.define("diff-modal", DiffModal, { extends: "dialog" });
+    customElements.define("diff-modal", DiffModal);
     customElements.define("welcome-modal", WelcomeModal, {
       extends: "dialog",
     });
@@ -35,12 +35,14 @@ export const initModals = () => {
   saveArea.innerHTML += MODALS.map(
     (e) => `<dialog is="${e}-modal"></dialog>`
   ).join("");
+  document.body.appendChild(document.createElement("diff-modal"));
 };
 
 export const refreshModals = () => {
   MODALS.forEach((e) =>
     document.querySelector<Modal>(`[is=${e}-modal]`)!.refresh()
   );
+  document.querySelector<Modal>(`diff-modal`)!.refresh();
 };
 
 export { WelcomeModal, DiffModal, CommitModal, RepoConfigModal, SettingsModal };

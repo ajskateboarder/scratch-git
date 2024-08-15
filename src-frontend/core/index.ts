@@ -4,3 +4,4 @@ export * from "./scratch";
 export * from "./checkbox";
 export * from "./input-field";
 export * from "./buttons";
+export * from "../modals/diff/card";

@@ -1,7 +1,7 @@
 import { Modal } from "../base";
 import api, { type Commit } from "@/api";
-import { cls, settings } from "@/components";
-import { CommitItem } from "@/components";
+import { cls, settings } from "@/core";
+import { CommitItem } from "@/core";
 import i18next from "@/l10n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
