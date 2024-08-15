@@ -1,8 +1,8 @@
 import { Modal } from "../base";
 import thumbnail from "./thumbnail.svg";
 import api, { cloneRepo, remoteExists } from "@/api";
-import { settings, fileMenu, cls } from "@/core";
-import { InputBox, InputField } from "@/core";
+import { settings, fileMenu, cls } from "@/components";
+import { InputBox, InputField } from "@/components";
 import i18next from "@/l10n";
 import { Redux, VM } from "@/lib";
 import { validEmail, validURL } from "@/utils";

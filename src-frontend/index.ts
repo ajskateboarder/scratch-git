@@ -1,6 +1,6 @@
 import api, { Project } from "./api";
 import { Styles, createGitMenu } from "./init";
-import { fileMenu, misc, ScratchAlert } from "./core";
+import { fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
 import i18next, { getLocale } from "./l10n";
 import { Redux, scratchblocks, VM } from "./lib";

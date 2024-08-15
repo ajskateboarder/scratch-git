@@ -1,5 +1,5 @@
 import van, { ChildDom } from "vanjs-core";
-import { cls, s } from "../../core/accessors";
+import { cls, s } from "../../components/accessors";
 
 const { div, img, span } = van.tags;
 

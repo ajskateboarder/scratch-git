@@ -3,7 +3,7 @@ import { DiffModal } from "./diff";
 import { CommitModal } from "./commit";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
-import { s } from "../core";
+import { s } from "../components";
 import type { Modal } from "./base";
 
 const MODALS = ["commit", "welcome", "repo-config", "settings"];

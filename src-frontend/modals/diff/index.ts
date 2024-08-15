@@ -1,7 +1,7 @@
 import { scrollBlockIntoView, flash } from "./block-utils";
 import api, { CostumeChange, Project } from "@/api";
-import { Card, cls, settings } from "@/core";
-import { Checkbox, Copy } from "@/core";
+import { Card, cls, settings } from "@/components";
+import { Checkbox, Copy } from "@/components";
 import { Redux, scratchblocks } from "@/lib";
 import { getBlockly } from "@/lib";
 import { parseScripts, type ScriptStatus } from "@/diff-indicators";
