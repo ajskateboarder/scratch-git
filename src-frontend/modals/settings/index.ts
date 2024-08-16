@@ -1,13 +1,12 @@
 import { DEFAULTS, userSettings } from "@/settings";
-import { Modal } from "../base";
 import van from "vanjs-core";
 import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
 import i18n from "@/l10n";
 import { Redux } from "@/lib";
+import { Modal } from "./modal";
 
-const { div, label, input, span, h1, p, summary, details, img, button, i, a } =
-  van.tags;
+const { div, label, input, span, p, summary, details, img, button } = van.tags;
 
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/components/tw-settings-modal/help-icon.svg
 const HELP_ICON_SVG = `data:image/svg+xml;base64,\
@@ -170,8 +169,9 @@ const Settings = (dark: boolean) => [
   PlainText(dark),
 ];
 
-export class SettingsModal extends Modal {
+export class SettingsModal extends HTMLElement {
   connectedCallback() {
+    this.close();
     const dark = Redux.getState().scratchGui.theme.theme.gui === "dark";
 
     const [scriptColor, imgChangeColors, highlights, plainText] =
@@ -183,19 +183,6 @@ export class SettingsModal extends Modal {
       highlights,
       plainText,
     ].map((e) => e.querySelectorAll("input")!);
-
-    const closeButton = button(
-      {
-        class: settings.button,
-        onclick: () => {
-          this.close();
-          scriptColor.open = false;
-          highlights.open = false;
-          plainText.open = false;
-        },
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
 
     const restoreDefaults = button(
       {
@@ -236,39 +223,28 @@ export class SettingsModal extends Modal {
 
     van.add(
       this,
-      div(
-        { class: "settings-wrapper" },
-        h1({ class: "header" }, "Settings", closeButton),
-        p(
-          { style: "color: var(--ui-modal-foreground)" },
-          scriptColor,
-          imgChangeColors,
-          highlights,
-          plainText
-        ),
+      Modal(
         div(
-          {
-            class: "bottom-bar",
-            style: "margin-top: 10px",
-          },
-          restoreDefaults,
-          uninstallButton
-        ),
-        p(
-          {
-            style:
-              "color: var(--ui-modal-foreground); position: absolute; bottom: 10px",
-          },
-          a(
-            { href: "https://github.com/ajskateboarder/scratch-git" },
-            i({ class: "fa-brands fa-github" })
+          { class: "settings-wrapper" },
+          p(
+            { style: "color: var(--ui-modal-foreground)" },
+            scriptColor,
+            imgChangeColors,
+            highlights,
+            plainText
           ),
-          " ",
-          a(
-            { href: "https://ajskateboarder.github.io/scratch-git/privacy" },
-            i({ class: "fa-solid fa-shield-halved" })
+          div(
+            {
+              class: "bottom-bar",
+              style: "margin-top: 10px",
+            },
+            restoreDefaults,
+            uninstallButton
           )
-        )
+        ),
+        // TODO: localize
+        "Git Settings",
+        () => this.close()
       )
     );
   }
@@ -283,5 +259,12 @@ export class SettingsModal extends Modal {
   public refresh() {
     this.querySelector(".settings-wrapper")!.remove();
     this.connectedCallback();
+  }
+
+  showModal() {
+    this.style.display = "block";
+  }
+  close() {
+    this.style.display = "none";
   }
 }

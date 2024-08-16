@@ -6,7 +6,7 @@ import { SettingsModal } from "./settings";
 import { s } from "../components";
 import type { Modal } from "./base";
 
-const MODALS = ["commit", "welcome", "repo-config", "settings"];
+const MODALS = ["commit", "welcome", "repo-config"];
 
 export const initModals = () => {
   if (document.querySelector("[is=commit-modal]")) return;
@@ -20,9 +20,7 @@ export const initModals = () => {
     customElements.define("repo-config-modal", RepoConfigModal, {
       extends: "dialog",
     });
-    customElements.define("settings-modal", SettingsModal, {
-      extends: "dialog",
-    });
+    customElements.define("settings-modal", SettingsModal);
   } catch {}
 
   // insert modals into area where they can show correctly
@@ -36,6 +34,7 @@ export const initModals = () => {
     (e) => `<dialog is="${e}-modal"></dialog>`
   ).join("");
   document.body.appendChild(document.createElement("diff-modal"));
+  document.body.appendChild(document.createElement("settings-modal"));
 };
 
 export const refreshModals = () => {
@@ -43,6 +42,7 @@ export const refreshModals = () => {
     document.querySelector<Modal>(`[is=${e}-modal]`)!.refresh()
   );
   document.querySelector<Modal>(`diff-modal`)!.refresh();
+  document.querySelector<Modal>(`settings-modal`)!.refresh();
 };
 
 export { WelcomeModal, DiffModal, CommitModal, RepoConfigModal, SettingsModal };

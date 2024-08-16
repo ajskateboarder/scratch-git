@@ -229,9 +229,7 @@ export const createGitMenu = async (
           .display();
       },
       settings: () => {
-        document
-          .querySelector<RepoConfigModal>("dialog[is='settings-modal']")!
-          .display();
+        document.querySelector<RepoConfigModal>("settings-modal")!.display();
       },
     },
     changeLocale

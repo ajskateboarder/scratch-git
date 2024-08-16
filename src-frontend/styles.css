@@ -16,7 +16,7 @@ dialog {
 
 dialog[is="commit-modal"],
 dialog[is="repo-config-modal"],
-dialog[is="settings-modal"] {
+settings-modal {
   overflow-x: hidden;
   overflow-y: auto;
 }
