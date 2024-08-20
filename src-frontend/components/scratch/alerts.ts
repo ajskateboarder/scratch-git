@@ -77,7 +77,8 @@ export class ScratchAlert {
               role: "button",
               tabIndex: "0",
               onclick: () => newAlert.remove(),
-              ...(Redux.getState().scratchGui.theme.theme.gui === "dark" && {
+              ...((Redux.getState().scratchGui as any).theme.theme.gui ===
+                "dark" && {
                 style: "background-color: rgba(0, 0, 0, 0.255)",
               }),
             },

@@ -4,7 +4,7 @@ import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
 import i18n from "@/l10n";
 import { Redux } from "@/lib";
-import { Modal } from "./modal";
+import { Modal } from "../modal";
 
 const { div, label, input, span, p, summary, details, img, button } = van.tags;
 
@@ -172,7 +172,8 @@ const Settings = (dark: boolean) => [
 export class SettingsModal extends HTMLElement {
   connectedCallback() {
     this.close();
-    const dark = Redux.getState().scratchGui.theme.theme.gui === "dark";
+    const dark =
+      (Redux.getState().scratchGui as any).theme.theme.gui === "dark";
 
     const [scriptColor, imgChangeColors, highlights, plainText] =
       Settings(dark);

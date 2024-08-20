@@ -4,7 +4,7 @@ import api, { cloneRepo, remoteExists } from "@/api";
 import { settings, fileMenu, cls } from "@/components";
 import { InputBox, InputField } from "@/components";
 import i18next from "@/l10n";
-import { Redux, VM } from "@/lib";
+import { Redux, vm } from "@/lib";
 import { validEmail, validURL } from "@/utils";
 import van from "vanjs-core";
 
@@ -87,7 +87,7 @@ export class WelcomeModal extends Modal {
             class: settings.button,
             onclick: () => {
               fileMenu.openProject();
-              VM.on("PROJECT_LOADED", async () => {
+              vm.runtime.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
                 setTimeout(async () => {
                   if (await api.getCurrentProject()?.exists()) {

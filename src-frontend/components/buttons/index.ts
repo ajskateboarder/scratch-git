@@ -1,3 +1,3 @@
 export * from "./copy";
-export * from "./diff-buttons";
+export * from "../../diff-indicators/diff-buttons";
 export * from "./reload";

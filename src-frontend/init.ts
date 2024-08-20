@@ -206,9 +206,7 @@ export const createGitMenu = async (
   gitMenu.create(
     {
       commitView: () =>
-        document
-          .querySelector<CommitModal>("dialog[is='commit-modal']")!
-          .display(),
+        document.querySelector<CommitModal>("commit-modal")!.display(),
       commitCreate: async () => {
         const message = await project!.commit();
         document

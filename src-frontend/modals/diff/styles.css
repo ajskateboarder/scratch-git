@@ -26,7 +26,8 @@
     list-style-type: none;
 
     & .tab-btn {
-      padding: 15px 30px;
+      padding: 0.3rem;
+      padding-left: 10px;
       border: 0.5px solid grey;
       background-color: #d9e3f2;
       color: hsl(225deg 15% 40% / 75%);
@@ -51,6 +52,8 @@
     border-right: 1px solid grey;
     background-color: #e6f0ff;
     margin-left: -20px;
+    overflow-y: auto;
+    min-width: fit-content;
   }
 
   & hr {

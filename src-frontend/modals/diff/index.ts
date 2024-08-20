@@ -2,35 +2,20 @@ import { scrollBlockIntoView, flash } from "./block-utils";
 import api, { CostumeChange, Project } from "@/api";
 import { Card, cls, settings } from "@/components";
 import { Checkbox, Copy } from "@/components";
-import { Redux, scratchblocks } from "@/lib";
+import { Redux, scratchblocks, vm } from "@/lib";
 import { getBlockly } from "@/lib";
 import { parseScripts, type ScriptStatus } from "@/diff-indicators";
 import { userSettings } from "@/settings";
 import van from "vanjs-core";
 
-import iconCodeSvg from "./icon--code.svg";
-import iconCostumesSvg from "./icon--costumes.svg";
-import iconSoundsSvg from "./icon--sounds.svg";
+import iconCodeSvg from "./code.svg";
+import iconCostumesSvg from "./paintbrush.svg";
+import iconSoundsSvg from "./sound.svg";
 import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
 import { getLocale } from "@/l10n";
 
-const {
-  div,
-  span,
-  ul,
-  button,
-  p,
-  pre,
-  aside,
-  main,
-  br,
-  i,
-  li,
-  img,
-  audio,
-  details,
-  summary,
-} = van.tags;
+const { div, span, ul, button, p, pre, aside, main, br, i, li, img, audio } =
+  van.tags;
 
 const DIFF_ICON = {
   added: "fa-solid fa-square-plus",
@@ -77,20 +62,46 @@ const percentFormatter = Intl.NumberFormat(getLocale(), {
   maximumFractionDigits: 1,
 });
 
+const createSprite = (name: string, blocks: any) =>
+  JSON.stringify({
+    isStage: false,
+    name,
+    variables: {},
+    lists: {},
+    broadcasts: {},
+    blocks,
+    comments: {},
+    currentCostume: 1,
+    costumes: [],
+    sounds: [],
+    volume: 100,
+    visible: false,
+    x: 0,
+    y: 0,
+    size: 100,
+    direction: 90,
+    draggable: false,
+    rotationStyle: "all around",
+  });
+
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends HTMLElement {
-  $scripts!: HTMLUListElement;
-  $commits!: HTMLParagraphElement;
-  $highlights!: HTMLInputElement;
-  $plainText!: HTMLInputElement;
-  $unified!: HTMLElement;
+  private $scripts!: HTMLUListElement;
+  private $commits!: HTMLParagraphElement;
+  private $highlights!: HTMLInputElement;
+  private $plainText!: HTMLInputElement;
+  private $unified!: HTMLElement;
+  private $importOld!: HTMLElement;
 
-  previousScripts: any;
-  currentScripts: any;
-  costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
+  private previousScripts: any;
+  private currentScripts: any;
+  private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
-  unify = van.state(true);
+
+  private unify = van.state(true);
+
+  tempSprites: string[] = [];
 
   constructor() {
     super();
@@ -112,7 +123,10 @@ export class DiffModal extends HTMLElement {
         {
           onclick: () => (this.unify.val = false),
           class: cls(settings.button, "round-right-button"),
-          style: () => (this.unify.val ? "filter: brightness(0.88)" : ""),
+          style: () =>
+            this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
         },
         "Split"
       ),
@@ -120,10 +134,20 @@ export class DiffModal extends HTMLElement {
         {
           onclick: () => (this.unify.val = true),
           class: cls(settings.button, "round-left-button"),
-          style: () => (!this.unify.val ? "filter: brightness(0.88)" : ""),
+          style: () =>
+            !this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
         },
         "Unified"
       )
+    );
+    const importOld = button(
+      {
+        class: settings.button,
+        style: "margin-left: 15px; padding: 0.3rem",
+      },
+      "Open old script"
     );
 
     const commits = p(
@@ -145,11 +169,12 @@ export class DiffModal extends HTMLElement {
     );
 
     Object.assign(this, {
-      $scripts: ul({ style: "max-width: 200px" }),
+      $scripts: ul(),
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
       $commits: commits.querySelector(".real-commit-wrap")!,
       $unified: unified,
+      $importOld: importOld,
     });
 
     van.add(
@@ -158,7 +183,7 @@ export class DiffModal extends HTMLElement {
         main(
           { class: "diff-view" },
           aside(this.$scripts),
-          main(div({ class: "content" }, commits))
+          main(div({ class: "content" }, importOld, commits))
         ),
         "Diff",
         () => this.close()
@@ -287,7 +312,7 @@ export class DiffModal extends HTMLElement {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid red",
                 },
-                Copy(() => aImage),
+                a.contents !== "" ? Copy(() => aImage) : undefined,
                 img({
                   src: a.contents,
                   height: aImage.height / 2,
@@ -301,7 +326,7 @@ export class DiffModal extends HTMLElement {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid green",
                 },
-                Copy(() => bImage),
+                b.contents !== "" ? Copy(() => bImage) : undefined,
                 img({
                   src: b.contents,
                   height: bImage.height / 2,
@@ -335,7 +360,14 @@ export class DiffModal extends HTMLElement {
     script = 0,
     cached = false
   ) {
-    const { $commits, $highlights, $plainText, $scripts, $unified } = this;
+    const {
+      $commits,
+      $highlights,
+      $plainText,
+      $scripts,
+      $unified,
+      $importOld,
+    } = this;
 
     // try again in case of undefined
     project ??= api.getCurrentProject()!;
@@ -365,8 +397,9 @@ export class DiffModal extends HTMLElement {
     );
 
     const costumeDiffs = this.costumeChanges[spriteName];
-    const { blocks: blockTheme, gui: uiTheme } =
-      Redux.getState().scratchGui.theme.theme;
+    const { blocks: blockTheme, gui: uiTheme } = (
+      Redux.getState().scratchGui as any
+    ).theme.theme;
 
     const config = {
       style:
@@ -432,7 +465,7 @@ export class DiffModal extends HTMLElement {
       const dropdownChange = {
         three: "brightness(0.83)",
         "high-contrast": "brightness(1.12) saturate(0.7)",
-      }[blockTheme];
+      }[blockTheme as string];
       if (dropdownChange !== undefined) {
         svg
           .querySelectorAll<SVGRectElement>("rect.sb3-input-dropdown")
@@ -730,27 +763,25 @@ export class DiffModal extends HTMLElement {
       scriptDiff === "costume"
     );
 
-    // TODO: this is annoying, refactor sometime
-    if (diffs[script] && diffs[script].status === "removed") {
-      // TODO: localize
-      const view = document.querySelector(".commit-view");
-      const wrapper = details(
-        summary({ style: "display: list-item" }, "This script was deleted")
-      );
-      if (view) {
-        view.parentNode!.insertBefore(wrapper, view);
-        wrapper.appendChild(view);
-      }
-    } else {
-      if (this.querySelector("details")) {
-        const el = document.querySelector(".commit-view")!;
-        document.querySelector("#commits")!.appendChild(el);
-        this.querySelector("details")!.remove();
-      }
-    }
-
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
+
+    if (scriptDiff === "script") {
+      const currentSprite = vm.runtime._editingTarget!;
+      // how do you recover a stage when there's only one stage right
+      // TODO: figure that out
+      if (!currentSprite.isStage) {
+        $importOld.style.display = "block";
+        $importOld.onclick = () => {
+          const name = `${currentSprite.sprite.name!} [↩]`;
+          vm.addSprite(createSprite(name, this.previousScripts));
+          this.tempSprites.push(name);
+        };
+      }
+    } else {
+      $importOld.style.display = "none";
+      $importOld.onclick = () => {};
+    }
 
     this.querySelector<HTMLElement>(".card-title")!.innerText = spriteName;
     if (!this.open) this.showModal();

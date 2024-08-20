@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@turbowarp/types": "^0.0.12",
     "i18next": "^23.11.4",
     "vanjs-core": "^1.5.0"
   },

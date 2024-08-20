@@ -4,7 +4,7 @@ import { s, sprites } from "@/components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
 import { SpriteDiff, StageDiff } from "@/components";
-import { getBlockly } from "@/lib/globals";
+import { getBlockly, vm } from "@/lib/globals";
 import { userSettings } from "../settings";
 import { contextMenu } from "./inject-context";
 
@@ -80,7 +80,7 @@ const highlightChanged = async (
     .forEach((e) => (e.style.filter = ""));
 
   if (sprite === undefined) {
-    throw new Error("No sprite was changed");
+    return false;
   }
 
   const previousScripts = await project.getPreviousScripts(sprite.format());
@@ -104,7 +104,8 @@ const highlightChanged = async (
     // fallback onto cache if fetching changed scripts fails
     changedScripts = window._changedScripts[sprite.format()];
     // if nothing was actually changed just forget it
-    if (changedScripts === undefined || changedScripts.length === 0) return;
+    if (changedScripts === undefined || changedScripts.length === 0)
+      return false;
   }
 
   // persist this until the next save
@@ -115,6 +116,8 @@ const highlightChanged = async (
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });
+
+  return true;
 };
 
 const nameOfSprite = (element: HTMLElement) =>
@@ -129,7 +132,12 @@ export const showIndicators = async (project: Project) => {
     editorSprites = [
       ...s("sprite-selector_items-wrapper").select().children,
     ] as HTMLElement[],
-    loadedJSON = JSON.parse(window.vm.toJSON());
+    loadedJSON = JSON.parse(vm.toJSON());
+
+  if (changedSprites.length === 0) {
+    throw new Error("Nothing was changed");
+  }
+
   contextMenu.onopen = (e) => {
     const currentSprite = nameOfSprite(sprites.selectedSprite.select());
     const index = window._changedScripts[currentSprite].indexOf(e.dataset.id!);
@@ -193,10 +201,9 @@ export const showIndicators = async (project: Project) => {
       },
       onclick: async (e: Event) => {
         e.stopPropagation();
-        (document.querySelector("diff-modal") as DiffModal).display(
-          project,
-          spriteName
-        );
+        document
+          .querySelector<DiffModal>("diff-modal")!
+          .display(project, spriteName);
       },
     });
 
@@ -273,7 +280,66 @@ export const showIndicators = async (project: Project) => {
     ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
     : STAGE;
 
-  await highlightChanged(project, sprite, loadedJSON);
+  const changed = await highlightChanged(project, sprite, loadedJSON);
+
+  // highlightChanged returns false if the changed sprite was removed (probably by design?)
+  // show the removed sprite as a ghost which is non-clickable and shows the diff indicator
+  if (!changed) {
+    changedSprites.forEach((e) => {
+      if (!vm.runtime.getSpriteTargetByName(e.name)) {
+        const lastSprite = [
+          ...document.querySelectorAll("div[style^='order: ']"),
+        ].pop();
+        if (lastSprite) {
+          const ghost = lastSprite.cloneNode(true) as HTMLElement;
+
+          ghost.querySelector<HTMLElement>(
+            "." + sprites.spriteName
+          )!.innerText = `${e.name} [❌]`;
+          ghost.querySelector("nav")?.remove();
+          ghost.querySelector("img")?.remove();
+          ghost.querySelector("img")?.parentElement?.remove();
+          ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
+          ghost.style.userSelect = "none";
+          ghost.title = "This sprite was deleted.";
+
+          const diffButton = SpriteDiff({
+            style: `
+            border-radius: 20px;
+            transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+            scale: 0.8;
+            z-index: 1;
+            opacity: 1
+          `,
+            onmouseover: () => {
+              diffButton.style.scale = "0.9";
+              diffButton.style.boxShadow =
+                "0px 0px 0px 6px var(--looks-transparent)";
+            },
+            onmouseleave: () => {
+              diffButton.style.scale = "0.8";
+              diffButton.style.boxShadow =
+                "0px 0px 0px 2px var(--looks-transparent)";
+            },
+            onclick: async (_e: Event) => {
+              _e.stopPropagation();
+              document
+                .querySelector<DiffModal>("diff-modal")!
+                .display(project, e.name);
+            },
+          });
+
+          (
+            ghost
+              .querySelector("div")!
+              .querySelectorAll("div") as NodeListOf<HTMLDivElement>
+          )[3].after(diffButton);
+
+          lastSprite.after(ghost);
+        }
+      }
+    });
+  }
 
   // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {

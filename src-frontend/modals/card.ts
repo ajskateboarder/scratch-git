@@ -1,9 +1,14 @@
 import van, { ChildDom } from "vanjs-core";
-import { cls, s } from "../../components/accessors";
+import { cls, s } from "../components/accessors";
 
 const { div, img, span, ul } = van.tags;
 
-export const Card = (children: ChildDom, title: string, closeCb: () => any) => {
+export const Card = (
+  children: ChildDom,
+  title: string,
+  closeCb: () => any,
+  styles?: string
+) => {
   let mouseOffsetX = 0;
   let mouseOffsetY = 0;
   let lastX = 0;
@@ -70,6 +75,7 @@ export const Card = (children: ChildDom, title: string, closeCb: () => any) => {
   const card = div(
     {
       class: cls(s("card_card_"), "git-card"),
+      ...(styles && { style: styles }),
     },
     header,
     div({ style: "overflow-y: auto; cursor: default" }, children)

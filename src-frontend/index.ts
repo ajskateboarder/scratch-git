@@ -1,11 +1,11 @@
 import api, { Project } from "./api";
-import { Styles, createGitMenu } from "./init";
+import { Styles } from "./init";
 import { fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
-import i18next, { getLocale } from "./l10n";
-import { Redux, scratchblocks, VM } from "./lib";
+import i18next from "./l10n";
+import { scratchblocks, vm } from "./lib";
 
-import { initModals, refreshModals, WelcomeModal } from "./modals";
+import { initModals, WelcomeModal } from "./modals";
 import { getReactHandlers } from "./utils";
 import { userSettings } from "./settings";
 
@@ -53,6 +53,7 @@ const main = async () => {
               (saveStatus as any)[getReactHandlers(saveStatus)].children[1]
                 .props.defaultMessage === "Saving project…"
             ) {
+              saveButton.click();
               await displayDiffs(project!);
               window._repoStatus = await project!.repoStatus();
               return;
@@ -73,36 +74,6 @@ const main = async () => {
           await displayDiffs(project!);
         }
       };
-
-      // add initialization handlers to each language option
-      // to make sure all our stuff gets updated to the new locale
-      // can there please be a Redux thing i can listen for
-      new MutationObserver(([mut, _]) => {
-        const languageOptions = mut.target.firstChild?.firstChild?.lastChild
-          ?.firstChild as HTMLUListElement | undefined;
-        if (languageOptions) {
-          [...languageOptions.children].forEach((e) => {
-            (e as HTMLDivElement).onclick = () => {
-              setTimeout(async () => {
-                // project titles are removed after changing lang by default
-                Redux.dispatch({
-                  type: "projectTitle/SET_PROJECT_TITLE",
-                  title: project?.projectName,
-                });
-
-                await main();
-                await createGitMenu(project!, getLocale());
-                i18next.changeLanguage(getLocale());
-                refreshModals();
-              }, 100);
-            };
-          });
-        }
-      }).observe(misc.menuItems.select().firstChild?.lastChild!, {
-        childList: true,
-      });
-
-      createGitMenu(project!);
     }
   }
 };
@@ -113,8 +84,11 @@ userSettings.init();
 document.head.append(...Styles());
 
 // avoids scenarios where scratch.git initializes before the editor is finished
-VM.on("ASSET_PROGRESS", async (finished: number, total: number) => {
+// @ts-expect-error - scratch types don't include ASSET_PROGRESS
+vm.runtime.on("ASSET_PROGRESS", async (finished: number, total: number) => {
   if (finished === total && finished > 0 && total > 0) {
     setTimeout(async () => await main());
   }
 });
+
+(window as any).api = api;

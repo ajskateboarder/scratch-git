@@ -8,7 +8,7 @@ export const scrollBlockIntoView = (blockOrId: string) => {
   const offsetX = 32;
   const offsetY = 32;
   const block = workspace.getBlockById(blockOrId)!;
-
+  block;
   const root = block.getRootBlock();
   let base = block;
   while (base.getOutputShape() && base.getSurroundParent()) {
