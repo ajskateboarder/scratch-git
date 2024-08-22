@@ -12,7 +12,8 @@ export default async (args) => {
     output: { file: "userscript.js", format: "iife" },
     logLevel: "silent",
     plugins: [
-      css({ minify: true }),
+      // TODO: bring back minify when rollup-plugin-import-css #24 resolves
+      css(),
       nodeResolve(),
       typescript({
         include: ["src-frontend/*.ts", "src-frontend/**/*.ts"],

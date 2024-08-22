@@ -1,5 +1,5 @@
 import api, { Project } from "./api";
-import { Styles } from "./init";
+import { createGitMenu, Styles } from "./init";
 import { fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
 import i18next from "./l10n";
@@ -38,6 +38,7 @@ const main = async () => {
     const project = api.getCurrentProject();
 
     if (await project!.exists()) {
+      await createGitMenu(project!);
       window._repoStatus = await project!.repoStatus();
       // ensure a click event listener for the save button
       new MutationObserver(() => {

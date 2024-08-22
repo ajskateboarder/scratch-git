@@ -1,4 +1,4 @@
-import van from "vanjs-core";
+import van, { Props } from "vanjs-core";
 
 const { button, canvas, i, a } = van.tags;
 
@@ -66,11 +66,15 @@ const copyToClipboard = async (node: string | SVGElement | HTMLImageElement) =>
     ? navigator.clipboard.writeText(node)
     : copyImage(node);
 
-export const Copy = (cb: () => string | SVGElement | HTMLImageElement) => {
+export const Copy = (
+  cb: () => string | SVGElement | HTMLImageElement,
+  props: Props = {}
+) => {
   const copyButton = button(
     {
       class: "copy-button",
       title: "Click while holding Shift to download image.",
+      ...props,
       onclick: async (e: KeyboardEvent) => {
         const node = cb();
         if (e.shiftKey && typeof node !== "string") {

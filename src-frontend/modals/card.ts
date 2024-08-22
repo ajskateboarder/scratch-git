@@ -55,7 +55,10 @@ export const Card = (
     },
     ul(
       { class: "sa-debugger-tabs" },
-      span({ style: "font-size: 0.9rem", class: "card-title" }, title)
+      span(
+        { style: "font-size: 0.9rem; color: white", class: "card-title" },
+        title
+      )
     ),
     div(
       { class: s("card_header-buttons-right"), style: "margin-left: auto" },
@@ -78,7 +81,7 @@ export const Card = (
       ...(styles && { style: styles }),
     },
     header,
-    div({ style: "overflow-y: auto; cursor: default" }, children)
+    div({ style: "overflow-y: auto; cursor: default; height: 100%" }, children)
   );
 
   return card;

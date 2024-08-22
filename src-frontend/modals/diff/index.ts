@@ -147,24 +147,33 @@ export class DiffModal extends HTMLElement {
         class: settings.button,
         style: "margin-left: 15px; padding: 0.3rem",
       },
-      "Open old script"
+      "Recover old script"
     );
 
-    const commits = p(
-      { style: "margin-right: 10px; margin-left: 10px", id: "commits" },
+    const header = p(
+      { style: "margin-right: 10px; margin-left: 10px", id: "diff-header" },
       span(
         {
           class: "header",
         },
-        span({ class: "settings-group" }, useHighlights, plainText, unified)
-      ),
-      div(
-        { class: "commit-view" },
-        pre(
-          { class: "commit-wrap" },
-          Copy(this.copyCallback),
-          pre({ class: "real-commit-wrap" })
+        span(
+          { class: "settings-group", style: "width: 100%" },
+          useHighlights,
+          plainText,
+          unified,
+          Copy(this.copyCallback, {
+            class: cls("copy-button", settings.button),
+            style: "padding: 0.3rem 10px",
+          })
         )
+      )
+    );
+
+    const diff = div(
+      { class: "commit-view" },
+      pre(
+        { class: "commit-wrap", style: "display: inline-block" },
+        pre({ class: "real-commit-wrap" })
       )
     );
 
@@ -172,7 +181,7 @@ export class DiffModal extends HTMLElement {
       $scripts: ul(),
       $highlights: useHighlights.querySelector("input")!,
       $plainText: plainText.querySelector("input")!,
-      $commits: commits.querySelector(".real-commit-wrap")!,
+      $commits: diff.querySelector(".real-commit-wrap")!,
       $unified: unified,
       $importOld: importOld,
     });
@@ -183,7 +192,7 @@ export class DiffModal extends HTMLElement {
         main(
           { class: "diff-view" },
           aside(this.$scripts),
-          main(div({ class: "content" }, importOld, commits))
+          main(div({ class: "content" }, importOld, header), diff)
         ),
         "Diff",
         () => this.close()
@@ -746,11 +755,6 @@ export class DiffModal extends HTMLElement {
       );
     }
 
-    // dark mode
-    this.querySelector(".diff-view")!.classList.toggle(
-      "dark",
-      uiTheme === "dark"
-    );
     this.setDiffTheme(uiTheme);
 
     if (scriptDiff === "script") {
@@ -776,6 +780,7 @@ export class DiffModal extends HTMLElement {
           const name = `${currentSprite.sprite.name!} [↩]`;
           vm.addSprite(createSprite(name, this.previousScripts));
           this.tempSprites.push(name);
+          this.close();
         };
       }
     } else {
