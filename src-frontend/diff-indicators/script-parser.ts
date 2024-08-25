@@ -10,49 +10,84 @@ interface ScriptParse {
   status: ScriptStatus;
   scriptNo: number;
   script: string;
+  json: ProjectJSON;
+  oldJSON: ProjectJSON;
+  oldScript: string;
+}
+
+export class ProjectJSON {
+  topLevels: string[];
+  json: Record<string, any>;
+
+  constructor(_json: Record<string, any>) {
+    this.topLevels = Object.keys(_json).filter(
+      (key) => _json[key].parent === null
+    );
+    // fixes parsing error
+    this.json = JSON.parse(
+      JSON.stringify(_json)
+        .replaceAll('{"SUBSTACK":[1,null]}', "{}")
+        .replaceAll(',"SUBSTACK":[1,null]', "")
+    );
+  }
+
+  /** Get a blockly script stack from a starting id */
+  getStack(startId: string) {
+    let stack: Record<string, any> = {};
+    let id = startId;
+    while (id !== null) {
+      const block = this.json[id];
+      [...JSON.stringify(block).matchAll(/":\[(?:1|2|3),"(\w)"/g)].forEach(
+        (e) => (stack[e[1]] = this.json[e[1]])
+      );
+      stack[id] = block;
+      id = block["next"];
+    }
+
+    // randomize block ids to prevent json key collision
+    const matches = [
+      ...JSON.stringify(stack).matchAll(/":\[(?:1|2|3),"(\w)"/g),
+    ].map((e) => e[0]);
+    matches.forEach((match) => {
+      const ogId = match.substring(6, match.length - 1);
+      const id = crypto.randomUUID();
+      stack = JSON.parse(
+        JSON.stringify(stack)
+          .replaceAll(match, `${match.substring(0, match.length - 2)}${id}"`)
+          .replaceAll(new RegExp(`:"${ogId}"`, "g"), `:"${id}"`)
+          .replaceAll(new RegExp(`"${ogId}":`, "g"), `"${id}":`)
+      );
+    });
+
+    return stack;
+  }
 }
 
 /** Parse scripts in a project that have been modified */
 const _parseScripts = (
-  oldProject: Record<string, any>,
-  newProject: Record<string, any>
+  oldProject: ProjectJSON,
+  newProject: ProjectJSON
 ): ScriptParse[] => {
-  const oldBlocks = Object.keys(oldProject)
-    .filter((key) => oldProject[key].parent === null)
-    .map((script) => {
-      return toScratchblocks(
-        script,
-        // fixes parsing error
-        JSON.parse(
-          JSON.stringify(oldProject)
-            .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-            .replaceAll(',"SUBSTACK":[1,null]', "")
-        ),
-        "en",
-        {
-          tabs: "",
-        }
-      );
-    })
-    .sort((a, b) => a.localeCompare(b));
-
-  const newBlocks = Object.keys(newProject)
-    .filter((key) => newProject[key].parent === null)
+  const oldBlocks = oldProject.topLevels
     .map((script) => {
       return {
-        content: toScratchblocks(
-          script,
-          JSON.parse(
-            JSON.stringify(newProject)
-              .replaceAll('{"SUBSTACK":[1,null]}', "{}")
-              .replaceAll(',"SUBSTACK":[1,null]', "")
-          ),
-          "en",
-          {
-            tabs: "",
-          }
-        ),
+        content: toScratchblocks(script, oldProject.json, "en", {
+          tabs: "",
+        }),
+        json: oldProject,
         script,
+      };
+    })
+    .sort((a, b) => a.content.localeCompare(b.content));
+
+  const newBlocks = newProject.topLevels
+    .map((script) => {
+      return {
+        content: toScratchblocks(script, newProject.json, "en", {
+          tabs: "",
+        }),
+        script,
+        json: newProject,
       };
     })
     .sort((a, b) => a.content.localeCompare(b.content));
@@ -60,20 +95,37 @@ const _parseScripts = (
   const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
     .filter(([a, b]) => a !== b)
-    // @ts-expect-error
-    .map(([[oldContent, { content: newContent, script }], scriptNo]) => {
-      if (newContent === undefined) {
-        newContent = "";
-      }
-      const status: ScriptStatus =
-        oldContent !== "" && newContent !== ""
-          ? "modified"
-          : oldContent === "" && newContent !== ""
-          ? "added"
-          : "removed";
+    .map(
+      ([
+        // @ts-expect-error
+        [
+          { content: oldContent, script: oldScript, json: oldJSON },
+          { content: newContent, script, json },
+        ],
+        scriptNo,
+      ]) => {
+        if (newContent === undefined) {
+          newContent = "";
+        }
+        const status: ScriptStatus =
+          oldContent !== "" && newContent !== ""
+            ? "modified"
+            : oldContent === "" && newContent !== ""
+            ? "added"
+            : "removed";
 
-      return { oldContent, newContent, status, scriptNo, script };
-    });
+        return {
+          oldContent,
+          newContent,
+          status,
+          scriptNo,
+          script,
+          json,
+          oldJSON,
+          oldScript,
+        };
+      }
+    );
 
   return results as ScriptParse[];
 };
@@ -81,8 +133,8 @@ const _parseScripts = (
 /** Parses all scripts in a sprite and diffs them */
 export const parseScripts = async (
   projectName: string,
-  previousScripts: Record<string, any>,
-  currentScripts: Record<string, any>
+  previousScripts: ProjectJSON,
+  currentScripts: ProjectJSON
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
   return (

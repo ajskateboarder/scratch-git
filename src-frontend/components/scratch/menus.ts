@@ -1,4 +1,3 @@
-/** @file Manages creation of Git menu and alerts */
 import { menu, s } from "../accessors";
 import i18next from "@/l10n";
 import { getReactHandlers } from "@/utils";
@@ -93,16 +92,7 @@ export const gitMenu = new class {
     });
   }
 
-  /**
-   * Initialize the Git menu
-   *
-   * @param push - handler to push code to remote
-   * @param pull - handler to pull code from remote
-   * @param repoConfig - handler to configure repo
-   * @param settings - handle to change settings
-   * @param commitView - handler to view commits
-   * @param commitCreate - handler to create commits
-   */
+  /** Initialize the Git menu */
   create(
     {
       push,
@@ -228,10 +218,7 @@ export const gitMenu = new class {
     this.menuInit = true;
   }
 
-  /** Enable/disable the pushing and pulling menu options
-   *
-   * @param enabled - whether to enable them
-   */
+  /** Enable/disable the pushing and pulling menu options */
   setPushPullStatus(enabled: boolean) {
     if (!enabled) {
       this.item(1).setAttribute("disabled", "");

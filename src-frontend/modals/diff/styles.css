@@ -115,6 +115,13 @@ html[style*="--color-scheme: dark"] {
   }
 }
 
+.revert-list {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid grey;
+  padding: 15px;
+}
+
 .commit-view {
   padding: 10px;
   border-radius: 10px;
