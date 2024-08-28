@@ -104,9 +104,9 @@ const _parseScripts = (
         ],
         scriptNo,
       ]) => {
-        if (newContent === undefined) {
-          newContent = "";
-        }
+        oldContent ??= "";
+        newContent ??= "";
+
         const status: ScriptStatus =
           oldContent !== "" && newContent !== ""
             ? "modified"

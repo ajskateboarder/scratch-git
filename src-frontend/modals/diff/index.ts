@@ -107,7 +107,7 @@ export class DiffModal extends HTMLElement {
   private $highlights!: HTMLInputElement;
   private $plainText!: HTMLInputElement;
   private $unified!: HTMLElement;
-  private $importOld!: HTMLElement;
+  private $revert!: HTMLButtonElement;
   private $revertList!: HTMLDialogElement;
 
   private previousScripts!: ProjectJSON;
@@ -206,7 +206,7 @@ export class DiffModal extends HTMLElement {
       $plainText: plainText.querySelector("input")!,
       $commits: diff.querySelector(".real-commit-wrap")!,
       $unified: unified,
-      $importOld: importOld,
+      $revert: importOld,
       $revertList: revertList,
     });
 
@@ -387,7 +387,7 @@ export class DiffModal extends HTMLElement {
   public async display(
     project: Project | undefined,
     spriteName: string,
-    script = 0,
+    script: number = 0,
     cached = false
   ) {
     const {
@@ -396,7 +396,7 @@ export class DiffModal extends HTMLElement {
       $plainText,
       $scripts,
       $unified,
-      $importOld,
+      $revert,
       $revertList,
     } = this;
 
@@ -796,132 +796,141 @@ export class DiffModal extends HTMLElement {
 
     if (scriptDiff === "script") {
       const currentSprite = vm.runtime._editingTarget!;
-      // how do you recover a stage when there's only one stage right
-      // TODO: figure that out
-      if (!currentSprite.isStage) {
-        const switchedToRevert = () => {
-          $revertList.style.display = "flex";
-          $revertList.innerHTML = "";
-          $importOld.innerHTML = "Cancel revert";
+      const switchedToRevert = () => {
+        $revertList.style.display = "flex";
+        $revertList.innerHTML = "";
+        $revert.innerHTML = "Cancel revert";
 
-          const states: State<boolean>[] = [];
+        const states: State<boolean>[] = [];
 
-          const RevertButton = (e: Diff, index: number) => {
-            const inp = input({
-              type: "checkbox",
-              name: index,
-              onchange: () => {
-                ticked.val = inp.checked;
+        const RevertButton = (e: Diff, index: number) => {
+          const inp = input({
+            type: "checkbox",
+            name: index,
+            onchange: () => {
+              ticked.val = inp.checked;
+            },
+          });
+          const ticked = van.state(false);
+          states.push(ticked);
+          return label(
+            // TODO: localize
+            span(
+              {
+                class: "revert-icon",
+                title: () =>
+                  `Using script ${ticked.val ? "after" : "before"} changes`,
               },
-            });
-            const ticked = van.state(false);
-            states.push(ticked);
-            return span(
-              span(() =>
+              () =>
                 i({
-                  class: `fa-solid fa-rotate-${ticked.val ? "right" : "left"}`,
+                  class: `fa-solid fa-sm fa-rotate-${
+                    ticked.val ? "right" : "left"
+                  }`,
                 })
-              ),
-              inp,
-              span(iconCodeSvg(), e.scriptNo)
-            );
-          };
-
-          $revertList.append(
-            ul(
-              li(
-                input({
-                  type: "checkbox",
-                  onchange: (e: Event) => {
-                    const target = e.target! as HTMLInputElement;
-                    [
-                      ...target.parentElement!.parentElement!.querySelectorAll<HTMLInputElement>(
-                        "input[type=checkbox]"
-                      ),
-                    ]
-                      .slice(1)
-                      .forEach((_e, _i) => {
-                        _e.checked = !_e.checked;
-                        states[_i].val = _e.checked;
-                      });
-                  },
-                })
-              ),
-              diffs.map((e, _i) => li(RevertButton(e, _i)))
             ),
-            br(),
-            button({
-              class: cls("fa-solid fa-check", settings.button),
-              style: "padding: 0.3rem",
-              onclick: (e) => {
-                let checkboxes = [
-                  ...e.target.parentElement.querySelectorAll(
-                    "input[type=checkbox]"
-                  ),
-                ]
-                  .map((e: HTMLInputElement) => {
-                    const name = e.getAttribute("name");
-                    return name ? [name, e.checked] : null;
-                  })
-                  .filter((e) => e !== null)
-                  .map(([name, checked]) => [
-                    parseInt(name as string),
-                    checked,
-                  ]);
-
-                const selections = Object.assign(
-                  {},
-                  ...checkboxes.map(([id, checked]) => {
-                    const diff = diffs[id as number];
-                    const stack = (checked ? diff.json : diff.oldJSON).getStack(
-                      checked ? diff.script : diff.oldScript
-                    );
-                    console.log(Object.keys(stack));
-                    return stack;
-                  })
-                );
-
-                const name = `${currentSprite.sprite.name!} [↩]`;
-                vm.addSprite(createSprite(name, selections));
-                this.tempSprites.push(name);
-                this.close();
-              },
-            })
+            inp,
+            span(iconCodeSvg(), e.scriptNo)
           );
         };
 
-        $importOld.style.display = "block";
-        $importOld.onclick = () => {
-          if (!this.reverting) {
-            switchedToRevert();
-          } else {
-            $revertList.style.display = "none";
-            $importOld.innerHTML = "";
-            $importOld.append(
-              i({ class: "fa-solid fa-rotate-left" }),
-              " Revert sprite"
-            );
-          }
-          this.reverting = !this.reverting;
-          // const name = `${currentSprite.sprite.name!} [↩]`;
-          // vm.addSprite(createSprite(name, this.previousScripts));
-          // this.tempSprites.push(name);
-          // this.close();
-        };
-      }
+        $revertList.append(
+          ul(
+            li(
+              input({
+                type: "checkbox",
+                onchange: (e: Event) => {
+                  const target = e.target! as HTMLInputElement;
+                  [
+                    ...target.parentElement!.parentElement!.querySelectorAll<HTMLInputElement>(
+                      "input[type=checkbox]"
+                    ),
+                  ]
+                    .slice(1)
+                    .forEach((_e, _i) => {
+                      _e.checked = target.checked;
+                      states[_i].val = target.checked;
+                    });
+                },
+              })
+            ),
+            diffs.map((e, _i) => li(RevertButton(e, _i)))
+          ),
+          br(),
+          button({
+            class: cls("fa-solid fa-check", settings.button),
+            style: "padding: 0.3rem",
+            onclick: (e) => {
+              let checkboxes = [
+                ...e.target.parentElement.querySelectorAll(
+                  "input[type=checkbox]"
+                ),
+              ]
+                .map((e: HTMLInputElement) => {
+                  const name = e.getAttribute("name");
+                  return name ? [name, e.checked] : null;
+                })
+                .filter((e) => e !== null)
+                .map(([name, checked]) => [parseInt(name as string), checked]);
+
+              const selections = Object.assign(
+                {},
+                ...checkboxes.map(([id, checked]) => {
+                  const diff = diffs[id as number];
+                  const stack = (checked ? diff.json : diff.oldJSON).getStack(
+                    checked ? diff.script : diff.oldScript
+                  );
+                  return stack;
+                })
+              );
+
+              const name = `${currentSprite.sprite.name!} [↩]`;
+              vm.addSprite(createSprite(name, selections));
+              this.tempSprites.push(name);
+              this.close();
+            },
+          })
+        );
+      };
+      $revert.classList.remove(settings.disabledButton);
+      $revert.disabled = false;
+      $revert.onclick = () => {
+        if (!this.reverting) {
+          switchedToRevert();
+        } else {
+          $revertList.style.display = "none";
+          $revert.innerHTML = "";
+          $revert.append(
+            i({ class: "fa-solid fa-rotate-left" }),
+            " Revert sprite"
+          );
+        }
+        this.reverting = !this.reverting;
+      };
     } else {
-      $importOld.style.display = "none";
-      $importOld.onclick = () => {};
+      $revert.classList.add(settings.disabledButton);
+      $revert.disabled = true;
+      $revert.onclick = () => {};
     }
 
     this.querySelector<HTMLElement>(".card-title")!.innerText = spriteName;
-    if (!this.open) this.showModal();
+
+    this.close();
+    this.showModal();
   }
 
   // placeholders so i don't have to change a lot of code
   // TODO: don't
   close() {
     this.style.display = "none";
+    if (this.$revertList) {
+      this.$revertList.style.display = "none";
+      this.reverting = false;
+      this.$revert.innerHTML = "";
+      this.$revert.append(
+        i({ class: "fa-solid fa-rotate-left" }),
+        " Revert sprite"
+      );
+    }
   }
   showModal() {
     this.style.display = "flex";

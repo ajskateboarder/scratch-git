@@ -29,7 +29,7 @@
       padding: 0.3rem;
       padding-left: 10px;
       border: 0.5px solid grey;
-      background-color: var(--ui-primary);
+      background-color: hsla(215, 100%, 95%, 0.4);
       color: var(--ui-modal-foreground);
       filter: brightness(0.5);
       transition: 0.2s background-color ease-in;
@@ -37,7 +37,7 @@
       border-top-right-radius: 10px;
       border-bottom-right-radius: 10px;
 
-      &:hover {
+      &:not(.active-tab):hover {
         background-color: var(--ui-black-transparent);
       }
     }
@@ -79,10 +79,6 @@
 .active-tab {
   filter: brightness(1) !important;
   outline: none;
-}
-
-.active-tab:hover {
-  background-color: var(--ui-primary) !important;
 }
 
 .tab-btn {
@@ -196,4 +192,15 @@ html[style*="--color-scheme: dark"] {
   width: 565px;
   height: 25rem;
   align-items: normal
+}
+
+.revert-icon {
+  padding: 2px;
+  margin-right: 5px;
+  border-radius: 5px;
+}
+
+.revert-icon:hover {
+  background-color: grey;
+  color: white;
 }

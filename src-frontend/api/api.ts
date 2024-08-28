@@ -327,13 +327,13 @@ export class ProjectManager extends Socket {
 
 /** Diff two scratchblocks scripts and return lines removed and added, and the diffed content
  *
- * @param oldScript - the script for a sprite before a save
+ * @param oldScript - the script for a sprite before a save, default is empty string
  * @param newScript - the script after a save
  */
 // LINK src-server/handlers.rs#diff
 export const diff = (
   projectName: string,
-  oldScript: string,
+  oldScript: string = "",
   newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));

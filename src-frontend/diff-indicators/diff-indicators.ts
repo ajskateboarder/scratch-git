@@ -283,8 +283,12 @@ export const showIndicators = async (project: Project) => {
 
   // highlightChanged returns false if the changed sprite was removed (probably by design?)
   // show the removed sprite as a ghost which is non-clickable and shows the diff indicator
+  document.querySelectorAll(".deleted-sprite").forEach((e) => e.remove());
   if (!changed) {
     changedSprites.forEach((e) => {
+      // stage will always exist so showing it here is redundant
+      if (e.name === "Stage") return;
+
       if (!vm.runtime.getSpriteTargetByName(e.name)) {
         const lastSprite = [
           ...document.querySelectorAll("div[style^='order: ']"),
@@ -300,7 +304,9 @@ export const showIndicators = async (project: Project) => {
           ghost.querySelector("img")?.parentElement?.remove();
           ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
           ghost.style.userSelect = "none";
+          // TODO: localize
           ghost.title = "This sprite was deleted.";
+          ghost.classList.add("deleted-sprite");
 
           const diffButton = SpriteDiff({
             style: `
