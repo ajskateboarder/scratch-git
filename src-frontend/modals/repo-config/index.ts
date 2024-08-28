@@ -98,10 +98,6 @@ export class RepoConfigModal extends HTMLElement {
   showModal() {
     this.style.display = "flex";
   }
-  refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
-  }
   get open() {
     return this.style.display !== "none";
   }

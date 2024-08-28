@@ -8,7 +8,9 @@ const getItem = (name: string, _default: any = null) => {
     return value;
   }
 };
+
 const delItem = (name: string) => localStorage.removeItem(`${NS}:${name}`);
+
 const setItem = (name: string, value: any) =>
   localStorage.setItem(
     `${NS}:${name}`,
@@ -19,50 +21,76 @@ export const DEFAULTS = {
   highlights: false,
   plainText: false,
   scriptColor: "#ed25cf",
-  imgAddColor: "#ff0000",
-  imgRmColor: "#00ff00",
   unified: false,
+  imgAddColor: "#00ff00",
+  imgRmColor: "#ff0000",
 };
-
-type Default = keyof typeof DEFAULTS;
-
-const DEFAULTS_MAP: Record<Default, string> = {
-  highlights: "highlights",
-  plainText: "plaintext",
-  scriptColor: "scriptcolor",
-  imgAddColor: "imgaddcolor",
-  imgRmColor: "imgrmcolor",
-  unified: "unified",
-};
-
-const _userSettings: Record<Default, any> = new Proxy(DEFAULTS, {
-  set(_, prop: string, value) {
-    setItem(prop, value);
-    return true;
-  },
-  get(_, prop: string) {
-    return getItem(prop);
-  },
-});
 
 export const userSettings = {
-  ..._userSettings,
+  get highlights() {
+    return getItem("highlights")!;
+  },
+  set highlights(value: boolean) {
+    setItem("highlights", value);
+  },
+
+  get plainText() {
+    return getItem("plaintext")!;
+  },
+  set plainText(value: boolean) {
+    setItem("plaintext", value);
+  },
+
+  get scriptColor() {
+    return getItem("scriptcolor")!;
+  },
+  set scriptColor(value: string) {
+    setItem("scriptcolor", value);
+  },
+
+  get unified() {
+    return getItem("unified")!;
+  },
+  set unified(value: boolean) {
+    setItem("unified", value);
+  },
+
+  get imgAddColor() {
+    return getItem("imgaddcolor")!;
+  },
+  set imgAddColor(value: string) {
+    setItem("imgaddcolor", value);
+  },
+
+  get imgRmColor() {
+    return getItem("imgrmcolor")!;
+  },
+  set imgRmColor(value: string) {
+    setItem("imgrmcolor", value);
+  },
 
   init() {
-    for (const [key, value] of Object.entries(DEFAULTS_MAP)) {
-      setItem(value, getItem(value, DEFAULTS[key as Default]));
-    }
+    setItem("highlights", getItem("highlights", DEFAULTS.highlights));
+    setItem("plaintext", getItem("plaintext", DEFAULTS.plainText));
+    setItem("scriptcolor", getItem("scriptcolor", DEFAULTS.scriptColor));
+    setItem("unified", getItem("unified", DEFAULTS.scriptColor));
+    setItem("imgaddcolor", getItem("imgaddcolor", DEFAULTS.imgAddColor));
+    setItem("imgrmcolor", getItem("imgrmcolor", DEFAULTS.imgRmColor));
   },
 
   clear() {
-    for (const key in Object.values(DEFAULTS_MAP)) {
-      delItem(key);
-    }
+    delItem("highlights");
+    delItem("plaintext");
+    delItem("scriptcolor");
+    delItem("imgaddcolor");
+    delItem("imgrmcolor");
   },
 
   defaults() {
-    for (const [key, value] of Object.entries(DEFAULTS_MAP)) {
-      setItem(value, DEFAULTS[key as Default]);
-    }
+    setItem("highlights", DEFAULTS.highlights);
+    setItem("plaintext", DEFAULTS.plainText);
+    setItem("scriptcolor", DEFAULTS.scriptColor);
+    setItem("imgaddcolor", DEFAULTS.imgAddColor);
+    setItem("imgrmcolor", DEFAULTS.imgRmColor);
   },
 };

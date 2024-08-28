@@ -92,7 +92,6 @@ const highlightChanged = async (
     previousScripts,
     currentScripts
   );
-  console.log(changedScripts, sprite);
 
   console.debug(
     `received following for sprite ${sprite.format()}`,

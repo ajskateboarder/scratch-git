@@ -379,11 +379,4 @@ export class WelcomeModal extends Modal {
       )
     );
   }
-
-  public refresh() {
-    this.currentStep.val = 0;
-    this.querySelectorAll(".screen").forEach((e) => e.remove());
-    this.querySelector(".thumbnail")!.remove();
-    this.connectedCallback();
-  }
 }

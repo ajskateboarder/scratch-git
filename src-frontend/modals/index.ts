@@ -37,14 +37,4 @@ export const initModals = () => {
   document.body.appendChild(document.createElement("repo-config-modal"));
 };
 
-export const refreshModals = () => {
-  MODALS.forEach((e) =>
-    document.querySelector<Modal>(`[is=${e}-modal]`)!.refresh()
-  );
-  document.querySelector<Modal>(`diff-modal`)!.refresh();
-  document.querySelector<Modal>(`settings-modal`)!.refresh();
-  document.querySelector<Modal>(`commit-modal`)!.refresh();
-  document.querySelector<Modal>(`repo-config-modal`)!.refresh();
-};
-
 export { WelcomeModal, DiffModal, CommitModal, RepoConfigModal, SettingsModal };

@@ -170,7 +170,9 @@ const Settings = (dark: boolean) => [
 
 export class SettingsModal extends HTMLElement {
   connectedCallback() {
+    if (this.querySelector("main")) return;
     this.close();
+
     const dark =
       (Redux.getState().scratchGui as any).theme.theme.gui === "dark";
 
@@ -219,12 +221,6 @@ export class SettingsModal extends HTMLElement {
       "Uninstall"
     );
 
-    scInput[0].value = userSettings.scriptColor;
-    hlInput[0].checked = userSettings.highlights;
-    ptInput[0].checked = userSettings.plainText;
-    icInput[0].value = userSettings.imgAddColor;
-    icInput[1].value = userSettings.imgRmColor;
-
     van.add(
       this,
       Modal(
@@ -250,18 +246,19 @@ export class SettingsModal extends HTMLElement {
         () => this.close()
       )
     );
+
+    scInput[0].value = userSettings.scriptColor;
+    icInput[0].value = userSettings.imgAddColor;
+    icInput[1].value = userSettings.imgRmColor;
+    hlInput[0].checked = userSettings.highlights;
+    ptInput[0].checked = userSettings.plainText;
   }
 
   public display() {
     // TODO: probably a better alt to doing a modal refresh every time
-    this.querySelector(".settings-wrapper")!.remove();
+    this.querySelector(".ReactModalPortal")!.remove();
     this.connectedCallback();
     this.showModal();
-  }
-
-  public refresh() {
-    this.querySelector(".settings-wrapper")!.remove();
-    this.connectedCallback();
   }
 
   showModal() {
@@ -269,5 +266,8 @@ export class SettingsModal extends HTMLElement {
   }
   close() {
     this.style.display = "none";
+  }
+  get open() {
+    return this.style.display !== "none";
   }
 }
