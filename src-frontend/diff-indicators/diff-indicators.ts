@@ -304,6 +304,7 @@ export const showIndicators = async (project: Project) => {
           ghost.querySelector("img")?.parentElement?.remove();
           ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
           ghost.style.userSelect = "none";
+          ghost.style.opacity = "0.5";
           // TODO: localize
           ghost.title = "This sprite was deleted.";
           ghost.classList.add("deleted-sprite");
