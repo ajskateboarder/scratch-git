@@ -1,8 +1,7 @@
-import { DEFAULTS, userSettings } from "@/settings";
 import van from "vanjs-core";
+import { DEFAULTS, userSettings } from "@/settings";
 import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
-import i18n from "@/l10n";
 import { Redux } from "@/lib";
 import { Modal } from "../modal";
 
@@ -45,7 +44,7 @@ const ScriptColor = (dark: boolean) => {
         value: userSettings.scriptColor,
         onchange: (e) => (userSettings.scriptColor = e.target.value),
       }),
-      span(" ", i18n.t("settings.highlight.name"))
+      span(" ", "Highlight")
     ),
     HelpIcon(dark)
   );
@@ -56,7 +55,7 @@ const ScriptColor = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(colorInput),
-    i18n.t("settings.highlight.help")
+    "Changes the highlight color of changed scripts"
   );
 };
 
@@ -81,7 +80,7 @@ const ImgChangeColors = (dark: boolean) => {
         value: userSettings.imgRmColor,
         onchange: (e) => (userSettings.imgRmColor = e.target.value),
       }),
-      span(" ", i18n.t("settings.img-change-colors.name"))
+      span(" ", "Image addition/removal colors")
     ),
     HelpIcon(dark)
   );
@@ -92,7 +91,7 @@ const ImgChangeColors = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(colorInput),
-    i18n.t("settings.img-change-colors.help")
+    "Changes the colors for parts of an image that were added or removed"
   );
 };
 
@@ -114,7 +113,7 @@ const Highlights = (dark: boolean) => {
         onchange: (e: Event) =>
           (userSettings.highlights = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", i18n.t("settings.highlight-diffs.name"))
+      span(" ", "Show diffs with highlights")
     ),
     HelpIcon(dark)
   );
@@ -125,7 +124,7 @@ const Highlights = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(hlInput),
-    i18n.t("settings.highlight-diffs.help")
+    "If this is enabled, diffs will be highlighted instead of being outlined or crossed out."
   );
 };
 
@@ -147,7 +146,7 @@ const PlainText = (dark: boolean) => {
         onchange: (e: Event) =>
           (userSettings.plainText = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", i18n.t("settings.plain-text.name"))
+      span(" ", "Show diffs in plain text")
     ),
     HelpIcon(dark)
   );
@@ -158,7 +157,7 @@ const PlainText = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(ptInput),
-    i18n.t("settings.plain-text.help")
+    "If this is enabled, diffs will be shown in plain text instead of Scratch blocks."
   );
 };
 
@@ -197,23 +196,27 @@ export class SettingsModal extends HTMLElement {
           ptInput[0].checked = DEFAULTS.plainText;
         },
       },
-      i18n.t("settings.reset-to-defaults")
+      "Reset to defaults"
     );
 
     const uninstallButton = button(
       {
         class: settings.button,
         onclick: async () => {
-          if (confirm(i18n.t("settings.uninstall-note"))) {
-            await uninstall();
-            userSettings.clear();
-            (window._changedScripts as any) = undefined;
-            (window._repoStatus as any) = undefined;
-            window.location.reload();
+          if (confirm("Are you sure you want to uninstall scratch.git?")) {
+            if (await uninstall()) {
+              userSettings.clear();
+              (window._changedScripts as any) = undefined;
+              (window._repoStatus as any) = undefined;
+              window.location.reload();
+            } else {
+              // TODO: o_0 what
+              alert("Failed to uninstall");
+            }
           }
         },
       },
-      i18n.t("settings.uninstall")
+      "Uninstall"
     );
 
     scInput[0].value = userSettings.scriptColor;
@@ -243,7 +246,6 @@ export class SettingsModal extends HTMLElement {
             uninstallButton
           )
         ),
-        // TODO: localize
         "Git Settings",
         () => this.close()
       )

@@ -1,12 +1,11 @@
-import { Modal } from "../base";
-import thumbnail from "./thumbnail.svg";
+import van from "vanjs-core";
 import api, { cloneRepo, remoteExists } from "@/api";
 import { settings, fileMenu, cls } from "@/components";
 import { InputBox, InputField } from "@/components";
-import i18next from "@/l10n";
 import { Redux, vm } from "@/lib";
 import { validEmail, validURL } from "@/utils";
-import van from "vanjs-core";
+import { Modal } from "../base";
+import thumbnail from "./thumbnail.svg";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
   van.tags;
@@ -20,10 +19,10 @@ const Screen = (step: { number: number; title: string }, ...children: any) =>
   );
 
 const CLONE_ERROR = {
-  [-1]: i18next.tlazy("alerts.clone.error"),
-  [-2]: i18next.tlazy("alerts.clone.no-json"),
-  [-3]: i18next.tlazy("alerts.clone.missing-asset"),
-  [-4]: i18next.tlazy("alerts.clone.cloned-already"),
+  [-1]: "An error occurred while trying to clone this repository.",
+  [-2]: "This repository is not a valid Scratch project.",
+  [-3]: "This repository uses costumes or sounds that don't exist.",
+  [-4]: "You have already cloned this repository.",
 };
 
 /** Project initialization */
@@ -76,7 +75,7 @@ export class WelcomeModal extends Modal {
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
-      i18next.t("welcome.next")
+      "Next"
     );
 
     const openProject = van.derive(() => {
@@ -93,24 +92,23 @@ export class WelcomeModal extends Modal {
                   if (await api.getCurrentProject()?.exists()) {
                     goToStep2.disabled = false;
                     goToStep2.style.cursor = "help";
-                    goToStep2.title = i18next.t("welcome.configured-before");
+                    goToStep2.title = "This project has been made already";
                   } else {
                     goToStep2.disabled = true;
                     goToStep2.style.cursor = "unset";
                     goToStep2.title = "";
                   }
                   goToStep2.classList.remove(settings.disabledButton);
-                  openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> ${i18next.t(
-                    "welcome.project-opened"
+                  openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> Project opened"
                   )}`;
                 });
                 setTimeout(() => {
-                  openProject.val.innerHTML = i18next.t("welcome.open-project");
+                  openProject.val.innerHTML = "Open project";
                 }, 2000);
               });
             },
           },
-          i18next.t("welcome.open-project")
+          "Open project"
         );
       } else {
         const $url = InputBox({
@@ -130,7 +128,7 @@ export class WelcomeModal extends Modal {
 
               if (!(await remoteExists($url.value))) {
                 $url.setCustomValidity(
-                  i18next.t("welcome.clone.repo-not-found")
+                  "This repository doesn't exist or it's private."
                 );
                 $url.reportValidity();
                 return;
@@ -138,33 +136,25 @@ export class WelcomeModal extends Modal {
 
               $submit.innerHTML = "";
               $submit.appendChild(
-                span(
-                  i({ class: "fa-solid fa-sync fa-spin" }),
-                  " ",
-                  i18next.t("welcome.clone.cloning")
-                )
+                span(i({ class: "fa-solid fa-sync fa-spin" }), " ", "Cloning")
               );
 
               let response = await cloneRepo($url.value);
-              $submit.innerText = i18next.t("welcome.clone.clone");
+              $submit.innerText = "Clone";
               if (response.success === false) {
                 $url.setCustomValidity(
-                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR]()
+                  CLONE_ERROR[response.reason as keyof typeof CLONE_ERROR]
                 );
                 $url.reportValidity();
                 return;
               }
 
               // should i use something other than alert?
-              alert(
-                i18next.t("welcome.clone.project-saved", {
-                  path: response.path,
-                })
-              );
+              alert(`Project saved at ${response.path}`);
               loadState.val = true;
             },
           },
-          i18next.t("welcome.clone.clone")
+          "Clone"
         );
 
         return form(
@@ -176,16 +166,14 @@ export class WelcomeModal extends Modal {
     });
 
     return Screen(
-      { title: i18next.t("welcome.welcome"), number: 1 },
+      { title: "Welcome to scratch.git", number: 1 },
       div(
         { style: "font-weight: normal" },
         p(
           () =>
-            i18next.t(
-              loadState.val
-                ? "welcome.get-started"
-                : "welcome.get-started-w-url"
-            ),
+            loadState.val
+              ? "Please load a project for Git development to get started"
+              : "Please load a project for development from a Git repository link to get started",
           br(),
           br()
         ),
@@ -198,7 +186,9 @@ export class WelcomeModal extends Modal {
             onclick: () => (loadState.val = !loadState.val),
           },
           () =>
-            i18next.t(loadState.val ? "welcome.or-clone" : "welcome.or-load")
+            loadState.val
+              ? "or clone a repository from online"
+              : "or load an existing project from your computer"
         ),
         br(),
         br()
@@ -216,7 +206,7 @@ export class WelcomeModal extends Modal {
               }
             },
           },
-          i18next.t("close")
+          "Close"
         ),
         goToStep2
       )
@@ -234,7 +224,7 @@ export class WelcomeModal extends Modal {
           ++this.currentStep.val;
         },
       },
-      i18next.t("welcome.next")
+      "Next"
     );
 
     const openProjectPath = input({
@@ -250,10 +240,14 @@ export class WelcomeModal extends Modal {
     });
 
     return Screen(
-      { title: i18next.t("welcome.select-project-loc"), number: 2 },
+      { title: "Select project file", number: 2 },
       div(
         { class: "welcome-screen-content" },
-        p(i18next.t("welcome.select-location"), br(), br()),
+        p(
+          "Please select the location of your Scratch project file.",
+          br(),
+          br()
+        ),
         openProjectPath
       ),
       BottomBar(
@@ -262,7 +256,7 @@ export class WelcomeModal extends Modal {
             class: cls(settings.button, "back-button"),
             onclick: () => --this.currentStep.val,
           },
-          i18next.t("welcome.back")
+          "Back"
         ),
         goToStep3
       )
@@ -296,7 +290,7 @@ export class WelcomeModal extends Modal {
           }
         },
       },
-      i18next.t("welcome.next")
+      "Next"
     );
 
     const disableIfEmptyFields = () => {
@@ -316,7 +310,7 @@ export class WelcomeModal extends Modal {
 
     const $username = InputField(
       {},
-      label({ class: "input-label" }, i18next.t("repoconfig.name")),
+      label({ class: "input-label" }, "Name"),
       InputBox({
         onblur: (e: Event) => {
           username = (e.target! as HTMLInputElement).value;
@@ -327,7 +321,7 @@ export class WelcomeModal extends Modal {
 
     const $email = InputField(
       {},
-      label({ class: "input-label" }, i18next.t("repoconfig.email")),
+      label({ class: "input-label" }, "Email"),
       InputBox({
         onblur: (e: Event) => {
           email = (e.target! as HTMLInputElement).value;
@@ -341,10 +335,14 @@ export class WelcomeModal extends Modal {
     );
 
     return Screen(
-      { title: i18next.t("welcome.set-info"), number: 3 },
+      { title: "Enter a username and email", number: 3 },
       div(
         { class: "welcome-screen-content" },
-        p(i18next.t("welcome.set-git-username"), br(), br()),
+        p(
+          "Please pick a username and email to use when making commits. Remember to keep this info appropriate if you want to share your repository on Scratch. Your email is only used for Git and doesn't have to be a real email.",
+          br(),
+          br()
+        ),
         $username,
         br(),
         $email,
@@ -355,7 +353,7 @@ export class WelcomeModal extends Modal {
               class: cls(settings.button, "back-button"),
               onclick: () => --this.currentStep.val,
             },
-            i18next.t("welcome.back")
+            "Back"
           ),
           goToStep4
         )
@@ -365,7 +363,7 @@ export class WelcomeModal extends Modal {
 
   private $step4() {
     return Screen(
-      { title: i18next.t("welcome.welcome"), number: 3 },
+      { title: "Welcome to scratch.git", number: 3 },
       div(
         { class: "welcome-screen-content" },
         p("To be written", br(), br()),
@@ -375,7 +373,7 @@ export class WelcomeModal extends Modal {
               class: cls(settings.button, "back-button"),
               onclick: () => this.close(),
             },
-            i18next.t("close")
+            "Close"
           )
         )
       )

@@ -39,29 +39,11 @@ These features closely mimic the kind of Git development seen in editors such as
 
 **Please note the following:**
 
-- scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to [build from scratch](#developing) for now - contributions for other systems are greatly appreciated!
+- scratch.git releases are only made for 64-bit Windows, MacOS, and recent Linux versions such as Ubuntu 20.04. Other systems will need to build from scratch for now - contributions for other systems are greatly appreciated!
 
 - scratch.git will likely break when Git's locale is something other than English because we check for certain words from Git's output.
 
-## Contributing
-
-Translations are currently accepted, but not recommended for submission as of now due to scratch.git being in an unfinished state. Please report bugs to our [issue tracker](https://github.com/ajskateboarder/scratch-git/issues).
-
-## Developing
-
-Install the build dependencies:
-
-```bash
-npm install
-```
-
-And run the debug script (Linux only for now):
-
-```bash
-.vscode/debug.sh
-```
-
-Alternatively, if you are using VSCode, there is a build task you can configure to run with `Ctrl+Shift+B`.
+If you spotted a bug or any errors, please report bugs to the [issue tracker](https://github.com/ajskateboarder/scratch-git/issues).
 
 ## Commit spec
 

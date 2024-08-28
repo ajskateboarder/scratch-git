@@ -6,7 +6,7 @@ import { SettingsModal } from "./settings";
 import { s } from "../components";
 import type { Modal } from "./base";
 
-const MODALS = ["welcome", "repo-config"];
+const MODALS = ["welcome"];
 
 export const initModals = () => {
   if (document.querySelector("commit-modal")) return;
@@ -14,13 +14,11 @@ export const initModals = () => {
   try {
     customElements.define("commit-modal", CommitModal);
     customElements.define("diff-modal", DiffModal);
+    customElements.define("repo-config-modal", RepoConfigModal);
+    customElements.define("settings-modal", SettingsModal);
     customElements.define("welcome-modal", WelcomeModal, {
       extends: "dialog",
     });
-    customElements.define("repo-config-modal", RepoConfigModal, {
-      extends: "dialog",
-    });
-    customElements.define("settings-modal", SettingsModal);
   } catch {}
 
   // insert modals into area where they can show correctly
@@ -36,6 +34,7 @@ export const initModals = () => {
   document.body.appendChild(document.createElement("diff-modal"));
   document.body.appendChild(document.createElement("settings-modal"));
   document.body.appendChild(document.createElement("commit-modal"));
+  document.body.appendChild(document.createElement("repo-config-modal"));
 };
 
 export const refreshModals = () => {
@@ -45,6 +44,7 @@ export const refreshModals = () => {
   document.querySelector<Modal>(`diff-modal`)!.refresh();
   document.querySelector<Modal>(`settings-modal`)!.refresh();
   document.querySelector<Modal>(`commit-modal`)!.refresh();
+  document.querySelector<Modal>(`repo-config-modal`)!.refresh();
 };
 
 export { WelcomeModal, DiffModal, CommitModal, RepoConfigModal, SettingsModal };

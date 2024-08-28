@@ -1,19 +1,18 @@
-import { scrollBlockIntoView, flash } from "./block-utils";
-import api, { CostumeChange, Project } from "@/api";
-import { Card, cls, settings } from "@/components";
-import { Checkbox, Copy } from "@/components";
-import { Redux, scratchblocks, vm } from "@/lib";
-import { getBlockly } from "@/lib";
-import { parseScripts, type ScriptStatus } from "@/diff-indicators";
-import { userSettings } from "@/settings";
 import van, { State } from "vanjs-core";
 
+import api, { CostumeChange, Project } from "@/api";
+import { cls, settings, Checkbox, Copy } from "@/components/";
+import { getBlockly, Redux, scratchblocks, vm } from "@/lib";
+import { parseScripts, type ScriptStatus } from "@/diff-indicators";
+import { userSettings } from "@/settings";
+import { ProjectJSON } from "@/diff-indicators/script-parser";
+
+import { Card } from "../card";
+import { scrollBlockIntoView, flash } from "./block-utils";
+import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
 import iconCodeSvg from "./code.svg";
 import iconCostumesSvg from "./paintbrush.svg";
 import iconSoundsSvg from "./sound.svg";
-import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
-import { getLocale } from "@/l10n";
-import { ProjectJSON } from "@/diff-indicators/script-parser";
 
 const {
   div,
@@ -65,14 +64,16 @@ interface Diff {
   diffed: string;
 }
 
-const byteFormatter = Intl.NumberFormat(getLocale(), {
+const locale = Redux.getState().locales.locale;
+
+const byteFormatter = Intl.NumberFormat(locale, {
   notation: "compact",
   style: "unit",
   unit: "byte",
   unitDisplay: "narrow",
 });
 
-const percentFormatter = Intl.NumberFormat(getLocale(), {
+const percentFormatter = Intl.NumberFormat(locale, {
   style: "percent",
   minimumFractionDigits: 0,
   maximumFractionDigits: 1,
@@ -108,7 +109,7 @@ export class DiffModal extends HTMLElement {
   private $plainText!: HTMLInputElement;
   private $unified!: HTMLElement;
   private $revert!: HTMLButtonElement;
-  private $revertList!: HTMLDialogElement;
+  private $revertList!: HTMLElement;
 
   private previousScripts!: ProjectJSON;
   private currentScripts!: ProjectJSON;
@@ -118,8 +119,6 @@ export class DiffModal extends HTMLElement {
 
   private unify = van.state(true);
   private reverting = false;
-
-  tempSprites: string[] = [];
 
   constructor() {
     super();
@@ -200,15 +199,13 @@ export class DiffModal extends HTMLElement {
 
     const revertList = main({ class: "revert-list", style: "display: none" });
 
-    Object.assign(this, {
-      $scripts: ul(),
-      $highlights: useHighlights.querySelector("input")!,
-      $plainText: plainText.querySelector("input")!,
-      $commits: diff.querySelector(".real-commit-wrap")!,
-      $unified: unified,
-      $revert: importOld,
-      $revertList: revertList,
-    });
+    this.$scripts = ul();
+    this.$highlights = useHighlights.querySelector("input")!;
+    this.$plainText = plainText.querySelector("input")!;
+    this.$commits = diff.querySelector(".real-commit-wrap")!;
+    this.$unified = unified;
+    this.$revert = importOld;
+    this.$revertList = revertList;
 
     van.add(
       this,
@@ -814,7 +811,6 @@ export class DiffModal extends HTMLElement {
           const ticked = van.state(false);
           states.push(ticked);
           return label(
-            // TODO: localize
             span(
               {
                 class: "revert-icon",
@@ -885,7 +881,6 @@ export class DiffModal extends HTMLElement {
 
               const name = `${currentSprite.sprite.name!} [↩]`;
               vm.addSprite(createSprite(name, selections));
-              this.tempSprites.push(name);
               this.close();
             },
           })

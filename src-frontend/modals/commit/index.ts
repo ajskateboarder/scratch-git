@@ -1,9 +1,9 @@
 import api, { type Commit } from "@/api";
-import { Card, cls, settings } from "@/components";
-import { CommitItem } from "@/components";
-import i18next from "@/l10n";
+import { cls, settings } from "@/components";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
+import { Card } from "../card";
+import { CommitItem } from "./commit-item";
 
 const { button, input, div, span, br, main, i, h3, p } = van.tags;
 
@@ -36,32 +36,30 @@ export class CommitModal extends HTMLElement {
       currentPage: van.state(0),
     };
 
-    Object.assign(this, {
-      $newer: button(
-        {
-          class: cls(settings.button, "round-right-button"),
-          disabled: true,
-        },
-        i({ class: "fa-solid fa-arrow-left" })
-      ),
-      $older: button(
-        {
-          class: cls(settings.button, "round-left-button"),
-        },
-        i({ class: "fa-solid fa-arrow-right" })
-      ),
-      $search: input({
-        type: "text",
-        style: "border-radius: 5px; width: 50%",
-        class: `${settings.inputField}${
-          (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
-            ? " dark"
-            : ""
-        }`,
-        placeholder: i18next.t("commit.search-commits"),
-      }),
-      $showing: p(),
+    this.$newer = button(
+      {
+        class: cls(settings.button, "round-right-button"),
+        disabled: true,
+      },
+      i({ class: "fa-solid fa-arrow-left" })
+    );
+    this.$older = button(
+      {
+        class: cls(settings.button, "round-left-button"),
+      },
+      i({ class: "fa-solid fa-arrow-right" })
+    );
+    this.$search = input({
+      type: "text",
+      style: "border-radius: 5px; width: 50%",
+      class: `${settings.inputField}${
+        (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
+          ? " dark"
+          : ""
+      }`,
+      placeholder: "Search for commits",
     });
+    this.$showing = p();
 
     const commitGroup = div(
       { class: "commit-group" },

@@ -1,5 +1,4 @@
-import { menu, s } from "../accessors";
-import i18next from "@/l10n";
+import { menu, s } from "./accessors";
 import { getReactHandlers } from "@/utils";
 import van, { ChildDom } from "vanjs-core";
 
@@ -102,12 +101,8 @@ export const gitMenu = new class {
       commitCreate,
       settings
     }: Record<string, () => any>,
-    locale: string | undefined
   ) {
-    if (this.menuInit && !locale) return;
-    if (locale) document.querySelector(".git-menu")?.remove();
-
-    i18next.changeLanguage(locale);
+    if (this.menuInit) return;
 
     // open, copy, and edit the file menu
     fileMenu.toggleMenu(false);
@@ -130,36 +125,36 @@ export const gitMenu = new class {
     this.newMenu.appendChild(this.savedItems);
 
     this.item(1).label(
-      span(i({ class: "fa-solid fa-upload" }), " ", i18next.t("menu.push"))
+      span(i({ class: "fa-solid fa-upload" }), " ", "Push")
     );
     this.item(1).onclick(push);
 
     this.item(2).label(
-      span(i({ class: "fa-solid fa-download" }), " ", i18next.t("menu.pull"))
+      span(i({ class: "fa-solid fa-download" }), " ", "Pull")
     );
     this.item(2).onclick(pull);
 
     this.item(5).label(
-      span(i({ class: "fa-solid fa-bars" }), " ", i18next.t("menu.setup-repo"))
+      span(i({ class: "fa-solid fa-bars" }), " ", "Setup repository")
     );
     this.item(5).onclick(repoConfig);
 
     // wrap the item in a span to show commit title right
     this.item(3).outerHTML = `<span>${this.item(3).outerHTML}</span>`;
-    this.item(3).label(span(i({class: "fa-solid fa-check"}), " ", i18next.t("menu.commit")));
+    this.item(3).label(span(i({class: "fa-solid fa-check"}), " ", "Commit"));
     this.item(3).onclick(commitCreate);
 
     this.item(4).label(
       span(
         i({ class: "fa-solid fa-code-commit" }),
         " ",
-        i18next.t("menu.view-commits")
+        "View commits"
       )
     );
     this.item(4).onclick(commitView);
 
     this.item(6).remove();
-    this.item(6).label(span(i({ class: "fa-solid fa-cog" }), " ", i18next.t("menu.settings")))
+    this.item(6).label(span(i({ class: "fa-solid fa-cog" }), " ", "Settings"))
     this.item(6).onclick(settings);
     this.item(6).classList.remove(menu.section);
 
@@ -178,7 +173,6 @@ export const gitMenu = new class {
         const commitsAhead = window._repoStatus.commits_ahead;
 
         if (commitsAhead !== 0 && !this.item(1).getAttribute("disabled")) {
-          // TODO: localize
           itemRef.parentElement!.title = `${commitsAhead} commit${commitsAhead > 1 ? "s" : ""} ahead`;
         } else {
           itemRef.parentElement!.setAttribute("title", "");
@@ -222,9 +216,9 @@ export const gitMenu = new class {
   setPushPullStatus(enabled: boolean) {
     if (!enabled) {
       this.item(1).setAttribute("disabled", "");
-      this.item(1).setAttribute("title", i18next.t("menu.repo-needed"));
+      this.item(1).setAttribute("title", "Please set up a repository to use this");
       this.item(2).setAttribute("disabled", "");
-      this.item(2).setAttribute("title", i18next.t("menu.repo-needed"));
+      this.item(2).setAttribute("title", "Please set up a repository to use this");
     } else {
       this.item(1).removeAttribute("disabled");
       this.item(1).removeAttribute("title");

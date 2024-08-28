@@ -1,14 +1,13 @@
-import { Modal } from "../base";
+import van from "vanjs-core";
 import api, { Project, remoteExists } from "@/api";
 import { settings, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
-import i18next from "@/l10n";
 import { validURL } from "@/utils";
-import van from "vanjs-core";
+import { Modal } from "../modal";
 
-const { main, button, h1, div, span, label, br, i } = van.tags;
+const { main, button, div, label, br } = van.tags;
 
-export class RepoConfigModal extends Modal {
+export class RepoConfigModal extends HTMLElement {
   $repository!: HTMLInputElement;
   $name!: HTMLInputElement;
   $email!: HTMLInputElement;
@@ -16,18 +15,10 @@ export class RepoConfigModal extends Modal {
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-
-    const closeButton = button(
-      {
-        class: settings.button,
-        style: "margin-left: 10px",
-        onclick: () => this.close(),
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
+    this.close();
 
     const $repository = InputBox({
-      placeholder: i18next.t("repoconfig.repo-url-placeholder"),
+      placeholder: "Enter a link to a repository URL",
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (!validURL(url) && !(await remoteExists(url))) {
@@ -43,7 +34,7 @@ export class RepoConfigModal extends Modal {
         class: settings.button,
         onclick: () => {
           if ($name.value.trim() === "") {
-            alert(i18next.t("repoconfig.no-empty-fields"));
+            alert("Don't leave starred fields blank");
             return;
           }
           if ($repository.value.trim() !== "") {
@@ -56,55 +47,34 @@ export class RepoConfigModal extends Modal {
           });
         },
       },
-      // TODO: localize
       "Save"
     );
 
-    const config = i18next
-      .t("repoconfig.repoconfig")
-      .replace(
-        /\[\[(.*?)\]\]/g,
-        `<span class="tip" title="${i18next.t(
-          "repoconfig.repo-tip"
-        )}">$1</span>`
-      );
-
     van.add(
       this,
-      main(
-        h1(
-          { style: "display: flex; justify-content: space-between" },
-          span({ innerHTML: config }),
-          closeButton
+      Modal(
+        main(
+          InputField({}, label({ class: "input-label" }, "Name", "*"), $name),
+          br(),
+          InputField(
+            {},
+            label({ class: "input-label" }, "Repository URL (optional)"),
+            $repository
+          ),
+          br(),
+          InputField({}, label({ class: "input-label" }, "Email"), $email),
+          br(),
+          br(),
+          div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
         ),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
-          $name
-        ),
-        br(),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
-          $repository
-        ),
-        br(),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.email")),
-          $email
-        ),
-        br(),
-        br(),
-        div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
+        "Project/repository settings",
+        () => this.close()
       )
     );
 
-    Object.assign(this, {
-      $repository,
-      $name,
-      $email,
-    });
+    this.$repository = $repository;
+    this.$name = $name;
+    this.$email = $email;
   }
 
   public async display() {
@@ -120,5 +90,19 @@ export class RepoConfigModal extends Modal {
     }
 
     if (!this.open) this.showModal();
+  }
+
+  close() {
+    this.style.display = "none";
+  }
+  showModal() {
+    this.style.display = "flex";
+  }
+  refresh() {
+    this.querySelector("main")?.remove();
+    this.connectedCallback();
+  }
+  get open() {
+    return this.style.display !== "none";
   }
 }

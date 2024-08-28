@@ -2,7 +2,6 @@ import api, { Project } from "./api";
 import { createGitMenu, Styles } from "./init";
 import { fileMenu, misc, ScratchAlert } from "./components";
 import { showIndicators } from "./diff-indicators";
-import i18next from "./l10n";
 import { scratchblocks, vm } from "./lib";
 
 import { initModals, WelcomeModal } from "./modals";
@@ -19,9 +18,9 @@ const displayDiffs = async (project: Project) => {
   try {
     await showIndicators(project!);
   } catch (e) {
-    new ScratchAlert(i18next.t("alerts.wrong-project"))
+    new ScratchAlert("Nothing was changed. Did you open the right project?")
       .type("warn")
-      .timeout(5000)
+      .timeout(4000)
       .display();
   }
 };

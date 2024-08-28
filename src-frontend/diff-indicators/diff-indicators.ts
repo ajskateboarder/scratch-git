@@ -2,7 +2,7 @@ import type { Project, Sprite } from "@/api";
 import { s, sprites } from "@/components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
-import { SpriteDiff, StageDiff } from "@/components";
+import { SpriteDiff, StageDiff } from "./diff-buttons";
 import { getBlockly, vm } from "@/lib/globals";
 import { userSettings } from "../settings";
 import { contextMenu } from "./inject-context";
@@ -143,7 +143,6 @@ export const showIndicators = async (project: Project) => {
     if (index === -1) return;
 
     contextMenu.setCustomItem({
-      // TODO: localize
       title: "Show Changes",
       onclick() {
         (document.querySelector("diff-modal") as DiffModal).display(
@@ -305,7 +304,6 @@ export const showIndicators = async (project: Project) => {
           ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
           ghost.style.userSelect = "none";
           ghost.style.opacity = "0.5";
-          // TODO: localize
           ghost.title = "This sprite was deleted.";
           ghost.classList.add("deleted-sprite");
 

@@ -61,7 +61,6 @@ class Socket {
           console.debug("message", message.data);
           const json = JSON.parse(message.data);
           if (json["unhandled-error"]) {
-            // TODO: localize
             alert(
               `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`
             );
