@@ -4,7 +4,6 @@ import { settings, fileMenu, cls } from "@/components";
 import { InputBox, InputField } from "@/components";
 import { Redux, vm } from "@/lib";
 import { validEmail, validURL } from "@/utils";
-import { Modal } from "../base";
 import thumbnail from "./thumbnail.svg";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
@@ -26,7 +25,7 @@ const CLONE_ERROR = {
 };
 
 /** Project initialization */
-export class WelcomeModal extends Modal {
+export class WelcomeModal extends HTMLDialogElement {
   $steps: Element[] = [];
 
   loadedProject: boolean = false;
@@ -99,8 +98,7 @@ export class WelcomeModal extends Modal {
                     goToStep2.title = "";
                   }
                   goToStep2.classList.remove(settings.disabledButton);
-                  openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> Project opened"
-                  )}`;
+                  openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
                 });
                 setTimeout(() => {
                   openProject.val.innerHTML = "Open project";
@@ -199,11 +197,11 @@ export class WelcomeModal extends Modal {
             class: cls(settings.button, "back-button"),
             onclick: () => {
               this.close();
-              if (this.loadedProject) {
-                // nothing is changed at this point so ignore warnings
-                window.onbeforeunload = () => {};
-                window.location.reload();
-              }
+              // if (this.loadedProject) {
+              //   // nothing is changed at this point so ignore warnings
+              //   window.onbeforeunload = () => {};
+              //   window.location.reload();
+              // }
             },
           },
           "Close"

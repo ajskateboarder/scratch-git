@@ -13,6 +13,7 @@ import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
 import iconCodeSvg from "./code.svg";
 import iconCostumesSvg from "./paintbrush.svg";
 import iconSoundsSvg from "./sound.svg";
+import { Base } from "../base";
 
 const {
   div,
@@ -102,7 +103,7 @@ const createSprite = (name: string, blocks: any) =>
   });
 
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
-export class DiffModal extends HTMLElement {
+export class DiffModal extends Base {
   private $scripts!: HTMLUListElement;
   private $commits!: HTMLParagraphElement;
   private $highlights!: HTMLInputElement;
@@ -913,8 +914,6 @@ export class DiffModal extends HTMLElement {
     this.showModal();
   }
 
-  // placeholders so i don't have to change a lot of code
-  // TODO: don't
   close() {
     this.style.display = "none";
     if (this.$revertList) {
@@ -926,15 +925,5 @@ export class DiffModal extends HTMLElement {
         " Revert sprite"
       );
     }
-  }
-  showModal() {
-    this.style.display = "flex";
-  }
-  refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
-  }
-  get open() {
-    return this.style.display !== "none";
   }
 }

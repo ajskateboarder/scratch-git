@@ -4,6 +4,7 @@ import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 import { Card } from "../card";
 import { CommitItem } from "./commit-item";
+import { Base } from "../base";
 
 const { button, input, div, span, br, main, i, h3, p } = van.tags;
 
@@ -13,7 +14,7 @@ const paginate = (list: any[], length: number) =>
   );
 
 /** Displays a log of all commits to a Git project */
-export class CommitModal extends HTMLElement {
+export class CommitModal extends Base {
   $older!: HTMLButtonElement;
   $newer!: HTMLButtonElement;
   $search!: HTMLInputElement;
@@ -226,15 +227,5 @@ export class CommitModal extends HTMLElement {
         ".card-title"
       )!.innerText = `Commits${info}`;
     }
-  }
-
-  showModal() {
-    this.style.display = "flex";
-  }
-  close() {
-    this.style.display = "none";
-  }
-  get open() {
-    return this.style.display !== "none";
   }
 }

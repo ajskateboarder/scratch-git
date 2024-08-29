@@ -4,10 +4,11 @@ import { settings, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
 import { validURL } from "@/utils";
 import { Modal } from "../modal";
+import { Base } from "../base";
 
 const { main, button, div, label, br } = van.tags;
 
-export class RepoConfigModal extends HTMLElement {
+export class RepoConfigModal extends Base {
   $repository!: HTMLInputElement;
   $name!: HTMLInputElement;
   $email!: HTMLInputElement;
@@ -90,15 +91,5 @@ export class RepoConfigModal extends HTMLElement {
     }
 
     if (!this.open) this.showModal();
-  }
-
-  close() {
-    this.style.display = "none";
-  }
-  showModal() {
-    this.style.display = "flex";
-  }
-  get open() {
-    return this.style.display !== "none";
   }
 }
