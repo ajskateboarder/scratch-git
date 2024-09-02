@@ -31,6 +31,7 @@ const changedBlocklyScripts = async (
     return;
   }
 
+  const spriteName: string = sprite.format();
   const topLevels = () => {
     const target = loadedJSON.targets.find((e: any) =>
       spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
@@ -41,7 +42,6 @@ const changedBlocklyScripts = async (
     );
   };
 
-  const spriteName: string = sprite.format();
   const workspace = getBlockly();
 
   const diffs = await parseScripts(
@@ -51,7 +51,14 @@ const changedBlocklyScripts = async (
   );
 
   return diffs
-    .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
+    .map(
+      (e) =>
+        (
+          workspace.topBlocks_[
+            workspace.topBlocks_.map((e) => e.id).indexOf(e.script)
+          ] ?? workspace.topBlocks_[topLevels().indexOf(e.script)]
+        )?.id
+    )
     .filter((e) => e !== undefined);
 };
 

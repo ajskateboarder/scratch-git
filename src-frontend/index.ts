@@ -6,7 +6,6 @@ import { scratchblocks, vm } from "./lib";
 
 import { initModals, WelcomeModal } from "./modals";
 import { getReactHandlers } from "./utils";
-import { userSettings } from "./settings";
 
 const displayDiffs = async (project: Project) => {
   [
@@ -18,6 +17,7 @@ const displayDiffs = async (project: Project) => {
   try {
     await showIndicators(project!);
   } catch (e) {
+    console.error(e);
     new ScratchAlert("Nothing was changed. Did you open the right project?")
       .type("warn")
       .timeout(4000)
@@ -79,7 +79,6 @@ const main = async () => {
 };
 
 window._changedScripts = {};
-userSettings.init();
 
 document.head.append(...Styles());
 

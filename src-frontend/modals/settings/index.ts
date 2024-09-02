@@ -1,5 +1,5 @@
 import van from "vanjs-core";
-import { DEFAULTS, userSettings } from "@/settings";
+import { clearSettings, DEFAULTS, setDefaults, userSettings } from "@/settings";
 import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
 import { Redux } from "@/lib";
@@ -190,7 +190,7 @@ export class SettingsModal extends HTMLElement {
       {
         class: settings.button,
         onclick: () => {
-          userSettings.defaults();
+          setDefaults();
           scInput[0].value = DEFAULTS.scriptColor;
           icInput[0].value = DEFAULTS.imgAddColor;
           icInput[1].value = DEFAULTS.imgRmColor;
@@ -207,7 +207,7 @@ export class SettingsModal extends HTMLElement {
         onclick: async () => {
           if (confirm("Are you sure you want to uninstall scratch.git?")) {
             if (await uninstall()) {
-              userSettings.clear();
+              clearSettings();
               (window._changedScripts as any) = undefined;
               (window._repoStatus as any) = undefined;
               window.location.reload();

@@ -1,21 +1,4 @@
-const NS = "scratch-git";
-
-const getItem = (name: string, _default: any = null) => {
-  const value = localStorage.getItem(`${NS}:${name}`) ?? String(_default);
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
-
-const delItem = (name: string) => localStorage.removeItem(`${NS}:${name}`);
-
-const setItem = (name: string, value: any) =>
-  localStorage.setItem(
-    `${NS}:${name}`,
-    typeof value === "string" ? value : JSON.stringify(value)
-  );
+const SETTINGS_KEY = "scratch-git:settings";
 
 export const DEFAULTS = {
   highlights: false,
@@ -26,71 +9,30 @@ export const DEFAULTS = {
   imgRmColor: "#ff0000",
 };
 
-export const userSettings = {
-  get highlights() {
-    return getItem("highlights")!;
+export const userSettings: {
+  highlights: boolean;
+  plainText: boolean;
+  scriptColor: string;
+  unified: boolean;
+  imgAddColor: string;
+  imgRmColor: string;
+} = new Proxy({} as any, {
+  get(_, name) {
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY)!)[name];
   },
-  set highlights(value: boolean) {
-    setItem("highlights", value);
+  set(_, name, value) {
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)!);
+    settings[name] = value;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    return true;
   },
+});
 
-  get plainText() {
-    return getItem("plaintext")!;
-  },
-  set plainText(value: boolean) {
-    setItem("plaintext", value);
-  },
+export const setDefaults = () =>
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULTS));
 
-  get scriptColor() {
-    return getItem("scriptcolor")!;
-  },
-  set scriptColor(value: string) {
-    setItem("scriptcolor", value);
-  },
+export const clearSettings = () => localStorage.removeItem(SETTINGS_KEY);
 
-  get unified() {
-    return getItem("unified")!;
-  },
-  set unified(value: boolean) {
-    setItem("unified", value);
-  },
-
-  get imgAddColor() {
-    return getItem("imgaddcolor")!;
-  },
-  set imgAddColor(value: string) {
-    setItem("imgaddcolor", value);
-  },
-
-  get imgRmColor() {
-    return getItem("imgrmcolor")!;
-  },
-  set imgRmColor(value: string) {
-    setItem("imgrmcolor", value);
-  },
-
-  init() {
-    setItem("highlights", getItem("highlights", DEFAULTS.highlights));
-    setItem("plaintext", getItem("plaintext", DEFAULTS.plainText));
-    setItem("scriptcolor", getItem("scriptcolor", DEFAULTS.scriptColor));
-    setItem("unified", getItem("unified", DEFAULTS.scriptColor));
-    setItem("imgaddcolor", getItem("imgaddcolor", DEFAULTS.imgAddColor));
-    setItem("imgrmcolor", getItem("imgrmcolor", DEFAULTS.imgRmColor));
-  },
-
-  clear() {
-    delItem("highlights");
-    delItem("plaintext");
-    delItem("scriptcolor");
-    delItem("imgaddcolor");
-    delItem("imgrmcolor");
-  },
-
-  defaults() {
-    setItem("highlights", DEFAULTS.highlights);
-    setItem("plaintext", DEFAULTS.plainText);
-    setItem("scriptcolor", DEFAULTS.scriptColor);
-    setItem("imgaddcolor", DEFAULTS.imgAddColor);
-    setItem("imgrmcolor", DEFAULTS.imgRmColor);
-  },
-};
+if (!localStorage.getItem(SETTINGS_KEY)) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULTS));
+}

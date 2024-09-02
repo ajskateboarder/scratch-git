@@ -92,9 +92,11 @@ const _parseScripts = (
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
+  console.log(zip(oldBlocks, newBlocks).map((e, i) => [e, i]));
   const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
-    .filter(([a, b]) => a !== b)
+    // @ts-expect-error
+    .filter(([a, b]) => a[0].content !== a[1].content)
     .map(
       ([
         // @ts-expect-error
@@ -137,6 +139,7 @@ export const parseScripts = async (
   currentScripts: ProjectJSON
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
+  console.log("parseScripts", scripts);
   return (
     await Promise.all(
       scripts.map((script) =>

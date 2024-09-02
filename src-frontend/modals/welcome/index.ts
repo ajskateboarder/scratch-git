@@ -197,11 +197,11 @@ export class WelcomeModal extends HTMLDialogElement {
             class: cls(settings.button, "back-button"),
             onclick: () => {
               this.close();
-              // if (this.loadedProject) {
-              //   // nothing is changed at this point so ignore warnings
-              //   window.onbeforeunload = () => {};
-              //   window.location.reload();
-              // }
+              if (this.loadedProject) {
+                // nothing is changed at this point so ignore warnings
+                window.onbeforeunload = () => {};
+                window.location.reload();
+              }
             },
           },
           "Close"
