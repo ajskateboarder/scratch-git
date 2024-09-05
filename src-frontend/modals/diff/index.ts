@@ -65,7 +65,30 @@ interface Diff {
   diffed: string;
 }
 
+<<<<<<< HEAD
 const locale = Redux.getState().locales.locale;
+=======
+const byteFormatter = Intl.NumberFormat(getLocale(), {
+  notation: "compact",
+  style: "unit",
+  unit: "byte",
+  unitDisplay: "narrow",
+});
+
+const percentFormatter = Intl.NumberFormat(getLocale(), {
+  style: "percent",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+/** Displays differences between previous and current project states and handles commiting the changes to Git */
+export class DiffModal extends Modal {
+  $scripts!: HTMLUListElement;
+  $commits!: HTMLParagraphElement;
+  $highlights!: HTMLInputElement;
+  $plainText!: HTMLInputElement;
+  $unified!: HTMLElement;
+>>>>>>> main
 
 const byteFormatter = Intl.NumberFormat(locale, {
   notation: "compact",
@@ -117,6 +140,7 @@ export class DiffModal extends Base {
   private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
+<<<<<<< HEAD
 
   private unify = van.state(true);
   private reverting = false;
@@ -124,6 +148,9 @@ export class DiffModal extends Base {
   constructor() {
     super();
   }
+=======
+  unify = van.state(true);
+>>>>>>> main
 
   connectedCallback() {
     if (this.querySelector("main")) return;
@@ -340,12 +367,17 @@ export class DiffModal extends Base {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid red",
                 },
+<<<<<<< HEAD
                 a.contents !== "" ? Copy(() => aImage) : undefined,
                 img({
                   src: a.contents,
                   height: aImage.height / 2,
                   width: aImage.width / 2,
                 }),
+=======
+                Copy(() => aImage),
+                aImage,
+>>>>>>> main
                 byteFormatter.format(a.size)
               ),
               i({ class: "fa-solid fa-arrow-right fa-xl" }),
@@ -354,12 +386,17 @@ export class DiffModal extends Base {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid green",
                 },
+<<<<<<< HEAD
                 b.contents !== "" ? Copy(() => bImage) : undefined,
                 img({
                   src: b.contents,
                   height: bImage.height / 2,
                   width: bImage.width / 2,
                 }),
+=======
+                Copy(() => bImage),
+                bImage,
+>>>>>>> main
                 sizeChange
               )
             )
@@ -738,6 +775,7 @@ export class DiffModal extends Base {
       const _previousAssetImg = img({ src: previousAsset.contents }),
         _currentAssetImg = img({ src: currentAsset.contents });
       const previousAssetImg = imageLayer(
+<<<<<<< HEAD
           img({
             src: previousAsset.contents,
             width: _previousAssetImg.width / 2,
@@ -751,6 +789,13 @@ export class DiffModal extends Base {
             width: _currentAssetImg.width / 2,
             height: _currentAssetImg.height / 2,
           }),
+=======
+          img({ src: previousAsset.contents }),
+          userSettings.imgRmColor
+        ),
+        currentAssetImg = imageLayer(
+          img({ src: currentAsset.contents }),
+>>>>>>> main
           userSettings.imgAddColor
         );
 
@@ -789,6 +834,28 @@ export class DiffModal extends Base {
       scriptDiff === "costume"
     );
 
+<<<<<<< HEAD
+=======
+    // TODO: this is annoying, refactor sometime
+    if (diffs[script] && diffs[script].status === "removed") {
+      // TODO: localize
+      const view = document.querySelector(".commit-view");
+      const wrapper = details(
+        summary({ style: "display: list-item" }, "This script was deleted")
+      );
+      if (view) {
+        view.parentNode!.insertBefore(wrapper, view);
+        wrapper.appendChild(view);
+      }
+    } else {
+      if (this.querySelector("details")) {
+        const el = document.querySelector(".commit-view")!;
+        document.querySelector("#commits")!.appendChild(el);
+        this.querySelector("details")!.remove();
+      }
+    }
+
+>>>>>>> main
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
 
