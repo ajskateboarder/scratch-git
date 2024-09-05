@@ -1,68 +1,38 @@
-const NS = "scratch-git";
-
-const getItem = (name: string, _default: any = null) => {
-  const value = localStorage.getItem(`${NS}:${name}`) ?? String(_default);
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
-const delItem = (name: string) => localStorage.removeItem(`${NS}:${name}`);
-const setItem = (name: string, value: any) =>
-  localStorage.setItem(
-    `${NS}:${name}`,
-    typeof value === "string" ? value : JSON.stringify(value)
-  );
+const SETTINGS_KEY = "scratch-git:settings";
 
 export const DEFAULTS = {
   highlights: false,
   plainText: false,
   scriptColor: "#ed25cf",
-  imgAddColor: "#ff0000",
-  imgRmColor: "#00ff00",
   unified: false,
+  imgAddColor: "#00ff00",
+  imgRmColor: "#ff0000",
 };
 
-type Default = keyof typeof DEFAULTS;
-
-const DEFAULTS_MAP: Record<Default, string> = {
-  highlights: "highlights",
-  plainText: "plaintext",
-  scriptColor: "scriptcolor",
-  imgAddColor: "imgaddcolor",
-  imgRmColor: "imgrmcolor",
-  unified: "unified",
-};
-
-const _userSettings: Record<Default, any> = new Proxy(DEFAULTS, {
-  set(_, prop: string, value) {
-    setItem(prop, value);
-    return true;
+export const userSettings: {
+  highlights: boolean;
+  plainText: boolean;
+  scriptColor: string;
+  unified: boolean;
+  imgAddColor: string;
+  imgRmColor: string;
+} = new Proxy({} as any, {
+  get(_, name) {
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY)!)[name];
   },
-  get(_, prop: string) {
-    return getItem(prop);
+  set(_, name, value) {
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)!);
+    settings[name] = value;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    return true;
   },
 });
 
-export const userSettings = {
-  ..._userSettings,
+export const setDefaults = () =>
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULTS));
 
-  init() {
-    for (const [key, value] of Object.entries(DEFAULTS_MAP)) {
-      setItem(value, getItem(value, DEFAULTS[key as Default]));
-    }
-  },
+export const clearSettings = () => localStorage.removeItem(SETTINGS_KEY);
 
-  clear() {
-    for (const key in Object.values(DEFAULTS_MAP)) {
-      delItem(key);
-    }
-  },
-
-  defaults() {
-    for (const [key, value] of Object.entries(DEFAULTS_MAP)) {
-      setItem(value, DEFAULTS[key as Default]);
-    }
-  },
-};
+if (!localStorage.getItem(SETTINGS_KEY)) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULTS));
+}

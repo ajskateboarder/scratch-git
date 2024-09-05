@@ -1,9 +1,9 @@
-import { cls, sprites } from "../accessors";
+import { cls, sprites } from "../components/accessors";
 import van from "vanjs-core";
 
 const { div, i } = van.tags;
 
-const BaseDelete = (props: {}, children: HTMLDivElement) =>
+const Delete = (props: {}, children: HTMLDivElement) =>
   div(
     {
       ariaLabel: "Diff",
@@ -15,7 +15,7 @@ const BaseDelete = (props: {}, children: HTMLDivElement) =>
   );
 
 export const SpriteDiff = (props: {}) =>
-  BaseDelete(
+  Delete(
     {
       class: cls(sprites.delete, sprites.spriteSelDelete, "diff-button"),
       ...props,
@@ -30,7 +30,7 @@ export const SpriteDiff = (props: {}) =>
   );
 
 export const StageDiff = (props: {}) =>
-  BaseDelete(
+  Delete(
     {
       class: cls(sprites.delete, sprites.spriteSelDelete, "stage-diff"),
       ...props,

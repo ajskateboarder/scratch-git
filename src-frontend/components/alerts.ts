@@ -1,4 +1,4 @@
-import { misc, Copy, s, cls } from "..";
+import { misc, Copy, s, cls } from ".";
 import type { DeviceCode } from "@/api";
 import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
@@ -77,7 +77,8 @@ export class ScratchAlert {
               role: "button",
               tabIndex: "0",
               onclick: () => newAlert.remove(),
-              ...(Redux.getState().scratchGui.theme.theme.gui === "dark" && {
+              ...((Redux.getState().scratchGui as any).theme.theme.gui ===
+                "dark" && {
                 style: "background-color: rgba(0, 0, 0, 0.255)",
               }),
             },

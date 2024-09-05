@@ -24,6 +24,8 @@ export const s = (className: string) => {
   });
 };
 
+(window as any).s = s;
+
 /** Join class names into a valid attribute */
 export const cls = (...classes: (string | undefined)[]) => classes.join(" ");
 
@@ -54,4 +56,6 @@ export const misc = {
   box: s("box_box"),
   menuItems: s("menu-bar_file-group"),
   saveArea: s("menu-bar_account-info-group"),
+  card: s("card_card"),
+  cardButtons: s("card_header-buttons"),
 };

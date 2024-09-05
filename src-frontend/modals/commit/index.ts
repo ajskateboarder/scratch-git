@@ -1,12 +1,12 @@
-import { Modal } from "../base";
 import api, { type Commit } from "@/api";
 import { cls, settings } from "@/components";
-import { CommitItem } from "@/components";
-import i18next from "@/l10n";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
+import { Card } from "../card";
+import { CommitItem } from "./commit-item";
+import { Base } from "../base";
 
-const { h1, button, input, div, span, br, main, i, h3, p } = van.tags;
+const { button, input, div, span, br, main, i, h3, p } = van.tags;
 
 const paginate = (list: any[], length: number) =>
   [...Array(Math.ceil(list.length / length))].map((_) =>
@@ -14,13 +14,11 @@ const paginate = (list: any[], length: number) =>
   );
 
 /** Displays a log of all commits to a Git project */
-export class CommitModal extends Modal {
-  private $!: {
-    $older: HTMLButtonElement;
-    $newer: HTMLButtonElement;
-    $search: HTMLInputElement;
-    $showing: HTMLParagraphElement;
-  };
+export class CommitModal extends Base {
+  $older!: HTMLButtonElement;
+  $newer!: HTMLButtonElement;
+  $search!: HTMLInputElement;
+  $showing!: HTMLParagraphElement;
 
   allCommits: Commit[] | undefined;
   private state!: {
@@ -31,15 +29,7 @@ export class CommitModal extends Modal {
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-
-    const closeButton = button(
-      {
-        class: settings.button,
-        style: "margin-left: 10px",
-        onclick: () => this.close(),
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
+    this.close();
 
     this.state = {
       paginatedCommits: van.state([]),
@@ -47,30 +37,30 @@ export class CommitModal extends Modal {
       currentPage: van.state(0),
     };
 
-    this.$ = {
-      $newer: button(
-        {
-          class: cls(settings.button, "round-right-button"),
-          disabled: true,
-        },
-        i({ class: "fa-solid fa-arrow-left" })
-      ),
-      $older: button(
-        {
-          class: cls(settings.button, "round-left-button"),
-        },
-        i({ class: "fa-solid fa-arrow-right" })
-      ),
-      $search: input({
-        type: "text",
-        style: "border-radius: 5px; width: 50%",
-        class: `${settings.inputField}${
-          Redux.getState().scratchGui.theme.theme.gui === "dark" ? " dark" : ""
-        }`,
-        placeholder: i18next.t("commit.search-commits"),
-      }),
-      $showing: p(),
-    };
+    this.$newer = button(
+      {
+        class: cls(settings.button, "round-right-button"),
+        disabled: true,
+      },
+      i({ class: "fa-solid fa-arrow-left" })
+    );
+    this.$older = button(
+      {
+        class: cls(settings.button, "round-left-button"),
+      },
+      i({ class: "fa-solid fa-arrow-right" })
+    );
+    this.$search = input({
+      type: "text",
+      style: "border-radius: 5px; width: 50%",
+      class: `${settings.inputField}${
+        (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
+          ? " dark"
+          : ""
+      }`,
+      placeholder: "Search for commits",
+    });
+    this.$showing = p();
 
     const commitGroup = div(
       { class: "commit-group" },
@@ -94,7 +84,7 @@ export class CommitModal extends Modal {
               }
             });
             return heading !== ""
-              ? span(h3(heading), finalCommits)
+              ? span(h3(heading), span(finalCommits))
               : span(finalCommits);
           })
         );
@@ -103,18 +93,22 @@ export class CommitModal extends Modal {
 
     van.add(
       this,
-      main(
-        { id: "commitList" },
-        h1({ class: "header" }, i18next.t("commit.commits"), closeButton),
-        div(
-          { class: "pagination" },
-          span(this.$.$newer, this.$.$older),
-          this.$.$search
+      Card(
+        main(
+          { id: "commitList", style: "padding: 20px" },
+          div(
+            { class: "pagination" },
+            span(this.$newer, this.$older),
+            this.$search
+          ),
+          br(),
+          this.$showing,
+          br(),
+          commitGroup
         ),
-        br(),
-        this.$.$showing,
-        br(),
-        commitGroup
+        "Commits",
+        () => this.close(),
+        "width: 420px; height: 20rem"
       )
     );
   }
@@ -122,13 +116,13 @@ export class CommitModal extends Modal {
   public async display() {
     this.allCommits = await api.getCurrentProject()?.getCommits();
     this.state.currentPage.val = 0;
-    this.$.$newer.disabled = true;
+    this.$newer.disabled = true;
     // for some odd reason, this.allCommits gets completely emptied if you access it
     // so as a temporary fix, we copy the commit array, which is at least better than requesting it
     let commits_ = this.allCommits?.slice()!;
     const commits = paginate(commits_, 40);
 
-    const { $newer, $older, $search, $showing } = this.$;
+    const { $newer, $older, $search, $showing } = this;
 
     this.state.paginatedCommits.val = commits[this.state.currentPage.val];
 
@@ -184,7 +178,7 @@ export class CommitModal extends Modal {
       }`;
     };
 
-    $search.oninput = async (s) => {
+    $search.oninput = async (s: Event) => {
       const search = (s.target! as any).value;
       this.state.searchQuery.val = search;
       if (search === "") {
@@ -207,27 +201,31 @@ export class CommitModal extends Modal {
         .filter((e) => e.subject.includes(search));
       $older.disabled = true;
       $newer.disabled = true;
-      $showing.innerText = `Showing ${commits_.length} of ${this.allCommits?.length}`;
-    };
 
-    const header = this.querySelector(".header") as HTMLDivElement;
-    const closeButton = header.querySelector("button") as HTMLButtonElement;
+      const commitsOnPage = Math.min(this.allCommits!.length, 40);
+      const info =
+        commitsOnPage === 0
+          ? ""
+          : ` (0-${commitsOnPage} / ${this.allCommits?.length})`;
 
-    this.onscroll = () => {
-      if (this.scrollTop > 50) {
-        header.style.fontSize = "20px";
-        closeButton.style.scale = "0.8";
-      } else {
-        header.setAttribute("style", "");
-        closeButton.setAttribute("style", "");
-      }
+      this.querySelector<HTMLElement>(
+        ".card-title"
+      )!.innerText = `Commits${info}`;
     };
 
     if (!this.open) {
       this.state.currentPage.val = 0;
       this.showModal();
       $search.focus();
-      $showing.innerText = `Showing 0-40 of ${this.allCommits?.length}`;
+      const commitsOnPage = Math.min(this.allCommits!.length, 40);
+      const info =
+        commitsOnPage === 0
+          ? ""
+          : ` (0-${commitsOnPage} / ${this.allCommits?.length})`;
+
+      this.querySelector<HTMLElement>(
+        ".card-title"
+      )!.innerText = `Commits${info}`;
     }
   }
 }

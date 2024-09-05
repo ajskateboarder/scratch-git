@@ -26,31 +26,34 @@
     list-style-type: none;
 
     & .tab-btn {
-      padding: 15px 30px;
+      padding: 0.3rem;
+      padding-left: 10px;
       border: 0.5px solid grey;
-      background-color: #d9e3f2;
-      color: hsl(225deg 15% 40% / 75%);
+      background-color: hsla(215, 100%, 95%, 0.4);
+      color: var(--ui-modal-foreground);
+      filter: brightness(0.5);
       transition: 0.2s background-color ease-in;
       margin-top: 10px;
       border-top-right-radius: 10px;
       border-bottom-right-radius: 10px;
 
-      &:hover {
-        background-color: #ccd3dd;
+      &:not(.active-tab):hover {
+        background-color: var(--ui-black-transparent);
       }
     }
   }
 
   & .tab-btn:not(.active-tab) button {
-    filter: brightness(0.5);
     pointer-events: none;
   }
 
   & aside {
     padding: 1rem;
     border-right: 1px solid grey;
-    background-color: #e6f0ff;
+    background-color: var(--ui-primary);
     margin-left: -20px;
+    overflow-y: auto;
+    min-width: fit-content;
   }
 
   & hr {
@@ -63,12 +66,18 @@
   .content {
     margin-top: 10px;
     overflow-x: hidden;
+    position: sticky;
+    background: var(--page-background);
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 }
 
 .active-tab {
-  color: var(--menu-bar-background-default) !important;
-  background-color: white !important;
+  filter: brightness(1) !important;
   outline: none;
 }
 
@@ -85,29 +94,10 @@
     padding: 5px;
     margin-left: 10px;
     filter: none;
-
-    &:hover {
-      filter: brightness(1.7);
-    }
   }
 }
 
-.dark .tab-btn.active-tab {
-  background-color: rgb(76 76 76) !important;
-  color: #eee !important;
-}
-
-.dark {
-  & aside {
-    background-color: #111 !important;
-    color: #eee;
-  }
-
-  & .tab-btn {
-    background-color: rgb(46 46 46) !important;
-    color: #707070 !important;
-  }
-
+html[style*="--color-scheme: dark"] {
   [class=commit-wrap] {
     --dot-space: 22px;
     --dot-size: 1px;
@@ -121,10 +111,17 @@
   }
 }
 
+.revert-list {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid grey;
+  padding: 15px;
+}
+
 .commit-view {
   padding: 10px;
   border-radius: 10px;
-  display: contents;
+  display: inline-block;
   overflow-x: auto;
   overflow-y: auto;
 }
@@ -132,7 +129,7 @@
 [class=commit-wrap] {
   --dot-space: 22px;
   --dot-size: 1px;
-  --dot-bg: white;
+  --dot-bg: #f9f9f9;
   --dot-color: #d2d2d2;
 
   background: linear-gradient(90deg,
@@ -141,8 +138,10 @@
     linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
       transparent 1%) center / var(--dot-space) var(--dot-space),
     var(--dot-color);
+
   padding: 10px;
   border-radius: 10px;
+  margin-top: 0;
 }
 
 .costume-diff-canvas {
@@ -184,4 +183,24 @@
 .disabled-area {
   opacity: 0.5;
   pointer-events: none;
+}
+
+.git-card {
+  position: absolute;
+  z-index: 492;
+  background-color: var(--ui-modal-background);
+  width: 565px;
+  height: 25rem;
+  align-items: normal
+}
+
+.revert-icon {
+  padding: 2px;
+  margin-right: 5px;
+  border-radius: 5px;
+}
+
+.revert-icon:hover {
+  background-color: grey;
+  color: white;
 }

@@ -1,10 +1,9 @@
-/** @file Displays indicators and info on sprites that were changed */
 import type { Project, Sprite } from "@/api";
 import { s, sprites } from "@/components";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
-import { SpriteDiff, StageDiff } from "@/components";
-import { getBlockly } from "@/lib/globals";
+import { SpriteDiff, StageDiff } from "./diff-buttons";
+import { getBlockly, vm } from "@/lib/globals";
 import { userSettings } from "../settings";
 import { contextMenu } from "./inject-context";
 
@@ -32,6 +31,7 @@ const changedBlocklyScripts = async (
     return;
   }
 
+  const spriteName: string = sprite.format();
   const topLevels = () => {
     const target = loadedJSON.targets.find((e: any) =>
       spriteName.includes("(stage)") ? e.isStage : e.name === spriteName
@@ -42,7 +42,6 @@ const changedBlocklyScripts = async (
     );
   };
 
-  const spriteName: string = sprite.format();
   const workspace = getBlockly();
 
   const diffs = await parseScripts(
@@ -52,7 +51,14 @@ const changedBlocklyScripts = async (
   );
 
   return diffs
-    .map((e) => workspace.topBlocks_[topLevels().indexOf(e.script)]?.id)
+    .map(
+      (e) =>
+        (
+          workspace.topBlocks_[
+            workspace.topBlocks_.map((e) => e.id).indexOf(e.script)
+          ] ?? workspace.topBlocks_[topLevels().indexOf(e.script)]
+        )?.id
+    )
     .filter((e) => e !== undefined);
 };
 
@@ -80,7 +86,7 @@ const highlightChanged = async (
     .forEach((e) => (e.style.filter = ""));
 
   if (sprite === undefined) {
-    throw new Error("No sprite was changed");
+    return false;
   }
 
   const previousScripts = await project.getPreviousScripts(sprite.format());
@@ -93,7 +99,6 @@ const highlightChanged = async (
     previousScripts,
     currentScripts
   );
-  console.log(changedScripts, sprite);
 
   console.debug(
     `received following for sprite ${sprite.format()}`,
@@ -104,7 +109,8 @@ const highlightChanged = async (
     // fallback onto cache if fetching changed scripts fails
     changedScripts = window._changedScripts[sprite.format()];
     // if nothing was actually changed just forget it
-    if (changedScripts === undefined || changedScripts.length === 0) return;
+    if (changedScripts === undefined || changedScripts.length === 0)
+      return false;
   }
 
   // persist this until the next save
@@ -115,6 +121,8 @@ const highlightChanged = async (
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
   });
+
+  return true;
 };
 
 const nameOfSprite = (element: HTMLElement) =>
@@ -129,19 +137,25 @@ export const showIndicators = async (project: Project) => {
     editorSprites = [
       ...s("sprite-selector_items-wrapper").select().children,
     ] as HTMLElement[],
-    loadedJSON = JSON.parse(window.vm.toJSON());
+    loadedJSON = JSON.parse(vm.toJSON());
+
+  if (changedSprites.length === 0) {
+    throw new Error("Nothing was changed");
+  }
+
   contextMenu.onopen = (e) => {
     const currentSprite = nameOfSprite(sprites.selectedSprite.select());
     const index = window._changedScripts[currentSprite].indexOf(e.dataset.id!);
     if (index === -1) return;
 
     contextMenu.setCustomItem({
-      // TODO: localize
       title: "Show Changes",
       onclick() {
-        (
-          document.querySelector("dialog[is='diff-modal']") as DiffModal
-        ).display(project, currentSprite, index);
+        (document.querySelector("diff-modal") as DiffModal).display(
+          project,
+          currentSprite,
+          index
+        );
         contextMenu.close();
       },
     });
@@ -179,7 +193,7 @@ export const showIndicators = async (project: Project) => {
       border-radius: 20px;
       transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
       scale: 0.8;
-      z-index: 99999;
+      z-index: 1;
     `,
       onmouseover: () => {
         diffButton.style.scale = "0.9";
@@ -191,9 +205,9 @@ export const showIndicators = async (project: Project) => {
       },
       onclick: async (e: Event) => {
         e.stopPropagation();
-        (
-          document.querySelector("dialog[is='diff-modal']") as DiffModal
-        ).display(project, spriteName);
+        document
+          .querySelector<DiffModal>("diff-modal")!
+          .display(project, spriteName);
       },
     });
 
@@ -243,7 +257,7 @@ export const showIndicators = async (project: Project) => {
       onclick: async (e: Event) => {
         e.stopPropagation();
         document
-          .querySelector<DiffModal>("dialog[is='diff-modal']")!
+          .querySelector<DiffModal>("diff-modal")!
           .display(project, "Stage (stage)");
       },
     });
@@ -270,7 +284,72 @@ export const showIndicators = async (project: Project) => {
     ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
     : STAGE;
 
-  await highlightChanged(project, sprite, loadedJSON);
+  const changed = await highlightChanged(project, sprite, loadedJSON);
+
+  // highlightChanged returns false if the changed sprite was removed (probably by design?)
+  // show the removed sprite as a ghost which is non-clickable and shows the diff indicator
+  document.querySelectorAll(".deleted-sprite").forEach((e) => e.remove());
+  if (!changed) {
+    changedSprites.forEach((e) => {
+      // stage will always exist so showing it here is redundant
+      if (e.name === "Stage") return;
+
+      if (!vm.runtime.getSpriteTargetByName(e.name)) {
+        const lastSprite = [
+          ...document.querySelectorAll("div[style^='order: ']"),
+        ].pop();
+        if (lastSprite) {
+          const ghost = lastSprite.cloneNode(true) as HTMLElement;
+
+          ghost.querySelector<HTMLElement>(
+            "." + sprites.spriteName
+          )!.innerText = `${e.name} [❌]`;
+          ghost.querySelector("nav")?.remove();
+          ghost.querySelector("img")?.remove();
+          ghost.querySelector("img")?.parentElement?.remove();
+          ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
+          ghost.style.userSelect = "none";
+          ghost.style.opacity = "0.5";
+          ghost.title = "This sprite was deleted.";
+          ghost.classList.add("deleted-sprite");
+
+          const diffButton = SpriteDiff({
+            style: `
+            border-radius: 20px;
+            transition: scale 0.15 ease-out, box-shadow 0.15 ease-out;
+            scale: 0.8;
+            z-index: 1;
+            opacity: 1
+          `,
+            onmouseover: () => {
+              diffButton.style.scale = "0.9";
+              diffButton.style.boxShadow =
+                "0px 0px 0px 6px var(--looks-transparent)";
+            },
+            onmouseleave: () => {
+              diffButton.style.scale = "0.8";
+              diffButton.style.boxShadow =
+                "0px 0px 0px 2px var(--looks-transparent)";
+            },
+            onclick: async (_e: Event) => {
+              _e.stopPropagation();
+              document
+                .querySelector<DiffModal>("diff-modal")!
+                .display(project, e.name);
+            },
+          });
+
+          (
+            ghost
+              .querySelector("div")!
+              .querySelectorAll("div") as NodeListOf<HTMLDivElement>
+          )[3].after(diffButton);
+
+          lastSprite.after(ghost);
+        }
+      }
+    });
+  }
 
   // retain diff highlights when switching between editor tabs
   new MutationObserver(async ([mutation, _]) => {

@@ -1,7 +1,6 @@
 /** @file Initializes the Git menu handlers and styles */
 import { GhAuth, PullMsg, Project, PushMsg } from "./api";
 import { GhAuthAlert, ScratchAlert, gitMenu, s, settings } from "./components";
-import i18next from "./l10n";
 import { CommitModal, RepoConfigModal } from "./modals";
 
 import van from "vanjs-core";
@@ -63,9 +62,11 @@ export const Styles = () => {
 
 const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
   "unrelated histories": new ScratchAlert(
-    i18next.t("alerts.unrelated-changes")
+    "Couldn't pull new changes since they are unrelated with your changes."
   ).type("error"),
-  success: new ScratchAlert(i18next.t("alerts.pull-success"))
+  success: new ScratchAlert(
+    "Successfully pulled new changes. Reload to see them."
+  )
     .type("success")
     .buttons([
       button(
@@ -73,7 +74,7 @@ const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
         i({ class: "fa-solid fa-rotate-right" })
       ),
     ]),
-  "nothing new": new ScratchAlert(i18next.t("alerts.no-changes"))
+  "nothing new": new ScratchAlert("There are no new changes to pull.")
     .type("success")
     .timeout(5000),
 };
@@ -99,7 +100,6 @@ const pullHandler =
           await pullHandler(project!, true);
         };
       } else {
-        // TODO: localize
         // asking for username and password in the app would look suspicious
         upassAlert = new ScratchAlert(
           "Please enter your username and password in the terminal to pull new changes."
@@ -121,7 +121,9 @@ const PUSH_MESSAGES: Record<
   (project: Project) => Promise<ScratchAlert>
 > = {
   "pull needed": async (project) =>
-    new ScratchAlert(i18next.t("alerts.inconsistent-work"))
+    new ScratchAlert(
+      "The online repository contains work that you don't have. Try pulling changes from online first."
+    )
       .type("warn")
       .buttons([
         button(
@@ -134,14 +136,16 @@ const PUSH_MESSAGES: Record<
       ]),
   success: async (project) =>
     new ScratchAlert(
-      i18next.t("alerts.push-success", {
-        url: (await project!.getDetails()).repository,
-      })
+      `Successfully pushed changes to ${
+        (await project!.getDetails()).repository
+      }`
     )
       .type("success")
       .timeout(5000),
   "up to date": async (_) =>
-    new ScratchAlert(i18next.t("alerts.up-to-date"))
+    new ScratchAlert(
+      "Everything is up to date. There are no new commits to push."
+    )
       .type("success")
       .timeout(5000),
 };
@@ -166,7 +170,6 @@ const pushHandler =
           await pushHandler(project!, true);
         };
       } else {
-        // TODO: localize
         upassAlert = new ScratchAlert(
           "Please enter your username and password in the terminal to push your changes."
         )
@@ -181,60 +184,43 @@ const pushHandler =
   };
 
 const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
-  [-1]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-add"))
+  [-1]: new ScratchAlert("There is nothing to add.").type("warn").timeout(5000),
+  [-2]: new ScratchAlert(
+    "Please tell me who you are. Set your name and email in Git -> Setup repository."
+  ).type("error"),
+  // TODO: is this needed
+  [-3]: new ScratchAlert("There is nothing to commit.")
     .type("warn")
     .timeout(5000),
-  [-2]: new ScratchAlert(i18next.t("alerts.commit.identity-needed")).type(
-    "error"
-  ),
-  [-3]: new ScratchAlert(i18next.t("alerts.commit.nothing-to-commit"))
-    .type("warn")
-    .timeout(5000),
-  [-4]: new ScratchAlert(i18next.t("alerts.commit.fail")).type("error"),
+  [-4]: new ScratchAlert("Failed to commit").type("error"),
 };
 
-/** Builds the final Git Menu
- *
- * @param project - the currently open project, which should exist
- * @param changeLocale - rebuild the entire menu only if the locale has changed
- */
-export const createGitMenu = async (
-  project: Project,
-  changeLocale?: string
-) => {
+/** Builds the final Git Menu */
+export const createGitMenu = async (project: Project) => {
   console.debug("building git menu");
-  gitMenu.create(
-    {
-      commitView: () =>
-        document
-          .querySelector<CommitModal>("dialog[is='commit-modal']")!
-          .display(),
-      commitCreate: async () => {
-        const message = await project!.commit();
-        document
-          .querySelectorAll(".stage-diff,.diff-button")
-          .forEach((e) => e.remove());
-        document.querySelector("filter#blocklyStackDiffFilter")?.remove();
-        project!.repoStatus().then((e) => (window._repoStatus = e));
-        (
-          COMMIT_MESSAGES[message as number] ??
-          new ScratchAlert(message).type("success").timeout(5000)
-        ).display();
-      },
-      push: await pushHandler(project!),
-      pull: await pullHandler(project!),
-      repoConfig: () => {
-        document
-          .querySelector<RepoConfigModal>("dialog[is='repo-config-modal']")!
-          .display();
-      },
-      settings: () => {
-        document
-          .querySelector<RepoConfigModal>("dialog[is='settings-modal']")!
-          .display();
-      },
+  gitMenu.create({
+    commitView: () =>
+      document.querySelector<CommitModal>("commit-modal")!.display(),
+    commitCreate: async () => {
+      const message = await project!.commit();
+      document
+        .querySelectorAll(".stage-diff,.diff-button")
+        .forEach((e) => e.remove());
+      document.querySelector("filter#blocklyStackDiffFilter")?.remove();
+      project!.repoStatus().then((e) => (window._repoStatus = e));
+      (
+        COMMIT_MESSAGES[message as number] ??
+        new ScratchAlert(message).type("success").timeout(5000)
+      ).display();
     },
-    changeLocale
-  );
+    push: await pushHandler(project!),
+    pull: await pullHandler(project!),
+    repoConfig: () => {
+      document.querySelector<RepoConfigModal>("repo-config-modal")!.display();
+    },
+    settings: () => {
+      document.querySelector<RepoConfigModal>("settings-modal")!.display();
+    },
+  });
   gitMenu.setPushPullStatus((await project!.getDetails()).repository !== "");
 };

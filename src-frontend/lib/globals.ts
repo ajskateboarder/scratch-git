@@ -1,3 +1,6 @@
+import "@turbowarp/types";
+import "@turbowarp/types/types/scratch-gui";
+
 export interface Block {
   getRootBlock(): any;
   getRelativeToSurfaceXY(): {
@@ -33,34 +36,9 @@ interface Workspace {
   topBlocks_: Block[];
 }
 
-interface State {
-  scratchGui: {
-    projectTitle: string;
-    theme: {
-      theme: {
-        gui: "light" | "dark";
-        blocks: "three" | "high-contrast" | "dark";
-      };
-    };
-    editorTab: {
-      activeTabIndex: number;
-    };
-  };
-  locales: {
-    locale: string;
-  };
-}
-
-interface ReduxStore {
-  getState(): State;
-  dispatch(_: { type: string; [key: string]: any | undefined }): void;
-}
-
-interface VMRuntime {
-  on(type: string, callback: (...e: any[]) => void): void;
-  once(type: string, callback: (...e: any[]) => void): void;
-}
-
 export const getBlockly = (): Workspace => window.Blockly.getMainWorkspace();
-export const Redux: ReduxStore = window.ReduxStore;
-export const VM: VMRuntime = window.vm.runtime;
+export const Redux: {
+  dispatch(event: ScratchGUI.ReduxEvent): any;
+  getState(): ScratchGUI.ReduxState;
+} = window.ReduxStore;
+export const vm: VM = window.vm;

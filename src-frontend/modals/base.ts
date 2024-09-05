@@ -1,14 +1,19 @@
-export abstract class Modal extends HTMLDialogElement {
+export class Base extends HTMLElement {
   constructor() {
     super();
   }
 
-  abstract connectedCallback(): void;
+  connectedCallback(): void {}
 
-  public abstract display(...args: any[]): void;
+  display(...args: any[]): void {}
 
-  public refresh() {
-    this.querySelector("main")?.remove();
-    this.connectedCallback();
+  close() {
+    this.style.display = "none";
+  }
+  showModal() {
+    this.style.display = "flex";
+  }
+  get open() {
+    return this.style.display !== "none";
   }
 }

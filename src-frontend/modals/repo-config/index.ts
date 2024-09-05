@@ -1,33 +1,25 @@
-import { Modal } from "../base";
+import van from "vanjs-core";
 import api, { Project, remoteExists } from "@/api";
 import { settings, gitMenu } from "@/components";
 import { InputBox, InputField } from "@/components/input-field";
-import i18next from "@/l10n";
 import { validURL } from "@/utils";
-import van from "vanjs-core";
+import { Modal } from "../modal";
+import { Base } from "../base";
 
-const { main, button, h1, div, span, label, br, i } = van.tags;
+const { main, button, div, label, br } = van.tags;
 
-export class RepoConfigModal extends Modal {
-  $repository: HTMLInputElement;
-  $name: HTMLInputElement;
-  $email: HTMLInputElement;
+export class RepoConfigModal extends Base {
+  $repository!: HTMLInputElement;
+  $name!: HTMLInputElement;
+  $email!: HTMLInputElement;
   private project!: Project;
 
   connectedCallback() {
     if (this.querySelector("main")) return;
-
-    const closeButton = button(
-      {
-        class: settings.button,
-        style: "margin-left: 10px",
-        onclick: () => this.close(),
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
+    this.close();
 
     const $repository = InputBox({
-      placeholder: i18next.t("repoconfig.repo-url-placeholder"),
+      placeholder: "Enter a link to a repository URL",
       onblur: async ({ target }: Event) => {
         const url: string = (target as HTMLInputElement).value;
         if (!validURL(url) && !(await remoteExists(url))) {
@@ -43,7 +35,7 @@ export class RepoConfigModal extends Modal {
         class: settings.button,
         onclick: () => {
           if ($name.value.trim() === "") {
-            alert(i18next.t("repoconfig.no-empty-fields"));
+            alert("Don't leave starred fields blank");
             return;
           }
           if ($repository.value.trim() !== "") {
@@ -56,55 +48,34 @@ export class RepoConfigModal extends Modal {
           });
         },
       },
-      // TODO: localize
       "Save"
     );
 
-    const config = i18next
-      .t("repoconfig.repoconfig")
-      .replace(
-        /\[\[(.*?)\]\]/g,
-        `<span class="tip" title="${i18next.t(
-          "repoconfig.repo-tip"
-        )}">$1</span>`
-      );
-
     van.add(
       this,
-      main(
-        h1(
-          { style: "display: flex; justify-content: space-between" },
-          span({ innerHTML: config }),
-          closeButton
+      Modal(
+        main(
+          InputField({}, label({ class: "input-label" }, "Name", "*"), $name),
+          br(),
+          InputField(
+            {},
+            label({ class: "input-label" }, "Repository URL (optional)"),
+            $repository
+          ),
+          br(),
+          InputField({}, label({ class: "input-label" }, "Email"), $email),
+          br(),
+          br(),
+          div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
         ),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.name"), "*"),
-          $name
-        ),
-        br(),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.repo-url")),
-          $repository
-        ),
-        br(),
-        InputField(
-          {},
-          label({ class: "input-label" }, i18next.t("repoconfig.email")),
-          $email
-        ),
-        br(),
-        br(),
-        div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
+        "Project/repository settings",
+        () => this.close()
       )
     );
 
-    this.$ = {
-      $repository,
-      $name,
-      $email,
-    };
+    this.$repository = $repository;
+    this.$name = $name;
+    this.$email = $email;
   }
 
   public async display() {
@@ -112,12 +83,11 @@ export class RepoConfigModal extends Modal {
 
     if (await this.project?.exists()) {
       const details = await this.project?.getDetails();
-      const { $repository, $name, $email } = this.$;
 
-      // in the future, these will never be blank
-      $repository.value = details.repository ?? "";
-      $name.value = details.username ?? "";
-      $email.value = details.email ?? "";
+      // in the future, these will never be blank, I think
+      this.$repository.value = details.repository ?? "";
+      this.$name.value = details.username ?? "";
+      this.$email.value = details.email ?? "";
     }
 
     if (!this.open) this.showModal();

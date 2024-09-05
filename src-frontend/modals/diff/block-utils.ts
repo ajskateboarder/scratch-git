@@ -8,7 +8,6 @@ export const scrollBlockIntoView = (blockOrId: string) => {
   const offsetX = 32;
   const offsetY = 32;
   const block = workspace.getBlockById(blockOrId)!;
-
   const root = block.getRootBlock();
   let base = block;
   while (base.getOutputShape() && base.getSurroundParent()) {
@@ -39,35 +38,39 @@ export const scrollBlockIntoView = (blockOrId: string) => {
 const currentFlash = { block: null, timerID: null } as any;
 
 /** Flash a script for identification purposes */
-export const flash = (block: any) => {
-  if (currentFlash.timerID > 0) {
-    clearTimeout(currentFlash.timerID);
-    if (currentFlash.block.svgGroup_) {
-      currentFlash.block.svgGroup_
-        .querySelectorAll("path")
-        .forEach((e: SVGElement) => (e.style.fill = ""));
+export const flash = (block: any): Promise<void> =>
+  new Promise((resolve) => {
+    if (currentFlash.timerID > 0) {
+      clearTimeout(currentFlash.timerID);
+      if (currentFlash.block.svgGroup_) {
+        currentFlash.block.svgGroup_
+          .querySelectorAll("path")
+          .forEach((e: SVGElement) => (e.style.fill = ""));
+      }
     }
-  }
 
-  let count = 4;
-  let flashOn = true;
-  currentFlash.block = block;
+    let count = 4;
+    let flashOn = true;
+    currentFlash.block = block;
 
-  const _flash = () => {
-    if (currentFlash.block.svgGroup_) {
-      currentFlash.block.svgGroup_
-        .querySelectorAll("path")
-        .forEach((e: SVGElement) => (e.style.fill = flashOn ? "#ffff80" : ""));
-    }
-    flashOn = !flashOn;
-    count--;
-    if (count > 0) {
-      currentFlash.timerID = setTimeout(_flash, 200);
-    } else {
-      currentFlash.timerID = 0;
-      currentFlash.block = null;
-    }
-  };
+    const _flash = () => {
+      if (currentFlash.block.svgGroup_) {
+        currentFlash.block.svgGroup_
+          .querySelectorAll("path")
+          .forEach(
+            (e: SVGElement) => (e.style.fill = flashOn ? "#ffff80" : "")
+          );
+      }
+      flashOn = !flashOn;
+      count--;
+      if (count > 0) {
+        currentFlash.timerID = setTimeout(_flash, 200);
+      } else {
+        currentFlash.timerID = 0;
+        currentFlash.block = null;
+        resolve();
+      }
+    };
 
-  _flash();
-};
+    _flash();
+  });

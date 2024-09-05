@@ -1,13 +1,11 @@
-import { DEFAULTS, userSettings } from "@/settings";
-import { Modal } from "../base";
 import van from "vanjs-core";
+import { clearSettings, DEFAULTS, setDefaults, userSettings } from "@/settings";
 import { cls, s, settings } from "@/components";
 import { uninstall } from "@/api";
-import i18n from "@/l10n";
 import { Redux } from "@/lib";
+import { Modal } from "../modal";
 
-const { div, label, input, span, h1, p, summary, details, img, button, i, a } =
-  van.tags;
+const { div, label, input, span, p, summary, details, img, button } = van.tags;
 
 // https://github.com/TurboWarp/scratch-gui/blob/develop/src/components/tw-settings-modal/help-icon.svg
 const HELP_ICON_SVG = `data:image/svg+xml;base64,\
@@ -46,7 +44,7 @@ const ScriptColor = (dark: boolean) => {
         value: userSettings.scriptColor,
         onchange: (e) => (userSettings.scriptColor = e.target.value),
       }),
-      span(" ", i18n.t("settings.highlight.name"))
+      span(" ", "Highlight")
     ),
     HelpIcon(dark)
   );
@@ -57,7 +55,7 @@ const ScriptColor = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(colorInput),
-    i18n.t("settings.highlight.help")
+    "Changes the highlight color of changed scripts"
   );
 };
 
@@ -82,7 +80,7 @@ const ImgChangeColors = (dark: boolean) => {
         value: userSettings.imgRmColor,
         onchange: (e) => (userSettings.imgRmColor = e.target.value),
       }),
-      span(" ", i18n.t("settings.img-change-colors.name"))
+      span(" ", "Image addition/removal colors")
     ),
     HelpIcon(dark)
   );
@@ -93,7 +91,7 @@ const ImgChangeColors = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(colorInput),
-    i18n.t("settings.img-change-colors.help")
+    "Changes the colors for parts of an image that were added or removed"
   );
 };
 
@@ -115,7 +113,7 @@ const Highlights = (dark: boolean) => {
         onchange: (e: Event) =>
           (userSettings.highlights = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", i18n.t("settings.highlight-diffs.name"))
+      span(" ", "Show diffs with highlights")
     ),
     HelpIcon(dark)
   );
@@ -126,7 +124,7 @@ const Highlights = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(hlInput),
-    i18n.t("settings.highlight-diffs.help")
+    "If this is enabled, diffs will be highlighted instead of being outlined or crossed out."
   );
 };
 
@@ -148,7 +146,7 @@ const PlainText = (dark: boolean) => {
         onchange: (e: Event) =>
           (userSettings.plainText = (e.target! as HTMLInputElement).checked),
       }),
-      span(" ", i18n.t("settings.plain-text.name"))
+      span(" ", "Show diffs in plain text")
     ),
     HelpIcon(dark)
   );
@@ -159,7 +157,7 @@ const PlainText = (dark: boolean) => {
       style: "pointer-events: none",
     },
     summary(ptInput),
-    i18n.t("settings.plain-text.help")
+    "If this is enabled, diffs will be shown in plain text instead of Scratch blocks."
   );
 };
 
@@ -170,9 +168,13 @@ const Settings = (dark: boolean) => [
   PlainText(dark),
 ];
 
-export class SettingsModal extends Modal {
+export class SettingsModal extends HTMLElement {
   connectedCallback() {
-    const dark = Redux.getState().scratchGui.theme.theme.gui === "dark";
+    if (this.querySelector("main")) return;
+    this.close();
+
+    const dark =
+      (Redux.getState().scratchGui as any).theme.theme.gui === "dark";
 
     const [scriptColor, imgChangeColors, highlights, plainText] =
       Settings(dark);
@@ -184,24 +186,11 @@ export class SettingsModal extends Modal {
       plainText,
     ].map((e) => e.querySelectorAll("input")!);
 
-    const closeButton = button(
-      {
-        class: settings.button,
-        onclick: () => {
-          this.close();
-          scriptColor.open = false;
-          highlights.open = false;
-          plainText.open = false;
-        },
-      },
-      i({ class: "fa-solid fa-xmark" })
-    );
-
     const restoreDefaults = button(
       {
         class: settings.button,
         onclick: () => {
-          userSettings.defaults();
+          setDefaults();
           scInput[0].value = DEFAULTS.scriptColor;
           icInput[0].value = DEFAULTS.imgAddColor;
           icInput[1].value = DEFAULTS.imgRmColor;
@@ -209,79 +198,76 @@ export class SettingsModal extends Modal {
           ptInput[0].checked = DEFAULTS.plainText;
         },
       },
-      i18n.t("settings.reset-to-defaults")
+      "Reset to defaults"
     );
 
     const uninstallButton = button(
       {
         class: settings.button,
         onclick: async () => {
-          if (confirm(i18n.t("settings.uninstall-note"))) {
-            await uninstall();
-            userSettings.clear();
-            (window._changedScripts as any) = undefined;
-            (window._repoStatus as any) = undefined;
-            window.location.reload();
+          if (confirm("Are you sure you want to uninstall scratch.git?")) {
+            if (await uninstall()) {
+              clearSettings();
+              (window._changedScripts as any) = undefined;
+              (window._repoStatus as any) = undefined;
+              window.location.reload();
+            } else {
+              // TODO: o_0 what
+              alert("Failed to uninstall");
+            }
           }
         },
       },
-      i18n.t("settings.uninstall")
+      "Uninstall"
     );
-
-    scInput[0].value = userSettings.scriptColor;
-    hlInput[0].checked = userSettings.highlights;
-    ptInput[0].checked = userSettings.plainText;
-    icInput[0].value = userSettings.imgAddColor;
-    icInput[1].value = userSettings.imgRmColor;
 
     van.add(
       this,
-      div(
-        { class: "settings-wrapper" },
-        h1({ class: "header" }, "Settings", closeButton),
-        p(
-          { style: "color: var(--ui-modal-foreground)" },
-          scriptColor,
-          imgChangeColors,
-          highlights,
-          plainText
-        ),
+      Modal(
         div(
-          {
-            class: "bottom-bar",
-            style: "margin-top: 10px",
-          },
-          restoreDefaults,
-          uninstallButton
-        ),
-        p(
-          {
-            style:
-              "color: var(--ui-modal-foreground); position: absolute; bottom: 10px",
-          },
-          a(
-            { href: "https://github.com/ajskateboarder/scratch-git" },
-            i({ class: "fa-brands fa-github" })
+          { class: "settings-wrapper" },
+          p(
+            { style: "color: var(--ui-modal-foreground)" },
+            scriptColor,
+            imgChangeColors,
+            highlights,
+            plainText
           ),
-          " ",
-          a(
-            { href: "https://ajskateboarder.github.io/scratch-git/privacy" },
-            i({ class: "fa-solid fa-shield-halved" })
+          div(
+            {
+              class: "bottom-bar",
+              style: "margin-top: 10px",
+            },
+            restoreDefaults,
+            uninstallButton
           )
-        )
+        ),
+        "Git Settings",
+        () => this.close()
       )
     );
+
+    scInput[0].value = userSettings.scriptColor;
+    icInput[0].value = userSettings.imgAddColor;
+    icInput[1].value = userSettings.imgRmColor;
+    hlInput[0].checked = userSettings.highlights;
+    ptInput[0].checked = userSettings.plainText;
   }
 
   public display() {
     // TODO: probably a better alt to doing a modal refresh every time
-    this.querySelector(".settings-wrapper")!.remove();
+    this.querySelector(".ReactModalPortal")!.remove();
     this.connectedCallback();
     this.showModal();
   }
 
-  public refresh() {
-    this.querySelector(".settings-wrapper")!.remove();
-    this.connectedCallback();
+  showModal() {
+    this.style.display = "block";
+  }
+  close() {
+    this.style.display = "none";
+  }
+  get open() {
+    return this.style.display !== "none";
   }
 }

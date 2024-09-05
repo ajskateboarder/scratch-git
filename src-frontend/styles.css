@@ -14,9 +14,9 @@ dialog {
   box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.4);
 }
 
-dialog[is="commit-modal"],
-dialog[is="repo-config-modal"],
-dialog[is="settings-modal"] {
+commit-modal,
+repo-config-modal,
+settings-modal {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -29,7 +29,7 @@ html[style*="--ui-primary: #111111"] .alert-button {
   color: white;
 }
 
-dialog[is="diff-modal"] {
+diff-modal {
   padding: 0;
 
   .button-group {
@@ -64,7 +64,7 @@ dialog[is="welcome-modal"] {
   position: absolute;
   right: 0;
   margin-top: 40px;
-  z-index: 99999;
+  z-index: 1;
   transition: all 0.15s ease-out;
   scale: 0.8;
   border-radius: 20px;

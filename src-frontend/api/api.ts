@@ -1,3 +1,4 @@
+import { ProjectJSON } from "@/diff-indicators/script-parser";
 import { SOCKET_URL } from "./config";
 import { Redux } from "@/lib";
 
@@ -60,7 +61,6 @@ class Socket {
           console.debug("message", message.data);
           const json = JSON.parse(message.data);
           if (json["unhandled-error"]) {
-            // TODO: localize
             alert(
               `An unhandled error occurred. Please check the console for errors using Ctrl+Shift+I.`
             );
@@ -98,13 +98,8 @@ class Socket {
   }
 }
 
-/** Represents a connection to interface with a specific project */
 export class Project extends Socket {
-  /** Constructs a project
-   *
-   * @param projectName - the name of an initialized project
-   * @param ws - a WebSocket connection
-   */
+  /** Constructs a project */
   constructor(public projectName: string, protected ws: WebSocket) {
     super(ws);
   }
@@ -168,32 +163,30 @@ export class Project extends Socket {
     ).data;
   }
 
-  /** Get the current scripts of a project's JSON
-   *
-   * @param sprite - the name of the sprite you want to receive scripts from
-   */
+  /** Get the current scripts of a project's JSON */
   // LINK src-server/handlers.rs#get-sprite-scripts
   async getCurrentScripts(sprite: string) {
-    return await this.request({
-      command: "current-project",
-      data: {
-        Project: { project_name: this.projectName, sprite_name: sprite },
-      },
-    });
+    return new ProjectJSON(
+      await this.request({
+        command: "current-project",
+        data: {
+          Project: { project_name: this.projectName, sprite_name: sprite },
+        },
+      })
+    );
   }
 
-  /** Get the scripts of a project's JSON before the project was saved
-   *
-   * @param sprite - the name of the sprite you want to receive scripts from
-   */
+  /** Get the scripts of a project's JSON before the project was saved */
   // LINK src-server/handlers.rs#get-sprite-scripts
-  getPreviousScripts(sprite: string): Promise<Record<string, string>> {
-    return this.request({
-      command: "previous-project",
-      data: {
-        Project: { project_name: this.projectName, sprite_name: sprite },
-      },
-    });
+  async getPreviousScripts(sprite: string) {
+    return new ProjectJSON(
+      await this.request({
+        command: "previous-project",
+        data: {
+          Project: { project_name: this.projectName, sprite_name: sprite },
+        },
+      })
+    );
   }
 
   /** Commit the current project to Git */
@@ -220,8 +213,7 @@ export class Project extends Socket {
 
   /** Pull upstream changes from the configured remote
    *
-   * Optionally takes usernames and passwords for hosts that use them
-   */
+   * May prompt user for username/password in terminal before responding */
   // LINK src-server/handlers.rs#pull
   async pull(): Promise<PullMsg> {
     return (
@@ -279,16 +271,12 @@ export class ProjectManager extends Socket {
     super(ws);
   }
 
-  /** Fetch a project resource using its name
-   *
-   * @param projectName - the name of a configured project
-   */
   async getProject(projectName: string): Promise<Project> {
     return new Project(projectName, this.ws);
   }
 
   /**
-   * Create and initialize a new project
+   * Create a new project
    *
    * @param info - the path to the project SB3 and the user's chosen name and email
    * @throws {Error}
@@ -338,13 +326,13 @@ export class ProjectManager extends Socket {
 
 /** Diff two scratchblocks scripts and return lines removed and added, and the diffed content
  *
- * @param oldScript - the script for a sprite before a save
+ * @param oldScript - the script for a sprite before a save, default is empty string
  * @param newScript - the script after a save
  */
 // LINK src-server/handlers.rs#diff
 export const diff = (
   projectName: string,
-  oldScript: string,
+  oldScript: string = "",
   newScript: string
 ): Promise<{ added: number; removed: number; diffed: string }> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
@@ -371,10 +359,7 @@ export const cloneRepo = (url: string) => {
   });
 };
 
-/** Check if a user-provided Git repository remote exists
- *
- * @param url - the URL of the repository to be checked
- */
+/** Check if a user-provided Git repository remote exists */
 // LINK src-server/handlers.rs#remote-exists
 export const remoteExists = async (url: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {

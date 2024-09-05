@@ -1,19 +1,19 @@
-import { Modal } from "../base";
-import { scrollBlockIntoView, flash } from "./block-utils";
+import van, { State } from "vanjs-core";
+
 import api, { CostumeChange, Project } from "@/api";
-import { cls, settings } from "@/components";
-import { Checkbox, Copy } from "@/components";
-import { Redux, scratchblocks } from "@/lib";
-import { getBlockly } from "@/lib";
+import { cls, settings, Checkbox, Copy } from "@/components/";
+import { getBlockly, Redux, scratchblocks, vm } from "@/lib";
 import { parseScripts, type ScriptStatus } from "@/diff-indicators";
 import { userSettings } from "@/settings";
-import van from "vanjs-core";
+import { ProjectJSON } from "@/diff-indicators/script-parser";
 
-import iconCodeSvg from "./icon--code.svg";
-import iconCostumesSvg from "./icon--costumes.svg";
-import iconSoundsSvg from "./icon--sounds.svg";
+import { Card } from "../card";
+import { scrollBlockIntoView, flash } from "./block-utils";
 import { imageLayer, unifiedDiff, toDataURI } from "./image-utils";
-import { getLocale } from "@/l10n";
+import iconCodeSvg from "./code.svg";
+import iconCostumesSvg from "./paintbrush.svg";
+import iconSoundsSvg from "./sound.svg";
+import { Base } from "../base";
 
 const {
   div,
@@ -25,13 +25,12 @@ const {
   aside,
   main,
   br,
-  hr,
   i,
   li,
   img,
   audio,
-  details,
-  summary,
+  input,
+  label,
 } = van.tags;
 
 const DIFF_ICON = {
@@ -66,36 +65,71 @@ interface Diff {
   diffed: string;
 }
 
-const byteFormatter = Intl.NumberFormat(getLocale(), {
+const locale = Redux.getState().locales.locale;
+
+const byteFormatter = Intl.NumberFormat(locale, {
   notation: "compact",
   style: "unit",
   unit: "byte",
   unitDisplay: "narrow",
 });
 
-const percentFormatter = Intl.NumberFormat(getLocale(), {
+const percentFormatter = Intl.NumberFormat(locale, {
   style: "percent",
   minimumFractionDigits: 0,
   maximumFractionDigits: 1,
 });
 
-/** Displays differences between previous and current project states and handles commiting the changes to Git */
-export class DiffModal extends Modal {
-  $scripts!: HTMLUListElement;
-  $commits!: HTMLParagraphElement;
-  $highlights!: HTMLInputElement;
-  $plainText!: HTMLInputElement;
-  $unified!: HTMLElement;
+const createSprite = (name: string, blocks: any) =>
+  JSON.stringify({
+    isStage: false,
+    name,
+    variables: {},
+    lists: {},
+    broadcasts: {},
+    blocks,
+    comments: {},
+    currentCostume: 1,
+    costumes: [],
+    sounds: [],
+    volume: 100,
+    visible: false,
+    x: 0,
+    y: 0,
+    size: 100,
+    direction: 90,
+    draggable: false,
+    rotationStyle: "all around",
+  });
 
-  previousScripts: any;
-  currentScripts: any;
-  costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
+/** Displays differences between previous and current project states and handles commiting the changes to Git */
+export class DiffModal extends Base {
+  private $scripts!: HTMLUListElement;
+  private $commits!: HTMLParagraphElement;
+  private $highlights!: HTMLInputElement;
+  private $plainText!: HTMLInputElement;
+  private $unified!: HTMLElement;
+  private $revert!: HTMLButtonElement;
+  private $revertList!: HTMLElement;
+
+  private previousScripts!: ProjectJSON;
+  private currentScripts!: ProjectJSON;
+  private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
 
   private copyCallback!: () => string | SVGElement;
-  unify = van.state(true);
+
+  private unify = van.state(true);
+  private reverting = false;
+
+  constructor() {
+    super();
+  }
 
   connectedCallback() {
     if (this.querySelector("main")) return;
+    this.close();
+    this.style.position = "absolute";
+    this.style.zIndex = "1000";
 
     this.copyCallback = () =>
       (this.querySelector(".scratchblocks svg") as SVGElement) ??
@@ -104,11 +138,15 @@ export class DiffModal extends Modal {
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
     const unified = span(
+      { style: "margin-left: -15px" },
       button(
         {
           onclick: () => (this.unify.val = false),
           class: cls(settings.button, "round-right-button"),
-          style: () => (this.unify.val ? "filter: brightness(0.88)" : ""),
+          style: () =>
+            this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
         },
         "Split"
       ),
@@ -116,58 +154,71 @@ export class DiffModal extends Modal {
         {
           onclick: () => (this.unify.val = true),
           class: cls(settings.button, "round-left-button"),
-          style: () => (!this.unify.val ? "filter: brightness(0.88)" : ""),
+          style: () =>
+            !this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
         },
         "Unified"
       )
     );
-
-    const closeButton = button(
+    const importOld = button(
       {
         class: settings.button,
-        onclick: () => {
-          useHighlights.querySelector("input")!.checked = false;
-          plainText.querySelector("input")!.checked = false;
-          this.close();
-        },
+        style: "margin-left: 15px; padding: 0.3rem",
       },
-      i({ class: "fa-solid fa-xmark" })
+      i({ class: "fa-solid fa-rotate-left" }),
+      " Revert sprite"
     );
 
-    const commits = p(
-      { style: "margin-right: 10px; margin-left: 10px", id: "commits" },
+    const header = p(
+      { style: "margin-right: 10px; margin-left: 10px", id: "diff-header" },
       span(
         {
           class: "header",
         },
-        span({ class: "settings-group" }, useHighlights, plainText, unified),
-        span({ class: "button-group" }, closeButton)
-      ),
-      hr(),
-      div(
-        { class: "commit-view" },
-        pre(
-          { class: "commit-wrap" },
-          Copy(this.copyCallback),
-          pre({ class: "real-commit-wrap" })
+        span(
+          { class: "settings-group", style: "width: 100%" },
+          useHighlights,
+          plainText,
+          unified,
+          Copy(this.copyCallback, {
+            class: cls("copy-button", settings.button),
+            style: "padding: 0.3rem 10px",
+          })
         )
       )
     );
 
-    Object.assign(this, {
-      $scripts: ul({ style: "max-width: 200px" }),
-      $highlights: useHighlights.querySelector("input")!,
-      $plainText: plainText.querySelector("input")!,
-      $commits: commits.querySelector(".real-commit-wrap")!,
-      $unified: unified,
-    });
+    const diff = div(
+      { class: "commit-view" },
+      pre(
+        { class: "commit-wrap", style: "display: inline-block" },
+        pre({ class: "real-commit-wrap" })
+      )
+    );
+
+    const revertList = main({ class: "revert-list", style: "display: none" });
+
+    this.$scripts = ul();
+    this.$highlights = useHighlights.querySelector("input")!;
+    this.$plainText = plainText.querySelector("input")!;
+    this.$commits = diff.querySelector(".real-commit-wrap")!;
+    this.$unified = unified;
+    this.$revert = importOld;
+    this.$revertList = revertList;
 
     van.add(
       this,
-      main(
-        { class: "diff-view" },
-        aside(this.$scripts),
-        main(div({ class: "content" }, commits))
+      Card(
+        main(
+          { class: "diff-view" },
+          aside(importOld, this.$scripts),
+          revertList,
+          main(div({ class: "content" }, header), diff)
+        ),
+        "Diff",
+        () => this.close()
       )
     );
   }
@@ -202,16 +253,10 @@ export class DiffModal extends Modal {
       this.querySelector(".scratchblocks svg") as SVGElement;
   }
 
-  /** Highlights diffs with plain text
-   *
-   * @param diffs - b
-   * @param script -
-   */
-  private highlightAsText(diffs: Diff[], script: number) {
+  /** Highlights diffs with plain text */
+  private highlightAsText(diff: Diff) {
     const { $commits, $highlights } = this;
-
-    // TODO: passing in diffs and script idx is probably unneeded
-    const content = diffs[script].diffed.trimStart() ?? "";
+    const content = diff.diffed.trimStart() ?? "";
 
     $commits.innerHTML = `<pre>${content}</pre><br>`;
 
@@ -295,8 +340,12 @@ export class DiffModal extends Modal {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid red",
                 },
-                Copy(() => aImage),
-                aImage,
+                a.contents !== "" ? Copy(() => aImage) : undefined,
+                img({
+                  src: a.contents,
+                  height: aImage.height / 2,
+                  width: aImage.width / 2,
+                }),
                 byteFormatter.format(a.size)
               ),
               i({ class: "fa-solid fa-arrow-right fa-xl" }),
@@ -305,8 +354,12 @@ export class DiffModal extends Modal {
                   class: "image costume-diff-canvas",
                   style: "border: 2px solid green",
                 },
-                Copy(() => bImage),
-                bImage,
+                b.contents !== "" ? Copy(() => bImage) : undefined,
+                img({
+                  src: b.contents,
+                  height: bImage.height / 2,
+                  width: bImage.width / 2,
+                }),
                 sizeChange
               )
             )
@@ -332,16 +385,23 @@ export class DiffModal extends Modal {
   public async display(
     project: Project | undefined,
     spriteName: string,
-    script = 0,
+    script: number = 0,
     cached = false
   ) {
-    const { $commits, $highlights, $plainText, $scripts, $unified } = this;
+    const {
+      $commits,
+      $highlights,
+      $plainText,
+      $scripts,
+      $unified,
+      $revert,
+      $revertList,
+    } = this;
 
     // try again in case of undefined
-    if (!project) project = api.getCurrentProject();
-    project = project!;
+    project ??= api.getCurrentProject()!;
 
-    let oldScripts: any, newScripts: any;
+    let oldScripts: ProjectJSON, newScripts: ProjectJSON;
 
     if (
       !cached ||
@@ -349,11 +409,9 @@ export class DiffModal extends Modal {
       !this.currentScripts ||
       !this.costumeChanges
     ) {
-      Object.assign(this, {
-        previousScripts: await project.getPreviousScripts(spriteName),
-        currentScripts: await project.getCurrentScripts(spriteName),
-        costumeChanges: await project.getChangedAssets(),
-      });
+      this.previousScripts = await project.getPreviousScripts(spriteName);
+      this.currentScripts = await project.getCurrentScripts(spriteName);
+      this.costumeChanges = await project.getChangedAssets();
     }
 
     oldScripts = this.previousScripts;
@@ -366,8 +424,9 @@ export class DiffModal extends Modal {
     );
 
     const costumeDiffs = this.costumeChanges[spriteName];
-    const { blocks: blockTheme, gui: uiTheme } =
-      Redux.getState().scratchGui.theme.theme;
+    const { blocks: blockTheme, gui: uiTheme } = (
+      Redux.getState().scratchGui as any
+    ).theme.theme;
 
     const config = {
       style:
@@ -433,7 +492,7 @@ export class DiffModal extends Modal {
       const dropdownChange = {
         three: "brightness(0.83)",
         "high-contrast": "brightness(1.12) saturate(0.7)",
-      }[blockTheme];
+      }[blockTheme as string];
       if (dropdownChange !== undefined) {
         svg
           .querySelectorAll<SVGRectElement>("rect.sb3-input-dropdown")
@@ -452,7 +511,7 @@ export class DiffModal extends Modal {
       if ($highlights.checked) {
         this.highlightAsBlocks();
         if ($plainText.checked) {
-          this.highlightAsText(diffs, script);
+          this.highlightAsText(diffs[script]);
         }
       } else {
         if ($plainText.checked) {
@@ -471,7 +530,7 @@ export class DiffModal extends Modal {
       userSettings.plainText = $plainText.checked;
       if ($plainText.checked) {
         if ($highlights.checked) {
-          this.highlightAsText(diffs, script);
+          this.highlightAsText(diffs[script]);
         } else {
           const content = diffs[script].diffed ?? "";
           $commits.innerHTML = "";
@@ -488,7 +547,7 @@ export class DiffModal extends Modal {
     };
 
     // assign diff displaying to diffs
-    diffs.forEach(async (diff, scriptNo) => {
+    diffs.forEach((diff, scriptNo) => {
       let labelText;
       if (window._changedScripts[spriteName])
         labelText = getBlockly()
@@ -507,9 +566,9 @@ export class DiffModal extends Modal {
             ? button(
                 {
                   class: `${settings.button} open-script`,
-                  onclick: async (e: Event) => {
+                  onclick: (e: Event) => {
                     e.stopPropagation();
-                    this.close();
+                    this.style.opacity = "0.5";
                     if (
                       Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
                     ) {
@@ -520,7 +579,13 @@ export class DiffModal extends Modal {
                     }
                     const id = window._changedScripts[spriteName][scriptNo];
                     scrollBlockIntoView(id);
-                    flash(getBlockly().getBlockById(id));
+                    flash(getBlockly().getBlockById(id)).then(() => {
+                      const listener = () => (this.style.opacity = "1");
+                      document.addEventListener("mousemove", () => {
+                        listener();
+                        document.removeEventListener("mousemove", listener);
+                      });
+                    });
                   },
                 },
                 i({ class: "fa-solid fa-up-right-from-square" })
@@ -620,9 +685,9 @@ export class DiffModal extends Modal {
     const scriptDiff = btnRef.getAttribute("diff-type");
 
     // costume diff view
-    const display = scriptDiff === "script" ? "block" : "none";
+    const display = scriptDiff === "script" ? "flex" : "none";
     document.querySelector<HTMLDivElement>(".copy-button")!.style.display =
-      display;
+      scriptDiff === "script" ? "block" : "none";
     $plainText.parentElement!.style.display = display;
     $highlights.parentElement!.style.display = display;
     $unified.style.display = scriptDiff === "costume" ? "block" : "none";
@@ -670,12 +735,22 @@ export class DiffModal extends Modal {
         }
       }
 
+      const _previousAssetImg = img({ src: previousAsset.contents }),
+        _currentAssetImg = img({ src: currentAsset.contents });
       const previousAssetImg = imageLayer(
-          img({ src: previousAsset.contents }),
+          img({
+            src: previousAsset.contents,
+            width: _previousAssetImg.width / 2,
+            height: _previousAssetImg.height / 2,
+          }),
           userSettings.imgRmColor
         ),
         currentAssetImg = imageLayer(
-          img({ src: currentAsset.contents }),
+          img({
+            src: currentAsset.contents,
+            width: _currentAssetImg.width / 2,
+            height: _currentAssetImg.height / 2,
+          }),
           userSettings.imgAddColor
         );
 
@@ -702,11 +777,6 @@ export class DiffModal extends Modal {
       );
     }
 
-    // dark mode
-    this.querySelector(".diff-view")!.classList.toggle(
-      "dark",
-      uiTheme === "dark"
-    );
     this.setDiffTheme(uiTheme);
 
     if (scriptDiff === "script") {
@@ -719,28 +789,141 @@ export class DiffModal extends Modal {
       scriptDiff === "costume"
     );
 
-    // TODO: this is annoying, refactor sometime
-    if (diffs[script] && diffs[script].status === "removed") {
-      // TODO: localize
-      const view = document.querySelector(".commit-view");
-      const wrapper = details(
-        summary({ style: "display: list-item" }, "This script was deleted")
-      );
-      if (view) {
-        view.parentNode!.insertBefore(wrapper, view);
-        wrapper.appendChild(view);
-      }
-    } else {
-      if (this.querySelector("details")) {
-        const el = document.querySelector(".commit-view")!;
-        document.querySelector("#commits")!.appendChild(el);
-        this.querySelector("details")!.remove();
-      }
-    }
-
     $highlights.checked = userSettings.highlights;
     $plainText.checked = userSettings.plainText;
 
-    if (!this.open) this.showModal();
+    if (scriptDiff === "script") {
+      const currentSprite = vm.runtime._editingTarget!;
+      const switchedToRevert = () => {
+        $revertList.style.display = "flex";
+        $revertList.innerHTML = "";
+        $revert.innerHTML = "Cancel revert";
+
+        const states: State<boolean>[] = [];
+
+        const RevertButton = (e: Diff, index: number) => {
+          const inp = input({
+            type: "checkbox",
+            name: index,
+            onchange: () => {
+              ticked.val = inp.checked;
+            },
+          });
+          const ticked = van.state(false);
+          states.push(ticked);
+          return label(
+            span(
+              {
+                class: "revert-icon",
+                title: () =>
+                  `Using script ${ticked.val ? "after" : "before"} changes`,
+              },
+              () =>
+                i({
+                  class: `fa-solid fa-sm fa-rotate-${
+                    ticked.val ? "right" : "left"
+                  }`,
+                })
+            ),
+            inp,
+            span(iconCodeSvg(), e.scriptNo)
+          );
+        };
+
+        $revertList.append(
+          ul(
+            li(
+              input({
+                type: "checkbox",
+                onchange: (e: Event) => {
+                  const target = e.target! as HTMLInputElement;
+                  [
+                    ...target.parentElement!.parentElement!.querySelectorAll<HTMLInputElement>(
+                      "input[type=checkbox]"
+                    ),
+                  ]
+                    .slice(1)
+                    .forEach((_e, _i) => {
+                      _e.checked = target.checked;
+                      states[_i].val = target.checked;
+                    });
+                },
+              })
+            ),
+            diffs.map((e, _i) => li(RevertButton(e, _i)))
+          ),
+          br(),
+          button({
+            class: cls("fa-solid fa-check", settings.button),
+            style: "padding: 0.3rem",
+            onclick: (e) => {
+              let checkboxes = [
+                ...e.target.parentElement.querySelectorAll(
+                  "input[type=checkbox]"
+                ),
+              ]
+                .map((e: HTMLInputElement) => {
+                  const name = e.getAttribute("name");
+                  return name ? [name, e.checked] : null;
+                })
+                .filter((e) => e !== null)
+                .map(([name, checked]) => [parseInt(name as string), checked]);
+
+              const selections = Object.assign(
+                {},
+                ...checkboxes.map(([id, checked]) => {
+                  const diff = diffs[id as number];
+                  const stack = (checked ? diff.json : diff.oldJSON).getStack(
+                    checked ? diff.script : diff.oldScript
+                  );
+                  return stack;
+                })
+              );
+
+              const name = `${currentSprite.sprite.name!} [↩]`;
+              vm.addSprite(createSprite(name, selections));
+              this.close();
+            },
+          })
+        );
+      };
+      $revert.classList.remove(settings.disabledButton);
+      $revert.disabled = false;
+      $revert.onclick = () => {
+        if (!this.reverting) {
+          switchedToRevert();
+        } else {
+          $revertList.style.display = "none";
+          $revert.innerHTML = "";
+          $revert.append(
+            i({ class: "fa-solid fa-rotate-left" }),
+            " Revert sprite"
+          );
+        }
+        this.reverting = !this.reverting;
+      };
+    } else {
+      $revert.classList.add(settings.disabledButton);
+      $revert.disabled = true;
+      $revert.onclick = () => {};
+    }
+
+    this.querySelector<HTMLElement>(".card-title")!.innerText = spriteName;
+
+    this.close();
+    this.showModal();
+  }
+
+  close() {
+    this.style.display = "none";
+    if (this.$revertList) {
+      this.$revertList.style.display = "none";
+      this.reverting = false;
+      this.$revert.innerHTML = "";
+      this.$revert.append(
+        i({ class: "fa-solid fa-rotate-left" }),
+        " Revert sprite"
+      );
+    }
   }
 }
