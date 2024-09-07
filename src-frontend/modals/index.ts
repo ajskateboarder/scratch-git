@@ -4,9 +4,6 @@ import { CommitModal } from "./commit";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
 import { s } from "../components";
-import type { Modal } from "./base";
-
-const MODALS = ["welcome"];
 
 export const initModals = () => {
   if (document.querySelector("commit-modal")) return;
@@ -21,16 +18,15 @@ export const initModals = () => {
     });
   } catch {}
 
-  // insert modals into area where they can show correctly
+  // insert the welcome modal into an area where it can show correctly (idk)
   const saveArea = document.querySelector<HTMLElement>(
     `#app > div > div.${s("gui_menu-bar-position")}.${s(
       "menu-bar_menu-bar"
     )} > div.${s("menu-bar_main-menu")} > div:nth-child(4)`
   )!;
   saveArea.style.opacity = "0";
-  saveArea.innerHTML += MODALS.map(
-    (e) => `<dialog is="${e}-modal"></dialog>`
-  ).join("");
+  saveArea.innerHTML += `<dialog is="welcome-modal"></dialog>`;
+
   document.body.appendChild(document.createElement("diff-modal"));
   document.body.appendChild(document.createElement("settings-modal"));
   document.body.appendChild(document.createElement("commit-modal"));
