@@ -4,7 +4,7 @@ import { zip } from "../utils";
 
 export type ScriptStatus = "modified" | "added" | "removed";
 
-interface ScriptParse {
+export interface ScriptParse {
   oldContent: string;
   newContent: string;
   status: ScriptStatus;

@@ -226,6 +226,10 @@ export const showIndicators = async (project: Project) => {
           });
         })
       );
+      sprites.spriteSelDelete
+        .selectAll<HTMLDivElement>()
+        .filter((button) => !button.classList.contains("stage-diff-button"))
+        .forEach((btn) => (btn.style.marginTop = "0px"));
 
       diffButton.style.marginTop =
         movedToSprite === spriteName ? "30px" : "0px";

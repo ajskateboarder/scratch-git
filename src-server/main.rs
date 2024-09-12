@@ -26,7 +26,7 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
         HandshakeError::Interrupted(_) => panic!("Bug: blocking socket would block"),
         HandshakeError::Failure(f) => f,
     })?;
-
+        
     loop {
         match socket.read()? {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {

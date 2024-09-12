@@ -1,5 +1,5 @@
 import { WelcomeModal } from "./welcome";
-import { DiffModal } from "./diff";
+import { DiffModal } from "./diff/diff";
 import { CommitModal } from "./commit";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
