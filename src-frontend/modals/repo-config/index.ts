@@ -1,15 +1,16 @@
 import van from "vanjs-core";
 import api, { Project, remoteExists } from "@/api";
-import { settings, gitMenu } from "@/components";
+import { Settings } from "@/components/accessors";
 import { InputBox, InputField } from "@/components/input-field";
 import { validURL } from "@/utils";
 import { Modal } from "../modal";
 import { Base } from "../base";
+import { GitMenu } from "@/components/menus";
 
 const { main, button, div, label, br } = van.tags;
 
 export class RepoConfigModal extends Base {
-  private $repository: HTMLInputElement = InputBox({
+  private $repository = InputBox({
     placeholder: "Enter a link to a repository URL",
     onblur: async ({ target }: Event) => {
       const url: string = (target as HTMLInputElement).value;
@@ -19,8 +20,8 @@ export class RepoConfigModal extends Base {
     },
   });
 
-  private $name: HTMLInputElement = InputBox({});
-  private $email: HTMLInputElement = InputBox({});
+  private $name = InputBox();
+  private $email = InputBox();
 
   private project: Project;
 
@@ -30,14 +31,14 @@ export class RepoConfigModal extends Base {
 
     const saveButton = button(
       {
-        class: settings.button,
+        class: Settings.button,
         onclick: () => {
           if (this.$name.value.trim() === "") {
             alert("Don't leave starred fields blank");
             return;
           }
           if (this.$repository.value.trim() !== "") {
-            gitMenu.setPushPullStatus(true);
+            GitMenu.setPushPullStatus(true);
           }
           this.project.setDetails({
             username: this.$name.value,

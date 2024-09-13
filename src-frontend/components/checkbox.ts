@@ -1,18 +1,15 @@
-import { cls, settings } from "./accessors";
-import van, { PropsWithKnownKeys } from "vanjs-core";
+import { cls, Settings } from "./accessors";
+import van, { Props } from "vanjs-core";
 
 const { div, label, input, span } = van.tags;
 
-export const Checkbox = (
-  props: PropsWithKnownKeys<HTMLDivElement>,
-  name: string
-) =>
+export const Checkbox = (props: Props, name: string) =>
   div(
-    { class: settings.settingsLabel, ...props },
+    { class: Settings.settingsLabel, ...props },
     label(
-      { class: settings.settingsLabel, style: "display: flex" },
+      { class: Settings.settingsLabel, style: "display: flex" },
       input({
-        class: cls(settings.settingsCheckbox, settings.checkbox),
+        class: cls(Settings.settingsCheckbox, Settings.checkbox),
         type: "checkbox",
         checked: false,
       }),

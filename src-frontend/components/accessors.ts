@@ -29,12 +29,12 @@ export const s = (className: string) => {
 /** Join class names into a valid attribute */
 export const cls = (...classes: (string | undefined)[]) => classes.join(" ");
 
-export const menu = {
+export const Menu = {
   activeMenuItem: s("menu-bar_active"),
   section: s("menu_menu-section"),
 };
 
-export const sprites = {
+export const Sprites = {
   delete: s("delete-button_delete-button"),
   visibleDelete: s("delete-button_delete-button-visible"),
   spriteSelDelete: s("sprite-selector-item_delete-button"),
@@ -43,7 +43,7 @@ export const sprites = {
   stageWrapper: s("target-pane_stage-selector-wrapper"),
 };
 
-export const settings = {
+export const Settings = {
   settingsLabel: s("settings-modal_label"),
   settingsCheckbox: s("settings-modal_checkbox"),
   checkbox: s("checkbox_checkbox"),
@@ -52,7 +52,7 @@ export const settings = {
   inputField: s("input_input-form"),
 };
 
-export const misc = {
+export const Misc = {
   box: s("box_box"),
   menuItems: s("menu-bar_file-group"),
   saveArea: s("menu-bar_account-info-group"),

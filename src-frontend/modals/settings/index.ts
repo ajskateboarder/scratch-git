@@ -1,6 +1,6 @@
 import van from "vanjs-core";
 import { clearSettings, DEFAULTS, setDefaults, userSettings } from "@/settings";
-import { cls, s, settings } from "@/components";
+import { cls, s, Settings } from "@/components/accessors";
 import { uninstall } from "@/api";
 import { Redux } from "@/lib";
 import { Modal } from "../modal";
@@ -33,12 +33,12 @@ const HelpIcon = (dark: boolean) =>
 
 const ScriptColor = (dark: boolean) => {
   const colorInput = div(
-    { class: settings.settingsLabel },
+    { class: Settings.settingsLabel },
     label(
-      { class: settings.settingsLabel, style: "margin-left: 0.5rem" },
+      { class: Settings.settingsLabel, style: "margin-left: 0.5rem" },
       "  ",
       input({
-        class: settings.settingsCheckbox,
+        class: Settings.settingsCheckbox,
         style: "pointer-events: auto",
         type: "color",
         value: userSettings.scriptColor,
@@ -61,12 +61,12 @@ const ScriptColor = (dark: boolean) => {
 
 const ImgChangeColors = (dark: boolean) => {
   const colorInput = div(
-    { class: settings.settingsLabel },
+    { class: Settings.settingsLabel },
     label(
-      { class: settings.settingsLabel, style: "margin-left: 0.5rem" },
+      { class: Settings.settingsLabel, style: "margin-left: 0.5rem" },
       "  ",
       input({
-        class: settings.settingsCheckbox,
+        class: Settings.settingsCheckbox,
         style: "pointer-events: auto",
         type: "color",
         value: userSettings.imgAddColor,
@@ -74,7 +74,7 @@ const ImgChangeColors = (dark: boolean) => {
       }),
       "  ",
       input({
-        class: settings.settingsCheckbox,
+        class: Settings.settingsCheckbox,
         style: "pointer-events: auto",
         type: "color",
         value: userSettings.imgRmColor,
@@ -98,16 +98,16 @@ const ImgChangeColors = (dark: boolean) => {
 const Highlights = (dark: boolean) => {
   const hlInput = div(
     {
-      class: settings.settingsLabel,
+      class: Settings.settingsLabel,
     },
     label(
       {
-        class: settings.settingsLabel,
+        class: Settings.settingsLabel,
         style: "margin-left: 0.5rem",
       },
       "  ",
       input({
-        class: cls(settings.settingsCheckbox, settings.checkbox),
+        class: cls(Settings.settingsCheckbox, Settings.checkbox),
         style: "pointer-events: auto",
         type: "checkbox",
         onchange: (e: Event) =>
@@ -131,16 +131,16 @@ const Highlights = (dark: boolean) => {
 const PlainText = (dark: boolean) => {
   const ptInput = div(
     {
-      class: settings.settingsLabel,
+      class: Settings.settingsLabel,
     },
     label(
       {
-        class: settings.settingsLabel,
+        class: Settings.settingsLabel,
         style: "margin-left: 0.5rem",
       },
       "  ",
       input({
-        class: cls(settings.settingsCheckbox, settings.checkbox),
+        class: cls(Settings.settingsCheckbox, Settings.checkbox),
         style: "pointer-events: auto",
         type: "checkbox",
         onchange: (e: Event) =>
@@ -161,7 +161,7 @@ const PlainText = (dark: boolean) => {
   );
 };
 
-const Settings = (dark: boolean) => [
+const SettingsList = (dark: boolean) => [
   ScriptColor(dark),
   ImgChangeColors(dark),
   Highlights(dark),
@@ -177,7 +177,7 @@ export class SettingsModal extends HTMLElement {
       (Redux.getState().scratchGui as any).theme.theme.gui === "dark";
 
     const [scriptColor, imgChangeColors, highlights, plainText] =
-      Settings(dark);
+      SettingsList(dark);
 
     const [scInput, icInput, hlInput, ptInput] = [
       scriptColor,
@@ -188,7 +188,7 @@ export class SettingsModal extends HTMLElement {
 
     const restoreDefaults = button(
       {
-        class: settings.button,
+        class: Settings.button,
         onclick: () => {
           setDefaults();
           scInput[0].value = DEFAULTS.scriptColor;
@@ -203,7 +203,7 @@ export class SettingsModal extends HTMLElement {
 
     const uninstallButton = button(
       {
-        class: settings.button,
+        class: Settings.button,
         onclick: async () => {
           if (confirm("Are you sure you want to uninstall scratch.git?")) {
             if (await uninstall()) {

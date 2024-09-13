@@ -1,4 +1,5 @@
-import { misc, Copy, s, cls } from ".";
+import { Misc, s, cls } from "./accessors";
+import { Copy } from "./copy";
 import type { DeviceCode } from "@/api";
 import { Redux } from "@/lib";
 import van, { ChildDom } from "vanjs-core";
@@ -53,7 +54,7 @@ export class ScratchAlert {
 
     const newAlert = div(
       {
-        class: cls(s("alert_alert"), misc.box, alertType),
+        class: cls(s("alert_alert"), Misc.box, alertType),
         style: "justify-content: space-between",
       },
       div({ class: s("alert_alert-message") }, this.message),
@@ -63,7 +64,7 @@ export class ScratchAlert {
           {
             class: cls(
               s("alert_alert-close-button-container"),
-              misc.box,
+              Misc.box,
               this._buttons.length !== 0 ? "alert-with-buttons" : undefined
             ),
           },

@@ -1,6 +1,8 @@
 import api, { Project } from "./api";
 import { createGitMenu, Styles } from "./init";
-import { fileMenu, misc, ScratchAlert } from "./components";
+import { FileMenu } from "./components/menus";
+import { Misc } from "./components/accessors";
+import { ScratchAlert } from "./components/alerts";
 import { showIndicators } from "./diff-indicators";
 import { scratchblocks, vm } from "./lib";
 
@@ -29,7 +31,7 @@ const main = async () => {
   scratchblocks.appendStyles();
   initModals();
 
-  if (!fileMenu.projectOpen()) {
+  if (!FileMenu.projectOpen()) {
     await document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
@@ -47,7 +49,7 @@ const main = async () => {
 
   // ensure a click event listener for the save button
   new MutationObserver(() => {
-    const saveButton = misc.saveArea.select<HTMLDivElement>();
+    const saveButton = Misc.saveArea.select<HTMLDivElement>();
     saveButton.onclick = () => {
       const observer = new MutationObserver(async () => {
         const saveStatus = saveButton.firstElementChild;
@@ -70,7 +72,7 @@ const main = async () => {
         childList: true,
       });
     };
-  }).observe(misc.saveArea.select(), {
+  }).observe(Misc.saveArea.select(), {
     childList: true,
   });
 

@@ -1,5 +1,5 @@
 import type { Project, Sprite } from "@/api";
-import { s, sprites } from "@/components";
+import { s, Sprites } from "@/components/accessors";
 import type { DiffModal } from "../modals";
 import { parseScripts } from "./script-parser";
 import { SpriteDiff, StageDiff } from "./diff-buttons";
@@ -146,7 +146,7 @@ export const showIndicators = async (project: Project) => {
   }
 
   contextMenu.onopen = (e) => {
-    const currentSprite = nameOfSprite(sprites.selectedSprite.select());
+    const currentSprite = nameOfSprite(Sprites.selectedSprite.select());
     const index = window._changedScripts[currentSprite].indexOf(e.dataset.id!);
     if (index === -1) return;
 
@@ -172,16 +172,16 @@ export const showIndicators = async (project: Project) => {
     // when this sprite is clicked, shift the position of every other diff button
     sprite.addEventListener("click", () => {
       if (
-        sprites.selectedSprite.select() &&
-        spriteName === nameOfSprite(sprites.selectedSprite.select()) &&
+        Sprites.selectedSprite.select() &&
+        spriteName === nameOfSprite(Sprites.selectedSprite.select()) &&
         sprite.querySelector<HTMLDivElement>(".diff-button")?.style
           .marginTop === "30px"
       ) {
         return;
       }
 
-      for (const spriteButton of sprites.spriteSelDelete
-        .selectAll<HTMLDivElement>(sprites.delete)
+      for (const spriteButton of Sprites.spriteSelDelete
+        .selectAll<HTMLDivElement>(Sprites.delete)
         .filter((button) => !button.classList.contains("stage-diff-button"))) {
         spriteButton.style.marginTop = "0px";
       }
@@ -192,7 +192,7 @@ export const showIndicators = async (project: Project) => {
 
     const diffButton = SpriteDiff({
       style: `margin-top: ${
-        sprites.delete.select() !== null ? "30px" : "0px"
+        Sprites.delete.select() !== null ? "30px" : "0px"
       };`,
       onclick: async (e: Event) => {
         e.stopPropagation();
@@ -209,9 +209,9 @@ export const showIndicators = async (project: Project) => {
       const movedToSprite = nameOfSprite(
         await new Promise((resolve) => {
           const observer = new MutationObserver(() => {
-            resolve(sprites.selectedSprite.select<HTMLDivElement>());
+            resolve(Sprites.selectedSprite.select<HTMLDivElement>());
           });
-          observer.observe(sprites.selectedSprite.select() ?? document.body, {
+          observer.observe(Sprites.selectedSprite.select() ?? document.body, {
             childList: true,
             subtree: true,
           });
@@ -230,7 +230,7 @@ export const showIndicators = async (project: Project) => {
   }
 
   // creates a diff button for the stage
-  const stageWrapper = sprites.stageWrapper.select();
+  const stageWrapper = Sprites.stageWrapper.select();
 
   if (changedSprites.some((e) => e.name === "Stage" && e.isStage)) {
     const stageDiffButton = StageDiff({
@@ -247,7 +247,7 @@ export const showIndicators = async (project: Project) => {
 
   // when opening the stage, move all the diff buttons up
   stageWrapper.addEventListener("click", async () => {
-    for (const button of sprites.spriteSelDelete
+    for (const button of Sprites.spriteSelDelete
       .selectAll<HTMLDivElement>()
       .filter((button) => !button.classList.contains("stage-diff-button"))) {
       button.style.marginTop = "0px";
@@ -257,7 +257,7 @@ export const showIndicators = async (project: Project) => {
   });
 
   // if the user is in costumes/sounds, there may be >1 "selected sprites"
-  const spriteSels = sprites.selectedSprite.selectAll<HTMLDivElement>();
+  const spriteSels = Sprites.selectedSprite.selectAll<HTMLDivElement>();
   const selectedSprite =
     spriteSels.length > 1 ? spriteSels[spriteSels.length - 1] : spriteSels[0];
 
@@ -285,12 +285,12 @@ export const showIndicators = async (project: Project) => {
     const ghost = lastSprite.cloneNode(true) as HTMLElement;
 
     ghost.querySelector<HTMLElement>(
-      "." + sprites.spriteName
+      "." + Sprites.spriteName
     )!.innerText = `${spriteName} [❌]`;
     ghost.querySelector("nav")?.remove();
     ghost.querySelector("img")?.remove();
     ghost.querySelector("img")?.parentElement?.remove();
-    ghost.firstElementChild?.classList.remove(sprites.selectedSprite);
+    ghost.firstElementChild?.classList.remove(Sprites.selectedSprite);
     ghost.title = "This sprite was deleted.";
     ghost.classList.add("deleted-sprite");
 
@@ -321,7 +321,7 @@ export const showIndicators = async (project: Project) => {
         s("react-tabs_react-tabs__tab--selected")
       )
     ) {
-      const selectedSprite = sprites.selectedSprite.select<HTMLDivElement>();
+      const selectedSprite = Sprites.selectedSprite.select<HTMLDivElement>();
       const sprite_ = selectedSprite
         ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
         : STAGE;
@@ -335,7 +335,7 @@ export const showIndicators = async (project: Project) => {
   // retain diff highlights for when editor theme changes
   new MutationObserver(async () => {
     if (window._repoStatus.status === 1) return;
-    const selectedSprite = sprites.selectedSprite.select<HTMLDivElement>();
+    const selectedSprite = Sprites.selectedSprite.select<HTMLDivElement>();
     const sprite_ = selectedSprite
       ? changedSprites.find((e) => e.name === nameOfSprite(selectedSprite))!
       : STAGE;

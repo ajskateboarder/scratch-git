@@ -1,6 +1,6 @@
 import van, { State } from "vanjs-core";
 import iconCodeSvg from "./code.svg";
-import { cls, settings } from "@/components";
+import { cls, Settings } from "@/components/accessors";
 import { ScriptParse } from "@/diff-indicators/script-parser";
 
 const { input, label, span, ul, li, i, br, button } = van.tags;
@@ -87,7 +87,7 @@ export const Revert = ({
     ),
     br(),
     button({
-      class: cls("fa-solid fa-check", settings.button),
+      class: cls("fa-solid fa-check", Settings.button),
       title: "Click while holding shift to replace original sprite",
       style: "padding: 0.3rem",
       onclick: (e: KeyboardEvent) => onsubmit(e),

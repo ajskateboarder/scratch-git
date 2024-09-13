@@ -1,10 +1,11 @@
 import van from "vanjs-core";
 import api, { cloneRepo, remoteExists } from "@/api";
-import { settings, fileMenu, cls } from "@/components";
-import { InputBox, InputField } from "@/components";
+import { Settings, cls } from "@/components/accessors";
+import { InputBox, InputField } from "@/components/input-field";
 import { Redux, vm } from "@/lib";
 import { validEmail, validURL } from "@/utils";
 import thumbnail from "./thumbnail.svg";
+import { FileMenu } from "@/components/menus";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
   van.tags;
@@ -70,7 +71,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
     const goToStep2 = button(
       {
-        class: cls(settings.button, settings.disabledButton, "back-button"),
+        class: cls(Settings.button, Settings.disabledButton, "back-button"),
         disabled: true,
         onclick: () => ++this.currentStep.val,
       },
@@ -82,9 +83,9 @@ export class WelcomeModal extends HTMLDialogElement {
         return button(
           {
             style: "width: 50%",
-            class: settings.button,
+            class: Settings.button,
             onclick: () => {
-              fileMenu.openProject();
+              FileMenu.openProject();
               vm.runtime.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
                 setTimeout(async () => {
@@ -97,7 +98,7 @@ export class WelcomeModal extends HTMLDialogElement {
                     goToStep2.style.cursor = "unset";
                     goToStep2.title = "";
                   }
-                  goToStep2.classList.remove(settings.disabledButton);
+                  goToStep2.classList.remove(Settings.disabledButton);
                   openProject.val.innerHTML = `<i class="fa-solid fa-check"></i> Project opened`;
                 });
                 setTimeout(() => {
@@ -118,7 +119,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
         const $submit = button(
           {
-            class: settings.button,
+            class: Settings.button,
             disabled: true,
             onclick: async () => {
               if ($submit.disabled) return;
@@ -194,7 +195,7 @@ export class WelcomeModal extends HTMLDialogElement {
       BottomBar(
         button(
           {
-            class: cls(settings.button, "back-button"),
+            class: cls(Settings.button, "back-button"),
             onclick: () => {
               this.close();
               if (this.loadedProject) {
@@ -215,7 +216,7 @@ export class WelcomeModal extends HTMLDialogElement {
   private $step2() {
     const goToStep3 = button(
       {
-        class: cls(settings.button, settings.disabledButton, "back-button"),
+        class: cls(Settings.button, Settings.disabledButton, "back-button"),
         disabled: true,
         onclick: async () => {
           this.projectName = Redux.getState().scratchGui.projectTitle;
@@ -227,11 +228,11 @@ export class WelcomeModal extends HTMLDialogElement {
 
     const openProjectPath = input({
       type: "file",
-      class: settings.button,
+      class: Settings.button,
       accept: ".sb,.sb2,.sb3",
       onchange: () => {
         goToStep3.disabled = false;
-        goToStep3.classList.remove(settings.disabledButton);
+        goToStep3.classList.remove(Settings.disabledButton);
         // .path is an electron-specific attr
         this.projectPath = (openProjectPath.files![0] as any).path;
       },
@@ -251,7 +252,7 @@ export class WelcomeModal extends HTMLDialogElement {
       BottomBar(
         button(
           {
-            class: cls(settings.button, "back-button"),
+            class: cls(Settings.button, "back-button"),
             onclick: () => --this.currentStep.val,
           },
           "Back"
@@ -269,7 +270,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
     const goToStep4 = button(
       {
-        class: cls(settings.button, settings.disabledButton, "back-button"),
+        class: cls(Settings.button, Settings.disabledButton, "back-button"),
         disabled: true,
         onclick: async () => {
           try {
@@ -299,10 +300,10 @@ export class WelcomeModal extends HTMLDialogElement {
         email === ""
       ) {
         goToStep4.disabled = true;
-        goToStep4.classList.add(settings.disabledButton);
+        goToStep4.classList.add(Settings.disabledButton);
       } else {
         goToStep4.disabled = false;
-        goToStep4.classList.remove(settings.disabledButton);
+        goToStep4.classList.remove(Settings.disabledButton);
       }
     };
 
@@ -348,7 +349,7 @@ export class WelcomeModal extends HTMLDialogElement {
         BottomBar(
           button(
             {
-              class: cls(settings.button, "back-button"),
+              class: cls(Settings.button, "back-button"),
               onclick: () => --this.currentStep.val,
             },
             "Back"
@@ -368,7 +369,7 @@ export class WelcomeModal extends HTMLDialogElement {
         BottomBar(
           button(
             {
-              class: cls(settings.button, "back-button"),
+              class: cls(Settings.button, "back-button"),
               onclick: () => this.close(),
             },
             "Close"

@@ -1,4 +1,4 @@
-import { menu, s } from "./accessors";
+import { Menu, s } from "./accessors";
 import { getReactHandlers } from "@/utils";
 import van, { ChildDom } from "vanjs-core";
 
@@ -6,7 +6,7 @@ const { i, span } = van.tags;
 
 /** Manages functions with the file menu */
 // prettier-ignore
-export const fileMenu = new class {
+export const FileMenu = new class {
   $menu: HTMLDivElement;
   private events: string;
 
@@ -59,7 +59,7 @@ export const fileMenu = new class {
 };
 
 // prettier-ignore
-export const gitMenu = new class {
+export const GitMenu = new class {
   private savedItems: HTMLElement | undefined;
   private newMenu: HTMLElement | undefined;
 
@@ -78,7 +78,7 @@ export const gitMenu = new class {
 
         li.addEventListener("click", async (e) => {
           e.stopPropagation();
-          this.newMenu!.classList.remove(menu.activeMenuItem);
+          this.newMenu!.classList.remove(Menu.activeMenuItem);
           this.savedItems!.style.display = "none";
           this.open = false;
           await handler();
@@ -105,11 +105,11 @@ export const gitMenu = new class {
     if (this.menuInit) return;
 
     // open, copy, and edit the file menu
-    fileMenu.toggleMenu(false);
-    fileMenu.toggleMenu(true);
-    this.newMenu = fileMenu.$menu.cloneNode(true) as HTMLDivElement;
-    fileMenu.$menu.after(this.newMenu);
-    this.newMenu.classList.remove(menu.activeMenuItem);
+    FileMenu.toggleMenu(false);
+    FileMenu.toggleMenu(true);
+    this.newMenu = FileMenu.$menu.cloneNode(true) as HTMLDivElement;
+    FileMenu.$menu.after(this.newMenu);
+    this.newMenu.classList.remove(Menu.activeMenuItem);
     this.newMenu.querySelector("span")!.innerText = "Git";
     this.savedItems = this.newMenu
       .querySelector("ul")!
@@ -156,16 +156,16 @@ export const gitMenu = new class {
     this.item(6).remove();
     this.item(6).label(span(i({ class: "fa-solid fa-cog" }), " ", "Settings"))
     this.item(6).onclick(settings);
-    this.item(6).classList.remove(menu.section);
+    this.item(6).classList.remove(Menu.section);
 
-    this.item(5).classList.add(menu.section);
+    this.item(5).classList.add(Menu.section);
 
     this.handlerInit = true;
 
     // make new menu toggle-able
     this.newMenu.onclick = () => {
       if (this.savedItems!.style.display === "none") {
-        this.newMenu!.classList.add(menu.activeMenuItem);
+        this.newMenu!.classList.add(Menu.activeMenuItem);
         this.savedItems!.style.display = "block";
         this.open = true;
 
@@ -186,7 +186,7 @@ export const gitMenu = new class {
           itemRef.parentElement!.style.cursor = "pointer";
         }
       } else {
-        this.newMenu!.classList.remove(menu.activeMenuItem);
+        this.newMenu!.classList.remove(Menu.activeMenuItem);
         this.savedItems!.style.display = "none";
         this.open = false;
       }
@@ -201,13 +201,13 @@ export const gitMenu = new class {
           (e.target as HTMLElement)!.parentNode !== this.newMenu &&
           this.open
         ) {
-          this.newMenu!.classList.remove(menu.activeMenuItem);
+          this.newMenu!.classList.remove(Menu.activeMenuItem);
           this.savedItems!.style.display = "none";
           this.open = false;
         }
       });
 
-    fileMenu.toggleMenu(true);
+    FileMenu.toggleMenu(true);
     this.menuInit = true;
   }
 

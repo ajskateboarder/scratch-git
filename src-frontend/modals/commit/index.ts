@@ -1,5 +1,5 @@
 import api, { type Commit } from "@/api";
-import { cls, settings } from "@/components";
+import { cls, Settings } from "@/components/accessors";
 import { Redux } from "@/lib";
 import van, { type State } from "vanjs-core";
 import { Card } from "../card";
@@ -15,25 +15,25 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Base {
-  $older: HTMLButtonElement = button(
+  $older = button(
     {
-      class: cls(settings.button, "round-left-button"),
+      class: cls(Settings.button, "round-left-button"),
     },
     i({ class: "fa-solid fa-arrow-right" })
   );
 
-  $newer: HTMLButtonElement = button(
+  $newer = button(
     {
-      class: cls(settings.button, "round-right-button"),
+      class: cls(Settings.button, "round-right-button"),
       disabled: true,
     },
     i({ class: "fa-solid fa-arrow-left" })
   );
 
-  $search: HTMLInputElement = input({
+  $search = input({
     type: "text",
     style: "border-radius: 5px; width: 50%",
-    class: `${settings.inputField}${
+    class: `${Settings.inputField}${
       (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
         ? " dark"
         : ""
@@ -41,7 +41,7 @@ export class CommitModal extends Base {
     placeholder: "Search for commits",
   });
 
-  $showing: HTMLParagraphElement = p();
+  $showing = p();
 
   private state: {
     paginatedCommits: State<Commit[]>;

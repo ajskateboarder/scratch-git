@@ -1,7 +1,9 @@
 import van from "vanjs-core";
 
 import api, { CostumeChange, Project } from "@/api";
-import { cls, settings, Checkbox, Copy } from "@/components/";
+import { cls, Settings } from "@/components/accessors";
+import { Checkbox } from "@/components/checkbox";
+import { Copy } from "@/components/copy";
 import { getBlockly, Redux, scratchblocks, vm } from "@/lib";
 import { parseScripts } from "@/diff-indicators";
 import { userSettings } from "@/settings";
@@ -90,7 +92,7 @@ export class DiffModal extends Base {
     button(
       {
         onclick: () => (this.unify.val = false),
-        class: cls(settings.button, "round-right-button"),
+        class: cls(Settings.button, "round-right-button"),
         style: () =>
           this.unify.val
             ? "filter: brightness(0.88); padding: 0.3rem"
@@ -101,7 +103,7 @@ export class DiffModal extends Base {
     button(
       {
         onclick: () => (this.unify.val = true),
-        class: cls(settings.button, "round-left-button"),
+        class: cls(Settings.button, "round-left-button"),
         style: () =>
           !this.unify.val
             ? "filter: brightness(0.88); padding: 0.3rem"
@@ -111,16 +113,16 @@ export class DiffModal extends Base {
     )
   );
 
-  private $revert: HTMLButtonElement = button(
+  private $revert = button(
     {
-      class: settings.button,
+      class: Settings.button,
       style: "margin-left: 15px; padding: 0.3rem",
     },
     i({ class: "fa-solid fa-rotate-left" }),
     " Revert sprite"
   );
 
-  private $revertList: HTMLElement = main({
+  private $revertList = main({
     class: "revert-list",
     style: "display: none",
   });
@@ -162,7 +164,7 @@ export class DiffModal extends Base {
           plainText,
           this.$unified,
           Copy(this.copyCallback, {
-            class: cls("copy-button", settings.button),
+            class: cls("copy-button", Settings.button),
             style: "padding: 0.3rem 10px",
           })
         )
@@ -544,7 +546,7 @@ export class DiffModal extends Base {
           diff.status === "modified" || diff.status === "added"
             ? button(
                 {
-                  class: `${settings.button} open-script`,
+                  class: `${Settings.button} open-script`,
                   onclick: (e: Event) => {
                     e.stopPropagation();
                     this.style.opacity = "0.5";
@@ -771,7 +773,7 @@ export class DiffModal extends Base {
 
     if (scriptDiff === "script") {
       const currentSprite = vm.runtime._editingTarget!;
-      $revert.classList.remove(settings.disabledButton);
+      $revert.classList.remove(Settings.disabledButton);
       $revert.disabled = false;
       $revert.onclick = () => {
         if (!this.reverting) {
@@ -855,7 +857,7 @@ export class DiffModal extends Base {
         this.reverting = !this.reverting;
       };
     } else {
-      $revert.classList.add(settings.disabledButton);
+      $revert.classList.add(Settings.disabledButton);
       $revert.disabled = true;
       $revert.onclick = () => {};
     }

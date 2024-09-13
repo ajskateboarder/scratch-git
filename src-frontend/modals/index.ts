@@ -3,7 +3,7 @@ import { DiffModal } from "./diff/diff";
 import { CommitModal } from "./commit";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
-import { s } from "../components";
+import { s } from "../components/accessors";
 
 export const initModals = () => {
   if (document.querySelector("commit-modal")) return;
