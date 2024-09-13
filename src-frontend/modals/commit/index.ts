@@ -15,52 +15,49 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Base {
-  $older: HTMLButtonElement;
-  $newer: HTMLButtonElement;
-  $search: HTMLInputElement;
-  $showing: HTMLParagraphElement;
+  $older: HTMLButtonElement = button(
+    {
+      class: cls(settings.button, "round-left-button"),
+    },
+    i({ class: "fa-solid fa-arrow-right" })
+  );
 
-  allCommits: Commit[] | undefined;
+  $newer: HTMLButtonElement = button(
+    {
+      class: cls(settings.button, "round-right-button"),
+      disabled: true,
+    },
+    i({ class: "fa-solid fa-arrow-left" })
+  );
+
+  $search: HTMLInputElement = input({
+    type: "text",
+    style: "border-radius: 5px; width: 50%",
+    class: `${settings.inputField}${
+      (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
+        ? " dark"
+        : ""
+    }`,
+    placeholder: "Search for commits",
+  });
+
+  $showing: HTMLParagraphElement = p();
+
   private state: {
     paginatedCommits: State<Commit[]>;
     searchQuery: State<string>;
     currentPage: State<number>;
+  } = {
+    paginatedCommits: van.state([]),
+    searchQuery: van.state(""),
+    currentPage: van.state(0),
   };
+
+  allCommits: Commit[] | undefined;
 
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
-
-    this.state = {
-      paginatedCommits: van.state([]),
-      searchQuery: van.state(""),
-      currentPage: van.state(0),
-    };
-
-    this.$newer = button(
-      {
-        class: cls(settings.button, "round-right-button"),
-        disabled: true,
-      },
-      i({ class: "fa-solid fa-arrow-left" })
-    );
-    this.$older = button(
-      {
-        class: cls(settings.button, "round-left-button"),
-      },
-      i({ class: "fa-solid fa-arrow-right" })
-    );
-    this.$search = input({
-      type: "text",
-      style: "border-radius: 5px; width: 50%",
-      class: `${settings.inputField}${
-        (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
-          ? " dark"
-          : ""
-      }`,
-      placeholder: "Search for commits",
-    });
-    this.$showing = p();
 
     const commitGroup = div(
       { class: "commit-group" },

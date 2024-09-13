@@ -9,42 +9,40 @@ import { Base } from "../base";
 const { main, button, div, label, br } = van.tags;
 
 export class RepoConfigModal extends Base {
-  $repository!: HTMLInputElement;
-  $name!: HTMLInputElement;
-  $email!: HTMLInputElement;
-  private project!: Project;
+  private $repository: HTMLInputElement = InputBox({
+    placeholder: "Enter a link to a repository URL",
+    onblur: async ({ target }: Event) => {
+      const url: string = (target as HTMLInputElement).value;
+      if (!validURL(url) && !(await remoteExists(url))) {
+        this.$repository.value = "";
+      }
+    },
+  });
+
+  private $name: HTMLInputElement = InputBox({});
+  private $email: HTMLInputElement = InputBox({});
+
+  private project: Project;
 
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
 
-    const $repository = InputBox({
-      placeholder: "Enter a link to a repository URL",
-      onblur: async ({ target }: Event) => {
-        const url: string = (target as HTMLInputElement).value;
-        if (!validURL(url) && !(await remoteExists(url))) {
-          $repository.value = "";
-        }
-      },
-    });
-    const $name = InputBox({});
-    const $email = InputBox({});
-
     const saveButton = button(
       {
         class: settings.button,
         onclick: () => {
-          if ($name.value.trim() === "") {
+          if (this.$name.value.trim() === "") {
             alert("Don't leave starred fields blank");
             return;
           }
-          if ($repository.value.trim() !== "") {
+          if (this.$repository.value.trim() !== "") {
             gitMenu.setPushPullStatus(true);
           }
           this.project.setDetails({
-            username: $name.value,
-            email: $email.value,
-            repository: $repository.value,
+            username: this.$name.value,
+            email: this.$email.value,
+            repository: this.$repository.value,
           });
         },
       },
@@ -55,15 +53,19 @@ export class RepoConfigModal extends Base {
       this,
       Modal(
         main(
-          InputField({}, label({ class: "input-label" }, "Name", "*"), $name),
+          InputField(
+            {},
+            label({ class: "input-label" }, "Name", "*"),
+            this.$name
+          ),
           br(),
           InputField(
             {},
             label({ class: "input-label" }, "Repository URL (optional)"),
-            $repository
+            this.$repository
           ),
           br(),
-          InputField({}, label({ class: "input-label" }, "Email"), $email),
+          InputField({}, label({ class: "input-label" }, "Email"), this.$email),
           br(),
           br(),
           div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
@@ -72,10 +74,6 @@ export class RepoConfigModal extends Base {
         () => this.close()
       )
     );
-
-    this.$repository = $repository;
-    this.$name = $name;
-    this.$email = $email;
   }
 
   public async display() {
