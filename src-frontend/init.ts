@@ -84,37 +84,33 @@ const PULL_MESSAGES: Record<PullMsg, ScratchAlert> = {
  * @param project - the currently open project
  * @param authed - true if you are authenticated
  */
-const pullHandler =
-  async (project: Project, authed = false) =>
-  async () => {
-    let upassAlert;
+const pullHandler = async (project: Project, authed = false) => {
+  let upassAlert;
 
-    if (!authed) {
-      if (await repoIsGitHub(project)) {
-        const auth = new GhAuth();
-        let authAlert: HTMLDivElement | undefined = undefined;
-        auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
-        auth.onlogin = async () => {
-          authAlert?.remove();
-          auth.close();
-          await pullHandler(project!, true);
-        };
-      } else {
-        // asking for username and password in the app would look suspicious
-        upassAlert = new ScratchAlert(
-          "Please enter your username and password in the terminal to pull new changes."
-        )
-          .type("success")
-          .display();
-      }
+  if (!authed) {
+    if (await repoIsGitHub(project)) {
+      const auth = new GhAuth();
+      let authAlert: HTMLDivElement | undefined = undefined;
+      auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
+      auth.onlogin = async () => {
+        authAlert?.remove();
+        auth.close();
+        await pullHandler(project!, true);
+      };
+    } else {
+      // asking for username and password in the app would look suspicious
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to pull new changes."
+      )
+        .type("success")
+        .display();
     }
+  }
 
-    const message = await project!.pull();
-    upassAlert?.remove();
-    (
-      PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")
-    ).display();
-  };
+  const message = await project!.pull();
+  upassAlert?.remove();
+  (PULL_MESSAGES[message] ?? new ScratchAlert(message).type("error")).display();
+};
 
 const PUSH_MESSAGES: Record<
   PushMsg,
@@ -129,7 +125,7 @@ const PUSH_MESSAGES: Record<
         button(
           {
             class: "alert-button",
-            onclick: await pullHandler(project!),
+            onclick: async () => await pullHandler(project!),
           },
           "Pull"
         ),
@@ -154,44 +150,38 @@ const PUSH_MESSAGES: Record<
  *
  * @param project - the currently open project
  */
-const pushHandler =
-  async (project: Project, authed: boolean = false) =>
-  async () => {
-    let upassAlert;
+const pushHandler = async (project: Project, authed: boolean = false) => {
+  let upassAlert;
 
-    if (!authed) {
-      if (await repoIsGitHub(project)) {
-        const auth = new GhAuth();
-        let authAlert: HTMLDivElement | undefined = undefined;
-        auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
-        auth.onlogin = async () => {
-          authAlert?.remove();
-          auth.close();
-          await pushHandler(project!, true);
-        };
-      } else {
-        upassAlert = new ScratchAlert(
-          "Please enter your username and password in the terminal to push your changes."
-        )
-          .type("success")
-          .display();
-      }
+  if (!authed) {
+    if (await repoIsGitHub(project)) {
+      const auth = new GhAuth();
+      let authAlert: HTMLDivElement | undefined = undefined;
+      auth.ondevicecode = (data) => (authAlert = GhAuthAlert(data).display());
+      auth.onlogin = async () => {
+        authAlert?.remove();
+        auth.close();
+        await pushHandler(project!, true);
+      };
+    } else {
+      upassAlert = new ScratchAlert(
+        "Please enter your username and password in the terminal to push your changes."
+      )
+        .type("success")
+        .display();
     }
+  }
 
-    const message = await project.push();
-    upassAlert?.remove();
-    (await PUSH_MESSAGES[message](project)).display();
-  };
+  const message = await project.push();
+  upassAlert?.remove();
+  (await PUSH_MESSAGES[message](project)).display();
+};
 
 const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
   [-1]: new ScratchAlert("There is nothing to add.").type("warn").timeout(5000),
   [-2]: new ScratchAlert(
     "Please tell me who you are. Set your name and email in Git -> Setup repository."
   ).type("error"),
-  // TODO: is this needed
-  [-3]: new ScratchAlert("There is nothing to commit.")
-    .type("warn")
-    .timeout(5000),
   [-4]: new ScratchAlert("Failed to commit").type("error"),
 };
 
@@ -203,9 +193,11 @@ export const createGitMenu = async (project: Project) => {
       document.querySelector<CommitModal>("commit-modal")!.display(),
     commitCreate: async () => {
       const message = await project!.commit();
-      document
-        .querySelectorAll(".stage-diff,.diff-button")
-        .forEach((e) => e.remove());
+      for (const button of document.querySelectorAll(
+        ".stage-diff,.diff-button"
+      )) {
+        button.remove();
+      }
       document.querySelector("filter#blocklyStackDiffFilter")?.remove();
       project!.repoStatus().then((e) => (window._repoStatus = e));
       (
@@ -213,8 +205,8 @@ export const createGitMenu = async (project: Project) => {
         new ScratchAlert(message).type("success").timeout(5000)
       ).display();
     },
-    push: await pushHandler(project!),
-    pull: await pullHandler(project!),
+    push: async () => await pushHandler(project!),
+    pull: async () => await pullHandler(project!),
     repoConfig: () => {
       document.querySelector<RepoConfigModal>("repo-config-modal")!.display();
     },

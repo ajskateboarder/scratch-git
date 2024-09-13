@@ -43,6 +43,7 @@ export type PushMsg = "success" | "up to date" | "pull needed";
 
 /** Represents a WebSocket interface */
 class Socket {
+  // store previous requests/responses to prevent duplicate requests (if it happens)
   private static lastRequest: {
     request: { command: any; data: any };
     response: any;
@@ -384,7 +385,7 @@ export const remoteExists = async (url: string): Promise<boolean> => {
   });
 };
 
-export const uninstall = async () => {
+export const uninstall = async (): Promise<boolean> => {
   const ws = new Socket(new WebSocket(SOCKET_URL));
   return !!ws.request({
     command: "uninstall",

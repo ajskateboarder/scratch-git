@@ -1,5 +1,4 @@
 import van, { State } from "vanjs-core";
-import { Diff } from ".";
 import iconCodeSvg from "./code.svg";
 import { cls, settings } from "@/components";
 import { ScriptParse } from "@/diff-indicators/script-parser";

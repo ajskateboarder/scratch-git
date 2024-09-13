@@ -5,7 +5,7 @@ export class Base extends HTMLElement {
 
   connectedCallback(): void {}
 
-  display(...args: any[]): void {}
+  display(..._: any[]): void {}
 
   close() {
     this.style.display = "none";

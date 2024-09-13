@@ -58,6 +58,12 @@ dialog[is="welcome-modal"] {
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0px 0px 0px 2px var(--looks-transparent);
+  z-index: 1;
+}
+
+.sprite-diff:hover {
+  scale: 0.9;
+  box-shadow: 0px 0px 0px 6px var(--looks-transparent);
 }
 
 .stage-diff {
@@ -69,6 +75,11 @@ dialog[is="welcome-modal"] {
   scale: 0.8;
   border-radius: 20px;
   box-shadow: 0 0 0 2px var(--looks-transparent);
+}
+
+.stage-diff:hover {
+  scale: 0.9;
+  box-shadow: 0px 0px 0px 6px var(--looks-transparent);
 }
 
 .bottom-bar {
@@ -112,4 +123,9 @@ dialog[is="welcome-modal"] {
   display: flex;
   width: 100%;
   gap: 10px;
+}
+
+.deleted-sprite {
+  user-select: none;
+  opacity: 0.5;
 }

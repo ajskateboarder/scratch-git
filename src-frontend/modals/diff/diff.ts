@@ -1,7 +1,7 @@
 import van from "vanjs-core";
 
 import api, { CostumeChange, Project } from "@/api";
-import { cls, settings, Checkbox, Copy } from "@/components";
+import { cls, settings, Checkbox, Copy } from "@/components/";
 import { getBlockly, Redux, scratchblocks, vm } from "@/lib";
 import { parseScripts } from "@/diff-indicators";
 import { userSettings } from "@/settings";
@@ -15,7 +15,7 @@ import iconCostumesSvg from "./paintbrush.svg";
 import iconSoundsSvg from "./sound.svg";
 import { Base } from "../base";
 import { Diff } from ".";
-import { createSprite, Revert } from "./revert-ui";
+import { Revert } from "./revert-ui";
 
 const { div, span, ul, button, p, pre, aside, main, br, i, li, img, audio } =
   van.tags;
@@ -56,21 +56,43 @@ const percentFormatter = Intl.NumberFormat(locale, {
   maximumFractionDigits: 1,
 });
 
+const createSprite = (name: string, blocks: any) =>
+  JSON.stringify({
+    isStage: false,
+    name,
+    variables: {},
+    lists: {},
+    broadcasts: {},
+    blocks,
+    comments: {},
+    currentCostume: 1,
+    costumes: [],
+    sounds: [],
+    volume: 100,
+    visible: false,
+    x: 0,
+    y: 0,
+    size: 100,
+    direction: 90,
+    draggable: false,
+    rotationStyle: "all around",
+  });
+
 /** Displays differences between previous and current project states and handles commiting the changes to Git */
 export class DiffModal extends Base {
-  private $scripts!: HTMLUListElement;
-  private $commits!: HTMLParagraphElement;
-  private $highlights!: HTMLInputElement;
-  private $plainText!: HTMLInputElement;
-  private $unified!: HTMLElement;
-  private $revert!: HTMLButtonElement;
-  private $revertList!: HTMLElement;
+  private $scripts: HTMLUListElement;
+  private $commits: HTMLParagraphElement;
+  private $highlights: HTMLInputElement;
+  private $plainText: HTMLInputElement;
+  private $unified: HTMLElement;
+  private $revert: HTMLButtonElement;
+  private $revertList: HTMLElement;
 
-  private previousScripts!: ProjectJSON;
-  private currentScripts!: ProjectJSON;
-  private costumeChanges!: Record<string, Record<string, CostumeChange[]>>;
+  private previousScripts: ProjectJSON;
+  private currentScripts: ProjectJSON;
+  private costumeChanges: Record<string, Record<string, CostumeChange[]>>;
 
-  private copyCallback!: () => string | SVGElement;
+  private copyCallback: () => string | SVGElement;
 
   private unify = van.state(true);
   private reverting = false;
@@ -82,8 +104,7 @@ export class DiffModal extends Base {
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
-    this.style.position = "absolute";
-    this.style.zIndex = "1000";
+    this.style.cssText = "position: absolute: z-index: 1000";
 
     this.copyCallback = () =>
       (this.querySelector(".scratchblocks svg") as SVGElement) ??
@@ -179,10 +200,10 @@ export class DiffModal extends Base {
 
   /** Highlights diffs as blocks */
   private highlightAsBlocks() {
-    const svg = this.querySelectorAll(".scratchblocks svg > g");
+    const svgs = this.querySelectorAll(".scratchblocks svg > g");
 
-    svg.forEach((blocks) => {
-      blocks.querySelectorAll("path.sb3-diff").forEach((diff) => {
+    for (const blocks of svgs) {
+      for (const diff of blocks.querySelectorAll("path.sb3-diff")) {
         const moddedBlock = diff.previousElementSibling!.cloneNode(
           true
         ) as SVGElement;
@@ -200,8 +221,8 @@ export class DiffModal extends Base {
           });
         diff.previousElementSibling!.after(moddedBlock);
         diff.remove();
-      });
-    });
+      }
+    }
 
     this.copyCallback = () =>
       this.querySelector(".scratchblocks svg") as SVGElement;
@@ -435,7 +456,7 @@ export class DiffModal extends Base {
             input.style.fill = "rgb(76, 76, 76)";
           });
         svg
-          .querySelectorAll<SVGTextElement>("text.sb3-label")
+          .querySelectorAll<SVGRectElement>("text.sb3-label")
           .forEach((input) => {
             input.style.fill = "#fff";
           });
@@ -501,15 +522,20 @@ export class DiffModal extends Base {
     };
 
     // assign diff displaying to diffs
-    diffs.forEach((diff, scriptNo) => {
+    for (const [scriptNo, diff] of diffs.entries()) {
       let labelText;
       if (window._changedScripts[spriteName])
         labelText = getBlockly()
           .getBlockById(window._changedScripts[spriteName][scriptNo])
           ?.comment?.getLabelText();
-      const diffButton = li(
+
+      const diffTab = li(
         button(
-          { class: "tab-btn" },
+          {
+            class: "tab-btn",
+            "script-no": scriptNo.toString(),
+            "diff-type": "script",
+          },
           span(
             { style: "display: flex; align-items: center: gap: 5px" },
             i({ class: `${DIFF_ICON[diff.status]} change-icon` }),
@@ -548,16 +574,12 @@ export class DiffModal extends Base {
         )
       );
 
-      const btnRef = diffButton.querySelector("button")!;
-      btnRef.setAttribute("script-no", scriptNo.toString());
-      btnRef.setAttribute("diff-type", "script");
-
       if (scriptNo !== script) {
-        diffButton.onclick = async () => {
+        diffTab.onclick = async () => {
           document
             .querySelectorAll(".tab-btn")
             .forEach((e) => e.classList.remove("active-tab"));
-          diffButton.querySelector("button")!.classList.add("active-tab");
+          diffTab.querySelector("button")!.classList.add("active-tab");
           await this.display(
             project,
             spriteName,
@@ -571,67 +593,69 @@ export class DiffModal extends Base {
         };
       }
 
-      $scripts.appendChild(diffButton);
-    });
+      $scripts.appendChild(diffTab);
+    }
 
-    let lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
+    const lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
 
-    if (costumeDiffs)
-      Object.keys(costumeDiffs).forEach((assetName, _costNo) => {
-        const costNo = lastScriptNo + _costNo;
-        const diff = costumeDiffs[assetName];
-        const isSoundDiff = diff.some(
-          (e) => e?.ext === "wav" || e?.ext === "mp3"
-        );
+    for (const [_costumeNumber, assetName] of Object.keys(
+      costumeDiffs
+    ).entries()) {
+      const costumeNumber = lastScriptNo + _costumeNumber;
+      const diff = costumeDiffs[assetName];
+      const isSoundDiff = diff.some(
+        (e) => e?.ext === "wav" || e?.ext === "mp3"
+      );
 
-        const status =
-          diff[0] && diff[1]
-            ? "modified"
-            : diff[0]?.kind === "after" && !diff[1]
-            ? "added"
-            : "removed";
+      const status =
+        diff[0] && diff[1]
+          ? "modified"
+          : diff[0]?.kind === "after" && !diff[1]
+          ? "added"
+          : "removed";
 
-        const diffButton = li(
-          button(
-            { class: "tab-btn" },
+      const diffTab = li(
+        button(
+          {
+            class: "tab-btn",
+            "script-no": costumeNumber.toString(),
+            "diff-type": isSoundDiff ? "sound" : "costume",
+            "asset-name": assetName,
+          },
+          span(
+            { style: "display: flex; align-items: center; gap: 5px" },
+            i({ class: `${DIFF_ICON[status]} change-icon` }),
             span(
-              { style: "display: flex; align-items: center; gap: 5px" },
-              i({ class: `${DIFF_ICON[status]} change-icon` }),
-              span(
-                { style: "padding-right: 10px" },
-                isSoundDiff ? iconSoundsSvg() : iconCostumesSvg()
-              )
+              { style: "padding-right: 10px" },
+              isSoundDiff ? iconSoundsSvg() : iconCostumesSvg()
+            )
+          ),
+          assetName
+        )
+      );
+
+      // add a click handler for non-selected tabs
+      if (costumeNumber !== script) {
+        diffTab.onclick = async () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((e) => e.classList.remove("active-tab"));
+          diffTab.querySelector("button")!.classList.add("active-tab");
+          await this.display(
+            project,
+            spriteName,
+            parseInt(
+              this.querySelector("button.active-tab")!.getAttribute(
+                "script-no"
+              )!
             ),
-            assetName
-          )
-        );
+            true
+          );
+        };
+      }
 
-        const btnRef = diffButton.querySelector("button")!;
-        btnRef.setAttribute("script-no", costNo.toString());
-        btnRef.setAttribute("diff-type", isSoundDiff ? "sound" : "costume");
-        btnRef.setAttribute("asset-name", assetName);
-
-        if (costNo !== script) {
-          diffButton.onclick = async () => {
-            document
-              .querySelectorAll(".tab-btn")
-              .forEach((e) => e.classList.remove("active-tab"));
-            diffButton.querySelector("button")!.classList.add("active-tab");
-            await this.display(
-              project,
-              spriteName,
-              parseInt(
-                this.querySelector("button.active-tab")!.getAttribute(
-                  "script-no"
-                )!
-              ),
-              true
-            );
-          };
-        }
-
-        $scripts.appendChild(diffButton);
-      });
+      $scripts.appendChild(diffTab);
+    }
 
     const btnRef = this.querySelector(`button[script-no="${script}"]`)!;
 
@@ -748,7 +772,6 @@ export class DiffModal extends Base {
 
     if (scriptDiff === "script") {
       const currentSprite = vm.runtime._editingTarget!;
-
       $revert.classList.remove(settings.disabledButton);
       $revert.disabled = false;
       $revert.onclick = () => {

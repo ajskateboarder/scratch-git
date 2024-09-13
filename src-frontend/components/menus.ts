@@ -7,25 +7,25 @@ const { i, span } = van.tags;
 /** Manages functions with the file menu */
 // prettier-ignore
 export const fileMenu = new class {
-  menu!: HTMLDivElement;
-  private events!: string;
+  $menu: HTMLDivElement;
+  private events: string;
 
   constructor() {
     this.updateMenu();
   }
 
   private updateMenu() {
-    this.menu = s("menu-bar_menu-bar-item").selectAll<HTMLDivElement>("div")[1];
-    this.events = getReactHandlers(this.menu);
+    this.$menu = s("menu-bar_menu-bar-item").selectAll<HTMLDivElement>("div")[1];
+    this.events = getReactHandlers(this.$menu);
   }
 
   /** Toggle menu between open and closed */
   toggleMenu(open: boolean) {
     // fake event object to control the menu
     // TurboWarp/scratch-gui/src/components/menu-bar/tw-menu-label.jsx#L33-L44
-    (this.menu as any)[this.events].onClick({
+    (this.$menu as any)[this.events].onClick({
       target: {
-        closest: () => (open ? this.menu : document.body),
+        closest: () => (open ? this.$menu : document.body),
       },
     });
   }
@@ -35,7 +35,7 @@ export const fileMenu = new class {
     const realConfirm = window.confirm;
     window.confirm = () => true;
     this.toggleMenu(true);
-    const loadFromComputer: any = this.menu.querySelectorAll("li")[2];
+    const loadFromComputer: any = this.$menu.querySelectorAll("li")[2];
     loadFromComputer[this.events].onClick();
     this.toggleMenu(false);
     this.toggleMenu(true);
@@ -45,12 +45,12 @@ export const fileMenu = new class {
   /** Returns if a project is currently open */
   projectOpen() {
     this.toggleMenu(true);
-    let savedMenu = this.menu.cloneNode(true) as HTMLElement;
+    let savedMenu = this.$menu.cloneNode(true) as HTMLElement;
     // tends to occur with translations
     if (!savedMenu.querySelector("li")) {
       this.updateMenu();
       this.toggleMenu(true);
-      savedMenu = this.menu.cloneNode(true) as HTMLElement;
+      savedMenu = this.$menu.cloneNode(true) as HTMLElement;
     }
     this.toggleMenu(false);
     this.toggleMenu(true);
@@ -107,8 +107,8 @@ export const gitMenu = new class {
     // open, copy, and edit the file menu
     fileMenu.toggleMenu(false);
     fileMenu.toggleMenu(true);
-    this.newMenu = fileMenu.menu.cloneNode(true) as HTMLDivElement;
-    fileMenu.menu.after(this.newMenu);
+    this.newMenu = fileMenu.$menu.cloneNode(true) as HTMLDivElement;
+    fileMenu.$menu.after(this.newMenu);
     this.newMenu.classList.remove(menu.activeMenuItem);
     this.newMenu.querySelector("span")!.innerText = "Git";
     this.savedItems = this.newMenu
@@ -179,8 +179,7 @@ export const gitMenu = new class {
         }
 
         if (window._repoStatus.status === 1) {
-          itemRef.style.pointerEvents = "none";
-          itemRef.style.opacity = "0.5";
+          itemRef.style.cssText = "pointer-events: none; opacity: 0.5"
           itemRef.parentElement!.style.cursor = "default";
         } else {
           itemRef.setAttribute("style", "");

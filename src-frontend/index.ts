@@ -12,12 +12,12 @@ const displayDiffs = async (project: Project) => {
     ...document.querySelectorAll(`.diff-button`),
     ...document.querySelectorAll(`.stage-diff`),
   ].forEach((e) => e.remove());
+
   await project!.unzip();
   window._changedScripts = {};
-  try {
-    await showIndicators(project!);
-  } catch (e) {
-    console.error(e);
+
+  const indicators = await showIndicators(project!);
+  if (!indicators) {
     new ScratchAlert("Nothing was changed. Did you open the right project?")
       .type("warn")
       .timeout(4000)
@@ -33,49 +33,53 @@ const main = async () => {
     await document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();
-  } else {
-    const project = api.getCurrentProject();
+    return;
+  }
 
-    if (await project!.exists()) {
-      await createGitMenu(project!);
-      window._repoStatus = await project!.repoStatus();
-      // ensure a click event listener for the save button
-      new MutationObserver(() => {
-        const saveButton = misc.saveArea.select<HTMLDivElement>();
-        saveButton.onclick = () => {
-          const observer = new MutationObserver(async () => {
-            const saveStatus = saveButton.firstElementChild;
-            if (saveStatus === null) {
-              observer.disconnect();
-              return;
-            }
-            if (
-              (saveStatus as any)[getReactHandlers(saveStatus)].children[1]
-                .props.defaultMessage === "Saving project…"
-            ) {
-              saveButton.click();
-              await displayDiffs(project!);
-              window._repoStatus = await project!.repoStatus();
-              return;
-            }
-          });
+  const project = api.getCurrentProject()!;
 
-          observer.observe(saveButton, {
-            childList: true,
-          });
-        };
-      }).observe(misc.saveArea.select(), {
-        childList: true,
+  if (!(await project.exists())) {
+    return;
+  }
+
+  await createGitMenu(project!);
+  window._repoStatus = await project!.repoStatus();
+
+  // ensure a click event listener for the save button
+  new MutationObserver(() => {
+    const saveButton = misc.saveArea.select<HTMLDivElement>();
+    saveButton.onclick = () => {
+      const observer = new MutationObserver(async () => {
+        const saveStatus = saveButton.firstElementChild;
+        if (saveStatus === null) {
+          observer.disconnect();
+          return;
+        }
+        if (
+          (saveStatus as any)[getReactHandlers(saveStatus)].children[1].props
+            .defaultMessage === "Saving project…"
+        ) {
+          saveButton.click();
+          await displayDiffs(project!);
+          window._repoStatus = await project!.repoStatus();
+          return;
+        }
       });
 
-      // this hopefully doesn't conflict with addons
-      document.onkeydown = async (e) => {
-        if (e.ctrlKey && e.key === "s") {
-          await displayDiffs(project!);
-        }
-      };
+      observer.observe(saveButton, {
+        childList: true,
+      });
+    };
+  }).observe(misc.saveArea.select(), {
+    childList: true,
+  });
+
+  // this hopefully doesn't conflict with addons
+  document.onkeydown = async (e) => {
+    if (e.ctrlKey && e.key === "s") {
+      await displayDiffs(project!);
     }
-  }
+  };
 };
 
 window._changedScripts = {};

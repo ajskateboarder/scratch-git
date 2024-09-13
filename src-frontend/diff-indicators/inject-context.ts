@@ -1,6 +1,6 @@
 import { getBlockly } from "@/lib";
 
-type Item = {
+interface Item {
   title: string;
   onclick: () => void;
 };
@@ -32,7 +32,7 @@ class ContextMenu {
     waitForElm<SVGGElement>("g.blocklyBlockCanvas").then((workspace) => {
       workspace.oncontextmenu = (_e: Event) => {
         // find the main stack from any selected part of the stack
-        let topBlocks = getBlockly().topBlocks_.map((e) => e.id);
+        const topBlocks = getBlockly().topBlocks_.map((e) => e.id);
         let target = _e.target as SVGElement;
         const topStack = (block: SVGElement) => {
           const closest = block.closest<SVGElement>("[data-id]");
