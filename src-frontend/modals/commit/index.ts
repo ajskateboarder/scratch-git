@@ -15,49 +15,52 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Base {
-  $older = button(
-    {
-      class: cls(Settings.button, "round-left-button"),
-    },
-    i({ class: "fa-solid fa-arrow-right" })
-  );
+  $older: HTMLButtonElement;
+  $newer: HTMLButtonElement;
+  $search: HTMLInputElement;
+  $showing: HTMLParagraphElement;
 
-  $newer = button(
-    {
-      class: cls(Settings.button, "round-right-button"),
-      disabled: true,
-    },
-    i({ class: "fa-solid fa-arrow-left" })
-  );
-
-  $search = input({
-    type: "text",
-    style: "border-radius: 5px; width: 50%",
-    class: `${Settings.inputField}${
-      (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
-        ? " dark"
-        : ""
-    }`,
-    placeholder: "Search for commits",
-  });
-
-  $showing = p();
-
+  allCommits: Commit[] | undefined;
   private state: {
     paginatedCommits: State<Commit[]>;
     searchQuery: State<string>;
     currentPage: State<number>;
-  } = {
-    paginatedCommits: van.state([]),
-    searchQuery: van.state(""),
-    currentPage: van.state(0),
   };
-
-  allCommits: Commit[] | undefined;
 
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
+
+    this.state = {
+      paginatedCommits: van.state([]),
+      searchQuery: van.state(""),
+      currentPage: van.state(0),
+    };
+
+    this.$newer = button(
+      {
+        class: cls(Settings.button, "round-right-button"),
+        disabled: true,
+      },
+      i({ class: "fa-solid fa-arrow-left" })
+    );
+    this.$older = button(
+      {
+        class: cls(Settings.button, "round-left-button"),
+      },
+      i({ class: "fa-solid fa-arrow-right" })
+    );
+    this.$search = input({
+      type: "text",
+      style: "border-radius: 5px; width: 50%",
+      class: `${Settings.inputField}${
+        (Redux.getState().scratchGui as any).theme.theme.gui === "dark"
+          ? " dark"
+          : ""
+      }`,
+      placeholder: "Search for commits",
+    });
+    this.$showing = p();
 
     const commitGroup = div(
       { class: "commit-group" },

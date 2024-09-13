@@ -1,4 +1,5 @@
-import { CLOSE_BUTTON_SVG, cls, misc, s } from "@/components";
+import { cls, Misc, s } from "@/components/accessors";
+import { CLOSE_BUTTON_SVG } from "@/components/alerts";
 import van, { ChildDom } from "vanjs-core";
 
 const { div, img } = van.tags;
@@ -30,7 +31,7 @@ export const Modal = (children: ChildDom, title: string, closeCb: () => any) =>
         },
         div(
           {
-            class: misc.box,
+            class: Misc.box,
             dir: "ltr",
             style: "flex-direction: column; flex-grow: 1",
           },
@@ -70,7 +71,7 @@ export const Modal = (children: ChildDom, title: string, closeCb: () => any) =>
               )
             )
           ),
-          div({ class: cls(s("settings-modal_body"), misc.box) }, children)
+          div({ class: cls(s("settings-modal_body"), Misc.box) }, children)
         )
       )
     )

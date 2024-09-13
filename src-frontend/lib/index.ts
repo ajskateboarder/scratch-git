@@ -13,4 +13,4 @@ export const toScratchblocks: (
   config: Record<string, any>
 ) => string = parseSB3Blocks_.toScratchblocks;
 
-export * from "./globals";
+export * from "./globals.js";

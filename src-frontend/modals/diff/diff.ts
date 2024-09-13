@@ -86,46 +86,9 @@ export class DiffModal extends Base {
   private $commits: HTMLParagraphElement;
   private $highlights: HTMLInputElement;
   private $plainText: HTMLInputElement;
-
-  private $unified = span(
-    { style: "margin-left: -15px" },
-    button(
-      {
-        onclick: () => (this.unify.val = false),
-        class: cls(Settings.button, "round-right-button"),
-        style: () =>
-          this.unify.val
-            ? "filter: brightness(0.88); padding: 0.3rem"
-            : "padding: 0.3rem",
-      },
-      "Split"
-    ),
-    button(
-      {
-        onclick: () => (this.unify.val = true),
-        class: cls(Settings.button, "round-left-button"),
-        style: () =>
-          !this.unify.val
-            ? "filter: brightness(0.88); padding: 0.3rem"
-            : "padding: 0.3rem",
-      },
-      "Unified"
-    )
-  );
-
-  private $revert = button(
-    {
-      class: Settings.button,
-      style: "margin-left: 15px; padding: 0.3rem",
-    },
-    i({ class: "fa-solid fa-rotate-left" }),
-    " Revert sprite"
-  );
-
-  private $revertList = main({
-    class: "revert-list",
-    style: "display: none",
-  });
+  private $unified: HTMLElement;
+  private $revert: HTMLButtonElement;
+  private $revertList: HTMLElement;
 
   private previousScripts: ProjectJSON;
   private currentScripts: ProjectJSON;
@@ -151,6 +114,39 @@ export class DiffModal extends Base {
 
     const useHighlights = Checkbox({}, "Use highlights");
     const plainText = Checkbox({ style: "margin-left: 10px;" }, "Plain text");
+    const unified = span(
+      { style: "margin-left: -15px" },
+      button(
+        {
+          onclick: () => (this.unify.val = false),
+          class: cls(Settings.button, "round-right-button"),
+          style: () =>
+            this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
+        },
+        "Split"
+      ),
+      button(
+        {
+          onclick: () => (this.unify.val = true),
+          class: cls(Settings.button, "round-left-button"),
+          style: () =>
+            !this.unify.val
+              ? "filter: brightness(0.88); padding: 0.3rem"
+              : "padding: 0.3rem",
+        },
+        "Unified"
+      )
+    );
+    const importOld = button(
+      {
+        class: Settings.button,
+        style: "margin-left: 15px; padding: 0.3rem",
+      },
+      i({ class: "fa-solid fa-rotate-left" }),
+      " Revert sprite"
+    );
 
     const header = p(
       { style: "margin-right: 10px; margin-left: 10px", id: "diff-header" },
@@ -162,7 +158,7 @@ export class DiffModal extends Base {
           { class: "settings-group", style: "width: 100%" },
           useHighlights,
           plainText,
-          this.$unified,
+          unified,
           Copy(this.copyCallback, {
             class: cls("copy-button", Settings.button),
             style: "padding: 0.3rem 10px",
@@ -179,18 +175,23 @@ export class DiffModal extends Base {
       )
     );
 
+    const revertList = main({ class: "revert-list", style: "display: none" });
+
     this.$scripts = ul();
     this.$highlights = useHighlights.querySelector("input")!;
     this.$plainText = plainText.querySelector("input")!;
     this.$commits = diff.querySelector(".real-commit-wrap")!;
+    this.$unified = unified;
+    this.$revert = importOld;
+    this.$revertList = revertList;
 
     van.add(
       this,
       Card(
         main(
           { class: "diff-view" },
-          aside(this.$revert, this.$scripts),
-          this.$revertList,
+          aside(importOld, this.$scripts),
+          revertList,
           main(div({ class: "content" }, header), diff)
         ),
         "Diff",

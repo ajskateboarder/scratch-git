@@ -10,6 +10,7 @@ import { GitMenu } from "@/components/menus";
 const { main, button, div, label, br } = van.tags;
 
 export class RepoConfigModal extends Base {
+<<<<<<< HEAD
   private $repository = InputBox({
     placeholder: "Enter a link to a repository URL",
     onblur: async ({ target }: Event) => {
@@ -24,26 +25,49 @@ export class RepoConfigModal extends Base {
   private $email = InputBox();
 
   private project: Project;
+=======
+  $repository!: HTMLInputElement;
+  $name!: HTMLInputElement;
+  $email!: HTMLInputElement;
+  private project!: Project;
+>>>>>>> parent of d85cffb (i used to think using an initializer on a wc would be bad)
 
   connectedCallback() {
     if (this.querySelector("main")) return;
     this.close();
 
+    const $repository = InputBox({
+      placeholder: "Enter a link to a repository URL",
+      onblur: async ({ target }: Event) => {
+        const url: string = (target as HTMLInputElement).value;
+        if (!validURL(url) && !(await remoteExists(url))) {
+          $repository.value = "";
+        }
+      },
+    });
+    const $name = InputBox({});
+    const $email = InputBox({});
+
     const saveButton = button(
       {
         class: Settings.button,
         onclick: () => {
-          if (this.$name.value.trim() === "") {
+          if ($name.value.trim() === "") {
             alert("Don't leave starred fields blank");
             return;
           }
+<<<<<<< HEAD
           if (this.$repository.value.trim() !== "") {
             GitMenu.setPushPullStatus(true);
+=======
+          if ($repository.value.trim() !== "") {
+            gitMenu.setPushPullStatus(true);
+>>>>>>> parent of d85cffb (i used to think using an initializer on a wc would be bad)
           }
           this.project.setDetails({
-            username: this.$name.value,
-            email: this.$email.value,
-            repository: this.$repository.value,
+            username: $name.value,
+            email: $email.value,
+            repository: $repository.value,
           });
         },
       },
@@ -54,19 +78,15 @@ export class RepoConfigModal extends Base {
       this,
       Modal(
         main(
-          InputField(
-            {},
-            label({ class: "input-label" }, "Name", "*"),
-            this.$name
-          ),
+          InputField({}, label({ class: "input-label" }, "Name", "*"), $name),
           br(),
           InputField(
             {},
             label({ class: "input-label" }, "Repository URL (optional)"),
-            this.$repository
+            $repository
           ),
           br(),
-          InputField({}, label({ class: "input-label" }, "Email"), this.$email),
+          InputField({}, label({ class: "input-label" }, "Email"), $email),
           br(),
           br(),
           div({ class: "bottom-bar repo-config-bottom-bar" }, saveButton)
@@ -75,6 +95,10 @@ export class RepoConfigModal extends Base {
         () => this.close()
       )
     );
+
+    this.$repository = $repository;
+    this.$name = $name;
+    this.$email = $email;
   }
 
   public async display() {
