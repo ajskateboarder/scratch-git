@@ -15,13 +15,13 @@ const paginate = (list: any[], length: number) =>
 
 /** Displays a log of all commits to a Git project */
 export class CommitModal extends Base {
-  $older: HTMLButtonElement;
-  $newer: HTMLButtonElement;
-  $search: HTMLInputElement;
-  $showing: HTMLParagraphElement;
+  $older!: HTMLButtonElement;
+  $newer!: HTMLButtonElement;
+  $search!: HTMLInputElement;
+  $showing!: HTMLParagraphElement;
 
   allCommits: Commit[] | undefined;
-  private state: {
+  private state!: {
     paginatedCommits: State<Commit[]>;
     searchQuery: State<string>;
     currentPage: State<number>;
@@ -67,6 +67,7 @@ export class CommitModal extends Base {
       span(() => {
         const commits = this.state.paginatedCommits.val;
         const groups = commits.reduce((groups: Record<string, Commit[]>, e) => {
+          // TODO: make this friendlier for other languages
           const date = e.author.date.split(" ").slice(1, 4).join(" ");
           (groups[date] || (groups[date] = [])).push(e);
           return groups;

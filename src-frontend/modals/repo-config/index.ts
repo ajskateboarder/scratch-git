@@ -10,27 +10,10 @@ import { GitMenu } from "@/components/menus";
 const { main, button, div, label, br } = van.tags;
 
 export class RepoConfigModal extends Base {
-<<<<<<< HEAD
-  private $repository = InputBox({
-    placeholder: "Enter a link to a repository URL",
-    onblur: async ({ target }: Event) => {
-      const url: string = (target as HTMLInputElement).value;
-      if (!validURL(url) && !(await remoteExists(url))) {
-        this.$repository.value = "";
-      }
-    },
-  });
-
-  private $name = InputBox();
-  private $email = InputBox();
-
-  private project: Project;
-=======
   $repository!: HTMLInputElement;
   $name!: HTMLInputElement;
   $email!: HTMLInputElement;
   private project!: Project;
->>>>>>> parent of d85cffb (i used to think using an initializer on a wc would be bad)
 
   connectedCallback() {
     if (this.querySelector("main")) return;
@@ -56,13 +39,8 @@ export class RepoConfigModal extends Base {
             alert("Don't leave starred fields blank");
             return;
           }
-<<<<<<< HEAD
           if (this.$repository.value.trim() !== "") {
             GitMenu.setPushPullStatus(true);
-=======
-          if ($repository.value.trim() !== "") {
-            gitMenu.setPushPullStatus(true);
->>>>>>> parent of d85cffb (i used to think using an initializer on a wc would be bad)
           }
           this.project.setDetails({
             username: $name.value,

@@ -48,16 +48,16 @@ export class ProjectJSON {
     const matches = [
       ...JSON.stringify(stack).matchAll(/":\[(?:1|2|3),"(\w)"/g),
     ].map((e) => e[0]);
-    for (const match of matches) {
+    matches.forEach((match) => {
       const ogId = match.substring(6, match.length - 1);
-      const id = Math.random().toString(36).slice(2);
+      const id = crypto.randomUUID();
       stack = JSON.parse(
         JSON.stringify(stack)
           .replaceAll(match, `${match.substring(0, match.length - 2)}${id}"`)
           .replaceAll(new RegExp(`:"${ogId}"`, "g"), `:"${id}"`)
           .replaceAll(new RegExp(`"${ogId}":`, "g"), `"${id}":`)
       );
-    }
+    });
 
     return stack;
   }
@@ -92,13 +92,14 @@ const _parseScripts = (
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
+  console.log(zip(oldBlocks, newBlocks).map((e, i) => [e, i]));
   const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
-    .filter(([a]: any[]) => a[0].content !== a[1].content)
+    // @ts-expect-error
+    .filter(([a, b]) => a[0].content !== a[1].content)
     .map(
       ([
         // @ts-expect-error
-        // not a symbol.iterator... who cares?
         [
           { content: oldContent, script: oldScript, json: oldJSON },
           { content: newContent, script, json },
@@ -138,6 +139,7 @@ export const parseScripts = async (
   currentScripts: ProjectJSON
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
+  console.log("parseScripts", scripts);
   return (
     await Promise.all(
       scripts.map((script) =>

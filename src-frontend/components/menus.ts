@@ -179,7 +179,8 @@ export const GitMenu = new class {
         }
 
         if (window._repoStatus.status === 1) {
-          itemRef.style.cssText = "pointer-events: none; opacity: 0.5"
+          itemRef.style.pointerEvents = "none";
+          itemRef.style.opacity = "0.5";
           itemRef.parentElement!.style.cursor = "default";
         } else {
           itemRef.setAttribute("style", "");

@@ -81,11 +81,9 @@ const highlightChanged = async (
     <feComposite in="SourceGraphic" in2="outGlow" operator="over"></feComposite>
   </filter>`;
 
-  for (const highlight of document.querySelectorAll<HTMLElement>(
-    'g[was-changed="true"]'
-  )) {
-    highlight.style.filter = "";
-  }
+  document
+    .querySelectorAll<HTMLElement>(`g[was-changed="true"]`)
+    .forEach((e) => (e.style.filter = ""));
 
   if (sprite === undefined) {
     return false;
@@ -118,11 +116,11 @@ const highlightChanged = async (
   // persist this until the next save
   window._changedScripts[sprite.format()] = changedScripts;
 
-  for (const script of changedScripts) {
-    const group = getBlockly().getBlockById(script)!.svgGroup_;
+  changedScripts.forEach((e) => {
+    const group = getBlockly().getBlockById(e)!.svgGroup_;
     group.style.filter = "url(#blocklyStackDiffFilter)";
     group.setAttribute("was-changed", "true");
-  }
+  });
 
   return true;
 };
@@ -142,7 +140,7 @@ export const showIndicators = async (project: Project) => {
     loadedJSON = JSON.parse(vm.toJSON());
 
   if (changedSprites.length === 0) {
-    return false;
+    throw new Error("Nothing was changed");
   }
 
   contextMenu.onopen = (e) => {
@@ -163,13 +161,12 @@ export const showIndicators = async (project: Project) => {
     });
   };
 
-  for (const sprite of editorSprites) {
+  editorSprites.forEach((sprite) => {
     const divs = sprite
       .querySelector("div")!
       .querySelectorAll("div") as NodeListOf<HTMLDivElement>;
     const spriteName = divs[2].innerText;
 
-    // when this sprite is clicked, shift the position of every other diff button
     sprite.addEventListener("click", () => {
       if (
         Sprites.selectedSprite.select() &&
@@ -187,6 +184,7 @@ export const showIndicators = async (project: Project) => {
       }
     });
 
+    // builds a sprite diff button
     if (!changedSprites.some((e) => e.name === spriteName && !e.isStage))
       return;
 
@@ -204,7 +202,7 @@ export const showIndicators = async (project: Project) => {
 
     divs[3].after(diffButton);
 
-    // when this sprite is clicked, adjust diff buttons location and highlight changed scripts
+    // on sprite click, adjust diff buttons location and highlight changed scripts
     sprite.addEventListener("click", async () => {
       const movedToSprite = nameOfSprite(
         await new Promise((resolve) => {
@@ -217,6 +215,10 @@ export const showIndicators = async (project: Project) => {
           });
         })
       );
+      Sprites.spriteSelDelete
+        .selectAll<HTMLDivElement>()
+        .filter((button) => !button.classList.contains("stage-diff-button"))
+        .forEach((btn) => (btn.style.marginTop = "0px"));
 
       diffButton.style.marginTop =
         movedToSprite === spriteName ? "30px" : "0px";
@@ -227,13 +229,24 @@ export const showIndicators = async (project: Project) => {
         loadedJSON
       );
     });
-  }
+  });
 
   // creates a diff button for the stage
   const stageWrapper = Sprites.stageWrapper.select();
 
   if (changedSprites.some((e) => e.name === "Stage" && e.isStage)) {
     const stageDiffButton = StageDiff({
+      class: "stage-diff",
+      onmouseover: () => {
+        stageDiffButton.style.scale = "0.9";
+        stageDiffButton.style.boxShadow =
+          "0px 0px 0px 6px var(--looks-transparent)";
+      },
+      onmouseleave: () => {
+        stageDiffButton.style.scale = "0.8";
+        stageDiffButton.style.boxShadow =
+          "0px 0px 0px 2px var(--looks-transparent)";
+      },
       onclick: async (e: Event) => {
         e.stopPropagation();
         document
@@ -247,11 +260,10 @@ export const showIndicators = async (project: Project) => {
 
   // when opening the stage, move all the diff buttons up
   stageWrapper.addEventListener("click", async () => {
-    for (const button of Sprites.spriteSelDelete
+    Sprites.spriteSelDelete
       .selectAll<HTMLDivElement>()
-      .filter((button) => !button.classList.contains("stage-diff-button"))) {
-      button.style.marginTop = "0px";
-    }
+      .filter((button) => !button.classList.contains("stage-diff-button"))
+      .forEach((button) => (button.style.marginTop = "0px"));
 
     await highlightChanged(project, STAGE, loadedJSON);
   });
@@ -270,54 +282,57 @@ export const showIndicators = async (project: Project) => {
   // highlightChanged returns false if the changed sprite was removed (probably by design?)
   // show the removed sprite as a ghost which is non-clickable and shows the diff indicator
   document.querySelectorAll(".deleted-sprite").forEach((e) => e.remove());
-  if (changed) return;
+  if (!changed) {
+    for (const { name: spriteName } of changedSprites) {
+      // ignore sprites that exist
+      if (
+        spriteName === "Stage" ||
+        vm.runtime.getSpriteTargetByName(spriteName)
+      )
+        return;
 
-  for (const { name: spriteName } of changedSprites) {
-    // ignore sprites that exist
-    if (spriteName === "Stage" || vm.runtime.getSpriteTargetByName(spriteName))
-      return;
+      const lastSprite = [
+        ...document.querySelectorAll("div[style^='order: ']"),
+      ].pop();
+      if (!lastSprite) return;
 
-    const lastSprite = [
-      ...document.querySelectorAll("div[style^='order: ']"),
-    ].pop();
-    if (!lastSprite) return;
+      const ghost = lastSprite.cloneNode(true) as HTMLElement;
 
-    const ghost = lastSprite.cloneNode(true) as HTMLElement;
+      ghost.querySelector<HTMLElement>(
+        "." + Sprites.spriteName
+      )!.innerText = `${spriteName} [❌]`;
+      ghost.querySelector("nav")?.remove();
+      ghost.querySelector("img")?.remove();
+      ghost.querySelector("img")?.parentElement?.remove();
+      ghost.firstElementChild?.classList.remove(Sprites.selectedSprite);
+      ghost.title = "This sprite was deleted.";
+      ghost.classList.add("deleted-sprite");
 
-    ghost.querySelector<HTMLElement>(
-      "." + Sprites.spriteName
-    )!.innerText = `${spriteName} [❌]`;
-    ghost.querySelector("nav")?.remove();
-    ghost.querySelector("img")?.remove();
-    ghost.querySelector("img")?.parentElement?.remove();
-    ghost.firstElementChild?.classList.remove(Sprites.selectedSprite);
-    ghost.title = "This sprite was deleted.";
-    ghost.classList.add("deleted-sprite");
+      const diffButton = SpriteDiff({
+        onclick: async (_e: Event) => {
+          _e.stopPropagation();
+          document
+            .querySelector<DiffModal>("diff-modal")!
+            .display(project, spriteName);
+        },
+      });
 
-    const diffButton = SpriteDiff({
-      onclick: async (_e: Event) => {
-        _e.stopPropagation();
-        document
-          .querySelector<DiffModal>("diff-modal")!
-          .display(project, spriteName);
-      },
-    });
+      (
+        ghost
+          .querySelector("div")!
+          .querySelectorAll("div") as NodeListOf<HTMLDivElement>
+      )[3].after(diffButton);
 
-    (
-      ghost
-        .querySelector("div")!
-        .querySelectorAll("div") as NodeListOf<HTMLDivElement>
-    )[3].after(diffButton);
-
-    lastSprite.after(ghost);
+      lastSprite.after(ghost);
+    }
   }
 
   // retain diff highlights when switching between editor tabs
-  new MutationObserver(async ([{ target: tabs }, _]) => {
+  new MutationObserver(async ([mutation, _]) => {
     // if there's no changes don't show
     if (window._repoStatus.status === 1) return;
     if (
-      (tabs as HTMLElement).classList.contains(
+      (mutation.target as HTMLElement).classList.contains(
         s("react-tabs_react-tabs__tab--selected")
       )
     ) {
@@ -332,7 +347,7 @@ export const showIndicators = async (project: Project) => {
     attributeFilter: ["class"],
   });
 
-  // retain diff highlights for when editor theme changes
+  // retain diff highlights for when editor theme
   new MutationObserver(async () => {
     if (window._repoStatus.status === 1) return;
     const selectedSprite = Sprites.selectedSprite.select<HTMLDivElement>();
@@ -344,6 +359,4 @@ export const showIndicators = async (project: Project) => {
     attributes: true,
     attributeFilter: ["style"],
   });
-
-  return true;
 };

@@ -14,12 +14,12 @@ const displayDiffs = async (project: Project) => {
     ...document.querySelectorAll(`.diff-button`),
     ...document.querySelectorAll(`.stage-diff`),
   ].forEach((e) => e.remove());
-
   await project!.unzip();
   window._changedScripts = {};
-
-  const indicators = await showIndicators(project!);
-  if (!indicators) {
+  try {
+    await showIndicators(project!);
+  } catch (e) {
+    console.error(e);
     new ScratchAlert("Nothing was changed. Did you open the right project?")
       .type("warn")
       .timeout(4000)
@@ -37,7 +37,6 @@ const main = async () => {
       .display();
     return;
   }
-
   const project = api.getCurrentProject()!;
 
   if (!(await project.exists())) {
