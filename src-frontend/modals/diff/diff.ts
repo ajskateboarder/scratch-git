@@ -132,7 +132,7 @@ export class DiffModal extends Base {
           class: "header",
         },
         span(
-          { class: "Settings-group", style: "width: 100%" },
+          { class: "settings-group", style: "width: 100%" },
           useHighlights,
           plainText,
           unified,

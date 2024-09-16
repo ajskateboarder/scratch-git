@@ -2,19 +2,23 @@
 import van from "vanjs-core";
 import { GhAuth, PullMsg, Project, PushMsg } from "./api";
 import { s, Settings } from "./components/accessors";
-import { GitMenu } from "./components/menus";
+import * as GitMenu from "./components/git-menu";
 import { GhAuthAlert, ScratchAlert } from "./components/alerts";
 import { CommitModal, RepoConfigModal } from "./modals";
-import { repoIsGitHub } from "./utils";
 
 // why can't rollup-plugin-import-css follow css imports?? why???
 import styles from "./styles.css";
 import diffStyles from "./modals/diff/styles.css";
 import repoConfigStyles from "./modals/repo-config/styles.css";
 import welcomeStyles from "./modals/welcome/styles.css";
-import commitStyles from "./modals/commit/styles.css";
+import commitStyles from "./modals/commits/styles.css";
+// import dropdownStyles from "./modals/commits/dropdown.css";
 
 const { link, style, button, i } = van.tags;
+
+/** Check if a project's configured remote URL is a GitHub URL */
+const repoIsGitHub = async (project: Project) =>
+  new URL((await project!.getDetails()).repository).host === "github.com";
 
 /** Packages styles and external dependencies */
 export const Styles = () => {
@@ -199,7 +203,7 @@ const COMMIT_MESSAGES: Record<number, ScratchAlert> = {
 /** Builds the final Git Menu */
 export const createGitMenu = async (project: Project) => {
   console.debug("building git menu");
-  GitMenu.create({
+  GitMenu.createMenu({
     commitView: () =>
       document.querySelector<CommitModal>("commit-modal")!.display(),
     commitCreate: async () => {

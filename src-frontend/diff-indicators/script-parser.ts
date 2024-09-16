@@ -1,6 +1,5 @@
 import { diff } from "../api";
 import { toScratchblocks } from "../lib";
-import { zip } from "../utils";
 
 export type ScriptStatus = "modified" | "added" | "removed";
 
@@ -14,6 +13,12 @@ export interface ScriptParse {
   oldJSON: ProjectJSON;
   oldScript: string;
 }
+
+const zip = <T, K>(a: T[], b: K[]) =>
+  Array.from(Array(Math.max(b.length, a.length)), (_, i) => [
+    a[i] ?? "",
+    b[i] ?? "",
+  ]);
 
 export class ProjectJSON {
   topLevels: string[];
