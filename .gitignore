@@ -21,3 +21,11 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+scratch-git
+src-server/diff
+
+
+# Added by cargo
+
+/target
