@@ -1,5 +1,5 @@
 [package]
-name = "scratch-git-gh-pages"
+name = "scratch-git"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,16 +7,18 @@ edition = "2021"
 
 [[bin]]
 path = "src-server/main.rs"
-name = "scratch-git-gh-pages"
+name = "scratch-git"
 
 [dependencies]
-actix-web = "4"
 serde_json = "1.0.113"
 serde = { version = "1.0.196", features = ["derive"] }
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+tungstenite = "0.21.0"
 itertools = "0.12.1"
 dunce = "1.0.4"
 walkdir = "2"
 minreq = { version = "2.11.2", features = ["json-using-serde", "https"] }
 regex_static = "0.1.1"
 anyhow = "1.0.86"
-futures = "0.3.30"
+actix-multipart = "0.7.2"
+actix-web = "4.9.0"

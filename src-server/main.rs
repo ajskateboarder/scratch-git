@@ -1,59 +1,86 @@
-use actix_web::{error, post, web, App, HttpResponse, HttpServer, Responder, Error};
-use futures::StreamExt;
-use sb3::get_assets;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
-pub mod git;
 pub mod diff;
+pub mod git;
 pub mod sb3;
+pub mod zipping;
 
-use crate::diff::structs::Diff;
-use crate::sb3::ProjectData;
+use std::{io::Read, process::Command};
 
-#[derive(Serialize, Deserialize)]
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::MultipartForm;
+use actix_web::{post, App, HttpResponse, HttpServer, Responder};
+
+use diff::structs::Diff;
+use sb3::ProjectData;
+use zipping::extract;
+
+const MAX_FILE_SIZE: usize = 50000000;
+
+#[derive(MultipartForm)]
 struct DiffRequest {
-    old_json: String,
-    new_json: String,
+    old_project: TempFile,
+    new_project: TempFile,
 }
 
 #[post("/diff_json")]
-async fn diff_json(mut payload: web::Payload) -> Result<HttpResponse, Error> {
-    let mut body = web::BytesMut::new();
-    while let Some(chunk) = payload.next().await {
-        let chunk = chunk?;
-        body.extend_from_slice(&chunk);
-    };
-    let obj = serde_json::from_slice::<DiffRequest>(&body)?;
-
-    
-    let old_diff_assets = serde_json::from_str::<ProjectData>(&obj.new_json);
-    if old_diff_assets.is_err() {
-        return Err(error::ErrorBadRequest("old_json is invalid json"));
+async fn diff_json(form: MultipartForm<DiffRequest>) -> impl Responder {
+    // validation
+    if form.0.old_project.size > MAX_FILE_SIZE || form.0.new_project.size > MAX_FILE_SIZE {
+        return HttpResponse::BadRequest()
+                .body(format!("file size is too large, max is {MAX_FILE_SIZE}"));
     }
-    let old_diff_assets = old_diff_assets.unwrap();
-    
-    let new_diff_assets = serde_json::from_str::<ProjectData>(&obj.new_json);
-    if new_diff_assets.is_err() {
-        return Err(error::ErrorBadRequest("new_json is invalid json"));
+
+    let mut old_archive = zip::ZipArchive::new(form.0.old_project.file).unwrap();
+
+    let mut buf = String::new();
+    let project_json = old_archive.by_name("project.json").unwrap().read_to_string(&mut buf);
+
+    if project_json.is_err() {
+        return HttpResponse::BadRequest()
+                .body(format!("old json could not be parsed as string"));
+    }
+    if serde_json::from_str::<ProjectData>(&buf).is_err() {
+        return HttpResponse::BadRequest()
+                .body(format!("invalid old json"));
     };
-    let new_diff_assets = new_diff_assets.unwrap();
 
-    let old_diff = serde_json::from_str::<Value>(&obj.old_json)?;
-    let new_diff = serde_json::from_str::<Value>(&obj.new_json)?;
+    let mut new_archive = zip::ZipArchive::new(form.0.new_project.file).unwrap();
+    let mut buf = String::new();
+    let project_json = new_archive.by_name("project.json").unwrap().read_to_string(&mut buf);
 
-    // get_assets(new)
-    // Diff::new(&old_json).commits(, new)
+    if project_json.is_err() {
+        return HttpResponse::BadRequest()
+                .body(format!("new json could not be parsed as string"));
+    }
+    if serde_json::from_str::<ProjectData>(&buf).is_err() {
+        return HttpResponse::BadRequest()
+                .body(format!("invalid new json"));
+    };
+    // end validation
 
-    todo!()
+    let _ = Command::new("rm").args(["-rf", "scratch-space"]).output();
+    let _ = Command::new("mkdir").args(["scratch-space"]).output();
+    let _ = Command::new("git").args(["init"]).current_dir::<String>("./scratch-space".into()).output();
+
+    extract(old_archive, "./scratch-space".into()).unwrap();
+
+    let _ = Command::new("git").args(["add", "."]).current_dir::<String>("./scratch-space".into()).output();
+    let _ = Command::new("git").args(["commit", "-m", "commit a"]).current_dir::<String>("./scratch-space".into()).output();
+
+    extract(new_archive, "./scratch-space".into()).unwrap();
+
+    let _ = Command::new("git").args(["add", "."]).current_dir::<String>("./scratch-space".into()).output();
+    let _ = Command::new("git").args(["commit", "-m", "commit b"]).current_dir::<String>("./scratch-space".into()).output();
+
+    let old_diff = Diff::from_revision(&"./scratch-space".into(), "HEAD~1:project.json").unwrap();
+    let new_diff = Diff::from_revision(&"./scratch-space".into(), "HEAD:project.json").unwrap();
+    
+    HttpResponse::Ok().body(old_diff.commits(&"./scratch-space".into(), &new_diff).unwrap().join(", "))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new().service(diff_json)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(diff_json))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }

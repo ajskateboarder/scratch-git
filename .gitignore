@@ -22,10 +22,18 @@ dist
 *.sln
 *.sw?
 
-scratch-git
 src-server/diff
-
+scratch-space
+src-server/sb3.rs
+src-server/git.rs
 
 # Added by cargo
 
 /target
+
+
+# Added by cargo
+#
+# already existing elements were commented out
+
+#/target
