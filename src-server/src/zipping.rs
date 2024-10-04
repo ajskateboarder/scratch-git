@@ -1,30 +1,30 @@
-use actix_multipart::form::tempfile::TempFile;
-use std::fs::{self, File};
+use std::fs;
 use std::io;
 use std::path::PathBuf;
-use zip::result::ZipError;
+use anyhow::{anyhow,Error};
 use zip::ZipArchive;
 
 /// Extract a ZIP file to a target directory
-pub fn extract<T>(mut archive: ZipArchive<T>, target_dir: PathBuf) -> Result<(), ZipError>
+pub fn extract<T>(mut archive: ZipArchive<T>, target_dir: PathBuf, max_size: u64) -> Result<(), Error>
 where
     T: std::io::Read,
     T: std::io::Seek,
 {
+    let mut size: u64 = 0;
+    for i in 0..archive.len() {
+        size += archive.by_index(i).unwrap().size()
+    }
+    if size > max_size {
+        return Err(anyhow!("this is most certainly a zip bomb"))
+    }
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         let outpath = match file.enclosed_name() {
             Some(path) => path.to_owned(),
             None => continue,
         };
-        if let Some(p) = outpath.parent() {
-            if !p.exists() {
-                fs::create_dir_all(p).unwrap();
-            }
-        }
-        dbg!(&target_dir.join(&outpath));
         let mut outfile = fs::File::create(target_dir.clone().join(&outpath)).unwrap();
-        dbg!(&outfile);
         io::copy(&mut file, &mut outfile).unwrap();
         #[cfg(unix)]
         {

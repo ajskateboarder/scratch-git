@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -12,6 +13,7 @@ pub struct CostumeOrSound {
 pub struct Target {
     pub costumes: Vec<CostumeOrSound>,
     pub sounds: Vec<CostumeOrSound>,
+    pub blocks: Value,
 }
 
 #[derive(Debug, Deserialize)]
