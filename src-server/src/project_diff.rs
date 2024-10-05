@@ -1,4 +1,9 @@
-use std::{io::{Read, Write}, path::PathBuf, process::{Command, Stdio}, thread};
+use std::{
+    io::{Read, Write},
+    path::PathBuf,
+    process::{Command, Stdio},
+    thread,
+};
 
 use crate::diff::structs::Diff;
 use crate::sb3::ProjectData;
@@ -11,6 +16,16 @@ use actix_web::{post, HttpResponse, Responder};
 use serde_json::json;
 
 const MAX_FILE_SIZE: u64 = 50000000; // 50mb
+
+fn parse_scratchblocks(json: String, key: String) -> String {
+    let mut child = Command::new("node").args(["main.cjs"])
+    .current_dir(PathBuf::from("./src/sb3-parser"))
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+    let mut child_stdin = child.stdin.take();
+    child_stdin.as_mut().unwrap().write_all(format!("{key},|,|,{json}").as_bytes()).unwrap();
+    drop(child_stdin);
+    String::from_utf8(child.wait_with_output().unwrap().stdout).unwrap()
+}
 
 #[derive(MultipartForm)]
 struct DiffRequest {
@@ -56,15 +71,7 @@ pub async fn project_diff(form: MultipartForm<DiffRequest>) -> impl Responder {
         return HttpResponse::BadRequest().body(format!("invalid new json"));
     };
 
-    let e = &project_json.unwrap().targets[1].blocks.to_string();
-    dbg!(e);
-
-    let mut child = Command::new("node").args(["src/sb3-parser/main.js"])
-        .stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
-    let mut child_stdin = child.stdin.take();
-    child_stdin.as_mut().unwrap().write_all(format!("b,{e}").as_bytes()).unwrap();
-    drop(child_stdin);
-    dbg!(child.wait_with_output().unwrap());
+    let e = &project_json.unwrap().targets.into_iter();
     // end validation
 
     let cwd: PathBuf = "./scratch-space".into();
