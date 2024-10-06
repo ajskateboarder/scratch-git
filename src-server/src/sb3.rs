@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CostumeOrSound {
     pub data_format: String,
@@ -9,14 +9,15 @@ pub struct CostumeOrSound {
     pub md5ext: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Target {
+    pub name: Option<String>,
     pub costumes: Vec<CostumeOrSound>,
     pub sounds: Vec<CostumeOrSound>,
     pub blocks: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectData {
     pub targets: Vec<Target>,
 }
