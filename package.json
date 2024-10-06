@@ -7,7 +7,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
     "@turbowarp/types": "^0.0.12",
-    "rollup": "^4.14.1",
+    "rollup": "^4.24.0",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-import-css": "^3.5.0",
     "tslib": "^2.6.2",
