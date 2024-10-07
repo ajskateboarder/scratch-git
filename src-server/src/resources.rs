@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{cookie::Cookie, get, post, web, HttpRequest, HttpResponse, Responder};
 use lazy_static::lazy_static;
 use minreq;
 use serde::{Deserialize, Serialize};
@@ -57,8 +57,10 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
     if let Ok(response) = response {
         let json = response.json::<Value>().unwrap();
         if let Some(token) = json.get("access_token") {
+            let c = Cookie::build("token", token.to_string()).finish();
+
             return HttpResponse::Ok()
-                .json(Code {code: token.to_string()})
+                .cookie(c).body("");
         }
     }
 
