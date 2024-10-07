@@ -1,4 +1,4 @@
-use actix_web::{cookie::Cookie, get, post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{cookie::Cookie, get, http, post, web, HttpRequest, HttpResponse, Responder};
 use lazy_static::lazy_static;
 use minreq;
 use serde::{Deserialize, Serialize};
@@ -38,7 +38,7 @@ struct AccessToken {
     code: String,
 }
 
-#[get("/github_auth")]
+#[get("/api/github_auth")]
 pub async fn github_auth(req: HttpRequest) -> impl Responder {
     let code = &web::Query::<Code>::from_query(req.query_string())
         .unwrap()
@@ -60,11 +60,13 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
             let c = Cookie::build("token", token.to_string()).finish();
 
             return HttpResponse::Ok()
-                .cookie(c).body("");
+                .append_header((http::header::LOCATION, "/"))
+                .cookie(c)
+                .body("it worked yippee");
         }
     }
 
-    HttpResponse::InternalServerError().into()
+    HttpResponse::InternalServerError().body("nope")
 }
 
 #[derive(Deserialize)]
@@ -74,7 +76,7 @@ struct ParseRequest {
     repo: String,
 }
 
-#[post("/commits")]
+#[post("/api/commits")]
 pub async fn commits(form: web::Json<ParseRequest>) -> impl Responder {
     match form.0.kind {
         SupportedHosts::Github(token) => HttpResponse::Ok(),
