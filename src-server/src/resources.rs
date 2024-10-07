@@ -1,9 +1,8 @@
 use actix_web::{
-    cookie::Cookie,
+    cookie::{Cookie, SameSite},
     get,
-    http::StatusCode,
     post,
-    web::{self, Redirect},
+    web,
     Either, HttpRequest, HttpResponse, Responder,
 };
 use lazy_static::lazy_static;
@@ -45,7 +44,7 @@ struct AccessToken {
     code: String,
 }
 
-#[get("/api/github_auth")]
+#[get("/github_auth")]
 pub async fn github_auth(req: HttpRequest) -> impl Responder {
     let code = &web::Query::<Code>::from_query(req.query_string())
         .unwrap()
@@ -64,18 +63,17 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
     if let Ok(response) = response {
         let json = response.json::<Value>().unwrap();
         if let Some(token) = json.get("access_token") {
-            let c = Cookie::build("token", token.to_string()).finish();
-
+            let mut c = Cookie::build("token", token.to_string()).domain("ajskateboarder.org").path("/").secure(true).finish();
+            c.set_same_site(SameSite::Strict);
             return Either::Left(
-                Redirect::to("/")
-                    .customize()
-                    .add_cookie(&c)
-                    .with_status(StatusCode::OK),
+                HttpResponse::Ok()
+		    .content_type("text/html; charset=utf-8")
+		    .cookie(c).body("<!DOCTYPE html><meta http-equiv='refresh' content='0;https://scratch-git.ajskateboarder.org'>")
             );
         }
     }
 
-    Either::Right(HttpResponse::InternalServerError().body("nope"))
+    Either::Right(HttpResponse::InternalServerError().body(""))
 }
 
 #[derive(Deserialize)]
@@ -85,7 +83,7 @@ struct ParseRequest {
     repo: String,
 }
 
-#[post("/api/commits")]
+#[post("/commits")]
 pub async fn commits(form: web::Json<ParseRequest>) -> impl Responder {
     match form.0.kind {
         SupportedHosts::Github(token) => HttpResponse::Ok(),
