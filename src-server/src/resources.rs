@@ -73,7 +73,7 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
         }
     }
 
-    Either::Right(HttpResponse::InternalServerError().body(""))
+    Either::Right(HttpResponse::InternalServerError().body("either your code expired or github screwed up. oopsies!! you get to decide"))
 }
 
 #[derive(Deserialize)]
