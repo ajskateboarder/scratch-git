@@ -8,8 +8,8 @@ pub mod resources;
 
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-use project_diff::project_diff as project_diff_service;
-use resources::commits as parse_url_service;
+use project_diff::project_diff as project_diff_;
+use resources::{commits, github_auth};
 
 #[get("/")]
 async fn root() -> impl Responder {
@@ -21,8 +21,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(root)
-            .service(project_diff_service)
-            .service(parse_url_service)
+            .service(project_diff_)
+            .service(commits)
+            .service(github_auth)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
