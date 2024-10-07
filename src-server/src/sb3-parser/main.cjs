@@ -70,8 +70,8 @@ const parseScripts = (
           oldContent !== "" && newContent !== ""
             ? "modified"
             : oldContent === "" && newContent !== ""
-            ? "added"
-            : "removed";
+              ? "added"
+              : "removed";
 
         return {
           oldContent,
@@ -88,8 +88,8 @@ const parseScripts = (
 (async () => {
   try {
     const [oldJSON, newJSON] = (await process.stdin.toArray())
-    .toString()
-    .trim().split("\r\n");
+      .toString()
+      .trim().split("\r\n");
     process.stdout.write(JSON.stringify(parseScripts(new ProjectJSON(JSON.parse(oldJSON)), new ProjectJSON(JSON.parse(newJSON)))));
   } catch (e) {
     console.error(e)
