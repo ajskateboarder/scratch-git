@@ -1,4 +1,11 @@
-use actix_web::{cookie::Cookie, get, http, post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    cookie::Cookie,
+    get,
+    http::StatusCode,
+    post,
+    web::{self, Redirect},
+    Either, HttpRequest, HttpResponse, Responder,
+};
 use lazy_static::lazy_static;
 use minreq;
 use serde::{Deserialize, Serialize};
@@ -59,14 +66,16 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
         if let Some(token) = json.get("access_token") {
             let c = Cookie::build("token", token.to_string()).finish();
 
-            return HttpResponse::Ok()
-                .append_header((http::header::LOCATION, "/"))
-                .cookie(c)
-                .body("it worked yippee");
+            return Either::Left(
+                Redirect::to("/")
+                    .customize()
+                    .add_cookie(&c)
+                    .with_status(StatusCode::OK),
+            );
         }
     }
 
-    HttpResponse::InternalServerError().body("nope")
+    Either::Right(HttpResponse::InternalServerError().body("nope"))
 }
 
 #[derive(Deserialize)]
