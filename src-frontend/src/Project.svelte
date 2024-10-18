@@ -4,7 +4,8 @@
     type Commit,
     setupScaffolding,
     type RepoProvider,
-  } from "./lib";
+  } from "./lib/index";
+  import env from "./lib/env";
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
@@ -24,6 +25,35 @@
   let currentCommit: Commit;
   let scaffold: any;
 
+  const parseCookie = <T extends Record<string, string | null>>(str: string) =>
+    str
+      .split(";")
+      .map((v) => v.split("="))
+      .reduce((acc, v) => {
+        acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
+        return acc;
+      }, {}) as T;
+
+  const authGitHub = () => {
+    if (
+      confirm(
+        "You must sign in with GitHub to work with GitHub projects. Continue?",
+      )
+    ) {
+      const child = window.open(
+        `https://github.com/login/oauth/authorize?client_id=${env.GH_CLIENT_ID}`,
+        "popup",
+        "width=600,height=400",
+      );
+      const poll = setInterval(() => {
+        if (child.closed) {
+          window.location.reload();
+          clearInterval(poll);
+        }
+      }, 500);
+    }
+  };
+
   const updateHash = async () => {
     let url = projectInput.value;
     try {
@@ -32,35 +62,51 @@
         commits = {};
       }
       parsed = parseUrl(url);
+      let token: string;
+      if (parsed.type === "GitHub") {
+        if (document.cookie === "") {
+          authGitHub();
+          return;
+        }
+        token = parseCookie<{ token: string }>(document.cookie).token;
+        if (token) {
+          token = token.slice(1, token.length - 1);
+          const req = await fetch(
+            `${env.API_URL}/valid_gh_token`,
+            { method: "POST", headers: { Token: token } },
+          );
+          if (req.status === 400) {
+            authGitHub();
+            return;
+          }
+        }
+      }
       try {
-        commits = await parsed.commitFetcher();
+        commits = await parsed.commitFetcher(token);
       } catch (e) {
-        alert(e);
+        console.error(e);
         return;
       }
-    } catch {
-      console.warn("bad url");
-    }
-  };
-
-  const updateHashFromEnter = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      projectInput.blur();
-      updateHash();
+    } catch (e) {
+      console.warn(e);
     }
   };
 
   const loadProject = async (sha: string) => {
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
-      response.text()
+      response.text(),
     );
     if (sha === "main") {
       currentCommit = { message: "Latest commit" } as any;
     }
-    console.log(projectData, parsed.assetFetcher(sha));
     scaffold = await setupScaffolding(parsed.assetFetcher(sha));
     await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
+    setInterval(() => {
+      if (!document.fullscreenElement) {
+        scaffold.relayout();
+      }
+    }, 100)
   };
 </script>
 
@@ -87,7 +133,7 @@
                   currentCommit = commit;
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
-                  Date.parse(commit.date)
+                  Date.parse(commit.date),
                 )
                   .toISOString()
                   .slice(11, -1)
@@ -143,7 +189,6 @@
       class="project-input"
       placeholder="https://linkto.repo/user/repository"
       on:blur={updateHash}
-      on:keydown={updateHashFromEnter}
       bind:this={projectInput}
       value={initialUrl}
     />
@@ -160,75 +205,74 @@
 </main>
 
 <style>
+  .project-input-wrapper {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
 
-.project-input-wrapper {
-  display: flex;
-  width: 100%;
-  justify-content: center;
-}
+  .close-button {
+    padding: 5px;
+  }
 
-.close-button {
-  padding: 5px;
-}
+  .project-input {
+    border: none;
+    width: 75%;
+    font-size: 23px;
+    line-height: 32px;
+    margin-top: 5px;
+    background-color: transparent;
+  }
 
-.project-input {
-  border: none;
-  width: 75%;
-  font-size: 23px;
-  line-height: 32px;
-  margin-top: 5px;
-  background-color: transparent;
-}
+  :global(.project-input) :focus {
+    color: white !important;
+  }
 
-.project-input :focus {
-  color: white !important;
-}
+  .project-commit-viewer {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 10px;
+  }
 
-.project-commit-viewer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  border: 1px solid black;
-  border-radius: 5px;
-  padding: 10px;
-}
+  .commit {
+    width: 100%;
+    text-align: left;
+  }
 
-.commit {
-  width: 100%;
-  text-align: left;
-}
+  :global(.commit.selected) {
+    filter: invert(100%);
+  }
 
-.commit.selected {
-  filter: invert(100%);
-}
+  .project-commit-viewer .project-viewer {
+    overflow: auto;
+    width: 75%;
+    height: 422px;
+  }
 
-.project-commit-viewer .project-viewer {
-  overflow: auto;
-  width: 75%;
-  height: 422px;
-}
+  .controls {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    padding-left: 10px;
+  }
 
-.controls {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  gap: 20px;
-  padding-left: 10px;
-}
+  .controls button {
+    border-radius: 60%;
+    height: 50px;
+    border: none;
+    width: 50px;
+  }
 
-.controls button {
-  border-radius: 60%;
-  height: 50px;
-  border: none;
-  width: 50px;
-}
+  .controls button:hover {
+    filter: brightness(110%);
+  }
 
-.controls button:hover {
-  filter: brightness(110%);
-}
-
-.controls button svg {
-  transform: scale(0.8);
-  margin-top: 3px;
-}
+  :global(.controls button svg) {
+    transform: scale(0.8);
+    margin-top: 3px;
+  }
 </style>

@@ -15,9 +15,9 @@ use itertools::{
 };
 use serde_json::{json, to_string, Value};
 
-use crate::{git::diff, sb3::ProjectData};
 use crate::zipping::extract;
 use crate::{diff::structs::Diff, sb3::Target};
+use crate::{git::diff, sb3::ProjectData};
 
 const MAX_FILE_SIZE: u64 = 50000000; // 50mb
 
@@ -111,11 +111,16 @@ pub async fn project_diff(form: MultipartForm<DiffRequest>) -> impl Responder {
 
     let mut changes = json!({});
     for (old, new) in g {
-        if old.name.clone().is_some() && new.name.is_some_and(|name| name == old.name.clone().unwrap()) {
+        if old.name.clone().is_some()
+            && new
+                .name
+                .is_some_and(|name| name == old.name.clone().unwrap())
+        {
             let single_changes: Value = serde_json::from_str(&get_sb3_changes(
                 to_string(&old.blocks).unwrap(),
-                to_string(&new.blocks).unwrap()
-            )).unwrap();
+                to_string(&new.blocks).unwrap(),
+            ))
+            .unwrap();
             let single_changes: Vec<_> = single_changes.as_array().unwrap().into_iter().map(|v| {
                 let new_content = v["newContent"].as_str().unwrap();
                 let old_content = v["oldContent"].as_str().unwrap();

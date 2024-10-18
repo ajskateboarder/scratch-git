@@ -6,12 +6,14 @@ Yes, I have nothing better to do
 
 ## Running
 
-- Create a new GitHub OAuth app and have it redirect to `http://localhost:8080/github_auth`. This is to view commits from GitHub repos
+- Create a new GitHub OAuth app and have it redirect to your site's domain (`localhost` works for dev) followed by `/github_auth`. This is to view commits from GitHub repos
 
 - Get the client ID and a secret and export them to `GH_CLIENT_ID` and `GH_CLIENT_SECRET`
 
+- Export the site domain for your cookie to `COOKIE_LOC` (localhost works)
+
 - Run `cargo run` from `src-server` 
 
-- In another shell, run `npm run build` and start an HTTP server for the frontend
+- In another shell, export your client ID and server URL to `VITE_GH_CLIENT_ID` and `VITE_API_URL`
 
-Sooner or later I'll make the sites configurable (i love my homelab sry :3)
+- Run `npm run whatever`

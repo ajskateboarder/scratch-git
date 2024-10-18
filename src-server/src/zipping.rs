@@ -1,11 +1,15 @@
+use anyhow::{anyhow, Error};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
-use anyhow::{anyhow,Error};
 use zip::ZipArchive;
 
 /// Extract a ZIP file to a target directory
-pub fn extract<T>(mut archive: ZipArchive<T>, target_dir: PathBuf, max_size: u64) -> Result<(), Error>
+pub fn extract<T>(
+    mut archive: ZipArchive<T>,
+    target_dir: PathBuf,
+    max_size: u64,
+) -> Result<(), Error>
 where
     T: std::io::Read,
     T: std::io::Seek,
@@ -15,7 +19,7 @@ where
         size += archive.by_index(i).unwrap().size()
     }
     if size > max_size {
-        return Err(anyhow!("this is most certainly a zip bomb"))
+        return Err(anyhow!("this is most certainly a zip bomb"));
     }
 
     for i in 0..archive.len() {

@@ -1,17 +1,18 @@
-import { assert, proxy, wrapProxy } from "./utils";
+import { assert, wrapProxy } from "../utils";
+import env from "./env"
 
 const URL_HOSTS = {
   "https://github.com/": "GitHub",
   "https://scratchgit.glitch.me/": "ScratchGit",
-};
+} as const;
 
 export interface RepoProvider {
-  type: string;
+  type: typeof URL_HOSTS[keyof typeof URL_HOSTS];
   user: string;
   repo: string;
-  commitFetcher(): Promise<Record<string, Commit[]>>;
-  assetFetcher(sha): (asset) => string;
-  jsonSource(sha): string;
+  commitFetcher(token: string | undefined): Promise<Record<string, Commit[]>>;
+  assetFetcher(sha: string): (asset: any) => string;
+  jsonSource(sha: string): string;
 }
 
 export interface Commit {
@@ -30,7 +31,6 @@ export const parseUrl = (url: string): RepoProvider => {
   );
 
   const host = URL_HOSTS[hosts.find((e) => url.startsWith(e))!];
-
   let path = new URL(url).pathname.split("/");
   assert(!path.every((e) => e === ""), "This Git URL could not be parsed");
   path = path.filter((e) => e !== "");
@@ -41,7 +41,7 @@ export const parseUrl = (url: string): RepoProvider => {
       type: host,
       user,
       repo,
-      commitFetcher: () => gitHubFetcher(user, repo),
+      commitFetcher: (token: string) => gitHubFetcher(user, repo, token),
       assetFetcher: (sha) => (asset) =>
         `https://raw.githubusercontent.com/${user}/${repo}/${sha}/${asset.assetId}.${asset.dataFormat}`,
       jsonSource: (sha) =>
@@ -91,11 +91,13 @@ export const scratchGitFetcher = async (
     }
   }
 
-  const response = await (
-    await proxy(
-      `https://scratchgit.glitch.me/api/v1/repos/${user}/${repo}/commits`
-    )
-  ).json();
+  const response = await (await fetch(`${env.API_URL}/commits`, {
+    body: JSON.stringify({
+      kind: "scratchgitglitch",
+      user,
+      repo,
+    })
+  })).json();
 
   assert(
     response.message !== "The target couldn't be found.",
@@ -129,7 +131,8 @@ export const scratchGitFetcher = async (
 
 export const gitHubFetcher = async (
   user: string,
-  repo: string
+  repo: string,
+  token: string,
 ): Promise<Record<string, Commit[]>> => {
   const commitHash = `commits:github/${user}/${repo}`;
   const cached = localStorage.getItem(commitHash);
@@ -143,9 +146,21 @@ export const gitHubFetcher = async (
     }
   }
 
-  const response = await (
-    await proxy(`https://api.github.com/repos/${user}/${repo}/commits`)
-  ).json();
+  const response_ = await fetch(`https://scratch-git-api.ajskateboarder.org/commits`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      kind: {
+        github: token
+      },
+      user,
+      repo,
+    })
+  });
+
+  const response = await response_.json();
 
   assert(
     response.message !== "Not Found",
@@ -178,7 +193,7 @@ export const gitHubFetcher = async (
 };
 
 export const setupScaffolding = (
-  assetHost: (asset) => string
+  assetHost: (asset: any) => string
 ): Promise<any> => {
   const scaffolding = new (window as any).Scaffolding.Scaffolding();
 

@@ -6,10 +6,11 @@ pub mod zipping;
 pub mod project_diff;
 pub mod resources;
 
+use actix_cors::Cors;
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
 use project_diff::project_diff as project_diff_;
-use resources::{commits, github_auth};
+use resources::{commits, github_auth, github_user};
 
 #[get("/status")]
 async fn root() -> impl Responder {
@@ -22,11 +23,19 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     HttpServer::new(|| {
+        let cors = Cors::default()
+            .allowed_origin("https://scratch-git.ajskateboarder.org")
+            .allowed_methods(vec!["GET", "POST"])
+            .allow_any_header()
+            .expose_any_header();
+
         App::new()
+            .wrap(cors)
             .service(root)
             .service(project_diff_)
             .service(commits)
             .service(github_auth)
+            .service(github_user)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
