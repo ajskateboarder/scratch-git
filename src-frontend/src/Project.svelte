@@ -9,8 +9,8 @@
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
-    import Fullscreen from "./icons/Fullscreen.svelte";
-    import Download from "./icons/Download.svelte";
+  import Fullscreen from "./icons/Fullscreen.svelte";
+  import Download from "./icons/Download.svelte";
 
   export let initialUrl: string;
 
@@ -24,8 +24,9 @@
   let projectInput: HTMLInputElement;
   let commits: Record<string, Commit[]> = {};
   let parsed: RepoProvider;
-  window.currentCommit_ = null as unknown as Commit;
-  window.scaffold_ = null;
+  let currentCommit: Commit;
+  let scaffold: any;
+  let turboMode = false;
 
   const parseCookie = <T extends Record<string, string | null>>(str: string) =>
     str
@@ -99,10 +100,10 @@
       response.text(),
     );
     if (sha === "main") {
-      window.currentCommit_ = { message: "Latest commit" } as any;
+      currentCommit = { message: "Latest commit" } as any;
     }
-    window.scaffold_ = await setupScaffolding(parsed.assetFetcher(sha));
-    await window.scaffold_.loadProject(projectData);
+    scaffold = await setupScaffolding(parsed.assetFetcher(sha));
+    await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
 
     const controls = document
@@ -111,12 +112,44 @@
     controls.style.cssText = "";
     document.querySelector(".sc-root").prepend(controls);
     document.querySelector(".sc-root").style.flexDirection = "column";
+    turboMode = false;
 
     setInterval(() => {
       if (!document.fullscreenElement) {
-        window.scaffold_.relayout();
+        scaffold.relayout();
       }
     }, 100);
+  };
+
+  window._downloadFromScaffold = async () => {
+    const data = await scaffold.vm.saveProjectSb3();
+    Object.assign(document.createElement("a"), {
+      href: window.URL.createObjectURL(data),
+      download: `${currentCommit.message.replaceAll(" ", "-")}.sb3`,
+    }).click();
+  };
+
+  window._startScaffold = function (e) {
+    if (e.shiftKey) {
+      e.preventDefault();
+      turboMode = !turboMode;
+      scaffold.vm.setTurboMode(turboMode);
+      document.querySelectorAll(".turbo-mode")[1].style.display = turboMode ? "block" : "none";
+      (e.target as HTMLElement).blur();
+      return;
+    }
+    (e.target as HTMLElement).style.background = "#333";
+    document.querySelector("canvas").style.filter = "";
+    scaffold.start();
+    scaffold.vm.on("PROJECT_RUN_STOP", () => {
+      (e.target as HTMLElement).style.background = "none";
+    });
+  };
+
+  window._stopScaffold = () => {
+    document.querySelector("canvas").style.filter = "";
+    scaffold.stopAll();
+    document.querySelector(".flag-button").style.background = "none";
   };
 </script>
 
@@ -140,7 +173,7 @@
                   e.target.classList.add("selected");
                   document.querySelector("#project").innerHTML = "";
                   await loadProject(commit.sha);
-                  window.currentCommit_ = commit;
+                  currentCommit = commit;
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
                   Date.parse(commit.date),
@@ -163,15 +196,16 @@
       >
         <div class="controls" style="display: none">
           <span>
-            <!-- this is terrible but reduces code duplication -->
+            <!-- inline click handlers are necessary to copy over the control bar into the scaffold without issues -->
             <button
-              onclick="document.querySelector('canvas').style.filter = ''; window.scaffold_.start()"
+              onclick="window._startScaffold(event)"
+              style="transform: translateY(1.02px)"
+              class="flag-button"
             >
               <Flag />
+              <i class="fa-solid fa-bolt fa-lg turbo-mode" style="display: none"></i>
             </button>
-            <button
-              onclick="document.querySelector('canvas').style.filter = ''; window.scaffold_.stopAll()"
-            >
+            <button onclick="window._stopScaffold()">
               <Stop />
             </button>
           </span>
@@ -181,9 +215,7 @@
             >
               <Fullscreen />
             </button>
-            <button
-              onclick="window.scaffold_.vm.saveProjectSb3().then(e => {'{'}e;Object.assign(document.createElement('a'), {'{'}href: window.URL.createObjectURL(e),download: {'`$'}{'{'}window.currentCommit_.message.replaceAll(' ', '-'){'}'}.sb3{'`'}{'}'}).click()})"
-            >
+            <button onclick="window._downloadFromScaffold()">
               <Download />
             </button>
           </span>
@@ -284,5 +316,11 @@
   :global(.controls button svg) {
     transform: scale(0.8);
     margin-top: 3px;
+  }
+
+  .turbo-mode {
+    position: absolute;
+    top: 22px;
+    right: 1px;
   }
 </style>

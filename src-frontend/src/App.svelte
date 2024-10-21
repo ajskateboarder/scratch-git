@@ -56,7 +56,7 @@
   <br />
   scratch.git is not affiliated with Scratch, the Scratch Team, or the Scratch Foundation.
   <br />
-  Flag/stop/download icons are used under the derived
+  Flag/stop/fullscreen icons are used under the derived
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en"
     >CC By-SA license.</a
   >

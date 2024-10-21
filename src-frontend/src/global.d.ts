@@ -1,8 +1,5 @@
-import type { Commit } from "./lib";
-
-declare global {
-    interface Window {
-        scaffold_: any,
-        currentCommit_: Commit
-    }
+interface Window {
+    _downloadFromScaffold(): any
+    _startScaffold(e: KeyboardEvent): any
+    _stopScaffold(): any
 }
