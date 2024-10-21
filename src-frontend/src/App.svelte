@@ -31,14 +31,14 @@
     <img src={logo} alt="scratch.git logo" width="70" />
     <span style="font-size: 40px;">scratch.git</span>
   </h1>
-  <p>
-    scratch.git provides a way to view/track your project's changes, revert to
-    previous versions, and collaborate more efficiently from TurboWarp Desktop.
-    Enter a URL below to view project versions. Please note that you must
-    install scratch.git in order to contribute to projects.
-  </p>
 </header>
 <Project initialUrl={hash}></Project>
+<p>
+  scratch.git provides a way to view/track your project's changes, revert to
+  previous versions, and collaborate more efficiently from TurboWarp Desktop.
+  Enter a URL below to view project versions. Please note that you must
+  install scratch.git in order to contribute to projects.
+</p>
 <h2 id="installing">Installing</h2>
 <p>
   First install <a href="https://desktop.turbowarp.org">TurboWarp Desktop</a>
@@ -56,7 +56,7 @@
   <br />
   scratch.git is not affiliated with Scratch, the Scratch Team, or the Scratch Foundation.
   <br />
-  Flag/stop icons are used under the derived
+  Flag/stop/download icons are used under the derived
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en"
     >CC By-SA license.</a
   >

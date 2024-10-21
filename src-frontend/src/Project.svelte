@@ -9,6 +9,8 @@
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
+    import Fullscreen from "./icons/Fullscreen.svelte";
+    import Download from "./icons/Download.svelte";
 
   export let initialUrl: string;
 
@@ -22,8 +24,8 @@
   let projectInput: HTMLInputElement;
   let commits: Record<string, Commit[]> = {};
   let parsed: RepoProvider;
-  let currentCommit: Commit;
-  let scaffold: any;
+  window.currentCommit_ = null as unknown as Commit;
+  window.scaffold_ = null;
 
   const parseCookie = <T extends Record<string, string | null>>(str: string) =>
     str
@@ -71,10 +73,10 @@
         token = parseCookie<{ token: string }>(document.cookie).token;
         if (token) {
           token = token.slice(1, token.length - 1);
-          const req = await fetch(
-            `${env.API_URL}/valid_gh_token`,
-            { method: "POST", headers: { Token: token } },
-          );
+          const req = await fetch(`${env.API_URL}/valid_gh_token`, {
+            method: "GET",
+            headers: { Token: token },
+          });
           if (req.status === 400) {
             authGitHub();
             return;
@@ -97,22 +99,30 @@
       response.text(),
     );
     if (sha === "main") {
-      currentCommit = { message: "Latest commit" } as any;
+      window.currentCommit_ = { message: "Latest commit" } as any;
     }
-    scaffold = await setupScaffolding(parsed.assetFetcher(sha));
-    await scaffold.loadProject(projectData);
+    window.scaffold_ = await setupScaffolding(parsed.assetFetcher(sha));
+    await window.scaffold_.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
+
+    const controls = document
+      .querySelector(".controls")
+      .cloneNode(true) as HTMLElement;
+    controls.style.cssText = "";
+    document.querySelector(".sc-root").prepend(controls);
+    document.querySelector(".sc-root").style.flexDirection = "column";
+
     setInterval(() => {
       if (!document.fullscreenElement) {
-        scaffold.relayout();
+        window.scaffold_.relayout();
       }
-    }, 100)
+    }, 100);
   };
 </script>
 
 <main style="flex-direction: column; align-items: center">
-  <div class="project-commit-viewer">
-    {#if Object.keys(commits).length !== 0}
+  {#if Object.keys(commits).length !== 0}
+    <div class="project-commit-viewer">
       <ul class="project-viewer">
         {#each Object.keys(commits) as commitDate}
           <br />
@@ -130,7 +140,7 @@
                   e.target.classList.add("selected");
                   document.querySelector("#project").innerHTML = "";
                   await loadProject(commit.sha);
-                  currentCommit = commit;
+                  window.currentCommit_ = commit;
                 }}
                 ><b>{commit.message}</b><br />{commit.author} - {new Date(
                   Date.parse(commit.date),
@@ -148,40 +158,41 @@
           </div>
         {/each}
       </ul>
-
-      <div class="project-viewer" id="project"></div>
-      <div class="controls">
-        <button
-          on:click={async () => {
-            document.querySelector("canvas").style.filter = "";
-            await scaffold.start();
-          }}
-        >
-          <Flag />
-        </button>
-        <button on:click={async () => await scaffold.stopAll()}>
-          <Stop />
-        </button>
-        <button
-          on:click={async () =>
-            document.querySelector("#project").requestFullscreen()}
-        >
-          <i class="fa-solid fa-expand" style="font-size: 30px"></i>
-        </button>
-        <button
-          on:click={async () => {
-            Object.assign(document.createElement("a"), {
-              href: URL.createObjectURL(await scaffold.vm.saveProjectSb3()),
-              download: `${currentCommit.message.replaceAll(" ", "-")}.sb3`,
-            }).click();
-          }}
-        >
-          <i class="fa-solid fa-download" style="font-size: 30px"></i>
-        </button>
-      </div>
+      <span
+        style="display: flex; flex-direction: column; width: 150%; align-items: center"
+      >
+        <div class="controls" style="display: none">
+          <span>
+            <!-- this is terrible but reduces code duplication -->
+            <button
+              onclick="document.querySelector('canvas').style.filter = ''; window.scaffold_.start()"
+            >
+              <Flag />
+            </button>
+            <button
+              onclick="document.querySelector('canvas').style.filter = ''; window.scaffold_.stopAll()"
+            >
+              <Stop />
+            </button>
+          </span>
+          <span>
+            <button
+              onclick="document.fullscreenElement ? document.exitFullscreen() : document.querySelector('#project').requestFullscreen()"
+            >
+              <Fullscreen />
+            </button>
+            <button
+              onclick="window.scaffold_.vm.saveProjectSb3().then(e => {'{'}e;Object.assign(document.createElement('a'), {'{'}href: window.URL.createObjectURL(e),download: {'`$'}{'{'}window.currentCommit_.message.replaceAll(' ', '-'){'}'}.sb3{'`'}{'}'}).click()})"
+            >
+              <Download />
+            </button>
+          </span>
+        </div>
+        <div class="project-viewer" id="project"></div>
+      </span>
       {void loadProject("main") ?? ""}
-    {/if}
-  </div>
+    </div>
+  {/if}
   <br />
   <div class="project-input-wrapper">
     <input
@@ -232,8 +243,6 @@
     display: flex;
     width: 100%;
     align-items: center;
-    border: 1px solid black;
-    border-radius: 5px;
     padding: 10px;
   }
 
@@ -254,17 +263,18 @@
 
   .controls {
     display: flex;
-    justify-content: center;
-    flex-direction: column;
-    gap: 20px;
-    padding-left: 10px;
+    justify-content: space-between;
+    width: 100%;
+    background: #222;
   }
 
   .controls button {
-    border-radius: 60%;
+    /* border-radius: 60%; */
     height: 50px;
     border: none;
-    width: 50px;
+    width: 40px;
+    background: #222;
+    color: white;
   }
 
   .controls button:hover {

@@ -10,7 +10,7 @@ use actix_cors::Cors;
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
 use project_diff::project_diff as project_diff_;
-use resources::{commits, github_auth, github_user};
+use resources::{commits, github_auth, valid_gh_user};
 
 #[get("/status")]
 async fn root() -> impl Responder {
@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
             .service(project_diff_)
             .service(commits)
             .service(github_auth)
-            .service(github_user)
+            .service(valid_gh_user)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

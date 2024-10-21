@@ -83,7 +83,7 @@ pub async fn github_auth(req: HttpRequest) -> impl Responder {
 }
 
 #[get("/valid_gh_token")]
-pub async fn github_user(req: HttpRequest) -> impl Responder {
+pub async fn valid_gh_user(req: HttpRequest) -> impl Responder {
     let token = req.headers().get("Token");
     let Some(token) = token else {
         return HttpResponse::BadRequest();
