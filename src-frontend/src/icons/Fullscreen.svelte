@@ -5,7 +5,7 @@
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink"
-    style="scale: 1.5"
+    style="scale: 1.5; margin-top: 9px"
 >
     <!-- Generator: Sketch 47.1 (45422) - http://www.bohemiancoding.com/sketch -->
     <title>Fullscreen</title>

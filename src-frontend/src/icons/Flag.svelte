@@ -1,12 +1,13 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 16.63 17.5"
+  style="scale: 0.7; pointer-events: none"
   ><defs
     ><style>
       .cls-1,
       .cls-2 {
-        fill: #4cbf56;
-        stroke: #45993d;
+        fill: currentColor;
+        stroke: currentColor;
         stroke-linecap: round;
         stroke-linejoin: round;
       }

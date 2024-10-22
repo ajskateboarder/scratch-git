@@ -11,6 +11,7 @@
   import Stop from "./icons/Stop.svelte";
   import Fullscreen from "./icons/Fullscreen.svelte";
   import Download from "./icons/Download.svelte";
+  import { timeAgo } from "./utils";
 
   export let initialUrl: string;
 
@@ -27,6 +28,7 @@
   let currentCommit: Commit;
   let scaffold: any;
   let turboMode = false;
+  let loading = false;
 
   const parseCookie = <T extends Record<string, string | null>>(str: string) =>
     str
@@ -87,6 +89,7 @@
       try {
         commits = await parsed.commitFetcher(token);
       } catch (e) {
+        alert(e);
         console.error(e);
         return;
       }
@@ -96,6 +99,7 @@
   };
 
   const loadProject = async (sha: string) => {
+    loading = true;
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
       response.text(),
     );
@@ -112,7 +116,9 @@
     controls.style.cssText = "";
     document.querySelector(".sc-root").prepend(controls);
     document.querySelector(".sc-root").style.flexDirection = "column";
+    console.log("here");
     turboMode = false;
+    loading = false;
 
     setInterval(() => {
       if (!document.fullscreenElement) {
@@ -130,26 +136,29 @@
   };
 
   window._startScaffold = function (e) {
+    e.stopPropagation();
+    if (e.target.tagName === "SVG") e.target = e.target.parentElement;
     if (e.shiftKey) {
       e.preventDefault();
       turboMode = !turboMode;
       scaffold.vm.setTurboMode(turboMode);
-      document.querySelectorAll(".turbo-mode")[1].style.display = turboMode ? "block" : "none";
-      (e.target as HTMLElement).blur();
+      document.querySelectorAll(".turbo-mode")[1].style.display = turboMode
+        ? "block"
+        : "none";
       return;
     }
-    (e.target as HTMLElement).style.background = "#333";
+    e.target.classList.add("selected");
     document.querySelector("canvas").style.filter = "";
     scaffold.start();
     scaffold.vm.on("PROJECT_RUN_STOP", () => {
-      (e.target as HTMLElement).style.background = "none";
+      e.target.classList.remove("selected");
     });
   };
 
   window._stopScaffold = () => {
     document.querySelector("canvas").style.filter = "";
     scaffold.stopAll();
-    document.querySelector(".flag-button").style.background = "none";
+    document.querySelector(".flag-button").style.cssText = "";
   };
 </script>
 
@@ -162,31 +171,36 @@
           <h3>{commitDate}</h3>
           <div class="commit-group">
             {#each commits[commitDate] as commit}
-              <button
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <div
                 class="commit"
                 title={commit.sha}
-                on:click={async (e) => {
+                id={commit.sha}
+                role="button"
+                tabindex="0"
+                on:click|stopPropagation={async (e) => {
                   document
-                    .querySelector(".selected")
+                    .querySelector(".commit.selected")
                     ?.classList.remove("selected");
                   // @ts-ignore
-                  e.target.classList.add("selected");
+                  document
+                    .querySelector(`[id="${commit.sha}"]`)
+                    .classList.add("selected");
                   document.querySelector("#project").innerHTML = "";
                   await loadProject(commit.sha);
                   currentCommit = commit;
                 }}
-                ><b>{commit.message}</b><br />{commit.author} - {new Date(
-                  Date.parse(commit.date),
-                )
-                  .toISOString()
-                  .slice(11, -1)
-                  .slice(0, -4)} -
-                <button
-                  on:click|stopPropagation={() => window.open(commit.htmlUrl)}
-                  ><i class="fa-solid fa-arrow-up-right-from-square"
-                  ></i></button
-                ></button
               >
+                <span
+                  ><b>{commit.message}</b><br /><span class="info">{commit.author} committed {timeAgo(
+                    new Date(Date.parse(commit.date)),
+                  )}</span>
+                  </span
+                >
+                <a href={commit.htmlUrl} target="_blank"
+                    ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
+                  >
+              </div>
             {/each}
           </div>
         {/each}
@@ -195,28 +209,25 @@
         style="display: flex; flex-direction: column; width: 150%; align-items: center"
       >
         <div class="controls" style="display: none">
-          <span>
+          <span style="display: flex; align-items: center">
             <!-- inline click handlers are necessary to copy over the control bar into the scaffold without issues -->
-            <button
-              onclick="window._startScaffold(event)"
-              style="transform: translateY(1.02px)"
-              class="flag-button"
-            >
+            <button onclick="window._startScaffold(event)" class="flag-button">
               <Flag />
-              <i class="fa-solid fa-bolt fa-lg turbo-mode" style="display: none"></i>
-            </button>
-            <button onclick="window._stopScaffold()">
+              <i
+                class="fa-solid fa-bolt fa-lg turbo-mode"
+                style="display: none; position: absolute"
+              ></i>
+            </button><button onclick="window._stopScaffold()">
               <Stop />
             </button>
           </span>
-          <span>
-            <button
+          <span style="display: flex; align-items: center">
+            <button onclick="window._downloadFromScaffold()">
+              <Download />
+            </button><button
               onclick="document.fullscreenElement ? document.exitFullscreen() : document.querySelector('#project').requestFullscreen()"
             >
               <Fullscreen />
-            </button>
-            <button onclick="window._downloadFromScaffold()">
-              <Download />
             </button>
           </span>
         </div>
@@ -273,7 +284,8 @@
 
   .project-commit-viewer {
     display: flex;
-    width: 100%;
+    max-width: 150%;
+    min-width: 100%;
     align-items: center;
     padding: 10px;
   }
@@ -281,36 +293,58 @@
   .commit {
     width: 100%;
     text-align: left;
+    padding: 5px;
+    font-size: small;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
+  .commit .info {
+    font-size: smaller;
+  }
+
+  .commit:not(.selected):hover {
+    background-color: #f1f1f1;
+  }
   :global(.commit.selected) {
-    filter: invert(100%);
+    background-color: #999;
   }
 
   .project-commit-viewer .project-viewer {
     overflow: auto;
     width: 75%;
     height: 422px;
+    list-style-position: inside;
+  padding-left: 0;
+
   }
 
   .controls {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    background: #222;
+    height: 43px;
+    background: #f1f1f1;
+    color: black;
   }
 
   .controls button {
-    /* border-radius: 60%; */
-    height: 50px;
+    height: 100%;
     border: none;
     width: 40px;
-    background: #222;
-    color: white;
+    background: none;
+    padding-bottom: 40px;
+    cursor: pointer;
   }
 
   .controls button:hover {
-    filter: brightness(110%);
+    background: #999;
+  }
+
+  .controls button:active,
+  :global(.controls button.selected) {
+    background: #888 !important;
   }
 
   :global(.controls button svg) {

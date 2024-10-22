@@ -3,11 +3,12 @@
   id="Layer_1"
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 14 14"
+  style="scale: 0.75; pointer-events: none"
 >
   <style type="text/css">
     .st0 {
-      fill: #ec5959;
-      stroke: #b84848;
+      fill: currentColor;
+      stroke: currentColor;
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10;

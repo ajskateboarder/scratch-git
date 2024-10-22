@@ -67,10 +67,6 @@ footer {
     outline: 2px solid white;
   }
 
-  .project-commit-viewer {
-    border: 1px solid white;
-  }
-
   .fullscreen,
   .download {
     fill: #fff;
@@ -78,5 +74,25 @@ footer {
 
   .stopsign {
     padding-bottom: 10px;
+  }
+
+  .controls {
+    background: #333 !important;
+  }
+
+  .controls button:hover {
+    background: #444;
+  }
+
+  .controls button:active, :global(.controls button.selected) {
+    background: #555 !important;
+  }
+
+  .commit:not(.selected):hover {
+    background-color: #333 !important;
+  }
+
+  :global(.commit.selected) {
+    background-color: #444;
   }
 }
