@@ -134,18 +134,6 @@ export const gitHubFetcher = async (
   repo: string,
   token: string,
 ): Promise<Record<string, Commit[]>> => {
-  const commitHash = `commits:github/${user}/${repo}`;
-  const cached = localStorage.getItem(commitHash);
-
-  if (cached) {
-    try {
-      const json = JSON.parse(cached);
-      return Promise.resolve(json as Record<string, Commit[]>);
-    } catch {
-      localStorage.removeItem(commitHash);
-    }
-  }
-
   const response_ = await fetch(`https://scratch-git-api.ajskateboarder.org/commits`, {
     method: "POST",
     headers: {
@@ -187,8 +175,6 @@ export const gitHubFetcher = async (
     });
     return groups;
   }, {});
-
-  localStorage.setItem(commitHash, JSON.stringify(groups));
 
   return groups;
 };

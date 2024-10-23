@@ -12,6 +12,7 @@
   import Fullscreen from "./icons/Fullscreen.svelte";
   import Download from "./icons/Download.svelte";
   import { timeAgo } from "./utils";
+  import { onMount } from "svelte";
 
   export let initialUrl: string;
 
@@ -28,7 +29,9 @@
   let currentCommit: Commit;
   let scaffold: any;
   let turboMode = false;
+
   let loading = false;
+  let initialLoaded = false;
 
   const parseCookie = <T extends Record<string, string | null>>(str: string) =>
     str
@@ -61,10 +64,15 @@
 
   const updateHash = async () => {
     let url = projectInput.value;
+    url = url === "" ? window.location.hash.slice(1) : url;
     try {
+      if (window.location.hash.slice(1) === url && initialLoaded) {
+        return;
+      }
+      commits = {};
       window.location.hash = url;
       if (url === "") {
-        commits = {};
+        return;
       }
       parsed = parseUrl(url);
       let token: string;
@@ -96,6 +104,7 @@
     } catch (e) {
       console.warn(e);
     }
+    initialLoaded = true;
   };
 
   const loadProject = async (sha: string) => {
@@ -160,10 +169,14 @@
     scaffold.stopAll();
     document.querySelector(".flag-button").style.cssText = "";
   };
+
+  onMount(async () => {
+    await updateHash();
+  });
 </script>
 
 <main style="flex-direction: column; align-items: center">
-  {#if Object.keys(commits).length !== 0}
+  {#if Object.keys(commits).length !== 0 || loading}
     <div class="project-commit-viewer">
       <ul class="project-viewer">
         {#each Object.keys(commits) as commitDate}
@@ -192,14 +205,18 @@
                 }}
               >
                 <span
-                  ><b>{commit.message}</b><br /><span class="info">{commit.author} committed {timeAgo(
-                    new Date(Date.parse(commit.date)),
-                  )}</span>
-                  </span
-                >
-                <a href={commit.htmlUrl} target="_blank"
-                    ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
+                  ><b>{commit.message}</b><br /><span class="info"
+                    >{commit.author} committed {timeAgo(
+                      new Date(Date.parse(commit.date)),
+                    )}</span
                   >
+                </span>
+                <a
+                  href={commit.htmlUrl}
+                  target="_blank"
+                  on:click|stopPropagation={() => {}}
+                  ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
+                >
               </div>
             {/each}
           </div>
@@ -235,26 +252,32 @@
       </span>
       {void loadProject("main") ?? ""}
     </div>
+  {:else}
+    <span>Loading</span>
   {/if}
   <br />
   <div class="project-input-wrapper">
+    {#if Object.keys(commits).length !== 0}
+      <a
+        class="close-button"
+        href={initialUrl}
+        target="blank"
+        style="color: inherit"
+        ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
+      >
+    {/if}
     <input
       type="text"
       class="project-input"
       placeholder="https://linkto.repo/user/repository"
+      on:focus={(e) => {
+        // @ts-ignore
+        e.target.select()
+      }}
       on:blur={updateHash}
       bind:this={projectInput}
       value={initialUrl}
     />
-    {#if Object.keys(commits).length !== 0}
-      <button
-        class="close-button"
-        on:click={() => {
-          window.location.hash = "";
-          commits = {};
-        }}>×</button
-      >
-    {/if}
   </div>
 </main>
 
@@ -262,6 +285,7 @@
   .project-input-wrapper {
     display: flex;
     width: 100%;
+    align-items: center;
     justify-content: center;
   }
 
@@ -297,6 +321,7 @@
     font-size: small;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
   }
 
@@ -316,8 +341,7 @@
     width: 75%;
     height: 422px;
     list-style-position: inside;
-  padding-left: 0;
-
+    padding-left: 0;
   }
 
   .controls {
