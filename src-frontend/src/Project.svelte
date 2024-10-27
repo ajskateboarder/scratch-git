@@ -119,19 +119,30 @@
     await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
 
+    document.querySelector(".sc-root .controls")?.remove();
     const controls = document
       .querySelector(".controls")
       .cloneNode(true) as HTMLElement;
     controls.style.cssText = "";
     document.querySelector(".sc-root").prepend(controls);
     document.querySelector(".sc-root").style.flexDirection = "column";
-    console.log("here");
     turboMode = false;
     loading = false;
 
-    setInterval(() => {
+    document.addEventListener("fullscreenchange", () => {
       if (!document.fullscreenElement) {
         scaffold.relayout();
+      }
+    });
+
+    // TODO: this could be optimized
+    const layers = document.querySelector(".sc-layers") as HTMLElement;
+    const controlWidth = parseInt(getComputedStyle(controls).width.slice(0, -2));
+    const h = setInterval(() => {
+      if (parseInt(layers.style.width.slice(0, -2)) !== controlWidth) {
+        scaffold.relayout();
+      } else {
+        clearInterval(h);
       }
     }, 100);
   };
@@ -184,10 +195,10 @@
           <h3>{commitDate}</h3>
           <div class="commit-group">
             {#each commits[commitDate] as commit}
+              {@const date = new Date(Date.parse(commit.date))}
               <!-- svelte-ignore a11y-click-events-have-key-events -->
               <div
                 class="commit"
-                title={commit.sha}
                 id={commit.sha}
                 role="button"
                 tabindex="0"
@@ -205,10 +216,11 @@
                 }}
               >
                 <span
-                  ><b>{commit.message}</b><br /><span class="info"
-                    >{commit.author} committed {timeAgo(
-                      new Date(Date.parse(commit.date)),
-                    )}</span
+                  ><b>{commit.message}</b><br /><span>
+                    {commit.author} committed
+                    <span class="info" title={date.toString()}
+                      >{timeAgo(date)}</span
+                    ></span
                   >
                 </span>
                 <a
@@ -225,6 +237,11 @@
       <span
         style="display: flex; flex-direction: column; width: 150%; align-items: center"
       >
+        {#if loading}<span>
+          <span><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+            <circle class="path" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+         </svg></span>
+          </span>{/if}
         <div class="controls" style="display: none">
           <span style="display: flex; align-items: center">
             <!-- inline click handlers are necessary to copy over the control bar into the scaffold without issues -->
@@ -248,12 +265,18 @@
             </button>
           </span>
         </div>
-        <div class="project-viewer" id="project"></div>
+        <div
+          class="project-viewer"
+          id="project"
+          style="display: {loading ? 'none' : 'block'}; overflow: hidden"
+        ></div>
       </span>
       {void loadProject("main") ?? ""}
     </div>
   {:else}
-    <span>Loading</span>
+    <span><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+      <circle class="path" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+   </svg></span>
   {/if}
   <br />
   <div class="project-input-wrapper">
@@ -272,7 +295,7 @@
       placeholder="https://linkto.repo/user/repository"
       on:focus={(e) => {
         // @ts-ignore
-        e.target.select()
+        e.target.select();
       }}
       on:blur={updateHash}
       bind:this={projectInput}
@@ -308,8 +331,6 @@
 
   .project-commit-viewer {
     display: flex;
-    max-width: 150%;
-    min-width: 100%;
     align-items: center;
     padding: 10px;
   }
@@ -332,13 +353,14 @@
   .commit:not(.selected):hover {
     background-color: #f1f1f1;
   }
+
   :global(.commit.selected) {
     background-color: #999;
   }
 
   .project-commit-viewer .project-viewer {
     overflow: auto;
-    width: 75%;
+    width: 70%;
     height: 422px;
     list-style-position: inside;
     padding-left: 0;
@@ -348,9 +370,15 @@
     display: flex;
     justify-content: space-between;
     width: 100%;
-    height: 43px;
     background: #f1f1f1;
     color: black;
+    flex-wrap: wrap;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+  }
+
+  :global(.sc-layers) {
+    border: 1px solid #f1f1f1;
   }
 
   .controls button {
@@ -358,7 +386,6 @@
     border: none;
     width: 40px;
     background: none;
-    padding-bottom: 40px;
     cursor: pointer;
   }
 
@@ -380,5 +407,13 @@
     position: absolute;
     top: 22px;
     right: 1px;
+  }
+
+  .info {
+    cursor: pointer;
+  }
+
+  .info:hover {
+    border-bottom: 0.1px dashed;
   }
 </style>

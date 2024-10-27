@@ -1,3 +1,5 @@
+@import url(./spinner.css);
+
 * {
   box-sizing: border-box;
 }
@@ -12,7 +14,7 @@
 body {
   display: flex;
   justify-content: center;
-  margin: auto 30%;
+  margin: auto 20%;
 }
 
 @media (max-device-width: 760px) {
@@ -94,5 +96,9 @@ footer {
 
   :global(.commit.selected) {
     background-color: #444;
+  }
+
+  :global(.sc-layers) {
+    border: 1px solid #333 !important;
   }
 }
