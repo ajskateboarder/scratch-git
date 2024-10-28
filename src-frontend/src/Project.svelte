@@ -189,7 +189,7 @@
 <main style="flex-direction: column; align-items: center">
   {#if Object.keys(commits).length !== 0 || loading}
     <div class="project-commit-viewer">
-      <ul class="project-viewer">
+      <ul class="project-viewer" style="padding-right: 10px;">
         {#each Object.keys(commits) as commitDate}
           <br />
           <h3>{commitDate}</h3>
@@ -280,15 +280,6 @@
   {/if}
   <br />
   <div class="project-input-wrapper">
-    {#if Object.keys(commits).length !== 0}
-      <a
-        class="close-button"
-        href={initialUrl}
-        target="blank"
-        style="color: inherit"
-        ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
-      >
-    {/if}
     <input
       type="text"
       class="project-input"
@@ -309,7 +300,6 @@
     display: flex;
     width: 100%;
     align-items: center;
-    justify-content: center;
   }
 
   .close-button {
@@ -318,15 +308,16 @@
 
   .project-input {
     border: none;
-    width: 75%;
+    width: 100%;
     font-size: 23px;
     line-height: 32px;
     margin-top: 5px;
     background-color: transparent;
+    opacity: 0.5;
   }
 
-  :global(.project-input) :focus {
-    color: white !important;
+  .project-input:focus {
+    opacity: 1;
   }
 
   .project-commit-viewer {

@@ -17,6 +17,11 @@ body {
   margin: auto 20%;
 }
 
+p {
+	font-size: 1rem;
+	line-height: 1.5em;
+}
+
 @media (max-device-width: 760px) {
   body {
     margin: 10px;
