@@ -63,8 +63,10 @@
   };
 
   const updateHash = async () => {
-    let url = projectInput.value;
-    url = url === "" ? window.location.hash.slice(1) : url;
+    let url = projectInput.value === "" ?
+      window.location.hash.slice(1) :
+      projectInput.value;
+
     try {
       if (window.location.hash.slice(1) === url && initialLoaded) {
         return;
@@ -83,7 +85,7 @@
         }
         token = parseCookie<{ token: string }>(document.cookie).token;
         if (token) {
-          token = token.slice(1, token.length - 1);
+          token = token.slice(1, -1);
           const req = await fetch(`${env.API_URL}/valid_gh_token`, {
             method: "GET",
             headers: { Token: token },
@@ -97,6 +99,7 @@
       try {
         commits = await parsed.commitFetcher(token);
       } catch (e) {
+        alert(token)
         alert(e);
         console.error(e);
         return;
@@ -112,20 +115,26 @@
     const projectData = await fetch(parsed.jsonSource(sha)).then((response) =>
       response.text(),
     );
+
     if (sha === "main") {
       currentCommit = { message: "Latest commit" } as any;
     }
+
     scaffold = await setupScaffolding(parsed.assetFetcher(sha));
     await scaffold.loadProject(projectData);
     document.querySelector("canvas").style.filter = "brightness(50%)";
 
     document.querySelector(".sc-root .controls")?.remove();
+
     const controls = document
       .querySelector(".controls")
       .cloneNode(true) as HTMLElement;
     controls.style.cssText = "";
-    document.querySelector(".sc-root").prepend(controls);
-    document.querySelector(".sc-root").style.flexDirection = "column";
+
+    const scRoot = document.querySelector<HTMLElement>(".sc-root");
+    scRoot.prepend(controls);
+    scRoot.style.flexDirection = "column";
+
     turboMode = false;
     loading = false;
 
@@ -238,7 +247,7 @@
         style="display: flex; flex-direction: column; width: 150%; align-items: center"
       >
         {#if loading}<span>
-          <span><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+          <span style="display: flex; justify-content: center; width: 20vw"><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
             <circle class="path" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
          </svg></span>
           </span>{/if}
@@ -273,10 +282,6 @@
       </span>
       {void loadProject("main") ?? ""}
     </div>
-  {:else}
-    <span><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-      <circle class="path" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
-   </svg></span>
   {/if}
   <br />
   <div class="project-input-wrapper">
@@ -300,10 +305,6 @@
     display: flex;
     width: 100%;
     align-items: center;
-  }
-
-  .close-button {
-    padding: 5px;
   }
 
   .project-input {
@@ -364,12 +365,6 @@
     background: #f1f1f1;
     color: black;
     flex-wrap: wrap;
-    border-top-right-radius: 5px;
-    border-top-left-radius: 5px;
-  }
-
-  :global(.sc-layers) {
-    border: 1px solid #f1f1f1;
   }
 
   .controls button {

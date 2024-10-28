@@ -102,8 +102,4 @@ footer {
   :global(.commit.selected) {
     background-color: #444;
   }
-
-  :global(.sc-layers) {
-    border: 1px solid #333 !important;
-  }
 }
