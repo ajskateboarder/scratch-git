@@ -14,7 +14,13 @@
 body {
   display: flex;
   justify-content: center;
-  margin: auto 20%;
+  margin: auto 30%;
+}
+
+@media (max-width: 860px) {
+  body {
+      margin: 10px;
+  }
 }
 
 p {

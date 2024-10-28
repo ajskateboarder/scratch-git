@@ -7,7 +7,7 @@
 }
 
 body {
-    margin: auto 20%;
+    margin: auto 30%;
 }
 
 a {
@@ -36,11 +36,11 @@ a:hover {
     }
 }
 
-@media (max-device-width: 760px) {
+@media (max-width: 860px) {
     body {
         margin: 10px;
     }
-}
+  }
 
 footer {
     color: grey;
