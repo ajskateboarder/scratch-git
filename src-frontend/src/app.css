@@ -28,12 +28,6 @@ p {
 	line-height: 1.5em;
 }
 
-@media (max-device-width: 760px) {
-  body {
-    margin: 10px;
-  }
-}
-
 main {
   display: flex;
   justify-content: center;

@@ -13,6 +13,7 @@
   import Download from "./icons/Download.svelte";
   import { timeAgo } from "./utils";
   import { onMount } from "svelte";
+  import {showingCompare, compareInfo} from "./compare" 
 
   export let initialUrl: string;
 
@@ -63,9 +64,10 @@
   };
 
   const updateHash = async () => {
-    let url = projectInput.value === "" ?
-      window.location.hash.slice(1) :
-      projectInput.value;
+    let url =
+      projectInput.value === ""
+        ? window.location.hash.slice(1)
+        : projectInput.value;
 
     try {
       if (window.location.hash.slice(1) === url && initialLoaded) {
@@ -99,7 +101,7 @@
       try {
         commits = await parsed.commitFetcher(token);
       } catch (e) {
-        alert(token)
+        alert(token);
         alert(e);
         console.error(e);
         return;
@@ -146,7 +148,9 @@
 
     // TODO: this could be optimized
     const layers = document.querySelector(".sc-layers") as HTMLElement;
-    const controlWidth = parseInt(getComputedStyle(controls).width.slice(0, -2));
+    const controlWidth = parseInt(
+      getComputedStyle(controls).width.slice(0, -2),
+    );
     const h = setInterval(() => {
       if (parseInt(layers.style.width.slice(0, -2)) !== controlWidth) {
         scaffold.relayout();
@@ -232,12 +236,42 @@
                     ></span
                   >
                 </span>
-                <a
-                  href={commit.htmlUrl}
-                  target="_blank"
-                  on:click|stopPropagation={() => {}}
-                  ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
-                >
+                <span style="gap: 5px">
+                  <a
+                    href="javascript:void"
+                    draggable="false"
+                    on:click|stopPropagation={async () => {
+                      $showingCompare = true;
+                      await loadProject(commit.sha);
+                      const form = new FormData();
+
+                      form.append("old", new File([await scaffold.vm.saveProjectSb3()], "old"));
+                      const allCommits = Object.values(commits).flat(Infinity).toReversed();
+                      // @ts-ignore
+                      const idx = allCommits.findIndex(e => e.sha === commit.sha) - 1;
+                      if (idx < 0) {
+                        alert("You don't have a previous commit to compare :(");
+                        return;
+                      }
+                      // @ts-ignore
+                      await loadProject(allCommits[idx].sha);
+                      form.append("new", new File([await scaffold.vm.saveProjectSb3()], "old"));
+
+                      const resp = await fetch(`${env.API_URL}/project_diff`, {
+                        method: "POST",
+                        body: form
+                      })
+                      $compareInfo = await resp.json()
+                    }}
+                    ><i class="fa-solid fa-code-compare"></i></a
+                  >
+                  <a
+                    href={commit.htmlUrl}
+                    target="_blank"
+                    on:click|stopPropagation={() => {}}
+                    ><i class="fa-solid fa-arrow-up-right-from-square"></i></a
+                  >
+                </span>
               </div>
             {/each}
           </div>
@@ -247,9 +281,26 @@
         style="display: flex; flex-direction: column; width: 150%; align-items: center"
       >
         {#if loading}<span>
-          <span style="display: flex; justify-content: center; width: 20vw"><svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-            <circle class="path" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
-         </svg></span>
+            <span style="display: flex; justify-content: center; width: 20vw"
+              ><svg
+                class="spinner"
+                width="65px"
+                height="65px"
+                viewBox="0 0 66 66"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  class="path"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  cx="33"
+                  cy="33"
+                  r="30"
+                ></circle>
+              </svg></span
+            >
           </span>{/if}
         <div class="controls" style="display: none">
           <span style="display: flex; align-items: center">

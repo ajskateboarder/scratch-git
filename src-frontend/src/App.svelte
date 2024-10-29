@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Compare from "./Compare.svelte";
   import Project from "./Project.svelte";
 
   import logo from "/logo.svg";
@@ -25,6 +26,7 @@
 </script>
 
 <svelte:window on:hashchange={routeChange} />
+<Compare></Compare>
 
 <header>
   <h1>
@@ -36,8 +38,8 @@
 <p>
   scratch.git provides a way to view/track your project's changes, revert to
   previous versions, and collaborate more efficiently from TurboWarp Desktop.
-  Enter a URL below to view project versions. Please note that you must
-  install scratch.git in order to contribute to projects.
+  Enter a URL below to view project versions. Please note that you must install
+  scratch.git in order to contribute to projects.
 </p>
 <h2 id="installing">Installing</h2>
 <p>
