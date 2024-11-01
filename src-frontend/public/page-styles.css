@@ -7,7 +7,7 @@
 }
 
 body {
-    margin: auto 30%;
+    margin: auto 20%;
 }
 
 a {
@@ -45,7 +45,6 @@ a:hover {
 footer {
     color: grey;
     text-align: center;
-    font-size: small;
 }
 
 h2 {

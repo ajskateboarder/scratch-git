@@ -1,0 +1,14 @@
+{
+    "short_name": "scratch.git",
+    "name": "scratch.git",
+    "icons": [
+      {
+        "src": "/pwa.svg",
+        "sizes": "any",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      }
+    ],
+    "start_url": ".",
+    "display": "standalone"
+  }

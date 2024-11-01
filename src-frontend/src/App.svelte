@@ -2,7 +2,7 @@
   import Compare from "./Compare.svelte";
   import Project from "./Project.svelte";
 
-  import logo from "/logo.svg";
+  import logo from "/favicon.svg";
   import { onMount } from "svelte";
 
   let hash = "";

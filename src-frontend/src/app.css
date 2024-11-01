@@ -14,7 +14,7 @@
 body {
   display: flex;
   justify-content: center;
-  margin: auto 30%;
+  margin: auto 20%;
 }
 
 @media (max-width: 860px) {
@@ -51,7 +51,6 @@ h1 {
 footer {
   color: grey;
   text-align: center;
-  font-size: small;
 }
 
 .kinda-big {

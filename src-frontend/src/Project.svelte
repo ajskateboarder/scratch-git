@@ -142,7 +142,17 @@
 
     document.addEventListener("fullscreenchange", () => {
       if (!document.fullscreenElement) {
-        scaffold.relayout();
+        const layers = document.querySelector(".sc-layers") as HTMLElement;
+        const controlWidth = parseInt(
+          getComputedStyle(controls).width.slice(0, -2),
+        );
+        const h = setInterval(() => {
+          if (parseInt(layers.style.width.slice(0, -2)) === controlWidth) {
+            scaffold.relayout();
+          } else {
+            clearInterval(h);
+          }
+        }, 100);
       }
     });
 
@@ -261,6 +271,14 @@
                         method: "POST",
                         body: form
                       })
+                      
+                      // null represents an error and undefined represents loading state
+                      // TODO: improve this lol
+                      if (!resp.ok) {
+                        $compareInfo = null;
+                        return;
+                      }
+
                       $compareInfo = await resp.json()
                     }}
                     ><i class="fa-solid fa-code-compare"></i></a

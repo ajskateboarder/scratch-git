@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>scratch.git - scratch version management</title>
     <script
@@ -28,5 +29,10 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js" async defer></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js")
+      }
+    </script>
   </body>
 </html>
