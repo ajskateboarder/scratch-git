@@ -134,7 +134,7 @@ export const gitHubFetcher = async (
   repo: string,
   token: string,
 ): Promise<Record<string, Commit[]>> => {
-  const response_ = await fetch(`https://scratch-git-api.ajskateboarder.org/commits`, {
+  const response_ = await fetch(`${env.API_URL}/commits`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

@@ -38,3 +38,5 @@ server {
     }
 }
 ```
+
+If the server continues crashing when trying to compare projects, try removing the `scratch-space` directory and making a new one

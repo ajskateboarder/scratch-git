@@ -101,8 +101,6 @@
       try {
         commits = await parsed.commitFetcher(token);
       } catch (e) {
-        alert(token);
-        alert(e);
         console.error(e);
         return;
       }
