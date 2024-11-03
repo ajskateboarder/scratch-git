@@ -12,7 +12,7 @@ use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use project_diff::project_diff as project_diff_;
 use resources::{commits, github_auth, valid_gh_user};
 
-#[get("/status")]
+#[get("/")]
 async fn root() -> impl Responder {
     return HttpResponse::Ok().body("i am ok");
 }

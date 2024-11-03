@@ -36,3 +36,4 @@ target
 *.sb3
 !old.sb3
 !new.sb3
+start.sh

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@turbowarp/packager": "2.0.0",
+    "scratchblocks": "^3.6.4",
     "svelte-portal": "^2.2.1"
   }
 }

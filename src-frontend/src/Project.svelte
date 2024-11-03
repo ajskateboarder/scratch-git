@@ -252,7 +252,9 @@
                     draggable="false"
                     on:click|stopPropagation={async () => {
                       $showingCompare = true;
-                      await loadProject(commit.sha);
+                      if (currentCommit.message !== commit.sha) {
+                        await loadProject(commit.sha);
+                      }
                       const form = new FormData();
 
                       form.append("old", new File([await scaffold.vm.saveProjectSb3()], "old"));

@@ -11,6 +11,9 @@ importers:
       '@turbowarp/packager':
         specifier: 2.0.0
         version: 2.0.0
+      scratchblocks:
+        specifier: ^3.6.4
+        version: 3.6.4
       svelte-portal:
         specifier: ^2.2.1
         version: 2.2.1
@@ -449,6 +452,9 @@ packages:
 
   safe-buffer@5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
+
+  scratchblocks@3.6.4:
+    resolution: {integrity: sha512-2qesRNViXrceNG7OvMim3D2rBQ2qDjH24VwRVijef1XQlLmEKNiMItx/3dQpdybnUDXTnfZyRU41vc/if+Au7w==}
 
   setimmediate@1.0.5:
     resolution: {integrity: sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==}
@@ -896,6 +902,8 @@ snapshots:
   safe-buffer@5.1.2: {}
 
   safe-buffer@5.2.1: {}
+
+  scratchblocks@3.6.4: {}
 
   setimmediate@1.0.5: {}
 

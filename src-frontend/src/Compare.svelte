@@ -1,5 +1,8 @@
 <script lang="ts">
     import { showingCompare, compareInfo } from "./compare";
+    import Scratchblocks from "./Scratchblocks.svelte";
+
+    let plainText = false;
 </script>
 
 <!-- 
@@ -24,7 +27,10 @@ even when the dialog goes out of the body
                     {@const spriteCount = Object.entries($compareInfo.changes)
                         .map(([a, b]) => (b.length !== 0 ? a : undefined))
                         .filter((e) => e !== undefined).length}
-                    {spriteCount > 0 ? spriteCount : "No"} sprite{spriteCount === 1 ? "" : "s"} changed
+                    {spriteCount > 0 ? spriteCount : "No"} sprite{spriteCount ===
+                    1
+                        ? ""
+                        : "s"} changed
                 {:else}
                     ...
                 {/if}
@@ -38,6 +44,15 @@ even when the dialog goes out of the body
             >
         </div>
         {#if $compareInfo}
+            {#key plainText}
+                <button on:click={() => (plainText = !plainText)}>
+                    {#if plainText}
+                        <i class="fa-solid fa-file"></i> see blocks
+                    {:else}
+                        <i class="fa-solid fa-code"></i> see text
+                    {/if}
+                </button>
+            {/key}
             {#each Object.entries($compareInfo.changes).filter(([_, b]) => b.length !== 0) as [sprite, changes]}
                 <details open>
                     <summary>
@@ -56,9 +71,19 @@ even when the dialog goes out of the body
                             >
                         </span>
                     </summary>
-                    {#each changes as change}
-                        <pre style="width: 100%; padding: 5px; overflow-x: auto">{change.diffed.diffed}</pre>
-                    {/each}
+                    {#key plainText}
+                        {#each changes as change}
+                            {@const style =
+                                "width: 100%; padding: 5px; overflow-x: auto"}
+                            {#if plainText}
+                                <pre {style}>{change.diffed.diffed}</pre>
+                            {:else}
+                                <Scratchblocks {style}
+                                    >{change.diffed.diffed}</Scratchblocks
+                                >
+                            {/if}
+                        {/each}
+                    {/key}
                 </details>
             {/each}
         {:else}
@@ -146,7 +171,6 @@ even when the dialog goes out of the body
     summary:hover {
         background-color: #f1f1f1;
     }
-
 
     @media (prefers-color-scheme: dark) {
         summary:hover {
