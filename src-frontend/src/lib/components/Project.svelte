@@ -4,16 +4,15 @@
     type Commit,
     setupScaffolding,
     type RepoProvider,
-  } from "./lib/index";
-  import env from "./lib/env";
+  } from "../index";
+  import env from "../env";
 
   import Flag from "./icons/Flag.svelte";
   import Stop from "./icons/Stop.svelte";
   import Fullscreen from "./icons/Fullscreen.svelte";
   import Download from "./icons/Download.svelte";
-  import { timeAgo } from "./utils";
   import { onMount } from "svelte";
-  import {showingCompare, compareInfo} from "./compare" 
+  import { showingCompare, compareInfo } from "./compare";
 
   export let initialUrl: string;
 
@@ -42,6 +41,27 @@
         acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
         return acc;
       }, {}) as T;
+
+  const timeAgo = (date: Date) => {
+    const formatter = new Intl.RelativeTimeFormat("en");
+    const ranges = [
+      ["years", 3600 * 24 * 365],
+      ["months", 3600 * 24 * 30],
+      ["weeks", 3600 * 24 * 7],
+      ["days", 3600 * 24],
+      ["hours", 3600],
+      ["minutes", 60],
+      ["seconds", 1],
+    ] as const;
+    const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+
+    for (const [rangeType, rangeVal] of ranges) {
+      if (rangeVal < Math.abs(secondsElapsed)) {
+        const delta = secondsElapsed / rangeVal;
+        return formatter.format(Math.round(delta), rangeType);
+      }
+    }
+  };
 
   const authGitHub = () => {
     if (
@@ -183,7 +203,7 @@
       e.preventDefault();
       turboMode = !turboMode;
       scaffold.vm.setTurboMode(turboMode);
-      document.querySelectorAll(".turbo-mode")[1].style.display = turboMode
+      (document.querySelectorAll(".turbo-mode")[1] as HTMLElement).style.display = turboMode
         ? "block"
         : "none";
       return;
@@ -199,7 +219,7 @@
   window._stopScaffold = () => {
     document.querySelector("canvas").style.filter = "";
     scaffold.stopAll();
-    document.querySelector(".flag-button").style.cssText = "";
+    document.querySelector<HTMLElement>(".flag-button").style.cssText = "";
   };
 
   onMount(async () => {
@@ -246,7 +266,7 @@
                 </span>
                 <span style="gap: 5px">
                   <a
-                    href="javascript:void"
+                    href="javascript:void(0)"
                     draggable="false"
                     on:click|stopPropagation={async () => {
                       $showingCompare = true;
@@ -255,23 +275,32 @@
                       }
                       const form = new FormData();
 
-                      form.append("old", new File([await scaffold.vm.saveProjectSb3()], "old"));
-                      const allCommits = Object.values(commits).flat(Infinity).toReversed();
-                      // @ts-ignore
-                      const idx = allCommits.findIndex(e => e.sha === commit.sha) - 1;
+                      form.append(
+                        "old",
+                        new File([await scaffold.vm.saveProjectSb3()], "old"),
+                      );
+                      const allCommits = Object.values(commits)
+                        .flat(Infinity)
+                        .toReversed();
+                        const idx =
+                        // @ts-ignore
+                        allCommits.findIndex((e) => e.sha === commit.sha) - 1;
                       if (idx < 0) {
                         alert("You don't have a previous commit to compare :(");
                         return;
                       }
                       // @ts-ignore
                       await loadProject(allCommits[idx].sha);
-                      form.append("new", new File([await scaffold.vm.saveProjectSb3()], "old"));
+                      form.append(
+                        "new",
+                        new File([await scaffold.vm.saveProjectSb3()], "old"),
+                      );
 
                       const resp = await fetch(`${env.API_URL}/project_diff`, {
                         method: "POST",
-                        body: form
-                      })
-                      
+                        body: form,
+                      });
+
                       // null represents an error and undefined represents loading state
                       // TODO: improve this lol
                       if (!resp.ok) {
@@ -279,9 +308,8 @@
                         return;
                       }
 
-                      $compareInfo = await resp.json()
-                    }}
-                    ><i class="fa-solid fa-code-compare"></i></a
+                      $compareInfo = await resp.json();
+                    }}><i class="fa-solid fa-code-compare"></i></a
                   >
                   <a
                     href={commit.htmlUrl}

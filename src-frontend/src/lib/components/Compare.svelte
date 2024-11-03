@@ -36,7 +36,6 @@ even when the dialog goes out of the body
                 {/if}
             </h2>
             <button
-                style="height: 30px"
                 on:click={() => {
                     $showingCompare = false;
                     $compareInfo = undefined;
@@ -176,5 +175,16 @@ even when the dialog goes out of the body
         summary:hover {
             background-color: #444;
         }
+    }
+
+    button {
+        font-size: 14px;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        margin: 0;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
     }
 </style>

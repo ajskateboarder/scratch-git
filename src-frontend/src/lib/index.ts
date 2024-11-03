@@ -149,7 +149,6 @@ export const gitHubFetcher = async (
   });
 
   const response = await response_.json();
-  console.log(response)
 
   assert(
     response.message !== "Not Found",

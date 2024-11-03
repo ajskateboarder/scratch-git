@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Compare from "./Compare.svelte";
-  import Project from "./Project.svelte";
+  import Compare from "./lib/components/Compare.svelte";
+  import Project from "./lib/components/Project.svelte";
 
   import logo from "/favicon.svg";
   import { onMount } from "svelte";
