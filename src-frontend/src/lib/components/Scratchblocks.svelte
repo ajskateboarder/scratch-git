@@ -18,7 +18,7 @@
                     true,
                 ) as SVGElement;
                 const fillColor = diff.classList.contains("sb3-diff-ins")
-                    ? "green"
+                    ? "#69ff5e"
                     : diff.classList.contains("sb3-diff-del")
                       ? "red"
                       : "grey";
@@ -30,7 +30,7 @@
                         element.style.cssText = `fill: ${fillColor}; opacity: 0.5`;
                     });
                 diff.previousElementSibling!.after(moddedBlock);
-                diff.remove();
+                (diff as HTMLElement).style.stroke = fillColor
             };
         };
     });

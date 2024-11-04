@@ -36,6 +36,7 @@ even when the dialog goes out of the body
                 {/if}
             </h2>
             <button
+                style="display: flex; justify-content: center; width: 30px"
                 on:click={() => {
                     $showingCompare = false;
                     $compareInfo = undefined;
@@ -43,21 +44,23 @@ even when the dialog goes out of the body
             >
         </div>
         {#if $compareInfo}
-            {#key plainText}
-                <button on:click={() => (plainText = !plainText)}>
-                    {#if plainText}
-                        <i class="fa-solid fa-file"></i> see blocks
-                    {:else}
-                        <i class="fa-solid fa-code"></i> see text
-                    {/if}
-                </button>
-            {/key}
+            <div
+                style="width: 100%; display: flex; justify-content: right; padding: 15px 0px"
+            >
+                {#key plainText}
+                    <button on:click={() => (plainText = !plainText)}>
+                        {#if plainText}
+                            <i class="fa-solid fa-file"></i>
+                        {:else}
+                            <i class="fa-solid fa-code"></i>
+                        {/if}
+                    </button>
+                {/key}
+            </div>
             {#each Object.entries($compareInfo.changes).filter(([_, b]) => b.length !== 0) as [sprite, changes]}
                 <details open>
                     <summary>
-                        <span
-                            style="display: inline-flex; width: 95%; align-items: center; justify-content: space-between"
-                        >
+                        <span class="compare-header">
                             <h3 style="display: inline-block">{sprite}</h3>
                             <span
                                 ><b
@@ -86,7 +89,12 @@ even when the dialog goes out of the body
                 </details>
             {/each}
         {:else}
-            <span style="display: flex; justify-content: center; width: 100%"
+            <span
+                style="
+                display: flex; 
+                justify-content: center;
+                width: 100%
+                "
                 ><svg
                     class="spinner"
                     width="65px"
@@ -128,9 +136,14 @@ even when the dialog goes out of the body
 
     .close-header {
         width: 100%;
+        height: 50px;
+        padding: 0px 5px;
+        background: inherit;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        position: sticky;
+        top: -16px;
     }
 
     dialog {
@@ -179,12 +192,23 @@ even when the dialog goes out of the body
 
     button {
         font-size: 14px;
-        color: white;
         border: none;
         padding: 0.5rem 1rem;
         margin: 0;
         border-radius: 4px;
         cursor: pointer;
         font-weight: bold;
+    }
+
+    button:focus-within {
+        box-shadow: 0 0 0 3px hsla(0, 0%, 60%, 0.35);
+    }
+
+    .compare-header {
+        display: inline-flex;
+        width: 95%;
+        align-items: center;
+        justify-content: space-between;
+        height: 30px;
     }
 </style>
