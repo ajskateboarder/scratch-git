@@ -36,9 +36,22 @@ interface Workspace {
   topBlocks_: Block[];
 }
 
-export const getBlockly = (): Workspace => window.Blockly.getMainWorkspace();
+let internalKey: string;
+
+export const getBlockly = (): Workspace => {
+    const wrapper = document.querySelector(`[class^="gui_blocks-wrapper"]`);
+    if (!wrapper) return null;
+    const internal = wrapper[(internalKey = internalKey ?? Object.keys(wrapper).find((key) => key.startsWith("__reactInternalInstance")))];
+  
+    let childable = internal;
+    while (((childable = childable.child), !childable || !childable.stateNode || !childable.stateNode.ScratchBlocks)) { }
+  
+    return childable.stateNode.ScratchBlocks;
+};
+
 export const Redux: {
   dispatch(event: ScratchGUI.ReduxEvent): any;
   getState(): ScratchGUI.ReduxState;
 } = window.ReduxStore;
+
 export const vm: VM = window.vm;
