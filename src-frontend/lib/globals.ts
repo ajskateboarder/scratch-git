@@ -46,7 +46,7 @@ export const getBlockly = (): Workspace => {
     let childable = internal;
     while (((childable = childable.child), !childable || !childable.stateNode || !childable.stateNode.ScratchBlocks)) { }
   
-    return childable.stateNode.ScratchBlocks;
+    return childable.stateNode.ScratchBlocks.getMainWorkspace();
 };
 
 export const Redux: {
