@@ -89,12 +89,13 @@ export class WelcomeModal extends HTMLDialogElement {
               vm.runtime.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
                 setTimeout(async () => {
+                  console.log(await api.getCurrentProject()?.exists())
                   if (await api.getCurrentProject()?.exists()) {
-                    goToStep2.disabled = false;
+                    goToStep2.disabled = true;
                     goToStep2.style.cursor = "help";
                     goToStep2.title = "This project has been made already";
                   } else {
-                    goToStep2.disabled = true;
+                    goToStep2.disabled = false;
                     goToStep2.style.cursor = "unset";
                     goToStep2.title = "";
                   }
@@ -200,7 +201,7 @@ export class WelcomeModal extends HTMLDialogElement {
               this.close();
               if (this.loadedProject) {
                 // nothing is changed at this point so ignore warnings
-                window.onbeforeunload = () => {};
+                window.onbeforeunload = () => { };
                 window.location.reload();
               }
             },

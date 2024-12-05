@@ -8,11 +8,11 @@ import { CommitModal, RepoConfigModal } from "./modals";
 
 // why can't rollup-plugin-import-css follow css imports?? why???
 import styles from "./styles.css";
+import dropdownStyles from "./modals/commits/dropdown.css";
 import diffStyles from "./modals/diff/styles.css";
 import repoConfigStyles from "./modals/repo-config/styles.css";
 import welcomeStyles from "./modals/welcome/styles.css";
 import commitStyles from "./modals/commits/styles.css";
-// import dropdownStyles from "./modals/commits/dropdown.css";
 
 const { link, style, button, i } = van.tags;
 
@@ -56,6 +56,7 @@ export const Styles = () => {
       ${disabledVersions}
       ${alertSuccess}
       ${styles}
+      ${dropdownStyles}
       ${diffStyles}
       ${repoConfigStyles}
       ${welcomeStyles}

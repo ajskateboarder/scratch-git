@@ -161,6 +161,7 @@ export const showIndicators = async (project: Project) => {
     });
   };
 
+  console.log(changedSprites);
   editorSprites.forEach((sprite) => {
     const divs = sprite
       .querySelector("div")!

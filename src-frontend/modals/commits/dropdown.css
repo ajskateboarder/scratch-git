@@ -18,6 +18,7 @@
     padding: 12px 16px;
     cursor: pointer;
     border-radius: 5px;
+    user-select: none;
 }
 
 .dropdown-content div:hover {

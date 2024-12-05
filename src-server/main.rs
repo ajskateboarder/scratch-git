@@ -57,8 +57,6 @@ fn main() {
         }
     };
 
-    let debug = env::args().nth(1).is_some_and(|arg| arg == "--debug");
-
     if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
         println!("Error: {}", e);
         println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
@@ -72,6 +70,8 @@ fn main() {
     println!(
         "Open TurboWarp Desktop to begin using scratch.git, and make sure to keep this running!"
     );
+
+    let debug = env::args().nth(1).is_some_and(|arg| arg == "--debug");
 
     for stream in server.incoming() {
         spawn(move || match stream {
