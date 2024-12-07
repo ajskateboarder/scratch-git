@@ -49,18 +49,31 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
 }
 
 fn main() {
-    let mut path = match turbowarp_path() {
-        Some(path) => path,
-        None => {
-            println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
-            PathBuf::from(stdin().lock().lines().next().unwrap().unwrap())
+    // TODO: make sure userscript.js is in the current directory.
+    // the current error is very confusing.
+    // maybe come up with a better method for finding it?
+    fn copy_userscript_to(mut path: PathBuf) -> Option<PathBuf> {
+        path.push("userscript.js");
+        match fs::copy("userscript.js", &path) {
+            Ok(_) => Some(path),
+            Err(e) => {
+                println!("Tried path: {}", path.to_string_lossy());
+                println!("Got error: {e}");
+                None
+            }
         }
-    };
-
-    if let Err(e) = fs::copy("userscript.js", path.join("userscript.js")) {
-        println!("Error: {}", e);
-        println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
-        path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
+    }
+    fn copy_userscript() -> PathBuf {
+        if let Some(path) = turbowarp_path().and_then(copy_userscript_to) {
+            return path;
+        }
+        loop {
+            println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
+            let path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
+            if let Some(path) = copy_userscript_to(path) {
+                return path;
+            }
+        }
     }
 
     let path = copy_userscript();
