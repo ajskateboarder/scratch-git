@@ -9,7 +9,7 @@ pub mod zipping;
 
 use std::{
     env, fs,
-    io::{stdin, BufRead},
+    io::stdin,
     net::{TcpListener, TcpStream},
     path::PathBuf,
     thread::spawn,
@@ -57,20 +57,28 @@ fn main() {
         match fs::copy("userscript.js", &path) {
             Ok(_) => Some(path),
             Err(e) => {
-                println!("Tried path: {}", path.to_string_lossy());
-                println!("Got error: {e}");
+                println!("Was unable to copy to path: {}", path.to_string_lossy());
+                println!("due to error: {e}");
                 None
             }
         }
     }
     fn copy_userscript() -> PathBuf {
-        if let Some(path) = turbowarp_path().and_then(copy_userscript_to) {
-            return path;
+        match turbowarp_path() {
+            Some(path) => {
+                println!("Found TurboWarp path: {}", path.to_string_lossy());
+                if let Some(path) = copy_userscript_to(path) {
+                    return path;
+                }
+            }
+            None => println!("Failed to find TurboWarp path automatically."),
         }
         loop {
-            println!("Failed to find TurboWarp path automatically. Please paste the correct path from the following: \n\thttps://github.com/TurboWarp/desktop#advanced-customizations");
-            let path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
-            if let Some(path) = copy_userscript_to(path) {
+            println!("Please paste the correct path from the following:");
+            println!("\thttps://github.com/TurboWarp/desktop#advanced-customizations");
+            let mut path = String::new();
+            stdin().read_line(&mut path).unwrap();
+            if let Some(path) = copy_userscript_to(PathBuf::from(path)) {
                 return path;
             }
         }
