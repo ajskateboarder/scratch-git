@@ -26,13 +26,13 @@ fn handle_client(stream: TcpStream, debug: bool) -> Result<()> {
         HandshakeError::Interrupted(_) => panic!("Bug: blocking socket would block"),
         HandshakeError::Failure(f) => f,
     })?;
-        
+
     loop {
         match socket.read()? {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {
                 let msg = msg.to_string();
                 if debug {
-                    println!("<- Received message: {}", &msg);
+                    println!("<- Received message: {msg}");
                 }
                 let cmd = from_str::<Cmd>(&msg).unwrap();
                 handle_command(cmd, &mut socket, debug).unwrap_or_else(|err| {
@@ -63,7 +63,8 @@ fn main() {
         path = PathBuf::from(stdin().lock().lines().next().unwrap().unwrap());
     }
 
-    println!("Script copied to {}", path.to_str().unwrap());
+    let path = copy_userscript();
+    println!("Script copied to {}", path.to_string_lossy());
 
     let _ = fs::create_dir("projects");
     let server = TcpListener::bind("127.0.0.1:8000").unwrap();
@@ -73,17 +74,14 @@ fn main() {
 
     let debug = env::args().nth(1).is_some_and(|arg| arg == "--debug");
 
-    for stream in server.incoming() {
-        spawn(move || match stream {
-            Ok(stream) => {
-                if let Err(err) = handle_client(stream, debug) {
-                    match err {
-                        Error::ConnectionClosed | Error::Protocol(_) | Error::Utf8 => (),
-                        e => panic!("{e}"),
-                    }
+    for stream in server.incoming().filter_map(|f| f.ok()) {
+        spawn(move || {
+            if let Err(err) = handle_client(stream, debug) {
+                match err {
+                    Error::ConnectionClosed | Error::Protocol(_) | Error::Utf8 => (),
+                    e => panic!("{e}"),
                 }
             }
-            Err(_) => (),
         });
     }
 }
