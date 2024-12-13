@@ -8,6 +8,9 @@
 .commit {
   border: 1px solid grey;
   padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
   &:first-child {
     border-radius: 5px;

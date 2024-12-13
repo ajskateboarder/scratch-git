@@ -14,7 +14,7 @@ const Delete = (props: Props, children: HTMLDivElement) =>
     children
   );
 
-export const SpriteDiff = (props: {}) =>
+export const SpriteDiff = (props: Props) =>
   Delete(
     {
       class: cls(Sprites.delete, Sprites.spriteSelDelete, "sprite-diff"),
@@ -29,7 +29,7 @@ export const SpriteDiff = (props: {}) =>
     )
   );
 
-export const StageDiff = (props: {}) =>
+export const StageDiff = (props: Props) =>
   Delete(
     {
       class: cls(Sprites.delete, Sprites.spriteSelDelete, "stage-diff"),

@@ -1,5 +1,5 @@
 export * from "./accessors";
-export * from "./menus";
+export * from "./file-menu";
 export * from "./input-field";
 export * from "./checkbox";
 export * from "./alerts";

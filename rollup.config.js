@@ -6,6 +6,7 @@ import css from "rollup-plugin-import-css";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import copy from "rollup-plugin-copy";
 
+// TODO: i want to move to vite soo bad but im not sure how most of this could translate to vite :(
 export default async (args) => {
   let build = {
     input: "src-frontend/index.ts",

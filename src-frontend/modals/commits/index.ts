@@ -5,6 +5,7 @@ import van, { type State } from "vanjs-core";
 import { Card } from "../card";
 import { CommitItem } from "./commit-item";
 import { Base } from "../base";
+import { DropdownMenu } from "./dropdown";
 
 const { button, input, div, span, br, main, i, h3, p } = van.tags;
 
@@ -75,12 +76,25 @@ export class CommitModal extends Base {
         return span(
           Object.entries(groups).map(([heading, commits]) => {
             const finalCommits = commits.map((e) => {
+              const dropdown = DropdownMenu(
+                div(
+                  i({ class: "fa-solid fa-code" }),
+                  " ",
+                  "Browse project at this point"
+                ),
+                div(
+                  i({ class: "fa-solid fa-arrow-rotate-left" }),
+                  " ",
+                  "Revert to this change"
+                )
+              );
+
               if (this.state.searchQuery.val !== "") {
                 if (e.subject.includes(this.state.searchQuery.val)) {
-                  return CommitItem(e, this.state.searchQuery.val);
+                  return CommitItem(e, this.state.searchQuery.val, dropdown);
                 }
               } else {
-                return CommitItem(e, "");
+                return CommitItem(e, "", dropdown);
               }
             });
             return heading !== ""
@@ -95,7 +109,7 @@ export class CommitModal extends Base {
       this,
       Card(
         main(
-          { id: "commitList", style: "padding: 20px" },
+          { style: "padding: 20px" },
           div(
             { class: "pagination" },
             span(this.$newer, this.$older),
@@ -104,11 +118,11 @@ export class CommitModal extends Base {
           br(),
           this.$showing,
           br(),
-          commitGroup
+          commitGroup,
+          br()
         ),
         "Commits",
-        () => this.close(),
-        "width: 420px; height: 20rem"
+        () => this.close()
       )
     );
   }

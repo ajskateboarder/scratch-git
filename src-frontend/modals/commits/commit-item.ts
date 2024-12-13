@@ -40,13 +40,20 @@ const highlight = (fullText: string, search: string) => {
   return fullText;
 };
 
-export const CommitItem = (commit: Commit, search: string) =>
+export const CommitItem = (
+  commit: Commit,
+  search: string,
+  dropdown: HTMLElement
+) =>
   div(
     { class: "commit" },
-    span({ style: "font-size: 1rem" }, highlight(commit.subject, search)),
-    br(),
     span(
-      { style: "font-size: 0.75rem", title: commit.author.date },
-      `${commit.author.name} committed ${timeAgo(commit.author.date)}`
-    )
+      span({ style: "font-size: 1rem" }, highlight(commit.subject, search)),
+      br(),
+      span(
+        { style: "font-size: 0.75rem", title: commit.author.date },
+        `${commit.author.name} committed ${timeAgo(commit.author.date)}`
+      )
+    ),
+    span(dropdown)
   );

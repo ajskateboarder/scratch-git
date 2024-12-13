@@ -1,6 +1,6 @@
 import { WelcomeModal } from "./welcome";
 import { DiffModal } from "./diff/diff";
-import { CommitModal } from "./commit";
+import { CommitModal } from "./commits";
 import { RepoConfigModal } from "./repo-config";
 import { SettingsModal } from "./settings";
 import { s } from "../components/accessors";
@@ -20,9 +20,7 @@ export const initModals = () => {
 
   // insert the welcome modal into an area where it can show correctly (idk)
   const saveArea = document.querySelector<HTMLElement>(
-    `#app > div > div.${s("gui_menu-bar-position")}.${s(
-      "menu-bar_menu-bar"
-    )} > div.${s("menu-bar_main-menu")} > div:nth-child(4)`
+    `div.${s("menu-bar_main-menu")} > div:nth-child(4)`
   )!;
   saveArea.style.opacity = "0";
   saveArea.innerHTML += `<dialog is="welcome-modal"></dialog>`;

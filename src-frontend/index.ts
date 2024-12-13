@@ -1,6 +1,6 @@
 import api, { Project } from "./api";
 import { createGitMenu, Styles } from "./init";
-import { FileMenu } from "./components/menus";
+import { projectOpen } from "./components/file-menu";
 import { Misc } from "./components/accessors";
 import { ScratchAlert } from "./components/alerts";
 import { showIndicators } from "./diff-indicators";
@@ -31,7 +31,7 @@ const main = async () => {
   scratchblocks.appendStyles();
   initModals();
 
-  if (!FileMenu.projectOpen()) {
+  if (!projectOpen()) {
     await document
       .querySelector<WelcomeModal>("dialog[is='welcome-modal']")!
       .display();

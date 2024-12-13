@@ -3,9 +3,9 @@ import api, { cloneRepo, remoteExists } from "@/api";
 import { Settings, cls } from "@/components/accessors";
 import { InputBox, InputField } from "@/components/input-field";
 import { Redux, vm } from "@/lib";
-import { validEmail, validURL } from "@/utils";
+import { validURL } from "@/utils";
 import thumbnail from "./thumbnail.svg";
-import { FileMenu } from "@/components/menus";
+import * as FileMenu from "@/components/file-menu";
 
 const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
   van.tags;
@@ -89,6 +89,7 @@ export class WelcomeModal extends HTMLDialogElement {
               vm.runtime.on("PROJECT_LOADED", async () => {
                 this.loadedProject = true;
                 setTimeout(async () => {
+                  console.log(await api.getCurrentProject()?.exists())
                   if (await api.getCurrentProject()?.exists()) {
                     goToStep2.disabled = true;
                     goToStep2.style.cursor = "help";
@@ -200,7 +201,7 @@ export class WelcomeModal extends HTMLDialogElement {
               this.close();
               if (this.loadedProject) {
                 // nothing is changed at this point so ignore warnings
-                window.onbeforeunload = () => {};
+                window.onbeforeunload = () => { };
                 window.location.reload();
               }
             },
@@ -324,7 +325,14 @@ export class WelcomeModal extends HTMLDialogElement {
       InputBox({
         onblur: (e: Event) => {
           email = (e.target! as HTMLInputElement).value;
-          if (!validEmail(email)) {
+          // test if the email is valid
+          if (
+            !email
+              .toLowerCase()
+              .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+              )
+          ) {
             $email.querySelector("input")!.value = "";
             email = "";
           }
