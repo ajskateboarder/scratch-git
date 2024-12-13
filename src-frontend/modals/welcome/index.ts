@@ -90,11 +90,11 @@ export class WelcomeModal extends HTMLDialogElement {
                 this.loadedProject = true;
                 setTimeout(async () => {
                   if (await api.getCurrentProject()?.exists()) {
-                    goToStep2.disabled = false;
+                    goToStep2.disabled = true;
                     goToStep2.style.cursor = "help";
                     goToStep2.title = "This project has been made already";
                   } else {
-                    goToStep2.disabled = true;
+                    goToStep2.disabled = false;
                     goToStep2.style.cursor = "unset";
                     goToStep2.title = "";
                   }
