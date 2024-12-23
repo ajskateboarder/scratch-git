@@ -45,6 +45,14 @@ These features closely mimic the kind of Git development seen in editors such as
 
 If you spotted a bug or any errors, please report bugs to the [issue tracker](https://github.com/ajskateboarder/scratch-git/issues).
 
+## Building
+
+1. Install Node.js and the Rust toolchain
+2. Run `cargo run` in one terminal 
+3. Install npm dependencies and run `rollup -c` in another
+
+There is also a build task configured for VSCode on Linux, provided you have [`watchexec`](https://github.com/watchexec/watchexec) installed.
+
 ## Commit spec
 
 scratch-git uses a derivative of [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/) which has been adapted to fit Scratch programming.
