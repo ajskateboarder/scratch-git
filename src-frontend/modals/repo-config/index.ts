@@ -5,7 +5,7 @@ import { InputBox, InputField } from "@/components/input-field";
 import { validURL } from "@/utils";
 import { Modal } from "../modal";
 import { Base } from "../base";
-import { GitMenu } from "@/components/menus";
+import * as GitMenu from "@/components/git-menu";
 
 const { main, button, div, label, br } = van.tags;
 

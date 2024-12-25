@@ -16,10 +16,16 @@ use regex_static::{once_cell::sync::Lazy, Regex};
 use serde_json::{Map, Value};
 
 use crate::git;
+use crate::sb3::Target;
 use vec_utils::{group_items, intersect_costumes};
 
-// removes ids from block statements to make diffs accurate
-static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),"\w""#);
+//
+// remove_ids is for block/reporter ids, remove_ids_2 is for broadcast/variable ids
+// TODO: check back here when diff indicators screw up again
+static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#":\[(?:1|2|3|\w),".*?""#);
+static REMOVE_IDS_2: Lazy<Regex> = regex_static::lazy_regex!(r#":\["\w*",".*""#);
+
+type Asset = (String, String, String, bool);
 
 impl Diff {
     /// Construct a new diff from a project.json
@@ -145,18 +151,17 @@ impl Diff {
     }
 
     /// Return the path to every costume being used
-    fn _assets(&self) -> HashMap<String, Vec<(String, String, String, bool)>> {
-        let mut assets: HashMap<String, Vec<(String, String, String, bool)>> = HashMap::new();
+    fn _assets(&self) -> HashMap<String, Vec<Asset>> {
+        let mut assets: HashMap<String, Vec<Asset>> = HashMap::new();
+
         if let Some(sprites) = self.data["targets"].as_array() {
             for sprite in sprites {
+                let sprite_name = sprite["name"].as_str().unwrap();
+                let is_stage = sprite["isStage"].as_bool().unwrap();
+
                 if let Some(sprite_costumes) = sprite["costumes"].as_array() {
                     assets.insert(
-                        sprite["name"].as_str().unwrap().to_string()
-                            + if sprite["isStage"].as_bool().unwrap() {
-                                " (stage)"
-                            } else {
-                                ""
-                            },
+                        sprite_name.to_string() + if is_stage { " (stage)" } else { "" },
                         sprite_costumes
                             .iter()
                             .map(|costume| {
@@ -164,7 +169,7 @@ impl Diff {
                                     costume["name"].as_str().unwrap().to_string(),
                                     costume["dataFormat"].as_str().unwrap().to_string(),
                                     Diff::get_asset_path(costume.clone()),
-                                    sprite["isStage"].as_bool().unwrap(),
+                                    is_stage,
                                 )
                             })
                             .collect(),
@@ -173,12 +178,7 @@ impl Diff {
                 if let Some(sprite_sounds) = sprite["sounds"].as_array() {
                     assets
                         .get_mut(
-                            &(sprite["name"].as_str().unwrap().to_string()
-                                + if sprite["isStage"].as_bool().unwrap() {
-                                    " (stage)"
-                                } else {
-                                    ""
-                                }),
+                            &(sprite_name.to_string() + if is_stage { " (stage)" } else { "" }),
                         )
                         .unwrap()
                         .extend(
@@ -189,7 +189,7 @@ impl Diff {
                                         sound["name"].as_str().unwrap().to_string(),
                                         sound["dataFormat"].as_str().unwrap().to_string(),
                                         Diff::get_asset_path(sound.clone()),
-                                        sprite["isStage"].as_bool().unwrap(),
+                                        is_stage,
                                     )
                                 })
                                 .collect::<Vec<_>>(),
@@ -197,6 +197,7 @@ impl Diff {
                 }
             }
         }
+
         assets
     }
 
@@ -215,7 +216,9 @@ impl Diff {
                 )
             })
             .collect();
+
         let mut commits: HashMap<String, String> = HashMap::new();
+
         for (sprite, actions) in group_items(_changes) {
             let split_ = actions
                 .iter()
@@ -232,6 +235,7 @@ impl Diff {
                 .collect();
             commits.insert(sprite, format!("{} {}", act[0].0, act[0].1.join(", ")));
         }
+
         commits.into_iter().map(|(x, y)| (x, y)).collect()
     }
 
@@ -264,8 +268,7 @@ impl Diff {
                 loop {
                     if let Some(mat) = REMOVE_IDS.find(&current_reporter) {
                         let seg = &current_reporter[mat.start()..mat.end()];
-                        let seg = seg.split(",").nth(1).unwrap().replace("]}", "");
-
+                        let seg = seg.split_once(",").unwrap().1.replace("]}", "");
                         let next_block = &blocks[&seg[1..seg.len() - 1]];
                         let next_inputs =
                             serde_json::to_string(next_block["inputs"].as_object().unwrap())
@@ -322,8 +325,23 @@ impl Diff {
         }
         statements.sort_by_key(|blocks| blocks.to_lowercase());
 
-        let blocks = &mut statements.join("\n");
-        REMOVE_IDS.replace_all(blocks, "\":[1,\"\"").to_string()
+        let mut blocks = statements.join("\n");
+
+        let h = &mut blocks.clone();
+        let caps = REMOVE_IDS_2.captures_iter(h);
+
+        for cap in caps {
+            let (matc, []) = cap.extract();
+            let parts = matc.split("\",").collect::<Vec<_>>();
+            if let Some(part) = parts.first() {
+                let rep = (&mut blocks).replace(matc, &format!("{part}\""));
+                blocks = rep.clone()
+            }
+        }
+
+        REMOVE_IDS
+            .replace_all(&mut blocks, "\":[1,\"\"")
+            .to_string()
     }
 
     /// Return all script changes given a newer project
@@ -354,55 +372,60 @@ impl Diff {
         let mut error = None;
 
         let changes = sprites
-            .filter_map(|(&ref old, &ref new)| {
+            .filter_map(|(old, new)| {
                 if old["blocks"].as_object() == new["blocks"].as_object() {
                     return None;
                 }
-                if old.is_null() {
+
+                let old = serde_json::from_value::<Target>(old.clone());
+                let new = serde_json::from_value::<Target>(new.clone());
+
+                if old.is_err() {
+                    let new = new.unwrap();
                     return Some(ScriptChanges {
-                        sprite: new["name"].as_str().unwrap().to_string(),
-                        added: _count_blocks(&new["blocks"].as_object().unwrap()) as usize,
+                        sprite: new.name,
+                        added: _count_blocks(&new.blocks) as usize,
                         removed: 0,
-                        on_stage: new["isStage"].as_bool().unwrap(),
+                        on_stage: new.is_stage,
                     });
                 }
-                if new.is_null() {
+
+                if new.is_err() {
+                    let old = old.unwrap();
                     return Some(ScriptChanges {
-                        sprite: old["name"].as_str().unwrap().to_string(),
+                        sprite: old.name,
                         added: 0,
-                        removed: _count_blocks(old["blocks"].as_object().unwrap()) as usize,
-                        on_stage: old["isStage"].as_bool().unwrap(),
+                        removed: _count_blocks(&old.blocks) as usize,
+                        on_stage: old.is_stage,
                     });
                 }
 
-                let old_content = Diff::format_blocks(old["blocks"].as_object().unwrap());
-                let new_content = Diff::format_blocks(new["blocks"].as_object().unwrap());
-                println!("{}", &old_content);
-                println!("\n{}", &new_content);
+                let old = old.unwrap();
+                let new = new.unwrap();
 
-                let diff = git::diff(cwd, old_content, new_content, 2000);
+                let diff = git::diff(
+                    cwd,
+                    Diff::format_blocks(&old.blocks),
+                    Diff::format_blocks(&new.blocks),
+                    2000,
+                );
 
-                if diff.is_err() {
+                let Ok(diff) = diff else {
                     error = Some(diff.unwrap_err());
                     return None;
                 };
 
-                let diff = diff.unwrap();
-
                 if diff.added != 0 || diff.removed != 0 {
                     let name = [
-                        old["name"].as_str().unwrap(),
-                        if old["isStage"].as_bool().unwrap() {
-                            " (stage)"
-                        } else {
-                            ""
-                        },
+                        old.name,
+                        if old.is_stage { " (stage)" } else { "" }.to_string(),
                     ];
+
                     Some(ScriptChanges {
                         sprite: name.join(""),
                         added: diff.added as usize,
                         removed: diff.removed.abs() as usize,
-                        on_stage: new["isStage"].as_bool().unwrap(),
+                        on_stage: new.is_stage,
                     })
                 } else {
                     None

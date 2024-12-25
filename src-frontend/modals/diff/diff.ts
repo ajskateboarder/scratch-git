@@ -132,7 +132,7 @@ export class DiffModal extends Base {
           class: "header",
         },
         span(
-          { class: "Settings-group", style: "width: 100%" },
+          { class: "settings-group", style: "width: 100%" },
           useHighlights,
           plainText,
           unified,
@@ -480,7 +480,7 @@ export class DiffModal extends Base {
       this.setDiffTheme(uiTheme);
     };
 
-    $plainText.onchange = (e) => {
+    $plainText.onchange = (e: Event) => {
       userSettings.plainText = $plainText.checked;
       if ($plainText.checked) {
         if ($highlights.checked) {
@@ -760,7 +760,7 @@ export class DiffModal extends Base {
           $revertList.append(
             Revert({
               diffs,
-              onsubmit: (e) => {
+              onsubmit: (e: KeyboardEvent) => {
                 let target = e.target! as HTMLElement;
 
                 if (

@@ -1,9 +1,9 @@
 import { cls, Settings } from "./accessors";
-import van, { Props } from "vanjs-core";
+import van, { ChildDom, Props } from "vanjs-core";
 
 const { p, input } = van.tags;
 
-export const InputField = (props: Props = {}, ...children: any[]) =>
+export const InputField = (props: Props, ...children: ChildDom[]) =>
   p({ class: "input-field", ...props }, children);
 
 export const InputBox = (props: Props = {}) =>

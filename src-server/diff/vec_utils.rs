@@ -2,11 +2,11 @@ use super::AssetChange;
 use std::collections::{HashMap, HashSet};
 
 pub trait ItemGrouping {
-    fn method(&self) -> HashMap<String, Vec<String>>;
+    fn group(&self) -> HashMap<String, Vec<String>>;
 }
 
 impl ItemGrouping for Vec<(String, String)> {
-    fn method(&self) -> HashMap<String, Vec<String>> {
+    fn group(&self) -> HashMap<String, Vec<String>> {
         let mut groups: HashMap<String, Vec<String>> = HashMap::new();
         for row in self.iter() {
             if !groups.contains_key::<String>(&row.0) {
@@ -22,7 +22,7 @@ impl ItemGrouping for Vec<(String, String)> {
 }
 
 impl ItemGrouping for Vec<Vec<String>> {
-    fn method(&self) -> HashMap<String, Vec<String>> {
+    fn group(&self) -> HashMap<String, Vec<String>> {
         let mut groups: HashMap<String, Vec<String>> = HashMap::new();
         for row in self.iter() {
             if !groups.contains_key::<String>(&row[0]) {
@@ -35,6 +35,10 @@ impl ItemGrouping for Vec<Vec<String>> {
         }
         groups
     }
+}
+
+pub fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
+    ItemGrouping::group(&items)
 }
 
 /// Set-intersection of costume changes because HashSet::intersection sucks
@@ -57,10 +61,6 @@ pub fn intersect_costumes(mut sets: Vec<HashSet<AssetChange>>) -> HashSet<AssetC
         })
     });
     result
-}
-
-pub fn group_items<T: ItemGrouping>(items: T) -> HashMap<String, Vec<String>> {
-    ItemGrouping::method(&items)
 }
 
 /// Group costumes by their sprite and costumes changes for each sprite by costume name

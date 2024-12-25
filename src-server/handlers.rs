@@ -654,6 +654,8 @@ impl CmdHandler<'_> {
 
         let new_diff = Diff::new(&_new_project);
 
+        dbg!(current_diff.blocks(&pth, &new_diff)?);
+
         let mut sprites: Vec<_> = current_diff
             .blocks(&pth, &new_diff)?
             .into_iter()
