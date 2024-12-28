@@ -127,10 +127,9 @@ impl CmdHandler<'_> {
             return self.send_json(json!({}));
         };
 
-        let name = Path::new(&file_path).file_name().unwrap().to_os_string();
+        let name = Path::new(&file_path).file_stem().unwrap().to_os_string();
         let name = name.to_str().unwrap();
 
-        let name = name.split(".").next().unwrap();
         let mut config = project_config().lock().unwrap();
 
         if self.debug {
@@ -327,8 +326,11 @@ impl CmdHandler<'_> {
         let CmdData::Project { project_name, .. } = data else {
             return self.send_json(json!({}));
         };
+        dbg!(project_name);
 
         let projects = &project_config().lock().unwrap().projects;
+        dbg!(projects);
+
         self.send_json(json!({ "exists": projects[project_name] != Value::Null }))
     }
 

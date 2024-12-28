@@ -4,8 +4,6 @@ use std::{env, path::PathBuf};
 pub fn turbowarp_path() -> Option<PathBuf> {
     #[cfg(windows)]
     {
-        use std::{fs::DirEntry, io::Result};
-
         if let Some(appdata) = env::var_os("APPDATA") {
             let mut pth = PathBuf::from(appdata);
             pth.push("turbowarp-desktop");
@@ -13,7 +11,7 @@ pub fn turbowarp_path() -> Option<PathBuf> {
                 return Some(pth);
             };
         }
-        let localappdata = PathBuf::new(env::var_os("LOCALAPPDATA")?);
+        let localappdata = PathBuf::from(env::var_os("LOCALAPPDATA")?);
         {
             let pth = localappdata.join("turbowarp-desktop");
             if pth.is_dir() {
@@ -21,20 +19,20 @@ pub fn turbowarp_path() -> Option<PathBuf> {
             };
         }
         let packages = localappdata.join("Packages");
-        let store_folders = packages.read_dir()?.into_iter().filter_map(|f| {
+        let store_folders = packages.read_dir().ok()?.into_iter().filter_map(|f| {
             let file_name = f.ok()?.file_name();
             file_name
                 .to_string_lossy()
                 .contains("TurboWarpDesktop")
-                .then(file_name)
+                .then_some(file_name)
         });
         for store_folder in store_folders {
             let local_cache_path = packages.join(store_folder);
             let Ok(local_cache) = local_cache_path.read_dir() else {
                 continue;
             };
-            if local_cache.into_iter().any(|f| {
-                let file_name = f.ok()?.file_name();
+            if local_cache.into_iter().filter(|x| x.is_ok()).any(|f| {
+                let file_name = f.unwrap().file_name();
                 file_name.to_string_lossy().contains("LocalCache")
             }) {
                 return Some(local_cache_path.join("LocalCache/Roaming/turbowarp-desktop"));
