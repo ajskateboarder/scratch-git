@@ -17,6 +17,8 @@ import { Base } from "../base";
 import { Diff } from ".";
 import { createSprite, Revert } from "./revert-ui";
 
+// this code makes me sick and refactoring would be so great
+
 const { div, span, ul, button, p, pre, aside, main, br, i, li, img, audio } =
   van.tags;
 
@@ -189,8 +191,8 @@ export class DiffModal extends Base {
         const fillColor = diff.classList.contains("sb3-diff-ins")
           ? "green"
           : diff.classList.contains("sb3-diff-del")
-          ? "red"
-          : "grey";
+            ? "red"
+            : "grey";
         moddedBlock
           .querySelectorAll<SVGPathElement | SVGGElement | SVGRectElement>(
             "path,g,rect"
@@ -218,13 +220,12 @@ export class DiffModal extends Base {
       let highlights = content.split("\n").map((e, i) =>
         span(
           {
-            style: `background-color: rgba(${
-              e.startsWith("-")
+            style: `background-color: rgba(${e.startsWith("-")
                 ? "255,0,0,0.5"
                 : e.startsWith("+")
-                ? "0,255,0,0.5"
-                : "0,0,0,0"
-            })`,
+                  ? "0,255,0,0.5"
+                  : "0,0,0,0"
+              })`,
           },
           i == 0 ? e.trimStart() : e
         )
@@ -270,13 +271,12 @@ export class DiffModal extends Base {
     b: { contents: string; size: number },
     unified: HTMLCanvasElement
   ) {
-    const sizeChange = `${byteFormatter.format(b.size)}${
-      a.size === 0
+    const sizeChange = `${byteFormatter.format(b.size)}${a.size === 0
         ? " "
         : " (" +
-          percentFormatter.format((b.size - a.size) / Math.abs(a.size)) +
-          ")"
-    }`;
+        percentFormatter.format((b.size - a.size) / Math.abs(a.size)) +
+        ")"
+      }`;
 
     const aImage = img({ src: a.contents }),
       bImage = img({ src: b.contents });
@@ -288,51 +288,51 @@ export class DiffModal extends Base {
       () =>
         !this.unify.val
           ? span(
-              { style: "display: flex; align-items: center; gap: 10px" },
-              span(
-                {
-                  class: "image costume-diff-canvas",
-                  style: "border: 2px solid red",
-                },
-                a.contents !== "" ? Copy(() => aImage) : undefined,
-                img({
-                  src: a.contents,
-                  height: aImage.height / 2,
-                  width: aImage.width / 2,
-                }),
-                byteFormatter.format(a.size)
-              ),
-              i({ class: "fa-solid fa-arrow-right fa-xl" }),
-              span(
-                {
-                  class: "image costume-diff-canvas",
-                  style: "border: 2px solid green",
-                },
-                b.contents !== "" ? Copy(() => bImage) : undefined,
-                img({
-                  src: b.contents,
-                  height: bImage.height / 2,
-                  width: bImage.width / 2,
-                }),
-                sizeChange
-              )
-            )
-          : span(
+            { style: "display: flex; align-items: center; gap: 10px" },
+            span(
               {
                 class: "image costume-diff-canvas",
-                style: "border: 2px solid grey",
+                style: "border: 2px solid red",
               },
-              Copy(() => img({ src: unified.toDataURL() })),
-              unified,
-              span(
-                { style: "text-align: right" },
-                byteFormatter.format(a.size),
-                " ",
-                i({ class: "fa-solid fa-arrow-right" }),
-                " ",
-                sizeChange
-              )
+              a.contents !== "" ? Copy(() => aImage) : undefined,
+              img({
+                src: a.contents,
+                height: aImage.height / 2,
+                width: aImage.width / 2,
+              }),
+              byteFormatter.format(a.size)
+            ),
+            i({ class: "fa-solid fa-arrow-right fa-xl" }),
+            span(
+              {
+                class: "image costume-diff-canvas",
+                style: "border: 2px solid green",
+              },
+              b.contents !== "" ? Copy(() => bImage) : undefined,
+              img({
+                src: b.contents,
+                height: bImage.height / 2,
+                width: bImage.width / 2,
+              }),
+              sizeChange
             )
+          )
+          : span(
+            {
+              class: "image costume-diff-canvas",
+              style: "border: 2px solid grey",
+            },
+            Copy(() => img({ src: unified.toDataURL() })),
+            unified,
+            span(
+              { style: "text-align: right" },
+              byteFormatter.format(a.size),
+              " ",
+              i({ class: "fa-solid fa-arrow-right" }),
+              " ",
+              sizeChange
+            )
+          )
     );
   }
 
@@ -393,16 +393,6 @@ export class DiffModal extends Base {
 
       const svg = this.querySelector(".scratchblocks svg > g")!;
 
-      svg.querySelectorAll("rect.sb3-input-string").forEach((input) => {
-        input.setAttribute("rx", "4");
-        input.setAttribute("ry", "4");
-      });
-
-      svg.querySelectorAll("rect.sb3-input-dropdown").forEach((input) => {
-        input.setAttribute("rx", "13");
-        input.setAttribute("ry", "13");
-      });
-
       // darken blocks to match tw dark theme
       if (blockTheme === "dark") {
         svg.querySelectorAll(":scope > g").forEach((blocks) => {
@@ -411,7 +401,7 @@ export class DiffModal extends Base {
             .forEach((element) => {
               const darkFill =
                 DARK_BLOCKS[
-                  element.classList.item(0) as keyof typeof DARK_BLOCKS
+                element.classList.item(0) as keyof typeof DARK_BLOCKS
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -422,7 +412,7 @@ export class DiffModal extends Base {
             .forEach((element) => {
               const darkFill =
                 DARK_BLOCKS[
-                  element.classList.item(0) as keyof typeof DARK_BLOCKS
+                element.classList.item(0) as keyof typeof DARK_BLOCKS
                 ];
               if (darkFill) {
                 element.style.fill = darkFill;
@@ -518,32 +508,33 @@ export class DiffModal extends Base {
           labelText ?? diff.scriptNo,
           diff.status === "modified" || diff.status === "added"
             ? button(
-                {
-                  class: `${Settings.button} open-script`,
-                  onclick: (e: Event) => {
-                    e.stopPropagation();
-                    this.style.opacity = "0.5";
-                    if (
-                      Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
-                    ) {
-                      Redux.dispatch({
-                        type: "scratch-gui/navigation/ACTIVATE_TAB",
-                        activeTabIndex: 0,
-                      });
-                    }
-                    const id = window._changedScripts[spriteName][scriptNo];
-                    scrollBlockIntoView(id);
-                    flash(getBlockly().getBlockById(id)).then(() => {
-                      const listener = () => (this.style.opacity = "1");
-                      document.addEventListener("mousemove", () => {
-                        listener();
-                        document.removeEventListener("mousemove", listener);
-                      });
+              {
+                class: `${Settings.button} open-script`,
+                onclick: (e: Event) => {
+                  e.stopPropagation();
+                  this.style.opacity = "0.5";
+                  // switch to editor tab to flash script if not there
+                  if (
+                    Redux.getState().scratchGui.editorTab.activeTabIndex !== 0
+                  ) {
+                    Redux.dispatch({
+                      type: "scratch-gui/navigation/ACTIVATE_TAB",
+                      activeTabIndex: 0,
                     });
-                  },
+                  }
+                  const id = window._changedScripts[spriteName][scriptNo];
+                  scrollBlockIntoView(id);
+                  flash(getBlockly().getBlockById(id)).then(() => {
+                    const listener = () => (this.style.opacity = "1");
+                    document.addEventListener("mousemove", () => {
+                      listener();
+                      document.removeEventListener("mousemove", listener);
+                    });
+                  });
                 },
-                i({ class: "fa-solid fa-up-right-from-square" })
-              )
+              },
+              i({ class: "fa-solid fa-up-right-from-square" })
+            )
             : undefined
         )
       );
@@ -576,8 +567,8 @@ export class DiffModal extends Base {
 
     let lastScriptNo = diffs.length === 0 ? 0 : diffs.length;
 
-    if (costumeDiffs)
-      Object.keys(costumeDiffs).forEach((assetName, _costNo) => {
+    if (costumeDiffs) {
+      for (const [_costNo, assetName] of Object.keys(costumeDiffs).entries()) {
         const costNo = lastScriptNo + _costNo;
         const diff = costumeDiffs[assetName];
         const isSoundDiff = diff.some(
@@ -588,8 +579,8 @@ export class DiffModal extends Base {
           diff[0] && diff[1]
             ? "modified"
             : diff[0]?.kind === "after" && !diff[1]
-            ? "added"
-            : "removed";
+              ? "added"
+              : "removed";
 
         const diffButton = li(
           button(
@@ -631,7 +622,8 @@ export class DiffModal extends Base {
         }
 
         $scripts.appendChild(diffButton);
-      });
+      };
+    }
 
     const btnRef = this.querySelector(`button[script-no="${script}"]`)!;
 
@@ -692,13 +684,13 @@ export class DiffModal extends Base {
       const _previousAssetImg = img({ src: previousAsset.contents }),
         _currentAssetImg = img({ src: currentAsset.contents });
       const previousAssetImg = imageLayer(
-          img({
-            src: previousAsset.contents,
-            width: _previousAssetImg.width / 2,
-            height: _previousAssetImg.height / 2,
-          }),
-          userSettings.imgRmColor
-        ),
+        img({
+          src: previousAsset.contents,
+          width: _previousAssetImg.width / 2,
+          height: _previousAssetImg.height / 2,
+        }),
+        userSettings.imgRmColor
+      ),
         currentAssetImg = imageLayer(
           img({
             src: currentAsset.contents,
@@ -723,9 +715,9 @@ export class DiffModal extends Base {
             : this.UnifyToggle(previousAsset, currentAsset, imageDiff!),
           ...(isSoundDiff
             ? [
-                i({ class: "fa-solid fa-arrow-right fa-xl" }),
-                audio({ src: currentAsset.contents, controls: true }),
-              ]
+              i({ class: "fa-solid fa-arrow-right fa-xl" }),
+              audio({ src: currentAsset.contents, controls: true }),
+            ]
             : [undefined])
         )
       );
@@ -835,7 +827,7 @@ export class DiffModal extends Base {
     } else {
       $revert.classList.add(Settings.disabledButton);
       $revert.disabled = true;
-      $revert.onclick = () => {};
+      $revert.onclick = () => { };
     }
 
     this.querySelector<HTMLElement>(".card-title")!.innerText = spriteName;

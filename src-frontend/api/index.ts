@@ -1,5 +1,5 @@
 import { ProjectManager } from "./api";
-import { SOCKET_URL } from "./config";
+import { SOCKET_URL } from "./url";
 
 export * from "./auth";
 export * from "./api";

@@ -1,6 +1,8 @@
+pub mod parse_script;
 pub mod structs;
 pub mod vec_utils;
 
+use parse_script::{parse_sprite, Sprite};
 use structs::*;
 
 use std::path::PathBuf;
@@ -12,14 +14,10 @@ use std::{
 use anyhow::Result;
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
-use regex_static::{once_cell::sync::Lazy, Regex};
 use serde_json::{Map, Value};
 
 use crate::git;
 use vec_utils::{group_items, intersect_costumes};
-
-// removes ids from block statements to make diffs accurate
-static REMOVE_IDS: Lazy<Regex> = regex_static::lazy_regex!(r#"":\[(?:1|2|3),"\w""#);
 
 impl Diff {
     /// Construct a new diff from a project.json
@@ -235,97 +233,6 @@ impl Diff {
         commits.into_iter().map(|(x, y)| (x, y)).collect()
     }
 
-    /// Formats scripts as a flat object representation with opcode, fields, and inputs
-    fn format_blocks(blocks: &Map<String, Value>) -> String {
-        let top_ids = blocks
-            .iter()
-            .filter_map(|(id, val)| {
-                if val["parent"].is_null() {
-                    Some(id)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-
-        let mut statements: Vec<String> = vec![];
-
-        for id in top_ids {
-            let mut _blocks: Vec<String> = vec![];
-            let mut current_block = &blocks[id];
-
-            loop {
-                let inputs =
-                    serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap();
-                let mut _reporters = vec![];
-                let mut current_reporter = inputs;
-
-                // dirty hack to fetch inner reporters
-                loop {
-                    if let Some(mat) = REMOVE_IDS.find(&current_reporter) {
-                        let seg = &current_reporter[mat.start()..mat.end()];
-                        let seg = seg.split(",").nth(1).unwrap().replace("]}", "");
-
-                        let next_block = &blocks[&seg[1..seg.len() - 1]];
-                        let next_inputs =
-                            serde_json::to_string(next_block["inputs"].as_object().unwrap())
-                                .unwrap();
-                        let next_opcode = next_block["opcode"].as_str().unwrap();
-                        let next_fields =
-                            serde_json::to_string(next_block["fields"].as_object().unwrap())
-                                .unwrap();
-
-                        _reporters.push(format!("{} {} {}", next_opcode, next_inputs, next_fields));
-                        current_reporter = next_inputs;
-                    } else {
-                        break;
-                    };
-                }
-
-                _blocks.push(format!(
-                    "{} {} {} {}",
-                    current_block["opcode"].as_str().unwrap(),
-                    serde_json::to_string(current_block["inputs"].as_object().unwrap()).unwrap(),
-                    serde_json::to_string(current_block["fields"].as_object().unwrap()).unwrap(),
-                    _reporters.join(" ")
-                ));
-
-                let next = &current_block["next"];
-
-                // attempt to find the next block
-                match next {
-                    // block is directly below
-                    Value::String(id) => {
-                        let substack = &current_block["inputs"]["SUBSTACK"][1];
-                        match substack {
-                            Value::String(id) => current_block = &blocks[id],
-                            Value::Null => current_block = &blocks[id],
-                            _ => unreachable!(),
-                        }
-                    }
-                    // block is located in c-block or e-block
-                    Value::Null => {
-                        let substack = &current_block["inputs"]["SUBSTACK"][1];
-                        match substack {
-                            Value::String(id) => current_block = &blocks[id],
-                            Value::Null => {
-                                _blocks.push("".into());
-                                break;
-                            }
-                            _ => unreachable!(),
-                        }
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            statements.push(_blocks.join("\n"));
-        }
-        statements.sort_by_key(|blocks| blocks.to_lowercase());
-
-        let blocks = &mut statements.join("\n");
-        REMOVE_IDS.replace_all(blocks, "\":[1,\"\"").to_string()
-    }
-
     /// Return all script changes given a newer project
     pub fn blocks<'a>(&'a self, cwd: &PathBuf, new: &'a Diff) -> Result<Vec<ScriptChanges>> {
         fn _count_blocks(blocks: &Map<String, Value>) -> i32 {
@@ -375,10 +282,37 @@ impl Diff {
                     });
                 }
 
-                let old_content = Diff::format_blocks(old["blocks"].as_object().unwrap());
-                let new_content = Diff::format_blocks(new["blocks"].as_object().unwrap());
-                println!("{}", &old_content);
-                println!("\n{}", &new_content);
+                let old_blocks = old["blocks"].as_object().unwrap();
+                let old_top_ids = old_blocks
+                    .iter()
+                    .filter_map(|(k, v)| {
+                        if v["topLevel"].as_bool().is_some_and(|b| b) {
+                            Some(k.to_owned())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                let old_content = parse_sprite(Sprite {
+                    blocks: old_blocks,
+                    top_ids: old_top_ids,
+                }).unwrap();
+
+                let new_blocks = new["blocks"].as_object().unwrap();
+                let new_top_ids = new_blocks
+                    .iter()
+                    .filter_map(|(k, v)| {
+                        if v["topLevel"].as_bool().is_some_and(|b| b) {
+                            Some(k.to_owned())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                let new_content = parse_sprite(Sprite {
+                    blocks: new_blocks,
+                    top_ids: new_top_ids,
+                }).unwrap();
 
                 let diff = git::diff(cwd, old_content, new_content, 2000);
 

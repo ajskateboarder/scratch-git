@@ -23,7 +23,7 @@ export class ProjectJSON {
     this.topLevels = Object.keys(_json).filter(
       (key) => _json[key].parent === null
     );
-    // fixes parsing error
+    // fixes parsing error with parse-sb3-blocks
     this.json = JSON.parse(
       JSON.stringify(_json)
         .replaceAll('{"SUBSTACK":[1,null]}', "{}")
@@ -50,7 +50,7 @@ export class ProjectJSON {
     ].map((e) => e[0]);
     matches.forEach((match) => {
       const ogId = match.substring(6, match.length - 1);
-      const id = crypto.randomUUID();
+      const id = Math.random().toString(36).slice(2);
       stack = JSON.parse(
         JSON.stringify(stack)
           .replaceAll(match, `${match.substring(0, match.length - 2)}${id}"`)
@@ -78,6 +78,7 @@ const _parseScripts = (
         script,
       };
     })
+    // sort to avoid blockly script reordering, not a magic bullet sadly
     .sort((a, b) => a.content.localeCompare(b.content));
 
   const newBlocks = newProject.topLevels
@@ -92,14 +93,14 @@ const _parseScripts = (
     })
     .sort((a, b) => a.content.localeCompare(b.content));
 
-  console.log(zip(oldBlocks, newBlocks).map((e, i) => [e, i]));
   const results = zip(oldBlocks, newBlocks)
     .map((e, i) => [e, i])
-    // @ts-expect-error
-    .filter(([a, b]) => a[0].content !== a[1].content)
+    // @ts-expect-error - i have no idea how to type this
+    // it seems to expect a union of a string | number | ProjectJSON
+    .filter(([a, _]) => a[0].content !== a[1].content)
     .map(
       ([
-        // @ts-expect-error
+        // @ts-expect-error - similar issue here
         [
           { content: oldContent, script: oldScript, json: oldJSON },
           { content: newContent, script, json },
@@ -139,7 +140,7 @@ export const parseScripts = async (
   currentScripts: ProjectJSON
 ) => {
   const scripts = _parseScripts(previousScripts, currentScripts);
-  console.log("parseScripts", scripts);
+
   return (
     await Promise.all(
       scripts.map((script) =>
@@ -148,5 +149,6 @@ export const parseScripts = async (
     )
   )
     .map((diffed, i) => ({ ...diffed, ...scripts[i] }))
+    // excludes sprites whose diff is empty (redundant?)
     .filter((result) => result.diffed !== "");
 };

@@ -128,16 +128,15 @@ const highlightChanged = async (
 const nameOfSprite = (element: HTMLElement) =>
   element.querySelectorAll("div")[2].innerText;
 
-/** Shows buttons to display changes and highlight changed scripts
- *
- * @param project - the currently open project
- */
+/** Shows buttons to display changes and highlight changed scripts */
 export const showIndicators = async (project: Project) => {
   const changedSprites = await project.getChangedSprites(),
     editorSprites = [
       ...s("sprite-selector_items-wrapper").select().children,
     ] as HTMLElement[],
     loadedJSON = JSON.parse(vm.toJSON());
+
+  console.log("changedSprites", changedSprites);
 
   if (changedSprites.length === 0) {
     throw new Error("Nothing was changed");
@@ -148,7 +147,7 @@ export const showIndicators = async (project: Project) => {
     const index = window._changedScripts[currentSprite].indexOf(e.dataset.id!);
     if (index === -1) return;
 
-    contextMenu.setCustomItem({
+    contextMenu.addItem({
       title: "Show Changes",
       onclick() {
         (document.querySelector("diff-modal") as DiffModal).display(
@@ -291,6 +290,7 @@ export const showIndicators = async (project: Project) => {
       )
         return;
 
+      // idk why this doesn't use :last-child
       const lastSprite = [
         ...document.querySelectorAll("div[style^='order: ']"),
       ].pop();

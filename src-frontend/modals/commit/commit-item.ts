@@ -22,6 +22,7 @@ const timeAgo = (input: Date | string) => {
   const matched = Object.keys(RANGES).find(
     (key) => RANGES[key as keyof typeof RANGES] < Math.abs(secondsElapsed)
   ) as keyof typeof RANGES;
+
   return formatter.format(
     Math.round(secondsElapsed / RANGES[matched]),
     matched as Intl.RelativeTimeFormatUnit
@@ -30,6 +31,7 @@ const timeAgo = (input: Date | string) => {
 
 const highlight = (fullText: string, search: string) => {
   if (search !== "") {
+    // sanitizes commit names for innerText.. just in case?
     const text = new Option(fullText).innerHTML;
     const newText = text.replaceAll(
       new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),

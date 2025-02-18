@@ -1,4 +1,4 @@
-import { SOCKET_URL } from "./config";
+import { SOCKET_URL } from "./url";
 
 export interface DeviceCode {
   user_code: string;

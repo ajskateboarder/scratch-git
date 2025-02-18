@@ -1,5 +1,5 @@
 import { ProjectJSON } from "@/diff-indicators/script-parser";
-import { SOCKET_URL } from "./config";
+import { SOCKET_URL } from "./url";
 import { Redux } from "@/lib";
 
 export interface Commit {

@@ -21,8 +21,26 @@ const waitForElm = <T extends Element>(selector: string): Promise<T> =>
     });
   });
 
+/** Find the root block from any block in a selected stack */
+const topStack = (topBlocks: string[], block: SVGElement) => {
+  const closest = block.closest<SVGElement>("[data-id]");
+
+  if (
+    block.dataset.id === closest?.dataset.id &&
+    !topBlocks.includes(closest!.dataset.id ?? "")
+  ) {
+    return topStack(topBlocks, closest?.parentElement as unknown as SVGElement);
+  }
+
+  if (topBlocks.includes(closest!.dataset.id ?? "")) {
+    return closest;
+  }
+
+  return topStack(topBlocks, closest!);
+};
+
 class ContextMenu {
-  onopen: (target: SVGElement) => any = () => {};
+  onopen: (target: SVGElement) => any = () => { };
 
   constructor() {
     this.listenOpens();
@@ -31,26 +49,15 @@ class ContextMenu {
   private listenOpens(): void {
     waitForElm<SVGGElement>("g.blocklyBlockCanvas").then((workspace) => {
       workspace.oncontextmenu = (_e: Event) => {
-        // find the main stack from any selected part of the stack
         let topBlocks = getBlockly().topBlocks_.map((e) => e.id);
         let target = _e.target as SVGElement;
-        const topStack = (block: SVGElement) => {
-          const closest = block.closest<SVGElement>("[data-id]");
-          if (
-            block.dataset.id === closest?.dataset.id &&
-            !topBlocks.includes(closest!.dataset.id ?? "")
-          )
-            return topStack(closest?.parentElement as unknown as SVGElement);
-          if (topBlocks.includes(closest!.dataset.id ?? "")) return closest;
-          return topStack(closest!);
-        };
-        target = topStack(target)!;
+        target = topStack(topBlocks, target)!;
         this.onopen(target);
       };
     });
   }
 
-  setCustomItem(item: Item) {
+  addItem(item: Item) {
     const blocklyMenu = document
       .querySelector("div.goog-menu.goog-menu-vertical.blocklyContextMenu")
       ?.querySelectorAll(".goog-menuitem");
@@ -84,7 +91,9 @@ class ContextMenu {
         ".blocklyWidgetDiv .goog-menu > .sa-blockly-menu-item-border"
       )!
       .after(menuItem);
+
     // when extra items are added, the height of the menu remains fixed
+    // todo: this is really REALLY dumb
     document.querySelector<HTMLDivElement>(
       ".blocklyContextMenu"
     )!.style.maxHeight = "1000000%";
