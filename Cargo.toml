@@ -20,3 +20,4 @@ walkdir = "2"
 minreq = { version = "2.11.2", features = ["json-using-serde", "https"] }
 regex_static = "0.1.1"
 anyhow = "1.0.86"
+native-dialog = "0.7.0"

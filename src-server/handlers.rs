@@ -9,6 +9,8 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use dunce::canonicalize;
+use itertools::Itertools;
+use native_dialog::FileDialog;
 use regex_static::{once_cell::sync::Lazy, Regex};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -61,7 +63,6 @@ enum CmdData<'a> {
         repository: String,
     },
     ProjectToCreate {
-        file_path: String,
         username: String,
         email: String,
     },
@@ -118,19 +119,32 @@ impl CmdHandler<'_> {
     /// Initialize a new project using a project's location and a user's name and email
     // ANCHOR[id=create-project]
     fn create_project(&mut self, data: CmdData) -> Result<()> {
-        let CmdData::ProjectToCreate {
-            file_path,
-            username,
-            email,
-        } = data
-        else {
+        let CmdData::ProjectToCreate { username, email } = data else {
             return self.send_json(json!({}));
         };
 
-        let name = Path::new(&file_path).file_name().unwrap().to_os_string();
-        let name = name.to_str().unwrap();
+        let mut file_path ;
 
-        let name = name.split(".").next().unwrap();
+        loop {
+            file_path = FileDialog::new()
+                .set_title("Select project location")
+                .set_location("~")
+                .add_filter("Scratch Project", &["sb3"])
+                .show_open_single_file()
+                .unwrap();
+            if file_path.is_some() {
+                break;
+            }
+        };
+
+        let file_path = file_path.unwrap();
+
+        let name = file_path.file_name().unwrap().to_os_string();
+        let name = name.to_str().unwrap();
+        let name = name.split(".").collect::<Vec<_>>();
+        let name = name.iter().take(name.len() - 1).join(".");
+        let name = name.as_str();
+
         let mut config = project_config().lock().unwrap();
 
         if self.debug {

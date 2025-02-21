@@ -296,7 +296,8 @@ impl Diff {
                 let old_content = parse_sprite(Sprite {
                     blocks: old_blocks,
                     top_ids: old_top_ids,
-                }).unwrap();
+                })
+                .unwrap();
 
                 let new_blocks = new["blocks"].as_object().unwrap();
                 let new_top_ids = new_blocks
@@ -312,7 +313,8 @@ impl Diff {
                 let new_content = parse_sprite(Sprite {
                     blocks: new_blocks,
                     top_ids: new_top_ids,
-                }).unwrap();
+                })
+                .unwrap();
 
                 let diff = git::diff(cwd, old_content, new_content, 2000);
 

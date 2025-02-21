@@ -2,12 +2,12 @@ import van from "vanjs-core";
 import api, { cloneRepo, remoteExists } from "@/api";
 import { Settings, cls } from "@/components/accessors";
 import { InputBox, InputField } from "@/components/input-field";
-import { Redux, vm } from "@/lib";
+import { vm } from "@/lib";
 import { validEmail, validURL } from "@/utils";
 import thumbnail from "./thumbnail.svg";
 import { FileMenu } from "@/components/menus";
 
-const { div, h1, button, p, br, span, input, pre, i, label, a, form } =
+const { div, h1, button, p, br, span, pre, i, label, a, form } =
   van.tags;
 
 const BottomBar = (...children: any) => div({ class: "bottom-bar" }, children);
@@ -37,7 +37,7 @@ export class WelcomeModal extends HTMLDialogElement {
 
   connectedCallback() {
     if (this.querySelector("div")) return;
-    this.$steps = [this.$step1(), this.$step2(), this.$step3(), this.$step4()];
+    this.$steps = [this.$step1(), this.$step2(), this.$step3()];
 
     const thumb = span({ class: "thumbnail" }, thumbnail());
 
@@ -58,7 +58,6 @@ export class WelcomeModal extends HTMLDialogElement {
         this.$step1(),
         this.$step2(),
         this.$step3(),
-        this.$step4(),
       ];
       this.currentStep.val = 0;
       this.showModal();
@@ -212,57 +211,7 @@ export class WelcomeModal extends HTMLDialogElement {
     );
   }
 
-  /** Input the project's location for our purposes */
   private $step2() {
-    const goToStep3 = button(
-      {
-        class: cls(Settings.button, Settings.disabledButton, "back-button"),
-        disabled: true,
-        onclick: async () => {
-          this.projectName = Redux.getState().scratchGui.projectTitle;
-          ++this.currentStep.val;
-        },
-      },
-      "Next"
-    );
-
-    const openProjectPath = input({
-      type: "file",
-      class: Settings.button,
-      accept: ".sb,.sb2,.sb3",
-      onchange: () => {
-        goToStep3.disabled = false;
-        goToStep3.classList.remove(Settings.disabledButton);
-        // .path is an electron-specific attr
-        this.projectPath = (openProjectPath.files![0] as any).path;
-      },
-    });
-
-    return Screen(
-      { title: "Select project file", number: 2 },
-      div(
-        { class: "welcome-screen-content" },
-        p(
-          "Please select the location of your Scratch project file.",
-          br(),
-          br()
-        ),
-        openProjectPath
-      ),
-      BottomBar(
-        button(
-          {
-            class: cls(Settings.button, "back-button"),
-            onclick: () => --this.currentStep.val,
-          },
-          "Back"
-        ),
-        goToStep3
-      )
-    );
-  }
-
-  private $step3() {
     let username: string;
     let email: string;
 
@@ -360,7 +309,7 @@ export class WelcomeModal extends HTMLDialogElement {
     );
   }
 
-  private $step4() {
+  private $step3() {
     return Screen(
       { title: "Welcome to scratch.git", number: 3 },
       div(
